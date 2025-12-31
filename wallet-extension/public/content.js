@@ -1,22 +1,75 @@
-// the content.js script is responsible for injecting the `injection.js` into the document page
-// and forwarding messages between the document page and the background script
+/**
+ * Content script for Stacks Wallet extension
+ * Injects the wallet provider and relays messages between page and background
+ */
 
+// Rate limiting for events from page
+const eventRateLimiter = {
+  lastEventTime: 0,
+  MIN_INTERVAL_MS: 100, // Max 10 events per second
+
+  canProcess() {
+    const now = Date.now();
+    if (now - this.lastEventTime < this.MIN_INTERVAL_MS) {
+      return false;
+    }
+    this.lastEventTime = now;
+    return true;
+  },
+};
+
+// Inject the wallet provider script into the page
 const script = document.createElement("script");
 script.src = chrome.runtime.getURL("injection.js");
 script.type = "module";
 document.head.prepend(script);
 
-// Listen for messages directly from the document page
+/**
+ * Listen for messages from the page (via injection.js)
+ */
 document.addEventListener("stackswallet_request", (event) => {
-  // Forward message to the background script
-  console.log("[StacksWallet] Received request from document page:", event.detail);
+  // Basic rate limiting
+  if (!eventRateLimiter.canProcess()) {
+    console.warn("[StacksWallet] Event rate limit exceeded");
+    return;
+  }
 
+  // Validate event source is from window (not iframe)
+  if (event.target !== document) {
+    console.warn("[StacksWallet] Ignoring event from non-document source");
+    return;
+  }
+
+  // Validate event has required data
+  if (!event.detail || typeof event.detail !== "object") {
+    console.warn("[StacksWallet] Invalid event detail");
+    return;
+  }
+
+  // Validate JSON-RPC structure
+  const { jsonrpc, id, method } = event.detail;
+  if (jsonrpc !== "2.0" || !id || !method) {
+    console.warn("[StacksWallet] Invalid JSON-RPC request");
+    return;
+  }
+
+  // Forward to background script
   chrome.runtime.sendMessage(event.detail);
 });
 
-// Listen for messages directly from the extension popup
+/**
+ * Listen for responses from the extension popup
+ */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Verify message is from our extension
+  if (sender.id !== chrome.runtime.id) {
+    console.warn("[StacksWallet] Ignoring message from unknown sender");
+    return;
+  }
+
+  // Validate JSON-RPC response format
   if (message?.jsonrpc === "2.0") {
+    // Post response back to page with restricted targetOrigin
     window.postMessage(message, window.location.origin);
   }
 });
