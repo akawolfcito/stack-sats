@@ -1,10 +1,10 @@
 type Account = {
-  path: String;
-  stxAddress: String;
-  btcP2PKHAddress: String;
-  btcP2TRAddress: String;
-  pubkey: String;
-  privkey: String;
+  index: number;
+  path: string;
+  stxAddress: string;
+  btcP2PKHAddress: string;
+  btcP2TRAddress: string;
+  pubkey: string;
 };
 
 type JsonRpcRequest = {
