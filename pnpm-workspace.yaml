@@ -1,0 +1,4 @@
+packages:
+  - clarity
+  - front-end
+  - wallet-extension
