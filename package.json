@@ -1,4 +1,11 @@
 {
   "name": "wallet-app-template",
-  "private": true
+  "private": true,
+  "scripts": {
+    "build": "pnpm --filter wallet-extension build",
+    "dev": "pnpm --filter wallet-extension dev",
+    "build:all": "pnpm -r build",
+    "dev:frontend": "pnpm --filter front-end dev",
+    "test": "pnpm --filter clarity test"
+  }
 }
