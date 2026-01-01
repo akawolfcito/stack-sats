@@ -9,7 +9,8 @@ import {
   broadcastTransaction,
   type ClarityValue,
 } from "@stacks/transactions";
-import { STACKS_DEVNET, type StacksNetwork } from "@stacks/network";
+import type { StacksNetwork } from "@stacks/network";
+import { buildNetworkWithClient } from "../network";
 import { c32ToB58 } from "c32check";
 import { generateP2TR, getPrivateKey } from "../accounts";
 import { hashUint8Array } from "../helpers";
@@ -114,27 +115,6 @@ async function handleGetAddresses(
   };
 }
 
-/**
- * Build network config for @stacks/transactions from connect params
- */
-function buildNetworkConfig(networkParams: {
-  chainId?: number;
-  client?: { baseUrl?: string };
-}): StacksNetwork {
-  // Extract baseUrl from the network params
-  const baseUrl = networkParams?.client?.baseUrl;
-
-  if (!baseUrl) {
-    // Default to devnet if no baseUrl provided
-    return STACKS_DEVNET;
-  }
-
-  // Return devnet config with custom client baseUrl
-  return {
-    ...STACKS_DEVNET,
-    client: { baseUrl },
-  };
-}
 
 /**
  * Handle stx_callContract method
@@ -152,7 +132,7 @@ async function handleCallContract(
   let response: JsonRpcResponse<"stx_callContract"> | JsonRpcError;
 
   // Build proper network config
-  const network = buildNetworkConfig(
+  const network = buildNetworkWithClient(
     params.network as { chainId?: number; client?: { baseUrl?: string } }
   );
 
@@ -245,7 +225,7 @@ async function handleTransferStx(
   let response: JsonRpcResponse<"stx_transferStx"> | JsonRpcError;
 
   // Build proper network config
-  const network = buildNetworkConfig(
+  const network = buildNetworkWithClient(
     params.network as { chainId?: number; client?: { baseUrl?: string } }
   );
 
