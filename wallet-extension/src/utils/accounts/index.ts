@@ -33,7 +33,7 @@ async function generateInitialAccounts(
     const path = `m/44'/5757'/0'/0/${index}`;
     const stxPrivateKey = finalWallet.accounts[index].stxPrivateKey;
 
-    const stxAddress = privateKeyToAddress(stxPrivateKey, "mainnet");
+    const stxAddress = privateKeyToAddress(stxPrivateKey, "testnet");
     const btcP2PKHAddress = c32ToB58(stxAddress);
     const pubkey = privateKeyToPublic(stxPrivateKey).toString();
     const btcP2TRAddress = await generateP2TR(pubkey);
