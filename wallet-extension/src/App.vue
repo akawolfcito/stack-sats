@@ -10,6 +10,7 @@ const router = useRouter();
 
 const payload = ref<JsonRpcRequest>();
 const tabId = ref<string>("");
+const origin = ref<string>("");
 const hasWallet = ref(false);
 const isLocked = ref(true);
 const hasLegacyWallet = ref(false);
@@ -45,12 +46,14 @@ onBeforeMount(() => {
   if (capturedSearchParams.size > 0) {
     const tabIdString = capturedSearchParams.get("tabId") || "0";
     const payloadString = capturedSearchParams.get("payload") || "";
+    const originString = capturedSearchParams.get("origin") || "";
 
     if (payloadString) {
       try {
         const payloadObject = JSON.parse(decodeURIComponent(payloadString));
         payload.value = payloadObject;
         tabId.value = tabIdString;
+        origin.value = originString;
         secureLog("Received RPC request", { method: payloadObject.method });
       } catch (error) {
         secureLog("Failed to parse payload", error);
@@ -60,22 +63,24 @@ onBeforeMount(() => {
 });
 
 // Determine if we can show confirmation
-// Must have wallet (encrypted or legacy) and not be locked (or have legacy wallet)
+// Show confirmation if we have a payload and a wallet exists
+// Confirmation component handles its own PIN unlock flow
 const canShowConfirmation = () => {
   if (!payload.value) return false;
 
   // Support legacy unencrypted wallets during transition
   if (hasLegacyWallet.value) return true;
 
-  // For encrypted wallets, must be unlocked
-  return hasWallet.value && !isLocked.value;
+  // For encrypted wallets, show confirmation even when locked
+  // Confirmation component has built-in PIN input
+  return hasWallet.value;
 };
 </script>
 
 <template>
   <!-- If payload is present and wallet is available, show Confirmation -->
   <div v-if="payload && canShowConfirmation()">
-    <Confirmation :payload="payload" :tabId="tabId" />
+    <Confirmation :payload="payload" :tabId="tabId" :origin="origin" />
   </div>
 
   <!-- If payload but wallet is locked, show unlock prompt message -->
