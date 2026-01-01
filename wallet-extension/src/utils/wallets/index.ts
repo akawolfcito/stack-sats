@@ -221,6 +221,49 @@ export function migrateLegacyWallet(): boolean {
 }
 
 /**
+ * Import a wallet from backup
+ * Returns: "added" if new, "replaced" if existing ID was replaced, null if failed
+ */
+export function importWallet(
+  entry: WalletEntry,
+  replaceExisting: boolean = false
+): "added" | "replaced" | null {
+  const wallets = getWallets();
+  const existingIndex = wallets.findIndex((w) => w.id === entry.id);
+
+  if (existingIndex !== -1) {
+    if (!replaceExisting) {
+      secureLog("Import failed: wallet ID already exists", { id: entry.id });
+      return null;
+    }
+    // Replace existing wallet
+    wallets[existingIndex] = entry;
+    saveWallets(wallets);
+    secureLog("Wallet replaced via import", { id: entry.id, name: entry.name });
+    return "replaced";
+  }
+
+  // Add as new wallet
+  wallets.push(entry);
+  saveWallets(wallets);
+
+  // Set as active if it's the first wallet
+  if (wallets.length === 1) {
+    setActiveWalletId(entry.id);
+  }
+
+  secureLog("Wallet imported", { id: entry.id, name: entry.name });
+  return "added";
+}
+
+/**
+ * Check if a wallet ID already exists
+ */
+export function walletExists(id: string): boolean {
+  return getWallets().some((w) => w.id === id);
+}
+
+/**
  * Delete all wallets (used when user wants to start fresh)
  */
 export function deleteAllWallets(): void {

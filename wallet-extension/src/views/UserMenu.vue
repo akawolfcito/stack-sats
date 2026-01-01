@@ -7,9 +7,18 @@ import { secureLog } from "@/utils/security/logger";
 import {
   getWallets,
   getActiveWalletId,
+  getActiveWallet,
   deleteWallet as deleteWalletEntry,
+  importWallet,
+  walletExists,
   type WalletEntry,
 } from "@/utils/wallets";
+import {
+  createBackup,
+  downloadBackup,
+  generateBackupFilename,
+  parseBackupFile,
+} from "@/utils/backup";
 
 const router = useRouter();
 
@@ -24,6 +33,12 @@ const deleteError = ref("");
 const walletToDelete = ref<string | null>(null);
 
 const CONFIRM_WORD = "ELIMINAR";
+
+// Backup state
+const backupMessage = ref<{ type: "success" | "error"; text: string } | null>(null);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const showImportConfirm = ref(false);
+const pendingImportWallet = ref<WalletEntry | null>(null);
 
 onMounted(() => {
   loadWallets();
@@ -122,6 +137,91 @@ function handlePinCancel() {
   showPinInput.value = false;
   deleteError.value = "";
 }
+
+// Backup functions
+function handleExportBackup() {
+  backupMessage.value = null;
+
+  const activeWallet = getActiveWallet();
+  if (!activeWallet) {
+    backupMessage.value = { type: "error", text: "No hay wallet activa para exportar" };
+    return;
+  }
+
+  try {
+    const backup = createBackup(activeWallet);
+    const filename = generateBackupFilename(activeWallet.name);
+    downloadBackup(backup, filename);
+    backupMessage.value = { type: "success", text: "Backup descargado correctamente" };
+    secureLog("Backup exported", { walletId: activeWallet.id });
+  } catch (error) {
+    backupMessage.value = { type: "error", text: "Error al crear el backup" };
+    secureLog("Backup export failed", { error: String(error) });
+  }
+
+  // Clear message after 3 seconds
+  setTimeout(() => {
+    backupMessage.value = null;
+  }, 3000);
+}
+
+function triggerFileInput() {
+  backupMessage.value = null;
+  fileInputRef.value?.click();
+}
+
+async function handleFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+
+  if (!file) return;
+
+  // Reset input for future selections
+  input.value = "";
+
+  const backup = await parseBackupFile(file);
+  if (!backup) {
+    backupMessage.value = { type: "error", text: "Archivo de backup inválido" };
+    return;
+  }
+
+  // Check if wallet already exists
+  if (walletExists(backup.wallet.id)) {
+    pendingImportWallet.value = backup.wallet;
+    showImportConfirm.value = true;
+    return;
+  }
+
+  // Import directly
+  completeImport(backup.wallet, false);
+}
+
+function completeImport(wallet: WalletEntry, replace: boolean) {
+  const result = importWallet(wallet, replace);
+
+  if (result) {
+    backupMessage.value = {
+      type: "success",
+      text: result === "replaced" ? "Wallet reemplazada correctamente" : "Wallet importada correctamente",
+    };
+    loadWallets();
+    secureLog("Wallet imported from backup", { walletId: wallet.id, result });
+  } else {
+    backupMessage.value = { type: "error", text: "Error al importar la wallet" };
+  }
+
+  showImportConfirm.value = false;
+  pendingImportWallet.value = null;
+
+  setTimeout(() => {
+    backupMessage.value = null;
+  }, 3000);
+}
+
+function cancelImport() {
+  showImportConfirm.value = false;
+  pendingImportWallet.value = null;
+}
 </script>
 
 <template>
@@ -161,6 +261,36 @@ function handlePinCancel() {
             </button>
           </div>
         </div>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Backup Section -->
+      <div class="backup-section">
+        <div class="section-header">
+          <h3>Respaldo</h3>
+        </div>
+
+        <div class="backup-buttons">
+          <button class="backup-btn export" @click="handleExportBackup">
+            Exportar Backup
+          </button>
+          <button class="backup-btn import" @click="triggerFileInput">
+            Importar Backup
+          </button>
+        </div>
+
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".json"
+          style="display: none"
+          @change="handleFileSelected"
+        />
+
+        <p v-if="backupMessage" class="backup-message" :class="backupMessage.type">
+          {{ backupMessage.text }}
+        </p>
       </div>
 
       <hr class="divider" />
@@ -214,6 +344,24 @@ function handlePinCancel() {
           @cancel="handlePinCancel"
         />
         <p v-if="deleteError" class="error-text">{{ deleteError }}</p>
+      </div>
+    </div>
+
+    <!-- Import Confirmation Modal -->
+    <div v-if="showImportConfirm" class="import-confirm-overlay">
+      <div class="import-confirm-modal">
+        <h3>Wallet ya existe</h3>
+        <p>
+          La wallet "<strong>{{ pendingImportWallet?.name }}</strong>" ya existe en tu extensión.
+        </p>
+        <p class="import-question">¿Deseas reemplazarla con el backup?</p>
+
+        <div class="button-group">
+          <button class="cancel-btn" @click="cancelImport">Cancelar</button>
+          <button class="confirm-btn replace" @click="completeImport(pendingImportWallet!, true)">
+            Reemplazar
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -461,5 +609,113 @@ function handlePinCancel() {
 
 .danger-zone small {
   color: #888;
+}
+
+/* Backup Section */
+.backup-section {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.backup-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.backup-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.backup-btn.export {
+  background: transparent;
+  border: 1px solid #5546ff;
+  color: #5546ff;
+}
+
+.backup-btn.export:hover {
+  background: rgba(85, 70, 255, 0.1);
+}
+
+.backup-btn.import {
+  background: transparent;
+  border: 1px solid #4ade80;
+  color: #4ade80;
+}
+
+.backup-btn.import:hover {
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.backup-message {
+  margin: 0.75rem 0 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.backup-message.success {
+  background: rgba(74, 222, 128, 0.1);
+  color: #4ade80;
+}
+
+.backup-message.error {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+/* Import Confirmation Modal */
+.import-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.import-confirm-modal {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 320px;
+  width: 100%;
+}
+
+.import-confirm-modal h3 {
+  margin: 0 0 1rem 0;
+  color: #fbbf24;
+}
+
+.import-confirm-modal p {
+  margin: 0 0 0.75rem 0;
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+.import-question {
+  color: #fff !important;
+  font-weight: 500;
+}
+
+.confirm-btn.replace {
+  background: #fbbf24;
+  color: #000;
+}
+
+.confirm-btn.replace:hover {
+  background: #f59e0b;
 }
 </style>
