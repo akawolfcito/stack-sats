@@ -163,7 +163,7 @@ onBeforeMount(() => {
 <template>
   <section class="start-page">
     <div class="page-top">
-      <img src="/laser-eyes-lil-guy-dark.png" width="100px" alt="laser-logo" />
+      <img src="/ironvault.png" width="100px" alt="laser-logo" />
       <h1>Stacks Wallet</h1>
       <div>Your Bitcoin experience, secured.</div>
     </div>

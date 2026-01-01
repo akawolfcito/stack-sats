@@ -292,7 +292,7 @@ const truncateAddress = (address: string) => {
         <img
           class="laser-logo"
           @click="handleOpenUserMenu"
-          src="/laser-eyes-lil-guy-dark.png"
+          src="/ironvault.png"
           width="30px"
           alt="laser-logo"
         />
