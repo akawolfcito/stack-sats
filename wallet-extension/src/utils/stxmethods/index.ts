@@ -10,7 +10,13 @@ import {
   type ClarityValue,
 } from "@stacks/transactions";
 import type { StacksNetwork } from "@stacks/network";
-import { buildNetworkWithClient } from "../network";
+import {
+  buildNetworkWithClient,
+  getSelectedNetwork,
+  getAddressVersion,
+  getNetworkConfig,
+  NETWORKS,
+} from "../network";
 import { c32ToB58 } from "c32check";
 import { generateP2TR, getPrivateKey } from "../accounts";
 import { hashUint8Array } from "../helpers";
@@ -68,22 +74,29 @@ async function handleSignMessage(
 
 /**
  * Handle getAddresses method
+ * Returns addresses AND the currently selected network
  */
 async function handleGetAddresses(
   payload: JsonRpcRequest,
   mnemonic: string,
   accountIndex: number
 ) {
+  // Get the currently selected network from wallet settings
+  const selectedNetwork = getSelectedNetwork();
+  const addressVersion = getAddressVersion(selectedNetwork);
+  const networkConfig = getNetworkConfig(selectedNetwork);
+
   // Get private key to derive addresses
   const privateKey = await getPrivateKey(mnemonic, accountIndex);
 
   const pubKey = privateKeyToPublic(privateKey).toString();
-  const stxAddress = privateKeyToAddress(privateKey, "testnet");
+  const stxAddress = privateKeyToAddress(privateKey, addressVersion);
   const btcP2PKHAddress = c32ToB58(stxAddress);
   const btcP2TRAddress = await generateP2TR(pubKey);
 
-  const response: JsonRpcResponse<"getAddresses"> = {
-    jsonrpc: "2.0",
+  // Build response with network info
+  const response = {
+    jsonrpc: "2.0" as const,
     id: payload.id,
     result: {
       addresses: [
@@ -103,10 +116,16 @@ async function handleGetAddresses(
           publicKey: pubKey,
         },
       ],
+      // Include network info so dApp knows which network wallet is using
+      network: {
+        name: selectedNetwork,
+        chainId: networkConfig.chainId,
+        client: networkConfig.client,
+      },
     },
   };
 
-  secureLog("Addresses retrieved", { method: "getAddresses" });
+  secureLog("Addresses retrieved", { method: "getAddresses", network: selectedNetwork });
 
   return {
     method: "getAddresses",
