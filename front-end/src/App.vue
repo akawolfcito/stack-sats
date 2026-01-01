@@ -91,7 +91,7 @@ onUnmounted(() => {
   >
   <div class="main-container">
     <h2>Wallet <> App Template</h2>
-    <template v-if="!isStacksWalletInjected || !isDevnetConnected">
+    <template v-if="!isStacksWalletInjected">
       <Instructions />
     </template>
 
