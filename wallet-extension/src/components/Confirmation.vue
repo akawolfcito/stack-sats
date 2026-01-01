@@ -218,7 +218,7 @@ function handleReject(reason?: string) {
   <section class="confirmation-page">
     <!-- Header with origin -->
     <div class="confirmation-header">
-      <img src="/laser-eyes-lil-guy-dark.png" width="40px" alt="logo" />
+      <img src="/ironvault.png" width="40px" alt="logo" />
       <h2>Confirmar Acción</h2>
     </div>
 

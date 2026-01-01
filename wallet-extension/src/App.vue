@@ -85,7 +85,7 @@ const canShowConfirmation = () => {
 
   <!-- If payload but wallet is locked, show unlock prompt message -->
   <div v-else-if="payload && hasWallet && isLocked" class="unlock-prompt">
-    <img src="/laser-eyes-lil-guy-dark.png" width="60px" alt="logo" />
+    <img src="/ironvault.png" width="60px" alt="logo" />
     <h2>Wallet Locked</h2>
     <p>Please unlock your wallet to continue</p>
     <button @click="router.push('/unlock')" class="btn-primary">

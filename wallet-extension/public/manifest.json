@@ -19,7 +19,10 @@
     "https://stacks-node-api.mainnet.stacks.co/*"
   ],
   "icons": {
-    "48": "laser-eyes-lil-guy-dark.png"
+    "16": "ironvault.png",
+    "32": "ironvault.png",
+    "48": "ironvault.png",
+    "128": "ironvault.png"
   },
   "background": {
     "service_worker": "background.js"

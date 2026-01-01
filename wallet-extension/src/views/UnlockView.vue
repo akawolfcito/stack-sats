@@ -83,7 +83,7 @@ onMounted(() => {
 <template>
   <section class="unlock-page">
     <div class="page-top">
-      <img src="/laser-eyes-lil-guy-dark.png" width="80px" alt="laser-logo" />
+      <img src="/ironvault.png" width="80px" alt="laser-logo" />
       <h1>Welcome Back</h1>
       <p>Enter your PIN to unlock your wallet</p>
     </div>
