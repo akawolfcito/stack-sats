@@ -1,19 +1,69 @@
 <script setup lang="ts">
-import { inject, type Ref } from "vue"
+import { inject, ref, type Ref } from "vue"
 import { connect, disconnect, getLocalStorage, isConnected, request } from "@stacks/connect"
 import Button from "./ui/Button.vue"
 
 let isWalletConnected = inject("isWalletConnected") as Ref<boolean>
 
-async function handleSignMessage() {
-  // OPTIONAL: directly call the provider:
-  // const response = await window.StacksWallet.request("stx_signMessage", {
-  //   message: "Stacks Wallet rocks!"
-  // })
+// Network state from wallet
+interface WalletNetwork {
+  name: string
+  chainId: number
+  client: { baseUrl: string }
+}
 
+const walletNetwork = ref<WalletNetwork | null>(null)
+const walletAddress = ref<string>("")
+
+// Fetch network info from wallet
+async function fetchWalletNetwork() {
+  try {
+    const response = await request("getAddresses", {})
+    console.log("Wallet getAddresses response:", response)
+
+    if (response && response.network) {
+      walletNetwork.value = response.network
+      console.log("Wallet network:", walletNetwork.value)
+    }
+
+    // Get STX address
+    if (response && response.addresses) {
+      const stxAddr = response.addresses.find((a: { symbol: string }) => a.symbol === "STX")
+      if (stxAddr) {
+        walletAddress.value = stxAddr.address
+      }
+    }
+  } catch (error) {
+    console.error("Failed to fetch wallet network:", error)
+  }
+}
+
+// Get network config - uses wallet network or falls back to Platform devnet
+function getNetworkConfig() {
+  if (walletNetwork.value) {
+    // Use wallet's network
+    return {
+      chainId: walletNetwork.value.chainId,
+      client: walletNetwork.value.client
+    }
+  }
+
+  // Fallback to Platform devnet
+  const platformDevnetUrl = `https://api.platform.hiro.so/v1/ext/${
+    import.meta.env.VITE_PLATFORM_HIRO_API_KEY
+  }/stacks-blockchain-api`
+
+  return {
+    chainId: 2147483648,
+    client: { baseUrl: platformDevnetUrl }
+  }
+}
+
+async function handleSignMessage() {
   const response = await request("stx_signMessage", {
     message: "Stacks Wallet rocks!"
   })
+  console.log("stx_signMessage response:", response)
 }
 
 async function handleConnect() {
@@ -23,6 +73,8 @@ async function handleConnect() {
 
   if (authRequest) {
     isWalletConnected.value = true
+    // Fetch wallet network after connecting
+    await fetchWalletNetwork()
   }
 }
 
@@ -41,38 +93,28 @@ function handleIsConnected() {
   console.log(response)
 }
 
-// Helper to build Platform devnet network config
-function getPlatformDevnetNetwork() {
-  const platformDevnetUrl = `https://api.platform.hiro.so/v1/ext/${
-    import.meta.env.VITE_PLATFORM_HIRO_API_KEY
-  }/stacks-blockchain-api`
-
-  return {
-    chainId: 2147483648, // devnet chain ID
-    client: {
-      baseUrl: platformDevnetUrl
-    }
-  }
-}
-
 async function handleCallContract() {
+  const network = getNetworkConfig()
+  console.log("Using network:", network)
+
   const response = await request("stx_callContract", {
-    // default contract address from devnet
     contract: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter",
     functionName: "increment",
     functionArgs: [],
-    network: getPlatformDevnetNetwork()
+    network
   })
   console.log("stx_callContract response:", response)
 }
 
 async function handleTransferStx() {
-  // Transfer 1 STX to another devnet wallet
+  const network = getNetworkConfig()
+  console.log("Using network:", network)
+
   const response = await request("stx_transferStx", {
-    recipient: "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", // wallet_2 from devnet
-    amount: "1000000", // 1 STX = 1,000,000 microSTX
+    recipient: "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ",
+    amount: "1000000", // 1 STX
     memo: "Test transfer from Stack-SATs",
-    network: getPlatformDevnetNetwork()
+    network
   })
   console.log("stx_transferStx response:", response)
 }
@@ -80,6 +122,8 @@ async function handleTransferStx() {
 function handleDisconnect() {
   disconnect()
   isWalletConnected.value = false
+  walletNetwork.value = null
+  walletAddress.value = ""
 }
 
 function handleConsoleLog() {
@@ -162,19 +206,26 @@ let methodsArray = [
     <button @click="handleConnect" v-if="!isWalletConnected">connect</button>
   </template>
   <template v-else>
+    <!-- Network and Address Info -->
+    <div class="wallet-info">
+      <div class="info-row">
+        <span class="label">Network:</span>
+        <span class="network-badge" :class="walletNetwork?.name || 'unknown'">
+          {{ walletNetwork?.name || 'Unknown' }}
+        </span>
+      </div>
+      <div class="info-row" v-if="walletAddress">
+        <span class="label">Address:</span>
+        <code class="address">{{ walletAddress.slice(0, 8) }}...{{ walletAddress.slice(-6) }}</code>
+      </div>
+    </div>
+
     <p>
       - Your Stacks Wallet extension is now connected with this app. Go ahead and interact with
       it using the below @stacks/connect methods.
     </p>
     <p>
-      - Be sure to have deployed your contracts to the Platform
-      <a
-        href="https://docs.hiro.so/stacks/platform/guides/devnet"
-        target="_blank"
-        class="inline-link"
-        >hosted</a
-      >
-      devnet in order to interact with <code>`stx_callContract`</code>.
+      - The dApp will use the network selected in your wallet: <strong>{{ walletNetwork?.name || 'Unknown' }}</strong>
     </p>
     <p>- Open up browser console to see responses.</p>
     <br />
@@ -189,4 +240,63 @@ let methodsArray = [
   </template>
 </template>
 
-<style scoped></style>
+<style scoped>
+.wallet-info {
+  background: rgba(100, 108, 255, 0.1);
+  border: 1px solid rgba(100, 108, 255, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.network-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.network-badge.mainnet {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.network-badge.testnet {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.network-badge.devnet {
+  background: rgba(100, 108, 255, 0.2);
+  color: #646cff;
+}
+
+.network-badge.unknown {
+  background: rgba(156, 163, 175, 0.2);
+  color: #9ca3af;
+}
+
+.address {
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+</style>
