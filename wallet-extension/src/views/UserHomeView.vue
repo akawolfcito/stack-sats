@@ -17,6 +17,12 @@ import {
   microStxToStx,
   formatUsdValue,
 } from "../utils/balance";
+import {
+  getAccountCount,
+  addAccount,
+  removeLastAccount,
+  DEFAULT_ACCOUNT_COUNT,
+} from "../utils/accounts/settings";
 
 const router = useRouter();
 const userAccounts = ref<Account[]>([]);
@@ -43,6 +49,9 @@ const stxBalanceMicro = ref<string>("0");
 const isLoadingBalance = ref(false);
 const stxPriceUsd = ref(0); // TODO: Fetch from price API
 
+// Account count state
+const accountCount = ref(DEFAULT_ACCOUNT_COUNT);
+
 // Computed properties for balance display
 const formattedStxBalance = computed(() => formatStxBalance(stxBalanceMicro.value));
 const stxBalanceNumber = computed(() => microStxToStx(stxBalanceMicro.value));
@@ -51,17 +60,40 @@ const totalValueUsd = computed(() => {
   return formatUsdValue(stxBalanceNumber.value * stxPriceUsd.value);
 });
 
-async function loadAccounts(mnemonic: string, network: NetworkName) {
+async function loadAccounts(mnemonic: string, network: NetworkName, count?: number) {
   isLoading.value = true;
   try {
-    const accounts = await generateInitialAccounts(mnemonic, 20, network);
+    const numAccounts = count || accountCount.value;
+    const accounts = await generateInitialAccounts(mnemonic, numAccounts, network);
     userAccounts.value = accounts;
-    secureLog(`Accounts loaded for ${network}`);
+    secureLog(`Accounts loaded for ${network}: ${numAccounts} accounts`);
   } catch (error) {
     secureLog("Failed to generate accounts", error);
     router.push({ path: "/" });
   }
   isLoading.value = false;
+}
+
+async function handleAddAccount() {
+  if (!currentMnemonic.value) return;
+  const newCount = addAccount();
+  accountCount.value = newCount;
+  await loadAccounts(currentMnemonic.value, selectedNetwork.value, newCount);
+  // Select the new account
+  accountIndexToDisplay.value = newCount - 1;
+}
+
+async function handleRemoveAccount() {
+  if (!currentMnemonic.value || accountCount.value <= 1) return;
+
+  // If current selection is the last account, move to previous
+  if (accountIndexToDisplay.value >= accountCount.value - 1) {
+    accountIndexToDisplay.value = accountCount.value - 2;
+  }
+
+  const newCount = removeLastAccount();
+  accountCount.value = newCount;
+  await loadAccounts(currentMnemonic.value, selectedNetwork.value, newCount);
 }
 
 async function loadBalance() {
@@ -85,6 +117,9 @@ async function refreshBalance() {
 }
 
 onBeforeMount(async () => {
+  // Load account count from settings
+  accountCount.value = getAccountCount();
+
   // Check for encrypted wallet first
   if (sessionManager.hasWallet) {
     if (sessionManager.isLocked) {
@@ -160,11 +195,29 @@ const truncateAddress = (address: string) => {
     <template v-else>
       <div class="user-page-header">
         <div class="header-selects">
-          <select v-model="accountIndexToDisplay" class="account-select">
-            <option v-for="(account, index) in userAccounts" :key="index" :value="index">
-              Account {{ index + 1 }}
-            </option>
-          </select>
+          <div class="account-controls">
+            <button
+              class="account-btn remove"
+              @click="handleRemoveAccount"
+              :disabled="accountCount <= 1 || isLoading"
+              title="Quitar cuenta"
+            >
+              -
+            </button>
+            <select v-model="accountIndexToDisplay" class="account-select">
+              <option v-for="(account, index) in userAccounts" :key="index" :value="index">
+                Account {{ index + 1 }}
+              </option>
+            </select>
+            <button
+              class="account-btn add"
+              @click="handleAddAccount"
+              :disabled="accountCount >= 100 || isLoading"
+              title="Agregar cuenta"
+            >
+              +
+            </button>
+          </div>
           <select v-model="selectedNetwork" class="network-select">
             <option v-for="(net, key) in NETWORKS" :key="key" :value="key">
               {{ net.name }}
@@ -320,6 +373,51 @@ small {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.account-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.account-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(100, 108, 255, 0.3);
+  background: transparent;
+  color: #646cff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.account-btn:hover:not(:disabled) {
+  background: rgba(100, 108, 255, 0.2);
+  border-color: #646cff;
+}
+
+.account-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.account-btn.add:hover:not(:disabled) {
+  color: #4ade80;
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.account-btn.remove:hover:not(:disabled) {
+  color: #f87171;
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
 }
 
 .account-select {
