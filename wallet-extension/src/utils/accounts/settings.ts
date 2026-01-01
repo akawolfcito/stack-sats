@@ -10,6 +10,7 @@ const ACCOUNT_SETTINGS_KEY = "account_settings";
 interface AccountSettings {
   count: number; // Number of accounts to generate
   hiddenIndices: number[]; // Accounts hidden by user
+  names: Record<number, string>; // Custom names for accounts (index -> name)
 }
 
 type WalletAccountSettings = Record<string, AccountSettings>;
@@ -40,16 +41,28 @@ function saveAllSettings(settings: WalletAccountSettings): void {
 }
 
 /**
+ * Get default settings object
+ */
+function getDefaultSettings(): AccountSettings {
+  return { count: DEFAULT_ACCOUNT_COUNT, hiddenIndices: [], names: {} };
+}
+
+/**
  * Get account settings for a specific wallet
  */
 export function getAccountSettings(walletId?: string): AccountSettings {
   const id = walletId || getActiveWalletId();
   if (!id) {
-    return { count: DEFAULT_ACCOUNT_COUNT, hiddenIndices: [] };
+    return getDefaultSettings();
   }
 
   const allSettings = getAllSettings();
-  return allSettings[id] || { count: DEFAULT_ACCOUNT_COUNT, hiddenIndices: [] };
+  const settings = allSettings[id];
+  if (!settings) {
+    return getDefaultSettings();
+  }
+  // Ensure names field exists for older stored settings
+  return { ...getDefaultSettings(), ...settings };
 }
 
 /**
@@ -68,7 +81,7 @@ export function setAccountCount(count: number, walletId?: string): void {
 
   const clampedCount = Math.max(MIN_ACCOUNT_COUNT, Math.min(MAX_ACCOUNT_COUNT, count));
   const allSettings = getAllSettings();
-  const currentSettings = allSettings[id] || { count: DEFAULT_ACCOUNT_COUNT, hiddenIndices: [] };
+  const currentSettings = allSettings[id] || getDefaultSettings();
 
   allSettings[id] = {
     ...currentSettings,
@@ -113,7 +126,7 @@ export function hideAccount(index: number, walletId?: string): void {
   if (!id) return;
 
   const allSettings = getAllSettings();
-  const currentSettings = allSettings[id] || { count: DEFAULT_ACCOUNT_COUNT, hiddenIndices: [] };
+  const currentSettings = allSettings[id] || getDefaultSettings();
 
   if (!currentSettings.hiddenIndices.includes(index)) {
     currentSettings.hiddenIndices.push(index);
@@ -130,7 +143,7 @@ export function showAccount(index: number, walletId?: string): void {
   if (!id) return;
 
   const allSettings = getAllSettings();
-  const currentSettings = allSettings[id] || { count: DEFAULT_ACCOUNT_COUNT, hiddenIndices: [] };
+  const currentSettings = allSettings[id] || getDefaultSettings();
 
   const hiddenIndex = currentSettings.hiddenIndices.indexOf(index);
   if (hiddenIndex !== -1) {
@@ -155,6 +168,50 @@ export function deleteAccountSettings(walletId: string): void {
   const allSettings = getAllSettings();
   delete allSettings[walletId];
   saveAllSettings(allSettings);
+}
+
+/**
+ * Get custom name for an account (or default "Account X")
+ */
+export function getAccountName(index: number, walletId?: string): string {
+  const settings = getAccountSettings(walletId);
+  return settings.names[index] || `Account ${index + 1}`;
+}
+
+/**
+ * Get all account names for the active wallet
+ */
+export function getAllAccountNames(walletId?: string): Record<number, string> {
+  return getAccountSettings(walletId).names;
+}
+
+/**
+ * Set custom name for an account
+ */
+export function setAccountName(index: number, name: string, walletId?: string): void {
+  const id = walletId || getActiveWalletId();
+  if (!id) return;
+
+  const allSettings = getAllSettings();
+  const currentSettings = allSettings[id] || getDefaultSettings();
+
+  const trimmedName = name.trim();
+  if (trimmedName) {
+    currentSettings.names[index] = trimmedName;
+  } else {
+    // If empty, remove custom name (reverts to default)
+    delete currentSettings.names[index];
+  }
+
+  allSettings[id] = currentSettings;
+  saveAllSettings(allSettings);
+}
+
+/**
+ * Clear custom name for an account (revert to default)
+ */
+export function clearAccountName(index: number, walletId?: string): void {
+  setAccountName(index, "", walletId);
 }
 
 export { DEFAULT_ACCOUNT_COUNT, MIN_ACCOUNT_COUNT, MAX_ACCOUNT_COUNT };

@@ -21,6 +21,8 @@ import {
   getAccountCount,
   addAccount,
   removeLastAccount,
+  getAccountName,
+  setAccountName,
   DEFAULT_ACCOUNT_COUNT,
 } from "../utils/accounts/settings";
 
@@ -52,6 +54,11 @@ const stxPriceUsd = ref(0); // TODO: Fetch from price API
 // Account count state
 const accountCount = ref(DEFAULT_ACCOUNT_COUNT);
 
+// Account naming state
+const isEditingName = ref(false);
+const editingName = ref("");
+const accountNames = ref<Record<number, string>>({});
+
 // Computed properties for balance display
 const formattedStxBalance = computed(() => formatStxBalance(stxBalanceMicro.value));
 const stxBalanceNumber = computed(() => microStxToStx(stxBalanceMicro.value));
@@ -59,6 +66,63 @@ const totalValueUsd = computed(() => {
   if (stxPriceUsd.value === 0) return null;
   return formatUsdValue(stxBalanceNumber.value * stxPriceUsd.value);
 });
+
+// Current account display name
+const currentAccountName = computed(() => {
+  return accountNames.value[accountIndexToDisplay.value] || `Account ${accountIndexToDisplay.value + 1}`;
+});
+
+// Get display name for account in dropdown
+function getDisplayName(index: number): string {
+  return accountNames.value[index] || `Account ${index + 1}`;
+}
+
+// Load account names from settings
+function loadAccountNames() {
+  const names: Record<number, string> = {};
+  for (let i = 0; i < accountCount.value; i++) {
+    const customName = getAccountName(i);
+    if (customName !== `Account ${i + 1}`) {
+      names[i] = customName;
+    }
+  }
+  accountNames.value = names;
+}
+
+// Start editing name
+function startEditName() {
+  editingName.value = currentAccountName.value;
+  isEditingName.value = true;
+}
+
+// Save edited name
+function saveAccountName() {
+  const trimmed = editingName.value.trim();
+  if (trimmed && trimmed !== `Account ${accountIndexToDisplay.value + 1}`) {
+    setAccountName(accountIndexToDisplay.value, trimmed);
+    accountNames.value[accountIndexToDisplay.value] = trimmed;
+  } else {
+    // Clear custom name if empty or same as default
+    setAccountName(accountIndexToDisplay.value, "");
+    delete accountNames.value[accountIndexToDisplay.value];
+  }
+  isEditingName.value = false;
+}
+
+// Cancel editing
+function cancelEditName() {
+  isEditingName.value = false;
+  editingName.value = "";
+}
+
+// Handle enter key in name input
+function handleNameKeydown(event: KeyboardEvent) {
+  if (event.key === "Enter") {
+    saveAccountName();
+  } else if (event.key === "Escape") {
+    cancelEditName();
+  }
+}
 
 async function loadAccounts(mnemonic: string, network: NetworkName, count?: number) {
   isLoading.value = true;
@@ -117,8 +181,9 @@ async function refreshBalance() {
 }
 
 onBeforeMount(async () => {
-  // Load account count from settings
+  // Load account settings
   accountCount.value = getAccountCount();
+  loadAccountNames();
 
   // Check for encrypted wallet first
   if (sessionManager.hasWallet) {
@@ -206,7 +271,7 @@ const truncateAddress = (address: string) => {
             </button>
             <select v-model="accountIndexToDisplay" class="account-select">
               <option v-for="(account, index) in userAccounts" :key="index" :value="index">
-                Account {{ index + 1 }}
+                {{ getDisplayName(index) }}
               </option>
             </select>
             <button
@@ -234,7 +299,23 @@ const truncateAddress = (address: string) => {
       </div>
 
       <div class="page-top">
-        <h1>Account {{ accountIndexToDisplay + 1 }}</h1>
+        <div class="account-name-header">
+          <h1 v-if="!isEditingName" @click="startEditName" class="editable-name" title="Click to rename">
+            {{ currentAccountName }}
+          </h1>
+          <div v-else class="name-edit-container">
+            <input
+              v-model="editingName"
+              type="text"
+              class="name-input"
+              maxlength="20"
+              @keydown="handleNameKeydown"
+              @blur="saveAccountName"
+              ref="nameInputRef"
+              autofocus
+            />
+          </div>
+        </div>
         <small>STX Balance</small>
         <div class="value-display" :class="{ loading: isLoadingBalance }">
           {{ isLoadingBalance ? '...' : formattedStxBalance }} STX
@@ -418,6 +499,60 @@ small {
   color: #f87171;
   border-color: #f87171;
   background: rgba(248, 113, 113, 0.1);
+}
+
+/* Account name editing */
+.account-name-header {
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editable-name {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  margin: 0;
+}
+
+.editable-name:hover {
+  background: rgba(100, 108, 255, 0.15);
+}
+
+.editable-name::after {
+  content: " \270E";
+  font-size: 0.7em;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.editable-name:hover::after {
+  opacity: 0.5;
+}
+
+.name-edit-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name-input {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  background: rgba(100, 108, 255, 0.1);
+  border: 2px solid #646cff;
+  border-radius: 8px;
+  color: #fff;
+  padding: 4px 12px;
+  width: 180px;
+  outline: none;
+}
+
+.name-input:focus {
+  background: rgba(100, 108, 255, 0.2);
 }
 
 .account-select {
