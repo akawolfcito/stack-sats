@@ -22,7 +22,8 @@ const eventRateLimiter = {
 const script = document.createElement("script");
 script.src = chrome.runtime.getURL("injection.js");
 script.type = "module";
-document.head.prepend(script);
+// Use documentElement as fallback since head might not exist at document_start
+(document.head || document.documentElement).prepend(script);
 
 /**
  * Listen for messages from the page (via injection.js)

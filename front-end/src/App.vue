@@ -43,7 +43,7 @@ const handleDevnetConnectionStatus = async () => {
 onBeforeMount(async () => {
   checkStacksWalletInterval = window.setInterval(() => {
     // @ts-ignore
-    if (window.StacksWallet.isStacksWallet) {
+    if (window.StacksWallet?.isStacksWallet) {
       isStacksWalletInjected.value = true
       clearInterval(checkStacksWalletInterval!)
       checkStacksWalletInterval = null
