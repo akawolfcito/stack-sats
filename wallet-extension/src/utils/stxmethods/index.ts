@@ -6,7 +6,9 @@ import {
   transactionToHex,
   makeContractCall,
   broadcastTransaction,
+  type ClarityValue,
 } from "@stacks/transactions";
+import { STACKS_DEVNET, type StacksNetwork } from "@stacks/network";
 import { c32ToB58 } from "c32check";
 import { generateP2TR, getPrivateKey } from "../accounts";
 import { hashUint8Array } from "../helpers";
@@ -74,7 +76,7 @@ async function handleGetAddresses(
   const privateKey = await getPrivateKey(mnemonic, accountIndex);
 
   const pubKey = privateKeyToPublic(privateKey).toString();
-  const stxAddress = privateKeyToAddress(privateKey, "mainnet");
+  const stxAddress = privateKeyToAddress(privateKey, "testnet");
   const btcP2PKHAddress = c32ToB58(stxAddress);
   const btcP2TRAddress = await generateP2TR(pubKey);
 
@@ -112,6 +114,28 @@ async function handleGetAddresses(
 }
 
 /**
+ * Build network config for @stacks/transactions from connect params
+ */
+function buildNetworkConfig(networkParams: {
+  chainId?: number;
+  client?: { baseUrl?: string };
+}): StacksNetwork {
+  // Extract baseUrl from the network params
+  const baseUrl = networkParams?.client?.baseUrl;
+
+  if (!baseUrl) {
+    // Default to devnet if no baseUrl provided
+    return STACKS_DEVNET;
+  }
+
+  // Return devnet config with custom client baseUrl
+  return {
+    ...STACKS_DEVNET,
+    client: { baseUrl },
+  };
+}
+
+/**
  * Handle stx_callContract method
  */
 async function handleCallContract(
@@ -126,24 +150,45 @@ async function handleCallContract(
 
   let response: JsonRpcResponse<"stx_callContract"> | JsonRpcError;
 
+  // Build proper network config
+  const network = buildNetworkConfig(
+    params.network as { chainId?: number; client?: { baseUrl?: string } }
+  );
+
+  // Log network config for debugging
+  console.log("[StacksWallet] Contract call params:", {
+    contract: params.contract,
+    functionName: params.functionName,
+    network,
+  });
+
   try {
+    console.log("[StacksWallet] Creating transaction...");
+
+    // Parse contract address and name
+    const [contractAddress, contractName] = params.contract.split(".");
+
+    // Process functionArgs - they come as ClarityValues from @stacks/connect
+    const functionArgs: ClarityValue[] = Array.isArray(params.functionArgs)
+      ? (params.functionArgs as ClarityValue[])
+      : [];
+
     const transaction = await makeContractCall({
-      contractAddress: params.contract.split(".")[0],
-      contractName: params.contract.split(".")[1],
+      contractAddress,
+      contractName,
       functionName: params.functionName,
-      // @ts-ignore
-      functionArgs: params.functionArgs,
+      functionArgs,
       senderKey: privateKey,
-      // @ts-ignore
-      network: params.network,
+      network,
+      fee: 10000n, // Fixed fee for devnet (0.01 STX)
     });
 
-    // @ts-ignore - network type mismatch
+    console.log("[StacksWallet] Broadcasting transaction...");
     const broadcasted = await broadcastTransaction({
       transaction,
-      // @ts-ignore
-      network: params.network,
+      network,
     });
+    console.log("[StacksWallet] Broadcast result:", broadcasted);
 
     response = {
       jsonrpc: "2.0",
@@ -160,17 +205,20 @@ async function handleCallContract(
       function: params.functionName,
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[StacksWallet] Contract call error:", errorMessage, error);
+
     response = {
       jsonrpc: "2.0",
       id: payload.id,
       error: {
         code: JsonRpcErrorCode.UnknownError,
         message: "Unknown error",
-        data: error instanceof Error ? error.message : "Unknown error",
+        data: errorMessage,
       },
     };
 
-    secureLog("Contract call failed", { error });
+    secureLog("Contract call failed", { error: errorMessage });
   }
 
   return {
