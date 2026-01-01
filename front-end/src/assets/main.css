@@ -18,11 +18,13 @@ button {
   border: none;
   padding: 0.7rem 1rem;
   border-radius: 5px;
-  background-color: #cfc9c2;
+  background-color: #5546ff;
+  color: #ffffff;
+  transition: background-color 0.2s;
 }
 
 button:hover {
-  background-color: #ff5500;
+  background-color: #4438cc;
 }
 
 small {
