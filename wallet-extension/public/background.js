@@ -10,6 +10,9 @@ const ALLOWED_ORIGINS = [
   "https://localhost",
 ];
 
+// Methods that can be auto-approved after first confirmation
+const AUTO_APPROVE_METHODS = ["getAddresses", "stx_getAddresses"];
+
 // Rate limiting
 const rateLimiter = {
   requests: new Map(),
@@ -77,9 +80,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return;
   }
 
+  // Check if this is an auto-approvable method with cached response
+  const method = message.method;
+  if (AUTO_APPROVE_METHODS.includes(method)) {
+    handleAutoApprove(message, sender, originUrl);
+    return true; // Keep channel open for async response
+  }
+
   // Open popup for confirmation
   openPopupConfirmation({ message, sender, originUrl });
 });
+
+/**
+ * Handle auto-approvable methods (like getAddresses)
+ * Returns cached response if available, otherwise opens popup
+ */
+async function handleAutoApprove(message, sender, originUrl) {
+  const cacheKey = `approved_${originUrl}`;
+
+  try {
+    const cached = await chrome.storage.session.get(cacheKey);
+
+    if (cached[cacheKey]) {
+      console.log("[StacksWallet] Auto-approving with cached response");
+      // Return cached response with the current request ID
+      const response = {
+        ...cached[cacheKey],
+        id: message.id,
+      };
+      await chrome.tabs.sendMessage(sender.tab.id, response);
+      return;
+    }
+  } catch (error) {
+    console.warn("[StacksWallet] Cache check failed:", error);
+  }
+
+  // No cache, open popup for first-time confirmation
+  openPopupConfirmation({ message, sender, originUrl });
+}
 
 /**
  * Open popup window for transaction confirmation
