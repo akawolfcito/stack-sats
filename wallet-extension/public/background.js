@@ -85,51 +85,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  * Open popup window for transaction confirmation
  */
 async function openPopupConfirmation({ message, sender, originUrl }) {
-  return new Promise((resolve) => {
-    chrome.windows.getCurrent({ populate: false }, async (currentWindow) => {
-      if (sender.tab.windowId !== currentWindow.id) {
-        console.error("[StacksWallet] Sender tab is not in current window");
-        return;
-      }
+  // Store payload in session storage instead of URL params (more secure)
+  const requestId = crypto.randomUUID();
 
-      // Store payload in session storage instead of URL params (more secure)
-      const requestId = crypto.randomUUID();
-
-      try {
-        await chrome.storage.session.set({
-          [`request_${requestId}`]: {
-            payload: message,
-            tabId: sender.tab.id,
-            origin: originUrl,
-            timestamp: Date.now(),
-          },
-        });
-      } catch (error) {
-        // Fallback to URL params if session storage not available
-        console.warn("[StacksWallet] Session storage not available, using URL params");
-      }
-
-      const params = new URLSearchParams({
-        tabId: String(sender.tab.id ?? 0),
-        payload: encodeURIComponent(JSON.stringify(message)),
-        origin: encodeURIComponent(originUrl),
-        requestId,
-      });
-
-      const popup = await chrome.windows.create(
-        {
-          url: chrome.runtime.getURL("index.html") + `?${params.toString()}`,
-          type: "popup",
-          width: 390,
-          height: 600,
-          focused: true,
-        },
-        (newWindow) => {
-          // Popup created
-        }
-      );
-
-      resolve(popup);
+  try {
+    await chrome.storage.session.set({
+      [`request_${requestId}`]: {
+        payload: message,
+        tabId: sender.tab.id,
+        origin: originUrl,
+        timestamp: Date.now(),
+      },
     });
+  } catch (error) {
+    // Fallback to URL params if session storage not available
+    console.warn("[StacksWallet] Session storage not available, using URL params");
+  }
+
+  const params = new URLSearchParams({
+    tabId: String(sender.tab.id ?? 0),
+    payload: encodeURIComponent(JSON.stringify(message)),
+    origin: encodeURIComponent(originUrl),
+    requestId,
+  });
+
+  chrome.windows.create({
+    url: chrome.runtime.getURL("index.html") + `?${params.toString()}`,
+    type: "popup",
+    width: 390,
+    height: 600,
+    focused: true,
   });
 }
