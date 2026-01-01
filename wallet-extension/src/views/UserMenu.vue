@@ -1,24 +1,57 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
+import {
+  getWallets,
+  getActiveWalletId,
+  deleteWallet as deleteWalletEntry,
+  type WalletEntry,
+} from "@/utils/wallets";
 
 const router = useRouter();
+
+// Wallet list state
+const wallets = ref<WalletEntry[]>([]);
+const activeWalletId = ref<string | null>(null);
 
 const showDeleteConfirm = ref(false);
 const confirmText = ref("");
 const showPinInput = ref(false);
 const deleteError = ref("");
+const walletToDelete = ref<string | null>(null);
 
 const CONFIRM_WORD = "ELIMINAR";
+
+onMounted(() => {
+  loadWallets();
+});
+
+function loadWallets() {
+  wallets.value = getWallets();
+  activeWalletId.value = getActiveWalletId();
+}
 
 function handleUserHome() {
   router.push({ path: "/user" });
 }
 
-function initiateDelete() {
+function switchWallet(walletId: string) {
+  if (walletId === activeWalletId.value) return;
+  sessionManager.switchWallet(walletId);
+  router.push({ path: "/unlock" });
+}
+
+function handleAddWallet() {
+  // Navigate to start view to create/import new wallet
+  // The StartView should detect existing wallets and offer to add, not replace
+  router.push({ path: "/add-wallet" });
+}
+
+function initiateDelete(walletId?: string) {
+  walletToDelete.value = walletId || activeWalletId.value;
   showDeleteConfirm.value = true;
   confirmText.value = "";
   deleteError.value = "";
@@ -29,6 +62,7 @@ function cancelDelete() {
   showPinInput.value = false;
   confirmText.value = "";
   deleteError.value = "";
+  walletToDelete.value = null;
 }
 
 function confirmDeleteText() {
@@ -55,26 +89,33 @@ async function handlePinComplete(pin: string) {
 function secureWipeAndDelete() {
   secureLog("Iniciando eliminación segura de wallet");
 
-  // Overwrite sensitive data before deletion
-  const randomData = crypto.getRandomValues(new Uint8Array(256));
-  const overwriteString = Array.from(randomData)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  if (walletToDelete.value) {
+    // Delete specific wallet
+    const isActive = walletToDelete.value === activeWalletId.value;
+    deleteWalletEntry(walletToDelete.value);
 
-  // Overwrite localStorage entries before removing
-  localStorage.setItem("encryptedWallet", overwriteString);
-  localStorage.setItem("mnemonic", overwriteString);
+    // Refresh wallet list
+    loadWallets();
 
-  // Now remove all wallet data
-  localStorage.removeItem("encryptedWallet");
-  localStorage.removeItem("mnemonic");
-  localStorage.removeItem("walletSalt");
-
-  // Lock session
-  sessionManager.lock();
+    if (wallets.value.length === 0) {
+      // No wallets left, go to start
+      sessionManager.lock();
+      router.push({ path: "/" });
+    } else if (isActive) {
+      // Deleted active wallet, need to unlock another
+      sessionManager.lock();
+      router.push({ path: "/unlock" });
+    } else {
+      // Deleted inactive wallet, stay on menu
+      cancelDelete();
+    }
+  } else {
+    // Delete all wallets (legacy behavior)
+    sessionManager.deleteWallet();
+    router.push({ path: "/" });
+  }
 
   secureLog("Wallet eliminada de forma segura");
-  router.push({ path: "/" });
 }
 
 function handlePinCancel() {
@@ -93,9 +134,44 @@ function handlePinCancel() {
     </div>
 
     <div v-if="!showDeleteConfirm" class="menu-options">
-      <button class="delete-btn" @click="initiateDelete">
-        Eliminar Wallet
-      </button>
+      <!-- Wallet List -->
+      <div class="wallets-section">
+        <div class="section-header">
+          <h3>Tus Wallets</h3>
+          <button class="add-wallet-btn" @click="handleAddWallet">+ Agregar</button>
+        </div>
+
+        <div class="wallet-list">
+          <div
+            v-for="wallet in wallets"
+            :key="wallet.id"
+            class="wallet-item"
+            :class="{ active: wallet.id === activeWalletId }"
+          >
+            <div class="wallet-info" @click="switchWallet(wallet.id)">
+              <span class="wallet-name">{{ wallet.name }}</span>
+              <span v-if="wallet.id === activeWalletId" class="active-badge">Activa</span>
+            </div>
+            <button
+              class="delete-wallet-btn"
+              @click.stop="initiateDelete(wallet.id)"
+              title="Eliminar wallet"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Danger Zone -->
+      <div class="danger-zone">
+        <small>Zona de peligro</small>
+        <button class="delete-btn" @click="initiateDelete()">
+          Eliminar Todas las Wallets
+        </button>
+      </div>
     </div>
 
     <!-- Delete confirmation flow -->
@@ -274,5 +350,116 @@ function handlePinCancel() {
 
 .pin-step {
   text-align: center;
+}
+
+/* Wallets Section */
+.wallets-section {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.add-wallet-btn {
+  background: #5546ff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.add-wallet-btn:hover {
+  background: #4438cc;
+}
+
+.wallet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.wallet-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #0f0f1a;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.wallet-item:hover {
+  border-color: #5546ff;
+}
+
+.wallet-item.active {
+  border-color: #5546ff;
+  background: rgba(85, 70, 255, 0.1);
+}
+
+.wallet-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  flex: 1;
+}
+
+.wallet-name {
+  color: #fff;
+  font-weight: 500;
+}
+
+.active-badge {
+  background: #5546ff;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.delete-wallet-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
+  line-height: 1;
+}
+
+.delete-wallet-btn:hover {
+  color: #dc3545;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #333;
+  margin: 1rem 0;
+}
+
+.danger-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.danger-zone small {
+  color: #888;
 }
 </style>
