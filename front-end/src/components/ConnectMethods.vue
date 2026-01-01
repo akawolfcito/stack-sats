@@ -42,12 +42,22 @@ function handleIsConnected() {
 }
 
 async function handleCallContract() {
+  // Build network config for Platform devnet
+  const platformDevnetUrl = `https://api.platform.hiro.so/v1/ext/${
+    import.meta.env.VITE_PLATFORM_HIRO_API_KEY
+  }/stacks-blockchain-api`
+
   const response = await request("stx_callContract", {
     // default contract address from devnet
     contract: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter",
     functionName: "increment",
     functionArgs: [],
-    network: "devnet"
+    network: {
+      chainId: 2147483648, // devnet chain ID
+      client: {
+        baseUrl: platformDevnetUrl
+      }
+    }
   })
 }
 
