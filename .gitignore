@@ -1,6 +1,10 @@
 node_modules
 clarity/.cache/
 
+# Sensitive project docs (do not commit)
+CLAUDE.md
+PROGRESS.md
+
 # Build outputs
 dist/
 *.local
