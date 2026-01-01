@@ -4,6 +4,7 @@ import {
   handleSignMessage,
   handleGetAddresses,
   handleCallContract,
+  handleTransferStx,
 } from "../utils/stxmethods";
 import type { JsonRpcRequest, Result } from "@/utils/types";
 import PinInput from "@/components/PinInput.vue";
@@ -139,7 +140,7 @@ async function handleConfirm() {
         result = await handleCallContract(props.payload, mnemonic, accountIndex);
         break;
       case "stx_transferStx":
-        // TODO: implement
+        result = await handleTransferStx(props.payload, mnemonic, accountIndex);
         break;
       case "stx_transferSip10Ft":
         // TODO: implement

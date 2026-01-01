@@ -5,6 +5,7 @@ import {
   privateKeyToAddress,
   transactionToHex,
   makeContractCall,
+  makeSTXTokenTransfer,
   broadcastTransaction,
   type ClarityValue,
 } from "@stacks/transactions";
@@ -228,4 +229,92 @@ async function handleCallContract(
   };
 }
 
-export { handleSignMessage, handleGetAddresses, handleCallContract };
+/**
+ * Handle stx_transferStx method
+ */
+async function handleTransferStx(
+  payload: JsonRpcRequest,
+  mnemonic: string,
+  accountIndex: number
+) {
+  const params: MethodParams<"stx_transferStx"> = payload.params;
+
+  // Get private key only when needed for signing
+  const privateKey = await getPrivateKey(mnemonic, accountIndex);
+
+  let response: JsonRpcResponse<"stx_transferStx"> | JsonRpcError;
+
+  // Build proper network config
+  const network = buildNetworkConfig(
+    params.network as { chainId?: number; client?: { baseUrl?: string } }
+  );
+
+  // Log transfer params for debugging
+  console.log("[StacksWallet] Transfer STX params:", {
+    recipient: params.recipient,
+    amount: params.amount,
+    memo: params.memo,
+    network,
+  });
+
+  try {
+    console.log("[StacksWallet] Creating STX transfer transaction...");
+
+    // Convert amount to bigint (comes as string or number from connect)
+    const amount = BigInt(params.amount);
+
+    const transaction = await makeSTXTokenTransfer({
+      recipient: params.recipient,
+      amount,
+      memo: params.memo,
+      senderKey: privateKey,
+      network,
+      fee: 10000n, // Fixed fee for devnet (0.01 STX)
+    });
+
+    console.log("[StacksWallet] Broadcasting transaction...");
+    const broadcasted = await broadcastTransaction({
+      transaction,
+      network,
+    });
+    console.log("[StacksWallet] Broadcast result:", broadcasted);
+
+    response = {
+      jsonrpc: "2.0",
+      id: payload.id,
+      result: {
+        txid: broadcasted.txid,
+        transaction: transactionToHex(transaction),
+      },
+    };
+
+    secureLog("STX transferred", {
+      method: payload.method,
+      recipient: params.recipient,
+      amount: params.amount,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[StacksWallet] Transfer STX error:", errorMessage, error);
+
+    response = {
+      jsonrpc: "2.0",
+      id: payload.id,
+      error: {
+        code: JsonRpcErrorCode.UnknownError,
+        message: "Unknown error",
+        data: errorMessage,
+      },
+    };
+
+    secureLog("STX transfer failed", { error: errorMessage });
+  }
+
+  return {
+    method: payload.method,
+    status: "COMPLETE",
+    data: response,
+  };
+}
+
+export { handleSignMessage, handleGetAddresses, handleCallContract, handleTransferStx };
