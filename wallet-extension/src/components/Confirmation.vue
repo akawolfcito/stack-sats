@@ -168,6 +168,17 @@ async function handleConfirm() {
     if (result.status === "COMPLETE") {
       await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
       secureLog("Response sent successfully", { method: props.payload.method });
+
+      // Cache getAddresses response for auto-approval
+      if (props.payload.method === "getAddresses" || props.payload.method === "stx_getAddresses") {
+        try {
+          const cacheKey = `approved_${props.origin}`;
+          await chrome.storage.session.set({ [cacheKey]: result.data });
+          secureLog("Cached addresses for origin", { origin: props.origin });
+        } catch (error) {
+          secureLog("Failed to cache addresses", { error: String(error) });
+        }
+      }
     } else {
       await chrome.tabs.sendMessage(parseInt(props.tabId), {
         jsonrpc: "2.0",
