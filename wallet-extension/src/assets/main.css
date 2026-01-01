@@ -4,9 +4,11 @@
   width: 390px;
   height: 600px;
   margin: 0 auto;
-  padding: 2rem;
-  background-color: #f2f0ed;
+  padding: 1.5rem;
+  background-color: #0f0f1a;
+  color: #ffffff;
   font-weight: normal;
+  overflow-y: auto;
 }
 
 button {
