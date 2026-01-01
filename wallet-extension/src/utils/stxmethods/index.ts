@@ -28,7 +28,8 @@ import {
 } from "@stacks/connect";
 import type { JsonRpcResponse } from "@stacks/connect/dist/types/methods";
 import type { JsonRpcRequest } from "@/utils/types";
-import { secureLog } from "../security/logger";
+import { secureLog, isDebugMode } from "../security/logger";
+import { scheduleCleanup } from "../security/memory";
 
 /**
  * Handle stx_signMessage method
@@ -41,35 +42,42 @@ async function handleSignMessage(
   const params: MethodParams<"stx_signMessage"> = payload.params;
 
   // Get private key only when needed for signing
-  const privateKey = await getPrivateKey(mnemonic, accountIndex);
+  let privateKey: string | null = null;
+  try {
+    privateKey = await getPrivateKey(mnemonic, accountIndex);
 
-  const LEGACY_PREFIX = "\x18Stacks Message Signing:\n";
-  const encodedMessage = encodeMessage(params["message"], LEGACY_PREFIX);
-  const messageHash = await hashUint8Array(encodedMessage);
+    const LEGACY_PREFIX = "\x18Stacks Message Signing:\n";
+    const encodedMessage = encodeMessage(params["message"], LEGACY_PREFIX);
+    const messageHash = await hashUint8Array(encodedMessage);
 
-  const signature = signMessageHashRsv({
-    messageHash,
-    privateKey,
-  });
+    const signature = signMessageHashRsv({
+      messageHash,
+      privateKey,
+    });
 
-  const result: MethodResult<"stx_signMessage"> = {
-    signature,
-    publicKey: String(privateKeyToPublic(privateKey)),
-  };
+    const result: MethodResult<"stx_signMessage"> = {
+      signature,
+      publicKey: String(privateKeyToPublic(privateKey)),
+    };
 
-  const response: JsonRpcResponse<"stx_signMessage"> = {
-    jsonrpc: "2.0",
-    id: payload.id,
-    result,
-  };
+    const response: JsonRpcResponse<"stx_signMessage"> = {
+      jsonrpc: "2.0",
+      id: payload.id,
+      result,
+    };
 
-  secureLog("Message signed", { method: payload.method });
+    secureLog("Message signed", { method: payload.method });
 
-  return {
-    method: payload.method,
-    status: "COMPLETE",
-    data: response,
-  };
+    return {
+      method: payload.method,
+      status: "COMPLETE",
+      data: response,
+    };
+  } finally {
+    // Clear sensitive data from memory
+    privateKey = null;
+    scheduleCleanup();
+  }
 }
 
 /**
@@ -87,51 +95,58 @@ async function handleGetAddresses(
   const networkConfig = getNetworkConfig(selectedNetwork);
 
   // Get private key to derive addresses
-  const privateKey = await getPrivateKey(mnemonic, accountIndex);
+  let privateKey: string | null = null;
+  try {
+    privateKey = await getPrivateKey(mnemonic, accountIndex);
 
-  const pubKey = privateKeyToPublic(privateKey).toString();
-  const stxAddress = privateKeyToAddress(privateKey, addressVersion);
-  const btcP2PKHAddress = c32ToB58(stxAddress);
-  const btcP2TRAddress = await generateP2TR(pubKey);
+    const pubKey = privateKeyToPublic(privateKey).toString();
+    const stxAddress = privateKeyToAddress(privateKey, addressVersion);
+    const btcP2PKHAddress = c32ToB58(stxAddress);
+    const btcP2TRAddress = await generateP2TR(pubKey);
 
-  // Build response with network info
-  const response = {
-    jsonrpc: "2.0" as const,
-    id: payload.id,
-    result: {
-      addresses: [
-        {
-          symbol: "BTC",
-          address: btcP2PKHAddress,
-          publicKey: pubKey,
+    // Build response with network info
+    const response = {
+      jsonrpc: "2.0" as const,
+      id: payload.id,
+      result: {
+        addresses: [
+          {
+            symbol: "BTC",
+            address: btcP2PKHAddress,
+            publicKey: pubKey,
+          },
+          {
+            symbol: "BTC",
+            address: btcP2TRAddress,
+            publicKey: pubKey,
+          },
+          {
+            symbol: "STX",
+            address: stxAddress,
+            publicKey: pubKey,
+          },
+        ],
+        // Include network info so dApp knows which network wallet is using
+        network: {
+          name: selectedNetwork,
+          chainId: networkConfig.chainId,
+          client: networkConfig.client,
         },
-        {
-          symbol: "BTC",
-          address: btcP2TRAddress,
-          publicKey: pubKey,
-        },
-        {
-          symbol: "STX",
-          address: stxAddress,
-          publicKey: pubKey,
-        },
-      ],
-      // Include network info so dApp knows which network wallet is using
-      network: {
-        name: selectedNetwork,
-        chainId: networkConfig.chainId,
-        client: networkConfig.client,
       },
-    },
-  };
+    };
 
-  secureLog("Addresses retrieved", { method: "getAddresses", network: selectedNetwork });
+    secureLog("Addresses retrieved", { method: "getAddresses", network: selectedNetwork });
 
-  return {
-    method: "getAddresses",
-    status: "COMPLETE",
-    data: response,
-  };
+    return {
+      method: "getAddresses",
+      status: "COMPLETE",
+      data: response,
+    };
+  } finally {
+    // Clear sensitive data from memory
+    privateKey = null;
+    scheduleCleanup();
+  }
 }
 
 
@@ -146,24 +161,24 @@ async function handleCallContract(
   const params: MethodParams<"stx_callContract"> = payload.params;
 
   // Get private key only when needed for signing
-  const privateKey = await getPrivateKey(mnemonic, accountIndex);
-
+  let privateKey: string | null = null;
   let response: JsonRpcResponse<"stx_callContract"> | JsonRpcError;
 
-  // Build proper network config
-  const network = buildNetworkWithClient(
-    params.network as { chainId?: number; client?: { baseUrl?: string } }
-  );
-
-  // Log network config for debugging
-  console.log("[StacksWallet] Contract call params:", {
-    contract: params.contract,
-    functionName: params.functionName,
-    network,
-  });
-
   try {
-    console.log("[StacksWallet] Creating transaction...");
+    privateKey = await getPrivateKey(mnemonic, accountIndex);
+
+    // Build proper network config
+    const network = buildNetworkWithClient(
+      params.network as { chainId?: number; client?: { baseUrl?: string } }
+    );
+
+    // Debug logging only in development
+    if (isDebugMode()) {
+      console.log("[StacksWallet] Contract call params:", {
+        contract: params.contract,
+        functionName: params.functionName,
+      });
+    }
 
     // Parse contract address and name
     const [contractAddress, contractName] = params.contract.split(".");
@@ -183,12 +198,14 @@ async function handleCallContract(
       fee: 10000n, // Fixed fee for devnet (0.01 STX)
     });
 
-    console.log("[StacksWallet] Broadcasting transaction...");
     const broadcasted = await broadcastTransaction({
       transaction,
       network,
     });
-    console.log("[StacksWallet] Broadcast result:", broadcasted);
+
+    if (isDebugMode()) {
+      console.log("[StacksWallet] Broadcast result:", broadcasted.txid);
+    }
 
     response = {
       jsonrpc: "2.0",
@@ -206,7 +223,10 @@ async function handleCallContract(
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("[StacksWallet] Contract call error:", errorMessage, error);
+
+    if (isDebugMode()) {
+      console.error("[StacksWallet] Contract call error:", errorMessage);
+    }
 
     response = {
       jsonrpc: "2.0",
@@ -219,6 +239,10 @@ async function handleCallContract(
     };
 
     secureLog("Contract call failed", { error: errorMessage });
+  } finally {
+    // Clear sensitive data from memory
+    privateKey = null;
+    scheduleCleanup();
   }
 
   return {
@@ -239,25 +263,24 @@ async function handleTransferStx(
   const params: MethodParams<"stx_transferStx"> = payload.params;
 
   // Get private key only when needed for signing
-  const privateKey = await getPrivateKey(mnemonic, accountIndex);
-
+  let privateKey: string | null = null;
   let response: JsonRpcResponse<"stx_transferStx"> | JsonRpcError;
 
-  // Build proper network config
-  const network = buildNetworkWithClient(
-    params.network as { chainId?: number; client?: { baseUrl?: string } }
-  );
-
-  // Log transfer params for debugging
-  console.log("[StacksWallet] Transfer STX params:", {
-    recipient: params.recipient,
-    amount: params.amount,
-    memo: params.memo,
-    network,
-  });
-
   try {
-    console.log("[StacksWallet] Creating STX transfer transaction...");
+    privateKey = await getPrivateKey(mnemonic, accountIndex);
+
+    // Build proper network config
+    const network = buildNetworkWithClient(
+      params.network as { chainId?: number; client?: { baseUrl?: string } }
+    );
+
+    // Debug logging only in development
+    if (isDebugMode()) {
+      console.log("[StacksWallet] Transfer STX params:", {
+        recipient: params.recipient,
+        amount: params.amount,
+      });
+    }
 
     // Convert amount to bigint (comes as string or number from connect)
     const amount = BigInt(params.amount);
@@ -271,12 +294,14 @@ async function handleTransferStx(
       fee: 10000n, // Fixed fee for devnet (0.01 STX)
     });
 
-    console.log("[StacksWallet] Broadcasting transaction...");
     const broadcasted = await broadcastTransaction({
       transaction,
       network,
     });
-    console.log("[StacksWallet] Broadcast result:", broadcasted);
+
+    if (isDebugMode()) {
+      console.log("[StacksWallet] Broadcast result:", broadcasted.txid);
+    }
 
     response = {
       jsonrpc: "2.0",
@@ -294,7 +319,10 @@ async function handleTransferStx(
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("[StacksWallet] Transfer STX error:", errorMessage, error);
+
+    if (isDebugMode()) {
+      console.error("[StacksWallet] Transfer STX error:", errorMessage);
+    }
 
     response = {
       jsonrpc: "2.0",
@@ -307,6 +335,10 @@ async function handleTransferStx(
     };
 
     secureLog("STX transfer failed", { error: errorMessage });
+  } finally {
+    // Clear sensitive data from memory
+    privateKey = null;
+    scheduleCleanup();
   }
 
   return {

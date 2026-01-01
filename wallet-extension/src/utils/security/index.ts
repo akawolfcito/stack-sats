@@ -24,3 +24,10 @@ export {
   sanitizeForLog,
   isDebugMode,
 } from "./logger";
+
+export {
+  clearString,
+  withSecureValue,
+  clearObject,
+  scheduleCleanup,
+} from "./memory";
