@@ -9,7 +9,11 @@
   "permissions": ["scripting", "tabs", "activeTab", "storage"],
   "host_permissions": [
     "http://localhost/*",
-    "http://127.0.0.1/*"
+    "http://127.0.0.1/*",
+    "https://api.platform.hiro.so/*",
+    "https://api.hiro.so/*",
+    "https://stacks-node-api.testnet.stacks.co/*",
+    "https://stacks-node-api.mainnet.stacks.co/*"
   ],
   "icons": {
     "48": "laser-eyes-lil-guy-dark.png"
