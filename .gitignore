@@ -4,6 +4,7 @@ clarity/.cache/
 # Sensitive project docs (do not commit)
 CLAUDE.md
 PROGRESS.md
+.claude/
 
 # Build outputs
 dist/
