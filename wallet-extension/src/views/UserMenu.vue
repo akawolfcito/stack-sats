@@ -39,6 +39,8 @@ const backupMessage = ref<{ type: "success" | "error"; text: string } | null>(nu
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const showImportConfirm = ref(false);
 const pendingImportWallet = ref<WalletEntry | null>(null);
+const showBackupPinInput = ref(false);
+const backupPinError = ref("");
 
 onMounted(() => {
   loadWallets();
@@ -141,10 +143,31 @@ function handlePinCancel() {
 // Backup functions
 function handleExportBackup() {
   backupMessage.value = null;
+  backupPinError.value = "";
 
   const activeWallet = getActiveWallet();
   if (!activeWallet) {
     backupMessage.value = { type: "error", text: "No hay wallet activa para exportar" };
+    return;
+  }
+
+  // Show PIN input for verification
+  showBackupPinInput.value = true;
+}
+
+async function handleBackupPinComplete(pin: string) {
+  const mnemonic = await sessionManager.unlock(pin);
+
+  if (!mnemonic) {
+    backupPinError.value = "PIN incorrecto. Intentos restantes: " + (3 - sessionManager.failedAttempts);
+    return;
+  }
+
+  // PIN verified, proceed with backup
+  const activeWallet = getActiveWallet();
+  if (!activeWallet) {
+    backupMessage.value = { type: "error", text: "No hay wallet activa para exportar" };
+    showBackupPinInput.value = false;
     return;
   }
 
@@ -159,10 +182,18 @@ function handleExportBackup() {
     secureLog("Backup export failed", { error: String(error) });
   }
 
+  showBackupPinInput.value = false;
+  backupPinError.value = "";
+
   // Clear message after 3 seconds
   setTimeout(() => {
     backupMessage.value = null;
   }, 3000);
+}
+
+function cancelBackupPin() {
+  showBackupPinInput.value = false;
+  backupPinError.value = "";
 }
 
 function triggerFileInput() {
@@ -344,6 +375,21 @@ function cancelImport() {
           @cancel="handlePinCancel"
         />
         <p v-if="deleteError" class="error-text">{{ deleteError }}</p>
+      </div>
+    </div>
+
+    <!-- Backup PIN Modal -->
+    <div v-if="showBackupPinInput" class="import-confirm-overlay">
+      <div class="import-confirm-modal backup-pin-modal">
+        <h3>Verificar PIN</h3>
+        <p>Ingresa tu PIN para exportar el backup:</p>
+        <PinInput
+          mode="unlock"
+          @complete="handleBackupPinComplete"
+          @cancel="cancelBackupPin"
+        />
+        <p v-if="backupPinError" class="error-text">{{ backupPinError }}</p>
+        <button class="cancel-btn full-width" @click="cancelBackupPin">Cancelar</button>
       </div>
     </div>
 
@@ -717,5 +763,23 @@ function cancelImport() {
 
 .confirm-btn.replace:hover {
   background: #f59e0b;
+}
+
+/* Backup PIN Modal */
+.backup-pin-modal {
+  text-align: center;
+}
+
+.backup-pin-modal h3 {
+  color: #5546ff;
+}
+
+.backup-pin-modal p {
+  margin-bottom: 1rem;
+}
+
+.full-width {
+  width: 100%;
+  margin-top: 1rem;
 }
 </style>
