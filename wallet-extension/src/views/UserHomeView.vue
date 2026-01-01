@@ -56,6 +56,24 @@ onBeforeMount(async () => {
 const handleOpenUserMenu = () => {
   router.push({ path: "/usermenu" });
 };
+
+const copiedAddress = ref<string | null>(null);
+
+const copyToClipboard = async (address: string) => {
+  try {
+    await navigator.clipboard.writeText(address);
+    copiedAddress.value = address;
+    setTimeout(() => {
+      copiedAddress.value = null;
+    }, 2000);
+  } catch (error) {
+    console.error("Failed to copy:", error);
+  }
+};
+
+const truncateAddress = (address: string) => {
+  return address.slice(0, 7) + "..." + address.slice(-7);
+};
 </script>
 
 <template>
@@ -85,42 +103,59 @@ const handleOpenUserMenu = () => {
       </div>
 
       <div class="page-bottom">
-        <small>Assets</small>
+        <small>Assets (click to copy)</small>
         <div class="assets-display">
           <div class="assets-display-row">
             <span>STX</span>
-            <span>{{
-              userAccounts[accountIndexToDisplay]?.stxAddress.slice(0, 7) +
-              "..." +
-              userAccounts[accountIndexToDisplay]?.stxAddress.slice(-7)
-            }}</span>
+            <span
+              class="address-copy"
+              :class="{ copied: copiedAddress === userAccounts[accountIndexToDisplay]?.stxAddress }"
+              @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.stxAddress || '')"
+              :title="userAccounts[accountIndexToDisplay]?.stxAddress"
+            >
+              {{ copiedAddress === userAccounts[accountIndexToDisplay]?.stxAddress
+                ? '✓ Copied!'
+                : truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}
+            </span>
             <span>0</span>
           </div>
           <div class="assets-display-row">
             <span>BTC</span>
-            <span>{{
-              userAccounts[accountIndexToDisplay]?.btcP2PKHAddress.slice(0, 7) +
-              "..." +
-              userAccounts[accountIndexToDisplay]?.btcP2PKHAddress.slice(-7)
-            }}</span>
+            <span
+              class="address-copy"
+              :class="{ copied: copiedAddress === userAccounts[accountIndexToDisplay]?.btcP2PKHAddress }"
+              @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || '')"
+              :title="userAccounts[accountIndexToDisplay]?.btcP2PKHAddress"
+            >
+              {{ copiedAddress === userAccounts[accountIndexToDisplay]?.btcP2PKHAddress
+                ? '✓ Copied!'
+                : truncateAddress(userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || '') }}
+            </span>
             <span>0</span>
           </div>
           <div class="assets-display-row">
             <span>Runes</span>
-            <span>{{
-              userAccounts[accountIndexToDisplay]?.btcP2TRAddress.slice(0, 7) +
-              "..." +
-              userAccounts[accountIndexToDisplay]?.btcP2TRAddress.slice(-7)
-            }}</span>
+            <span
+              class="address-copy"
+              :class="{ copied: copiedAddress === userAccounts[accountIndexToDisplay]?.btcP2TRAddress }"
+              @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')"
+              :title="userAccounts[accountIndexToDisplay]?.btcP2TRAddress"
+            >
+              {{ copiedAddress === userAccounts[accountIndexToDisplay]?.btcP2TRAddress
+                ? '✓ Copied!'
+                : truncateAddress(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '') }}
+            </span>
             <span>0</span>
           </div>
           <div class="assets-display-row">
             <span>Ordinals</span>
-            <span>{{
-              userAccounts[accountIndexToDisplay]?.btcP2TRAddress.slice(0, 7) +
-              "..." +
-              userAccounts[accountIndexToDisplay]?.btcP2TRAddress.slice(-7)
-            }}</span>
+            <span
+              class="address-copy"
+              @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')"
+              :title="userAccounts[accountIndexToDisplay]?.btcP2TRAddress"
+            >
+              {{ truncateAddress(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '') }}
+            </span>
             <span>0</span>
           </div>
         </div>
@@ -173,5 +208,22 @@ small {
   justify-content: center;
   height: 100%;
   color: #888;
+}
+
+.address-copy {
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.address-copy:hover {
+  background: rgba(100, 108, 255, 0.2);
+  color: #646cff;
+}
+
+.address-copy.copied {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
 }
 </style>
