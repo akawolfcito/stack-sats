@@ -165,9 +165,10 @@ async function handleConfirm() {
     }
 
     if (result.status === "COMPLETE") {
-      chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
+      await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
+      secureLog("Response sent successfully", { method: props.payload.method });
     } else {
-      chrome.tabs.sendMessage(parseInt(props.tabId), {
+      await chrome.tabs.sendMessage(parseInt(props.tabId), {
         jsonrpc: "2.0",
         error: {
           code: -32603,
@@ -177,18 +178,20 @@ async function handleConfirm() {
       });
     }
   } catch (error) {
-    secureWarn("Error processing request", { error });
-    chrome.tabs.sendMessage(parseInt(props.tabId), {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    secureWarn("Error processing request", { error: errorMsg });
+    await chrome.tabs.sendMessage(parseInt(props.tabId), {
       jsonrpc: "2.0",
       error: {
         code: -32603,
-        message: "Internal Error",
+        message: errorMsg,
       },
       id: props.payload.id,
     });
   }
 
-  window.close();
+  // Delay to ensure message is sent before closing
+  setTimeout(() => window.close(), 150);
 }
 
 function handleReject(reason?: string) {
