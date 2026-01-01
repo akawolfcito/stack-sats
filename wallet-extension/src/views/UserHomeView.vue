@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { onBeforeMount, ref, watch } from "vue";
+import { onBeforeMount, ref, watch, computed } from "vue";
 import { generateInitialAccounts } from "../utils/accounts";
 import { type Account } from "../utils/types";
 import { sessionManager } from "../utils/security/session";
@@ -11,6 +11,12 @@ import {
   NETWORKS,
   type NetworkName,
 } from "../utils/network";
+import {
+  fetchStxBalance,
+  formatStxBalance,
+  microStxToStx,
+  formatUsdValue,
+} from "../utils/balance";
 
 const router = useRouter();
 const userAccounts = ref<Account[]>([]);
@@ -18,6 +24,19 @@ const accountIndexToDisplay = ref(0);
 const isLoading = ref(true);
 const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
 const currentMnemonic = ref<string | null>(null);
+
+// Balance state
+const stxBalanceMicro = ref<string>("0");
+const isLoadingBalance = ref(false);
+const stxPriceUsd = ref(0); // TODO: Fetch from price API
+
+// Computed properties for balance display
+const formattedStxBalance = computed(() => formatStxBalance(stxBalanceMicro.value));
+const stxBalanceNumber = computed(() => microStxToStx(stxBalanceMicro.value));
+const totalValueUsd = computed(() => {
+  if (stxPriceUsd.value === 0) return null;
+  return formatUsdValue(stxBalanceNumber.value * stxPriceUsd.value);
+});
 
 async function loadAccounts(mnemonic: string, network: NetworkName) {
   isLoading.value = true;
@@ -30,6 +49,26 @@ async function loadAccounts(mnemonic: string, network: NetworkName) {
     router.push({ path: "/" });
   }
   isLoading.value = false;
+}
+
+async function loadBalance() {
+  const currentAccount = userAccounts.value[accountIndexToDisplay.value];
+  if (!currentAccount?.stxAddress) return;
+
+  isLoadingBalance.value = true;
+  try {
+    const balance = await fetchStxBalance(currentAccount.stxAddress, selectedNetwork.value);
+    if (balance !== null) {
+      stxBalanceMicro.value = balance;
+    }
+  } catch (error) {
+    secureLog("Failed to load balance", error);
+  }
+  isLoadingBalance.value = false;
+}
+
+async function refreshBalance() {
+  await loadBalance();
 }
 
 onBeforeMount(async () => {
@@ -45,6 +84,8 @@ onBeforeMount(async () => {
     if (mnemonic) {
       currentMnemonic.value = mnemonic;
       await loadAccounts(mnemonic, selectedNetwork.value);
+      // Load balance after accounts are loaded
+      await loadBalance();
     } else {
       router.push({ path: "/unlock" });
     }
@@ -54,6 +95,7 @@ onBeforeMount(async () => {
     if (legacyMnemonic) {
       currentMnemonic.value = legacyMnemonic;
       await loadAccounts(legacyMnemonic, selectedNetwork.value);
+      await loadBalance();
     } else {
       router.push({ path: "/" });
     }
@@ -65,7 +107,13 @@ watch(selectedNetwork, async (newNetwork) => {
   setSelectedNetwork(newNetwork);
   if (currentMnemonic.value) {
     await loadAccounts(currentMnemonic.value, newNetwork);
+    await loadBalance();
   }
+});
+
+// Watch for account index changes and reload balance
+watch(accountIndexToDisplay, async () => {
+  await loadBalance();
 });
 
 const handleOpenUserMenu = () => {
@@ -120,8 +168,13 @@ const truncateAddress = (address: string) => {
 
       <div class="page-top">
         <h1>Account {{ accountIndexToDisplay + 1 }}</h1>
-        <small>Total Value</small>
-        <div class="value-display">$1,000,000</div>
+        <small>STX Balance</small>
+        <div class="value-display" :class="{ loading: isLoadingBalance }">
+          {{ isLoadingBalance ? '...' : formattedStxBalance }} STX
+        </div>
+        <button class="refresh-btn" @click="refreshBalance" :disabled="isLoadingBalance">
+          {{ isLoadingBalance ? '↻' : '↻ Refresh' }}
+        </button>
       </div>
 
       <div class="page-bottom">
@@ -139,7 +192,7 @@ const truncateAddress = (address: string) => {
                 ? '✓ Copied!'
                 : truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}
             </span>
-            <span>0</span>
+            <span class="balance-value">{{ formattedStxBalance }}</span>
           </div>
           <div class="assets-display-row">
             <span>BTC</span>
@@ -265,5 +318,36 @@ small {
   background: rgba(100, 108, 255, 0.2);
   border-radius: 4px;
   color: #646cff;
+}
+
+.refresh-btn {
+  margin-top: 8px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(100, 108, 255, 0.3);
+  border-radius: 4px;
+  color: #646cff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: rgba(100, 108, 255, 0.1);
+  border-color: #646cff;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.value-display.loading {
+  opacity: 0.5;
+}
+
+.balance-value {
+  color: #4ade80;
+  font-weight: bold;
 }
 </style>
