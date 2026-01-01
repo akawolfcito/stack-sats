@@ -25,6 +25,16 @@ import {
   setAccountName,
   DEFAULT_ACCOUNT_COUNT,
 } from "../utils/accounts/settings";
+import {
+  fetchTransactions,
+  formatRelativeTime,
+  formatAmount,
+  truncateAddress as truncateTxAddress,
+  getTransactionTypeLabel,
+  getExplorerUrl,
+  type Transaction,
+  type TransactionStatus,
+} from "../utils/transactions";
 
 const router = useRouter();
 const userAccounts = ref<Account[]>([]);
@@ -58,6 +68,11 @@ const accountCount = ref(DEFAULT_ACCOUNT_COUNT);
 const isEditingName = ref(false);
 const editingName = ref("");
 const accountNames = ref<Record<number, string>>({});
+
+// Transaction history state
+const transactions = ref<Transaction[]>([]);
+const isLoadingTx = ref(false);
+const showAllTx = ref(false);
 
 // Computed properties for balance display
 const formattedStxBalance = computed(() => formatStxBalance(stxBalanceMicro.value));
@@ -176,8 +191,38 @@ async function loadBalance() {
   isLoadingBalance.value = false;
 }
 
+async function loadTransactions() {
+  const currentAccount = userAccounts.value[accountIndexToDisplay.value];
+  if (!currentAccount?.stxAddress) return;
+
+  isLoadingTx.value = true;
+  try {
+    const txs = await fetchTransactions(currentAccount.stxAddress, 20, 0, selectedNetwork.value);
+    if (txs !== null) {
+      transactions.value = txs;
+    }
+  } catch (error) {
+    secureLog("Failed to load transactions", error);
+  }
+  isLoadingTx.value = false;
+}
+
+function getStatusClass(status: TransactionStatus): string {
+  switch (status) {
+    case "success": return "tx-success";
+    case "pending": return "tx-pending";
+    default: return "tx-failed";
+  }
+}
+
+function openExplorer(txId: string) {
+  const url = getExplorerUrl(txId, selectedNetwork.value);
+  window.open(url, "_blank");
+}
+
 async function refreshBalance() {
   await loadBalance();
+  await loadTransactions();
 }
 
 onBeforeMount(async () => {
@@ -197,8 +242,9 @@ onBeforeMount(async () => {
     if (mnemonic) {
       currentMnemonic.value = mnemonic;
       await loadAccounts(mnemonic, selectedNetwork.value);
-      // Load balance after accounts are loaded
+      // Load balance and transactions after accounts are loaded
       await loadBalance();
+      loadTransactions(); // Don't await, load in background
     } else {
       router.push({ path: "/unlock" });
     }
@@ -209,6 +255,7 @@ onBeforeMount(async () => {
       currentMnemonic.value = legacyMnemonic;
       await loadAccounts(legacyMnemonic, selectedNetwork.value);
       await loadBalance();
+      loadTransactions();
     } else {
       router.push({ path: "/" });
     }
@@ -218,16 +265,20 @@ onBeforeMount(async () => {
 // Watch for network changes and regenerate accounts
 watch(selectedNetwork, async (newNetwork) => {
   setSelectedNetwork(newNetwork);
+  transactions.value = []; // Clear transactions on network change
   if (currentMnemonic.value) {
     await loadAccounts(currentMnemonic.value, newNetwork);
     await loadBalance();
+    loadTransactions();
   }
 });
 
 // Watch for account index changes - save to localStorage and reload balance
 watch(accountIndexToDisplay, async (newIndex) => {
   localStorage.setItem(ACCOUNT_STORAGE_KEY, String(newIndex));
+  transactions.value = []; // Clear transactions on account change
   await loadBalance();
+  loadTransactions();
 });
 
 const handleOpenUserMenu = () => {
@@ -380,6 +431,78 @@ const truncateAddress = (address: string) => {
               {{ truncateAddress(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '') }}
             </span>
             <span>0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction History -->
+      <div class="page-bottom tx-section">
+        <div class="tx-header">
+          <small>Recent Activity</small>
+          <button
+            v-if="transactions.length > 5"
+            class="show-all-btn"
+            @click="showAllTx = !showAllTx"
+          >
+            {{ showAllTx ? 'Show Less' : 'Show All' }}
+          </button>
+        </div>
+
+        <div v-if="isLoadingTx" class="tx-loading">
+          Loading transactions...
+        </div>
+
+        <div v-else-if="transactions.length === 0" class="tx-empty">
+          No transactions yet
+        </div>
+
+        <div v-else class="tx-list">
+          <div
+            v-for="tx in (showAllTx ? transactions : transactions.slice(0, 5))"
+            :key="tx.txId"
+            class="tx-item"
+            @click="openExplorer(tx.txId)"
+            :title="'View on Explorer: ' + tx.txId"
+          >
+            <div class="tx-icon" :class="getStatusClass(tx.status)">
+              <span v-if="tx.type === 'token_transfer'">
+                {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? '↑' : '↓' }}
+              </span>
+              <span v-else-if="tx.type === 'contract_call'">⚡</span>
+              <span v-else-if="tx.type === 'smart_contract'">📄</span>
+              <span v-else>•</span>
+            </div>
+
+            <div class="tx-details">
+              <div class="tx-type">
+                {{ getTransactionTypeLabel(tx.type) }}
+                <span v-if="tx.functionName" class="tx-function">
+                  .{{ tx.functionName }}
+                </span>
+              </div>
+              <div class="tx-meta">
+                <span v-if="tx.type === 'token_transfer' && tx.recipient">
+                  {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress
+                    ? 'To: ' + truncateTxAddress(tx.recipient, 4)
+                    : 'From: ' + truncateTxAddress(tx.sender, 4) }}
+                </span>
+                <span v-else-if="tx.contractId">
+                  {{ truncateTxAddress(tx.contractId.split('.')[0], 4) }}.{{ tx.contractId.split('.')[1] }}
+                </span>
+                <span class="tx-time">{{ formatRelativeTime(tx.timestamp) }}</span>
+              </div>
+            </div>
+
+            <div class="tx-amount" v-if="tx.amount">
+              <span :class="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? 'amount-out' : 'amount-in'">
+                {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? '-' : '+' }}{{ formatAmount(tx.amount) }}
+              </span>
+              <small>STX</small>
+            </div>
+
+            <div class="tx-status" :class="getStatusClass(tx.status)">
+              {{ tx.status === 'success' ? '✓' : tx.status === 'pending' ? '⏳' : '✗' }}
+            </div>
           </div>
         </div>
       </div>
@@ -596,5 +719,164 @@ small {
 .balance-value {
   color: #4ade80;
   font-weight: bold;
+}
+
+/* Transaction History Styles */
+.tx-section {
+  margin-top: 16px;
+}
+
+.tx-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.show-all-btn {
+  background: transparent;
+  border: none;
+  color: #646cff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.show-all-btn:hover {
+  color: #535bf2;
+}
+
+.tx-loading,
+.tx-empty {
+  text-align: center;
+  color: #8c877d;
+  padding: 20px;
+  font-size: 0.85rem;
+}
+
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(100, 108, 255, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tx-item:hover {
+  background: rgba(100, 108, 255, 0.12);
+}
+
+.tx-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.tx-icon.tx-success {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.tx-icon.tx-pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.tx-icon.tx-failed {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+.tx-details {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tx-type {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tx-function {
+  color: #646cff;
+  font-weight: normal;
+  font-size: 0.8rem;
+}
+
+.tx-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #8c877d;
+  margin-top: 2px;
+}
+
+.tx-time {
+  color: #6b6b6b;
+}
+
+.tx-amount {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tx-amount span {
+  font-family: monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tx-amount small {
+  display: block;
+  font-size: 0.65rem;
+  color: #6b6b6b;
+}
+
+.amount-in {
+  color: #4ade80;
+}
+
+.amount-out {
+  color: #f87171;
+}
+
+.tx-status {
+  width: 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.tx-status.tx-success {
+  color: #4ade80;
+}
+
+.tx-status.tx-pending {
+  color: #fbbf24;
+}
+
+.tx-status.tx-failed {
+  color: #f87171;
 }
 </style>
