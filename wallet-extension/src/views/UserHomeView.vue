@@ -20,10 +20,23 @@ import {
 
 const router = useRouter();
 const userAccounts = ref<Account[]>([]);
-const accountIndexToDisplay = ref(0);
 const isLoading = ref(true);
 const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
 const currentMnemonic = ref<string | null>(null);
+
+// Persistent account selection
+const ACCOUNT_STORAGE_KEY = "selected_account_index";
+function getSavedAccountIndex(): number {
+  const saved = localStorage.getItem(ACCOUNT_STORAGE_KEY);
+  if (saved !== null) {
+    const index = parseInt(saved, 10);
+    if (!isNaN(index) && index >= 0 && index < 20) {
+      return index;
+    }
+  }
+  return 0;
+}
+const accountIndexToDisplay = ref(getSavedAccountIndex());
 
 // Balance state
 const stxBalanceMicro = ref<string>("0");
@@ -111,8 +124,9 @@ watch(selectedNetwork, async (newNetwork) => {
   }
 });
 
-// Watch for account index changes and reload balance
-watch(accountIndexToDisplay, async () => {
+// Watch for account index changes - save to localStorage and reload balance
+watch(accountIndexToDisplay, async (newIndex) => {
+  localStorage.setItem(ACCOUNT_STORAGE_KEY, String(newIndex));
   await loadBalance();
 });
 
