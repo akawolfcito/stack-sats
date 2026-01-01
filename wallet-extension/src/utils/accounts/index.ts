@@ -5,6 +5,7 @@ import { Buffer } from "buffer";
 import ecc from "@bitcoinerlab/secp256k1";
 import { type Account } from "../types";
 import { secureLog } from "../security/logger";
+import { getAddressVersion, type NetworkName } from "../network";
 
 /**
  * Generate the first N accounts for the user (without private keys)
@@ -12,7 +13,8 @@ import { secureLog } from "../security/logger";
  */
 async function generateInitialAccounts(
   mnemonic: string,
-  count: number = 20
+  count: number = 20,
+  network?: NetworkName
 ): Promise<Account[]> {
   let wallet = await generateWallet({
     secretKey: mnemonic,
@@ -28,12 +30,13 @@ async function generateInitialAccounts(
 
   const finalWallet = wallets[count - 1];
   const accounts: Account[] = [];
+  const addressVersion = getAddressVersion(network);
 
   for (let index = 0; index < count; index++) {
     const path = `m/44'/5757'/0'/0/${index}`;
     const stxPrivateKey = finalWallet.accounts[index].stxPrivateKey;
 
-    const stxAddress = privateKeyToAddress(stxPrivateKey, "testnet");
+    const stxAddress = privateKeyToAddress(stxPrivateKey, addressVersion);
     const btcP2PKHAddress = c32ToB58(stxAddress);
     const pubkey = privateKeyToPublic(stxPrivateKey).toString();
     const btcP2TRAddress = await generateP2TR(pubkey);
@@ -49,7 +52,7 @@ async function generateInitialAccounts(
     });
   }
 
-  secureLog(`Generated ${count} accounts`);
+  secureLog(`Generated ${count} accounts for ${addressVersion}`);
 
   return accounts;
 }
