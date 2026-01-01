@@ -24,6 +24,11 @@ const router = createRouter({
       name: "usermenu",
       component: () => import("../views/UserMenu.vue"),
     },
+    {
+      path: "/add-wallet",
+      name: "add-wallet",
+      component: () => import("../views/AddWalletView.vue"),
+    },
   ],
 });
 

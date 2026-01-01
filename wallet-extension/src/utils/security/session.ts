@@ -4,15 +4,19 @@
  */
 
 import { ref, type Ref } from "vue";
+import { decryptWithPIN, isValidPIN } from "./encryption";
 import {
-  decryptWithPIN,
-  isValidPIN,
-  type EncryptedData,
-} from "./encryption";
+  getActiveWallet,
+  hasWallets,
+  migrateLegacyWallet,
+  deleteAllWallets,
+  addWallet,
+  setActiveWalletId,
+  type WalletEntry,
+} from "../wallets";
 
 const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_UNLOCK_ATTEMPTS = 3;
-const STORAGE_KEY = "wallet_encrypted";
 
 export interface SessionState {
   isLocked: Ref<boolean>;
@@ -27,8 +31,11 @@ class SessionManager {
   private _lastActivity: number = Date.now();
   private _timeoutId: ReturnType<typeof setTimeout> | null = null;
   private _decryptedMnemonic: string | null = null;
+  private _activeWalletId: string | null = null;
 
   constructor() {
+    // Migrate legacy wallet format if needed
+    migrateLegacyWallet();
     this.checkWalletExists();
     this.setupActivityListeners();
   }
@@ -57,35 +64,45 @@ class SessionManager {
     return MAX_UNLOCK_ATTEMPTS - this._failedAttempts.value;
   }
 
+  get activeWalletId(): string | null {
+    return this._activeWalletId;
+  }
+
   /**
    * Check if wallet exists in storage
    */
   checkWalletExists(): boolean {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    this._hasWallet.value = stored !== null;
+    this._hasWallet.value = hasWallets();
     return this._hasWallet.value;
   }
 
   /**
-   * Get encrypted wallet data from storage
+   * Get active wallet entry
    */
-  getEncryptedWallet(): EncryptedData | null {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return null;
-
-    try {
-      return JSON.parse(stored) as EncryptedData;
-    } catch {
-      return null;
-    }
+  getActiveWalletEntry(): WalletEntry | null {
+    return getActiveWallet();
   }
 
   /**
-   * Save encrypted wallet to storage
+   * Save new encrypted wallet to storage
+   * Returns the new wallet entry
    */
-  saveEncryptedWallet(encryptedData: EncryptedData): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(encryptedData));
+  saveEncryptedWallet(
+    encryptedData: import("./encryption").EncryptedData,
+    name?: string
+  ): WalletEntry {
+    const wallet = addWallet(encryptedData, name);
     this._hasWallet.value = true;
+    return wallet;
+  }
+
+  /**
+   * Switch to a different wallet
+   */
+  switchWallet(walletId: string): void {
+    setActiveWalletId(walletId);
+    // Lock when switching wallets for security
+    this.lock();
   }
 
   /**
@@ -97,16 +114,17 @@ class SessionManager {
       return null;
     }
 
-    const encryptedData = this.getEncryptedWallet();
-    if (!encryptedData) {
+    const activeWallet = getActiveWallet();
+    if (!activeWallet) {
       return null;
     }
 
     try {
-      const mnemonic = await decryptWithPIN(encryptedData, pin);
+      const mnemonic = await decryptWithPIN(activeWallet.encryptedData, pin);
       this._isLocked.value = false;
       this._failedAttempts.value = 0;
       this._decryptedMnemonic = mnemonic;
+      this._activeWalletId = activeWallet.id;
       this.resetActivity();
       this.startAutoLockTimer();
       return mnemonic;
@@ -207,23 +225,15 @@ class SessionManager {
   }
 
   /**
-   * Delete wallet completely
+   * Delete all wallets completely
    */
   deleteWallet(): void {
-    // Overwrite before removing (best effort security)
-    localStorage.setItem(STORAGE_KEY, "0".repeat(1000));
-    localStorage.removeItem(STORAGE_KEY);
-
-    // Also remove legacy unencrypted mnemonic if exists
-    const legacyMnemonic = localStorage.getItem("mnemonic");
-    if (legacyMnemonic) {
-      localStorage.setItem("mnemonic", "0".repeat(legacyMnemonic.length));
-      localStorage.removeItem("mnemonic");
-    }
+    deleteAllWallets();
 
     this._hasWallet.value = false;
     this._isLocked.value = true;
     this._decryptedMnemonic = null;
+    this._activeWalletId = null;
     this._failedAttempts.value = 0;
   }
 
