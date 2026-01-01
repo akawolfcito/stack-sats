@@ -54,7 +54,8 @@ const handleInput = (index: number, event: Event) => {
   }
 
   // Emit complete when all digits are filled
-  if (fullPin.length === PIN_LENGTH && !fullPin.includes("")) {
+  const allFilled = digits.value.every((d) => d !== "");
+  if (fullPin.length === PIN_LENGTH && allFilled) {
     emit("complete", fullPin);
   }
 };
