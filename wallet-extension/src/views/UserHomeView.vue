@@ -1,15 +1,36 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { onBeforeMount, ref } from "vue";
+import { onBeforeMount, ref, watch } from "vue";
 import { generateInitialAccounts } from "../utils/accounts";
 import { type Account } from "../utils/types";
 import { sessionManager } from "../utils/security/session";
 import { secureLog } from "../utils/security/logger";
+import {
+  getSelectedNetwork,
+  setSelectedNetwork,
+  NETWORKS,
+  type NetworkName,
+} from "../utils/network";
 
 const router = useRouter();
 const userAccounts = ref<Account[]>([]);
 const accountIndexToDisplay = ref(0);
 const isLoading = ref(true);
+const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
+const currentMnemonic = ref<string | null>(null);
+
+async function loadAccounts(mnemonic: string, network: NetworkName) {
+  isLoading.value = true;
+  try {
+    const accounts = await generateInitialAccounts(mnemonic, 20, network);
+    userAccounts.value = accounts;
+    secureLog(`Accounts loaded for ${network}`);
+  } catch (error) {
+    secureLog("Failed to generate accounts", error);
+    router.push({ path: "/" });
+  }
+  isLoading.value = false;
+}
 
 onBeforeMount(async () => {
   // Check for encrypted wallet first
@@ -22,14 +43,8 @@ onBeforeMount(async () => {
     // Get mnemonic from session (already unlocked)
     const mnemonic = sessionManager.getMnemonic();
     if (mnemonic) {
-      try {
-        const accounts = await generateInitialAccounts(mnemonic);
-        userAccounts.value = accounts;
-        secureLog("Accounts loaded from encrypted wallet");
-      } catch (error) {
-        secureLog("Failed to generate accounts", error);
-        router.push({ path: "/" });
-      }
+      currentMnemonic.value = mnemonic;
+      await loadAccounts(mnemonic, selectedNetwork.value);
     } else {
       router.push({ path: "/unlock" });
     }
@@ -37,20 +52,20 @@ onBeforeMount(async () => {
     // Check for legacy unencrypted mnemonic
     const legacyMnemonic = localStorage.getItem("mnemonic");
     if (legacyMnemonic) {
-      try {
-        const accounts = await generateInitialAccounts(legacyMnemonic);
-        userAccounts.value = accounts;
-        secureLog("Accounts loaded from legacy wallet");
-      } catch (error) {
-        secureLog("Failed to generate accounts", error);
-        router.push({ path: "/" });
-      }
+      currentMnemonic.value = legacyMnemonic;
+      await loadAccounts(legacyMnemonic, selectedNetwork.value);
     } else {
       router.push({ path: "/" });
     }
   }
+});
 
-  isLoading.value = false;
+// Watch for network changes and regenerate accounts
+watch(selectedNetwork, async (newNetwork) => {
+  setSelectedNetwork(newNetwork);
+  if (currentMnemonic.value) {
+    await loadAccounts(currentMnemonic.value, newNetwork);
+  }
 });
 
 const handleOpenUserMenu = () => {
@@ -82,11 +97,18 @@ const truncateAddress = (address: string) => {
 
     <template v-else>
       <div class="user-page-header">
-        <select v-model="accountIndexToDisplay">
-          <option v-for="(account, index) in userAccounts" :key="index" :value="index">
-            Account {{ index + 1 }}
-          </option>
-        </select>
+        <div class="header-selects">
+          <select v-model="accountIndexToDisplay" class="account-select">
+            <option v-for="(account, index) in userAccounts" :key="index" :value="index">
+              Account {{ index + 1 }}
+            </option>
+          </select>
+          <select v-model="selectedNetwork" class="network-select">
+            <option v-for="(net, key) in NETWORKS" :key="key" :value="key">
+              {{ net.name }}
+            </option>
+          </select>
+        </div>
         <img
           class="laser-logo"
           @click="handleOpenUserMenu"
@@ -225,5 +247,23 @@ small {
 .address-copy.copied {
   color: #4ade80;
   background: rgba(74, 222, 128, 0.1);
+}
+
+.header-selects {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.account-select {
+  font-size: 0.9rem;
+}
+
+.network-select {
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  background: rgba(100, 108, 255, 0.2);
+  border-radius: 4px;
+  color: #646cff;
 }
 </style>
