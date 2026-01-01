@@ -41,24 +41,40 @@ function handleIsConnected() {
   console.log(response)
 }
 
-async function handleCallContract() {
-  // Build network config for Platform devnet
+// Helper to build Platform devnet network config
+function getPlatformDevnetNetwork() {
   const platformDevnetUrl = `https://api.platform.hiro.so/v1/ext/${
     import.meta.env.VITE_PLATFORM_HIRO_API_KEY
   }/stacks-blockchain-api`
 
+  return {
+    chainId: 2147483648, // devnet chain ID
+    client: {
+      baseUrl: platformDevnetUrl
+    }
+  }
+}
+
+async function handleCallContract() {
   const response = await request("stx_callContract", {
     // default contract address from devnet
     contract: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter",
     functionName: "increment",
     functionArgs: [],
-    network: {
-      chainId: 2147483648, // devnet chain ID
-      client: {
-        baseUrl: platformDevnetUrl
-      }
-    }
+    network: getPlatformDevnetNetwork()
   })
+  console.log("stx_callContract response:", response)
+}
+
+async function handleTransferStx() {
+  // Transfer 1 STX to another devnet wallet
+  const response = await request("stx_transferStx", {
+    recipient: "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", // wallet_2 from devnet
+    amount: "1000000", // 1 STX = 1,000,000 microSTX
+    memo: "Test transfer from Stack-SATs",
+    network: getPlatformDevnetNetwork()
+  })
+  console.log("stx_transferStx response:", response)
 }
 
 function handleDisconnect() {
@@ -95,6 +111,12 @@ let methodsArray = [
     name: "stx_callContract",
     description: "Calls `.counter` contract's `increment` function",
     function: handleCallContract,
+    link: "https://docs.hiro.so/stacks/connect/guides/broadcast-transactions#sign-and-broadcast-transactions"
+  },
+  {
+    name: "stx_transferStx",
+    description: "Transfers 1 STX to wallet_2 (devnet)",
+    function: handleTransferStx,
     link: "https://docs.hiro.so/stacks/connect/guides/broadcast-transactions#sign-and-broadcast-transactions"
   },
   {
