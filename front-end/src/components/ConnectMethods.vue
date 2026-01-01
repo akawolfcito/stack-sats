@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref, type Ref } from "vue"
+import { inject, ref, onMounted, watch, type Ref } from "vue"
 import { connect, disconnect, getLocalStorage, isConnected, request } from "@stacks/connect"
 import Button from "./ui/Button.vue"
 
@@ -18,12 +18,15 @@ const walletAddress = ref<string>("")
 // Fetch network info from wallet
 async function fetchWalletNetwork() {
   try {
+    console.log("[dApp] Fetching wallet network...")
     const response = await request("getAddresses", {})
-    console.log("Wallet getAddresses response:", response)
+    console.log("[dApp] getAddresses response:", response)
 
     if (response && response.network) {
       walletNetwork.value = response.network
-      console.log("Wallet network:", walletNetwork.value)
+      console.log("[dApp] Wallet network set to:", walletNetwork.value)
+    } else {
+      console.warn("[dApp] No network in response, response was:", response)
     }
 
     // Get STX address
@@ -31,12 +34,29 @@ async function fetchWalletNetwork() {
       const stxAddr = response.addresses.find((a: { symbol: string }) => a.symbol === "STX")
       if (stxAddr) {
         walletAddress.value = stxAddr.address
+        console.log("[dApp] Wallet address:", walletAddress.value)
       }
     }
   } catch (error) {
-    console.error("Failed to fetch wallet network:", error)
+    console.error("[dApp] Failed to fetch wallet network:", error)
   }
 }
+
+// Fetch network when component mounts if already connected
+onMounted(async () => {
+  if (isWalletConnected.value) {
+    console.log("[dApp] Already connected, fetching network...")
+    await fetchWalletNetwork()
+  }
+})
+
+// Also watch for connection changes
+watch(isWalletConnected, async (connected) => {
+  if (connected && !walletNetwork.value) {
+    console.log("[dApp] Connection changed, fetching network...")
+    await fetchWalletNetwork()
+  }
+})
 
 // Get network config - uses wallet network or falls back to Platform devnet
 function getNetworkConfig() {
