@@ -45,10 +45,17 @@ describe("Transfer Module", () => {
       expect(validateStxAddress(undefined as unknown as string, "testnet")).toBe(false);
     });
 
-    it("returns false for address with invalid characters", () => {
-      // 0, O, I, l are not valid in base58
-      expect(validateStxAddress("ST0PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "testnet")).toBe(false);
-      expect(validateStxAddress("STIOPQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "testnet")).toBe(false);
+    it("returns false for address with invalid c32 characters", () => {
+      // I, L, O, U are not valid in c32 (but 0 IS valid)
+      expect(validateStxAddress("STIPQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "testnet")).toBe(false); // has I
+      expect(validateStxAddress("STLPQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "testnet")).toBe(false); // has L
+      expect(validateStxAddress("STOPQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "testnet")).toBe(false); // has O
+      expect(validateStxAddress("STUPQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", "testnet")).toBe(false); // has U
+    });
+
+    it("returns true for address with 0 (zero is valid in c32)", () => {
+      // 0 is valid in c32 encoding
+      expect(validateStxAddress("ST2G0KVR849MZHJ6YB4DCN8K5THBAC4GM7GAKHSR4", "testnet")).toBe(true);
     });
   });
 
