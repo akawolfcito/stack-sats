@@ -94,6 +94,27 @@ export async function fetchStxBalance(
 }
 
 /**
+ * Fungible token balance type
+ */
+export interface FungibleTokenBalance {
+  balance: string;
+  total_sent: string;
+  total_received: string;
+}
+
+/**
+ * Fetch fungible tokens for an address
+ */
+export async function fetchFungibleTokens(
+  address: string,
+  network?: NetworkName
+): Promise<Record<string, FungibleTokenBalance> | null> {
+  const balances = await fetchAccountBalances(address, network);
+  if (!balances) return null;
+  return balances.fungible_tokens;
+}
+
+/**
  * Convert microSTX to STX (divide by 1,000,000)
  */
 export function microStxToStx(microStx: string | number): number {
