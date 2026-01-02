@@ -475,6 +475,13 @@ const closeReceiveModal = () => {
             >
               {{ truncateAddress(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '') }}
             </span>
+            <button
+              class="qr-btn"
+              @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '', 'Ordinals')"
+              title="Show QR code"
+            >
+              QR
+            </button>
             <span>0</span>
           </div>
         </div>
