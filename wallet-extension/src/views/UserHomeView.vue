@@ -13,10 +13,15 @@ import {
 } from "../utils/network";
 import {
   fetchStxBalance,
+  fetchFungibleTokens,
   formatStxBalance,
   microStxToStx,
   formatUsdValue,
 } from "../utils/balance";
+import {
+  fetchAllTokenInfo,
+  type TokenInfo,
+} from "../utils/tokens";
 import {
   getAccountCount,
   addAccount,
@@ -74,6 +79,11 @@ const accountNames = ref<Record<number, string>>({});
 const transactions = ref<Transaction[]>([]);
 const isLoadingTx = ref(false);
 const showAllTx = ref(false);
+
+// Token state (SIP-010)
+const tokens = ref<TokenInfo[]>([]);
+const isLoadingTokens = ref(false);
+const showTokens = ref(true);
 
 // Computed properties for balance display
 const formattedStxBalance = computed(() => formatStxBalance(stxBalanceMicro.value));
@@ -208,6 +218,27 @@ async function loadTransactions() {
   isLoadingTx.value = false;
 }
 
+async function loadTokens() {
+  const currentAccount = userAccounts.value[accountIndexToDisplay.value];
+  if (!currentAccount?.stxAddress) return;
+
+  isLoadingTokens.value = true;
+  try {
+    const fungibleTokens = await fetchFungibleTokens(currentAccount.stxAddress, selectedNetwork.value);
+    if (fungibleTokens && Object.keys(fungibleTokens).length > 0) {
+      const tokenInfos = await fetchAllTokenInfo(fungibleTokens, selectedNetwork.value);
+      // Filter out tokens with 0 balance
+      tokens.value = tokenInfos.filter(t => t.balance !== "0");
+    } else {
+      tokens.value = [];
+    }
+  } catch (error) {
+    secureLog("Failed to load tokens", error);
+    tokens.value = [];
+  }
+  isLoadingTokens.value = false;
+}
+
 function getStatusClass(status: TransactionStatus): string {
   switch (status) {
     case "success": return "tx-success";
@@ -223,7 +254,8 @@ function openExplorer(txId: string) {
 
 async function refreshBalance() {
   await loadBalance();
-  await loadTransactions();
+  loadTransactions(); // Load in background
+  loadTokens(); // Load in background
 }
 
 onBeforeMount(async () => {
@@ -243,9 +275,10 @@ onBeforeMount(async () => {
     if (mnemonic) {
       currentMnemonic.value = mnemonic;
       await loadAccounts(mnemonic, selectedNetwork.value);
-      // Load balance and transactions after accounts are loaded
+      // Load balance, transactions and tokens after accounts are loaded
       await loadBalance();
       loadTransactions(); // Don't await, load in background
+      loadTokens(); // Don't await, load in background
     } else {
       router.push({ path: "/unlock" });
     }
@@ -259,10 +292,12 @@ onBeforeMount(async () => {
 watch(selectedNetwork, async (newNetwork) => {
   setSelectedNetwork(newNetwork);
   transactions.value = []; // Clear transactions on network change
+  tokens.value = []; // Clear tokens on network change
   if (currentMnemonic.value) {
     await loadAccounts(currentMnemonic.value, newNetwork);
     await loadBalance();
     loadTransactions();
+    loadTokens();
   }
 });
 
@@ -270,8 +305,10 @@ watch(selectedNetwork, async (newNetwork) => {
 watch(accountIndexToDisplay, async (newIndex) => {
   localStorage.setItem(ACCOUNT_STORAGE_KEY, String(newIndex));
   transactions.value = []; // Clear transactions on account change
+  tokens.value = []; // Clear tokens on account change
   await loadBalance();
   loadTransactions();
+  loadTokens();
 });
 
 const handleOpenUserMenu = () => {
@@ -494,6 +531,54 @@ const closeReceiveModal = () => {
               QR
             </button>
             <span>0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIP-010 Tokens Section -->
+      <div class="page-bottom tokens-section">
+        <div class="tokens-header">
+          <small>Tokens ({{ tokens.length }})</small>
+          <button
+            v-if="tokens.length > 0 || isLoadingTokens"
+            class="toggle-tokens-btn"
+            @click="showTokens = !showTokens"
+          >
+            {{ showTokens ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+
+        <div v-if="showTokens">
+          <div v-if="isLoadingTokens" class="tokens-loading">
+            Loading tokens...
+          </div>
+
+          <div v-else-if="tokens.length === 0" class="tokens-empty">
+            No tokens found
+          </div>
+
+          <div v-else class="tokens-list">
+            <div
+              v-for="token in tokens"
+              :key="token.contractId"
+              class="token-item"
+              :title="token.contractId"
+            >
+              <div class="token-icon">
+                <img
+                  v-if="token.imageUri"
+                  :src="token.imageUri"
+                  :alt="token.symbol"
+                  @error="($event.target as HTMLImageElement).style.display = 'none'"
+                />
+                <span v-else class="token-icon-fallback">{{ token.symbol.charAt(0) }}</span>
+              </div>
+              <div class="token-info">
+                <span class="token-symbol">{{ token.symbol }}</span>
+                <span class="token-name">{{ token.name }}</span>
+              </div>
+              <span class="token-balance">{{ token.formattedBalance }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1014,5 +1099,113 @@ small {
 .send-btn:hover {
   background: #646cff;
   color: #fff;
+}
+
+/* Tokens Section Styles */
+.tokens-section {
+  margin-top: 16px;
+}
+
+.tokens-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.toggle-tokens-btn {
+  background: transparent;
+  border: none;
+  color: #646cff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.toggle-tokens-btn:hover {
+  color: #535bf2;
+}
+
+.tokens-loading,
+.tokens-empty {
+  text-align: center;
+  color: #8c877d;
+  padding: 16px;
+  font-size: 0.85rem;
+}
+
+.tokens-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.token-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(100, 108, 255, 0.05);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.token-item:hover {
+  background: rgba(100, 108, 255, 0.12);
+}
+
+.token-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(100, 108, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.token-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.token-icon-fallback {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #646cff;
+  text-transform: uppercase;
+}
+
+.token-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.token-symbol {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.token-name {
+  font-size: 0.7rem;
+  color: #8c877d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.token-balance {
+  font-family: monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4ade80;
+  flex-shrink: 0;
 }
 </style>
