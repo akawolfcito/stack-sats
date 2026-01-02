@@ -3,6 +3,10 @@
  * Handles message relay between content scripts and popup
  */
 
+// Enable side panel to open when clicking extension icon (while holding Alt/Option)
+// Users can also right-click the icon and select "Open side panel"
+chrome.sidePanel?.setOptions({ enabled: true }).catch(() => {});
+
 // Domain whitelist - only localhost allowed for development
 const ALLOWED_ORIGINS = [
   "http://localhost",

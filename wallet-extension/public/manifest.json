@@ -6,7 +6,10 @@
   "action": {
     "default_popup": "index.html"
   },
-  "permissions": ["scripting", "tabs", "activeTab", "storage"],
+  "permissions": ["scripting", "tabs", "activeTab", "storage", "sidePanel"],
+  "side_panel": {
+    "default_path": "index.html"
+  },
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none';"
   },
