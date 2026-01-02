@@ -103,15 +103,15 @@ onBeforeMount(async () => {
     }
   }
 
-  // Generate address
+  // Generate address - need to generate enough accounts to reach the selected index
   const mnemonic = sessionManager.getMnemonic();
   if (mnemonic) {
     const { generateInitialAccounts } = await import("@/utils/accounts");
-    const accounts = await generateInitialAccounts(mnemonic, 1, network.value);
+    // Generate accountIndex + 1 accounts to ensure we have the selected account
+    const numAccounts = accountIndex.value + 1;
+    const accounts = await generateInitialAccounts(mnemonic, numAccounts, network.value);
     if (accounts[accountIndex.value]) {
       senderAddress.value = accounts[accountIndex.value].stxAddress;
-    } else if (accounts[0]) {
-      senderAddress.value = accounts[0].stxAddress;
     }
   }
 
