@@ -575,10 +575,14 @@ function truncateAddress(address: string): string {
 .amount-input-wrapper {
   display: flex;
   gap: 8px;
+  align-items: stretch;
+  width: 100%;
 }
 
 .amount-input {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 100px;
+  width: 100%;
 }
 
 .max-btn {
@@ -589,6 +593,8 @@ function truncateAddress(address: string): string {
   color: #646cff;
   font-weight: 600;
   cursor: pointer;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .max-btn:hover {
