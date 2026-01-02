@@ -31,7 +31,7 @@ export const NETWORKS: Record<
     name: "Testnet",
     config: STACKS_TESTNET,
     addressPrefix: "ST",
-    explorerUrl: "https://explorer.hiro.so/?chain=testnet",
+    explorerUrl: "https://explorer.hiro.so",
   },
   devnet: {
     name: "Devnet",
