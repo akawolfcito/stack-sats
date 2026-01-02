@@ -92,6 +92,8 @@ export async function transferStx(params: TransferParams): Promise<TransferResul
 
 /**
  * Validate STX address format
+ * Stacks addresses use c32check encoding (not base58)
+ * c32 alphabet: 0123456789ABCDEFGHJKMNPQRSTVWXYZ (no I, L, O, U)
  */
 export function validateStxAddress(address: string, network: NetworkName): boolean {
   if (!address || typeof address !== "string") {
@@ -99,10 +101,10 @@ export function validateStxAddress(address: string, network: NetworkName): boole
   }
 
   const prefix = NETWORKS[network].addressPrefix;
-  const trimmed = address.trim();
+  const trimmed = address.trim().toUpperCase();
 
   // STX addresses are typically 41-42 characters
-  // Format: [SP|ST] + 33-34 alphanumeric characters
+  // Format: [SP|ST] + 39-40 c32 characters
   if (trimmed.length < 39 || trimmed.length > 42) {
     return false;
   }
@@ -111,9 +113,10 @@ export function validateStxAddress(address: string, network: NetworkName): boole
     return false;
   }
 
-  // Check for valid base58 characters (no 0, O, I, l)
-  const validChars = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/;
-  return validChars.test(trimmed.slice(2));
+  // Check for valid c32 characters (no I, L, O, U)
+  // c32 alphabet: 0123456789ABCDEFGHJKMNPQRSTVWXYZ
+  const validC32Chars = /^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]+$/;
+  return validC32Chars.test(trimmed.slice(2));
 }
 
 /**
