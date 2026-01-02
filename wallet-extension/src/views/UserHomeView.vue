@@ -277,6 +277,13 @@ const handleOpenUserMenu = () => {
   router.push({ path: "/usermenu" });
 };
 
+// Open wallet in full-page tab
+const openFullPage = () => {
+  const url = chrome.runtime.getURL("index.html");
+  chrome.tabs.create({ url });
+  window.close();
+};
+
 const copiedAddress = ref<string | null>(null);
 
 const copyToClipboard = async (address: string) => {
@@ -332,13 +339,22 @@ const truncateAddress = (address: string) => {
             </option>
           </select>
         </div>
-        <img
-          class="laser-logo"
-          @click="handleOpenUserMenu"
-          src="/ironvault.png"
-          width="30px"
-          alt="laser-logo"
-        />
+        <div class="header-actions">
+          <button
+            class="expand-btn"
+            @click="openFullPage"
+            title="Open in full page"
+          >
+            ⛶
+          </button>
+          <img
+            class="laser-logo"
+            @click="handleOpenUserMenu"
+            src="/ironvault.png"
+            width="30px"
+            alt="laser-logo"
+          />
+        </div>
       </div>
 
       <div class="page-top">
@@ -870,5 +886,33 @@ small {
 
 .tx-status.tx-failed {
   color: #f87171;
+}
+
+/* Header actions (expand + menu) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expand-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid rgba(100, 108, 255, 0.3);
+  border-radius: 6px;
+  color: #646cff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.expand-btn:hover {
+  background: rgba(100, 108, 255, 0.15);
+  border-color: #646cff;
 }
 </style>
