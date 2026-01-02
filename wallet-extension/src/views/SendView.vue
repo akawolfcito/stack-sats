@@ -5,7 +5,7 @@ import PinInput from "@/components/PinInput.vue";
 import { sessionManager } from "@/utils/security/session";
 import { getPrivateKey } from "@/utils/accounts";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
-import { fetchBalance } from "@/utils/balance";
+import { fetchStxBalance } from "@/utils/balance";
 import {
   transferStx,
   validateStxAddress,
@@ -123,8 +123,8 @@ async function loadBalance() {
   if (!senderAddress.value) return;
 
   try {
-    const result = await fetchBalance(senderAddress.value, network.value);
-    balanceMicroStx.value = result.stx.balance;
+    const result = await fetchStxBalance(senderAddress.value, network.value);
+    balanceMicroStx.value = result || "0";
   } catch {
     balanceMicroStx.value = "0";
   }
