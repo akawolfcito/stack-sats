@@ -92,6 +92,22 @@ const formattedParams = computed(() => {
 
 secureLog("Incoming request", { method: props.payload.method, tabId: props.tabId });
 
+// Close window/tab based on context (popup vs full-page)
+function closeWindow() {
+  // Full-page mode: viewport is larger than popup dimensions
+  if (window.innerWidth > 400 || window.innerHeight > 650) {
+    chrome.tabs.getCurrent((tab) => {
+      if (tab?.id) {
+        chrome.tabs.remove(tab.id);
+      } else {
+        window.close();
+      }
+    });
+  } else {
+    window.close();
+  }
+}
+
 async function handlePinComplete(pin: string) {
   const success = await sessionManager.unlock(pin);
   if (success) {
@@ -203,12 +219,12 @@ async function handleConfirm() {
   }
 
   // Delay to ensure message is sent before closing
-  setTimeout(() => window.close(), 150);
+  setTimeout(() => closeWindow(), 150);
 }
 
 function handleReject(reason?: string) {
   if (!props.tabId) {
-    window.close();
+    closeWindow();
     return;
   }
 
@@ -221,7 +237,7 @@ function handleReject(reason?: string) {
     id: props.payload.id,
   });
 
-  window.close();
+  closeWindow();
 }
 </script>
 
