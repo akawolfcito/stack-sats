@@ -249,16 +249,8 @@ onBeforeMount(async () => {
       router.push({ path: "/unlock" });
     }
   } else {
-    // Check for legacy unencrypted mnemonic
-    const legacyMnemonic = localStorage.getItem("mnemonic");
-    if (legacyMnemonic) {
-      currentMnemonic.value = legacyMnemonic;
-      await loadAccounts(legacyMnemonic, selectedNetwork.value);
-      await loadBalance();
-      loadTransactions();
-    } else {
-      router.push({ path: "/" });
-    }
+    // No wallet exists, redirect to start
+    router.push({ path: "/" });
   }
 });
 

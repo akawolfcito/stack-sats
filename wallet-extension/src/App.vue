@@ -13,15 +13,11 @@ const tabId = ref<string>("");
 const origin = ref<string>("");
 const hasWallet = ref(false);
 const isLocked = ref(true);
-const hasLegacyWallet = ref(false);
 
 // Check wallet state
 const checkWalletState = () => {
   hasWallet.value = sessionManager.hasWallet;
   isLocked.value = sessionManager.isLocked;
-
-  // Check for legacy unencrypted wallet
-  hasLegacyWallet.value = localStorage.getItem("mnemonic") !== null;
 };
 
 // Watch for session lock changes
@@ -67,12 +63,6 @@ onBeforeMount(() => {
 // Confirmation component handles its own PIN unlock flow
 const canShowConfirmation = () => {
   if (!payload.value) return false;
-
-  // Support legacy unencrypted wallets during transition
-  if (hasLegacyWallet.value) return true;
-
-  // For encrypted wallets, show confirmation even when locked
-  // Confirmation component has built-in PIN input
   return hasWallet.value;
 };
 </script>
