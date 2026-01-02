@@ -240,11 +240,13 @@ export function truncateAddress(address: string, chars: number = 4): string {
  */
 export function getExplorerUrl(txId: string, network?: NetworkName): string {
   const selectedNetwork = network || getSelectedNetwork();
-  const baseUrl =
-    selectedNetwork === "mainnet"
-      ? "https://explorer.stacks.co"
-      : "https://explorer.stacks.co";
 
+  // Ensure txId has 0x prefix
+  const formattedTxId = txId.startsWith("0x") ? txId : `0x${txId}`;
+
+  // Build URL with proper format: /txid/0x...?chain=network
+  const baseUrl = "https://explorer.hiro.so";
   const networkParam = selectedNetwork === "mainnet" ? "" : `?chain=${selectedNetwork}`;
-  return `${baseUrl}/txid/${txId}${networkParam}`;
+
+  return `${baseUrl}/txid/${formattedTxId}${networkParam}`;
 }

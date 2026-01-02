@@ -63,7 +63,10 @@ const explorerUrl = computed(() => {
   if (!txid.value) return "";
   const base = NETWORKS[network.value].explorerUrl;
   if (!base) return "";
-  return `${base}/txid/${txid.value}`;
+  // Ensure txid has 0x prefix and add chain param for non-mainnet
+  const formattedTxId = txid.value.startsWith("0x") ? txid.value : `0x${txid.value}`;
+  const chainParam = network.value === "mainnet" ? "" : `?chain=${network.value}`;
+  return `${base}/txid/${formattedTxId}${chainParam}`;
 });
 const truncatedRecipient = computed(() => {
   if (recipient.value.length <= 20) return recipient.value;
