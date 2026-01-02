@@ -29,6 +29,11 @@ const router = createRouter({
       name: "add-wallet",
       component: () => import("../views/AddWalletView.vue"),
     },
+    {
+      path: "/send",
+      name: "send",
+      component: () => import("../views/SendView.vue"),
+    },
   ],
 });
 
