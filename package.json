@@ -6,6 +6,8 @@
     "dev": "pnpm --filter wallet-extension dev",
     "build:all": "pnpm -r build",
     "dev:frontend": "pnpm --filter front-end dev",
-    "test": "pnpm --filter clarity test"
+    "test": "pnpm --filter clarity test",
+    "test:wallet": "pnpm --filter wallet-extension test",
+    "test:all": "pnpm --filter clarity test && pnpm --filter wallet-extension test"
   }
 }
