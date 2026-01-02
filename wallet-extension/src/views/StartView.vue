@@ -145,17 +145,9 @@ const handleBack = () => {
 };
 
 onBeforeMount(() => {
-  // Check if user already has a wallet (encrypted or legacy)
+  // Check if user already has a wallet
   if (sessionManager.hasWallet) {
     router.push({ path: "/unlock" });
-    return;
-  }
-
-  // Check for legacy unencrypted mnemonic
-  const legacyMnemonic = localStorage.getItem("mnemonic");
-  if (legacyMnemonic) {
-    // Redirect to migration flow or user page
-    router.push({ path: "/user" });
   }
 });
 </script>

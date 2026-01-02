@@ -9,7 +9,6 @@ import { secureLog } from "../security/logger";
 // Storage keys
 const WALLETS_KEY = "wallets";
 const ACTIVE_WALLET_KEY = "active_wallet_id";
-const LEGACY_WALLET_KEY = "wallet_encrypted";
 
 /**
  * Wallet entry stored in localStorage
@@ -180,47 +179,6 @@ export function getWalletCount(): number {
 }
 
 /**
- * Migrate from legacy single wallet format to multi-wallet format
- * This handles the transition from wallet_encrypted to the new wallets array
- */
-export function migrateLegacyWallet(): boolean {
-  // Check if already migrated
-  if (getWallets().length > 0) {
-    return false;
-  }
-
-  // Check for legacy wallet
-  const legacyData = localStorage.getItem(LEGACY_WALLET_KEY);
-  if (!legacyData) {
-    return false;
-  }
-
-  try {
-    const encryptedData = JSON.parse(legacyData) as EncryptedData;
-
-    // Create wallet entry from legacy data
-    const migratedWallet: WalletEntry = {
-      id: generateWalletId(),
-      name: "Wallet 1",
-      encryptedData,
-      createdAt: Date.now(),
-    };
-
-    saveWallets([migratedWallet]);
-    setActiveWalletId(migratedWallet.id);
-
-    // Remove legacy key after successful migration
-    localStorage.removeItem(LEGACY_WALLET_KEY);
-
-    secureLog("Legacy wallet migrated", { id: migratedWallet.id });
-    return true;
-  } catch {
-    secureLog("Legacy wallet migration failed");
-    return false;
-  }
-}
-
-/**
  * Import a wallet from backup
  * Returns: "added" if new, "replaced" if existing ID was replaced, null if failed
  */
@@ -267,21 +225,13 @@ export function walletExists(id: string): boolean {
  * Delete all wallets (used when user wants to start fresh)
  */
 export function deleteAllWallets(): void {
-  // Overwrite before removing
+  // Overwrite before removing (security measure)
   const wallets = getWallets();
   if (wallets.length > 0) {
     localStorage.setItem(WALLETS_KEY, "0".repeat(1000));
   }
   localStorage.removeItem(WALLETS_KEY);
   localStorage.removeItem(ACTIVE_WALLET_KEY);
-  localStorage.removeItem(LEGACY_WALLET_KEY);
-
-  // Also remove legacy unencrypted mnemonic if exists
-  const legacyMnemonic = localStorage.getItem("mnemonic");
-  if (legacyMnemonic) {
-    localStorage.setItem("mnemonic", "0".repeat(legacyMnemonic.length));
-    localStorage.removeItem("mnemonic");
-  }
 
   secureLog("All wallets deleted");
 }

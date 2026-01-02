@@ -8,7 +8,6 @@ import { decryptWithPIN, isValidPIN } from "./encryption";
 import {
   getActiveWallet,
   hasWallets,
-  migrateLegacyWallet,
   deleteAllWallets,
   addWallet,
   setActiveWalletId,
@@ -34,8 +33,6 @@ class SessionManager {
   private _activeWalletId: string | null = null;
 
   constructor() {
-    // Migrate legacy wallet format if needed
-    migrateLegacyWallet();
     this.checkWalletExists();
     this.setupActivityListeners();
   }
