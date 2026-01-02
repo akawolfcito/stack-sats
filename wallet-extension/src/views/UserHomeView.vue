@@ -278,6 +278,10 @@ const handleOpenUserMenu = () => {
   router.push({ path: "/usermenu" });
 };
 
+const handleSend = () => {
+  router.push({ path: "/send" });
+};
+
 // Open wallet in full-page tab
 const openFullPage = () => {
   const url = chrome.runtime.getURL("index.html");
@@ -421,6 +425,13 @@ const closeReceiveModal = () => {
               title="Show QR code"
             >
               QR
+            </button>
+            <button
+              class="send-btn"
+              @click="handleSend"
+              title="Send STX"
+            >
+              Send
             </button>
             <span class="balance-value">{{ formattedStxBalance }}</span>
           </div>
@@ -985,5 +996,23 @@ small {
 .qr-btn:hover {
   background: rgba(100, 108, 255, 0.15);
   border-color: #646cff;
+}
+
+.send-btn {
+  padding: 2px 8px;
+  background: rgba(100, 108, 255, 0.2);
+  border: 1px solid #646cff;
+  border-radius: 4px;
+  color: #646cff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.send-btn:hover {
+  background: #646cff;
+  color: #fff;
 }
 </style>
