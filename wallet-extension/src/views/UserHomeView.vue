@@ -35,6 +35,7 @@ import {
   type Transaction,
   type TransactionStatus,
 } from "../utils/transactions";
+import ReceiveModal from "../components/ReceiveModal.vue";
 
 const router = useRouter();
 const userAccounts = ref<Account[]>([]);
@@ -301,6 +302,21 @@ const copyToClipboard = async (address: string) => {
 const truncateAddress = (address: string) => {
   return address.slice(0, 7) + "..." + address.slice(-7);
 };
+
+// Receive modal state
+const showReceiveModal = ref(false);
+const receiveAddress = ref("");
+const receiveType = ref("");
+
+const openReceiveModal = (address: string, type: string) => {
+  receiveAddress.value = address;
+  receiveType.value = type;
+  showReceiveModal.value = true;
+};
+
+const closeReceiveModal = () => {
+  showReceiveModal.value = false;
+};
 </script>
 
 <template>
@@ -399,6 +415,13 @@ const truncateAddress = (address: string) => {
                 ? '✓ Copied!'
                 : truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}
             </span>
+            <button
+              class="qr-btn"
+              @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')"
+              title="Show QR code"
+            >
+              QR
+            </button>
             <span class="balance-value">{{ formattedStxBalance }}</span>
           </div>
           <div class="assets-display-row">
@@ -413,6 +436,13 @@ const truncateAddress = (address: string) => {
                 ? '✓ Copied!'
                 : truncateAddress(userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || '') }}
             </span>
+            <button
+              class="qr-btn"
+              @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || '', 'BTC')"
+              title="Show QR code"
+            >
+              QR
+            </button>
             <span>0</span>
           </div>
           <div class="assets-display-row">
@@ -427,6 +457,13 @@ const truncateAddress = (address: string) => {
                 ? '✓ Copied!'
                 : truncateAddress(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '') }}
             </span>
+            <button
+              class="qr-btn"
+              @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '', 'Taproot')"
+              title="Show QR code"
+            >
+              QR
+            </button>
             <span>0</span>
           </div>
           <div class="assets-display-row">
@@ -515,6 +552,14 @@ const truncateAddress = (address: string) => {
         </div>
       </div>
     </template>
+
+    <!-- Receive Modal -->
+    <ReceiveModal
+      :visible="showReceiveModal"
+      :address="receiveAddress"
+      :type="receiveType"
+      @close="closeReceiveModal"
+    />
   </section>
 </template>
 
@@ -912,6 +957,25 @@ small {
 }
 
 .expand-btn:hover {
+  background: rgba(100, 108, 255, 0.15);
+  border-color: #646cff;
+}
+
+/* QR button in assets rows */
+.qr-btn {
+  padding: 2px 6px;
+  background: transparent;
+  border: 1px solid rgba(100, 108, 255, 0.3);
+  border-radius: 4px;
+  color: #646cff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.qr-btn:hover {
   background: rgba(100, 108, 255, 0.15);
   border-color: #646cff;
 }
