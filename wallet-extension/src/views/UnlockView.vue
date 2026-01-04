@@ -53,12 +53,12 @@ const handleCancelDelete = () => {
   pinInputRef.value?.focus();
 };
 
-const handleConfirmDelete = () => {
+const handleConfirmDelete = async () => {
   if (deleteConfirmText.value.toUpperCase() !== "DELETE") {
     return;
   }
 
-  sessionManager.deleteWallet();
+  await sessionManager.deleteWalletAsync();
   secureLog("Wallet deleted");
   router.push({ path: "/" });
 };
@@ -153,22 +153,29 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding: 20px;
+  padding: var(--space-lg);
 }
 
 .page-top {
   text-align: center;
-  margin-bottom: 32px;
+  padding-top: var(--space-3xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.page-top img {
+  margin-bottom: var(--space-lg);
 }
 
 .page-top h1 {
-  font-weight: 900;
-  margin: 16px 0 8px;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-2xl);
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-primary);
 }
 
 .page-top p {
-  color: #888;
-  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
   margin: 0;
 }
 
@@ -177,21 +184,22 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-xl);
 }
 
 .btn-link {
   background: none;
   border: none;
-  color: #646cff;
-  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  text-decoration: underline;
-  padding: 8px;
+  text-decoration: none;
+  padding: var(--space-sm);
+  width: auto;
 }
 
 .btn-link:hover:not(:disabled) {
-  color: #535bf2;
+  color: var(--color-accent-primary);
 }
 
 .btn-link:disabled {
@@ -200,102 +208,66 @@ onMounted(() => {
 }
 
 .loading-text {
-  color: #888;
-  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
   margin: 0;
 }
 
 .delete-warning {
-  background: rgba(255, 68, 68, 0.1);
-  border: 1px solid rgba(255, 68, 68, 0.3);
-  border-radius: 8px;
-  padding: 16px;
+  background: var(--color-error-muted);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
   text-align: center;
   width: 100%;
 }
 
 .delete-warning strong {
-  color: #ff4444;
-  font-size: 1.1rem;
+  color: var(--color-error);
+  font-size: var(--font-size-lg);
 }
 
 .delete-warning p {
-  margin: 12px 0 0;
-  font-size: 0.875rem;
-  color: #888;
-  line-height: 1.4;
+  margin: var(--space-md) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
 }
 
 .delete-confirm-input {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .delete-confirm-input label {
-  font-size: 0.875rem;
-  color: #888;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .confirm-input {
   width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  border: 2px solid #444;
-  border-radius: 8px;
-  background: #1a1a1a;
-  color: #fff;
+  padding: var(--space-lg);
+  font-size: var(--font-size-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 2px;
+  height: auto;
 }
 
 .confirm-input:focus {
   outline: none;
-  border-color: #ff4444;
+  border-color: var(--color-error);
 }
 
 .button-group {
   display: flex;
-  gap: 12px;
+  gap: var(--space-md);
   width: 100%;
-}
-
-.btn-secondary {
-  flex: 1;
-  background: transparent;
-  color: #888;
-  border: 1px solid #444;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.btn-secondary:hover {
-  border-color: #666;
-  color: #fff;
-}
-
-.btn-danger {
-  flex: 1;
-  background: #ff4444;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #ff2222;
-}
-
-.btn-danger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>

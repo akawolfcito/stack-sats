@@ -102,7 +102,7 @@ async function handlePinConfirm(enteredPin: string) {
     const encryptedData = await encryptWithPIN(mnemonic.value, pin.value);
 
     // Save as new wallet with name
-    sessionManager.saveEncryptedWallet(encryptedData, walletName.value.trim());
+    await sessionManager.saveEncryptedWalletAsync(encryptedData, walletName.value.trim());
 
     // Unlock session with new wallet
     await sessionManager.unlock(pin.value);
@@ -261,7 +261,7 @@ function handleStepBack() {
 
 <style scoped>
 .add-wallet-page {
-  padding: 1rem;
+  padding: var(--space-lg);
   max-width: 360px;
   margin: 0 auto;
 }
@@ -269,22 +269,30 @@ function handleStepBack() {
 .page-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
 }
 
 .page-header h2 {
   margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   flex: 1;
+  text-align: center;
 }
 
 .back-btn {
   background: none;
   border: none;
-  color: #5546ff;
+  color: var(--color-text-primary);
   cursor: pointer;
-  font-size: 1rem;
-  padding: 0.5rem;
+  font-size: var(--font-size-base);
+  padding: var(--space-sm);
+  width: auto;
+}
+
+.back-btn:hover {
+  opacity: 0.7;
 }
 
 .page-content {
@@ -294,60 +302,20 @@ function handleStepBack() {
 .step-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-lg);
 }
 
 .subtitle {
-  color: #888;
+  color: var(--color-text-secondary);
   text-align: center;
   margin: 0;
-}
-
-.btn-primary {
-  background: #646cff;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #535bf2;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: transparent;
-  color: #888;
-  border: 1px solid #444;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  border-color: #666;
-  color: #fff;
-}
-
-.btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  font-size: var(--font-size-sm);
 }
 
 .button-group {
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
 }
 
 .button-group .btn-secondary {
@@ -359,81 +327,77 @@ function handleStepBack() {
 }
 
 .mnemonic-warning {
-  background: rgba(255, 170, 0, 0.1);
-  border: 1px solid rgba(255, 170, 0, 0.3);
-  border-radius: 8px;
-  padding: 12px;
+  background: var(--color-warning-muted);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
   text-align: center;
 }
 
 .mnemonic-warning strong {
-  color: #ffaa00;
+  color: var(--color-warning);
+  font-size: var(--font-size-base);
 }
 
 .mnemonic-warning p {
-  margin: 8px 0 0;
-  font-size: 0.85rem;
-  color: #888;
+  margin: var(--space-sm) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .mnemonic-display {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  background: #1a1a1a;
-  padding: 16px;
-  border-radius: 8px;
+  gap: var(--space-sm);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
 }
 
 .mnemonic-word {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: monospace;
-  font-size: 0.9rem;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
 }
 
 .word-number {
-  color: #666;
-  font-size: 0.75rem;
-  min-width: 20px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  min-width: 18px;
 }
 
 .word-text {
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 .input-label {
-  color: #888;
-  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .name-input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  background: #1a1a1a;
-  color: #fff;
-  font-size: 1rem;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
   box-sizing: border-box;
+  height: auto;
 }
 
 .name-input:focus {
   outline: none;
-  border-color: #5546ff;
-}
-
-.error-text {
-  color: #ff4444;
-  font-size: 0.875rem;
-  text-align: center;
-  margin: 0;
+  border-color: var(--color-accent-primary);
 }
 
 .loading-text {
-  color: #888;
-  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
   text-align: center;
   margin: 0;
 }
