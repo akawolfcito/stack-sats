@@ -3,6 +3,9 @@
 **Stacks Wallet Browser Extension**
 **Version:** 1.0.0
 
+> **Homepage URL:** https://OWNER.github.io/stack-sats/
+> (Replace OWNER with your GitHub username after deploying)
+
 ## Security Model
 
 ### Threat Model

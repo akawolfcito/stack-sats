@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - Stacks Wallet</title>
+  <meta name="description" content="Privacy Policy for Stacks Wallet browser extension. Learn how we protect your data.">
+  <link rel="icon" type="image/png" href="icon.png">
+  <style>
+    :root {
+      --primary: #646cff;
+      --bg: #1a1a1a;
+      --surface: #242424;
+      --text: #ffffff;
+      --text-muted: #888888;
+      --border: #333333;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    nav {
+      margin-bottom: 40px;
+    }
+    nav a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .updated {
+      color: var(--text-muted);
+      margin-bottom: 30px;
+    }
+    h2 {
+      font-size: 1.3rem;
+      margin: 35px 0 15px;
+      color: var(--primary);
+    }
+    p, li {
+      color: var(--text-muted);
+      margin-bottom: 15px;
+    }
+    ul, ol {
+      padding-left: 25px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+    th {
+      background: var(--surface);
+      color: var(--text);
+    }
+    td {
+      color: var(--text-muted);
+    }
+    .highlight-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 25px 0;
+    }
+    .highlight-box h3 {
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    .limited-use {
+      background: #1a2f1a;
+      border: 1px solid #2d5a2d;
+      border-radius: 8px;
+      padding: 25px;
+      margin: 30px 0;
+    }
+    .limited-use h3 {
+      color: #4ade80;
+      margin-bottom: 15px;
+    }
+    .warning {
+      background: #3d2f00;
+      border: 1px solid #665200;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+    .warning strong {
+      color: #ffd700;
+    }
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    strong {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">&larr; Back to Home</a>
+    </nav>
+
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last Updated: January 2025</p>
+
+    <!-- LIMITED USE DISCLOSURE - Required by Chrome Web Store -->
+    <div class="limited-use">
+      <h3>Google API Services User Data Policy Compliance</h3>
+      <p>
+        <strong>Stacks Wallet's use and transfer of information received from Google APIs adheres to the
+        <a href="https://developer.chrome.com/docs/webstore/program-policies/limited-use/" target="_blank" style="color: #4ade80;">
+        Chrome Web Store User Data Policy</a>, including the Limited Use requirements.</strong>
+      </p>
+      <p>Specifically:</p>
+      <ul>
+        <li><strong>We do NOT collect or transmit user data to external servers.</strong></li>
+        <li>All data remains locally on the user's device.</li>
+        <li>We do not sell, share, or transfer user data to third parties.</li>
+        <li>We do not use user data for advertising or marketing purposes.</li>
+        <li>We do not use user data for creditworthiness or lending purposes.</li>
+      </ul>
+    </div>
+
+    <h2>Overview</h2>
+    <p>
+      Stacks Wallet is a browser extension that enables users to manage Stacks blockchain wallets,
+      view token balances, and authorize transactions for decentralized applications (dApps).
+    </p>
+
+    <div class="highlight-box">
+      <h3>Key Privacy Commitment</h3>
+      <p>
+        <strong>We do NOT collect, transmit, or store any personal data on external servers.</strong>
+        All wallet data remains exclusively in your browser's local storage under your control.
+      </p>
+    </div>
+
+    <h2>Data Storage</h2>
+    <p>The following data is stored locally on your device using Chrome's secure storage API:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data Type</th>
+          <th>Storage Location</th>
+          <th>Encryption</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Mnemonic seed phrase</td>
+          <td>chrome.storage.local (local only)</td>
+          <td>AES-256-GCM with PBKDF2</td>
+        </tr>
+        <tr>
+          <td>Wallet addresses</td>
+          <td>chrome.storage.local (local only)</td>
+          <td>Not encrypted (public data)</td>
+        </tr>
+        <tr>
+          <td>Network preferences</td>
+          <td>chrome.storage.local (local only)</td>
+          <td>Not encrypted</td>
+        </tr>
+        <tr>
+          <td>Transaction history</td>
+          <td>Not stored</td>
+          <td>Fetched on-demand</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Encryption Details</h2>
+    <p>Your seed phrase is protected using industry-standard encryption:</p>
+    <ul>
+      <li><strong>Algorithm:</strong> AES-256-GCM (authenticated encryption)</li>
+      <li><strong>Key Derivation:</strong> PBKDF2 with SHA-256, 100,000 iterations</li>
+      <li><strong>Salt:</strong> 16 bytes, cryptographically random per wallet</li>
+      <li><strong>IV:</strong> 12 bytes, cryptographically random per encryption</li>
+    </ul>
+
+    <h2>External Communications</h2>
+    <p>The extension communicates only with the following services:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Purpose</th>
+          <th>Data Sent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Hiro Stacks API (api.hiro.so)</td>
+          <td>Fetch blockchain data</td>
+          <td>Wallet addresses only (public)</td>
+        </tr>
+        <tr>
+          <td>Stacks blockchain nodes</td>
+          <td>Broadcast transactions</td>
+          <td>Signed transaction data</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>No personal information is transmitted in these requests.</strong></p>
+
+    <h2>Permissions Used</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Permission</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>storage</td>
+          <td>Store encrypted wallet data locally</td>
+        </tr>
+        <tr>
+          <td>scripting</td>
+          <td>Inject wallet provider for dApp communication</td>
+        </tr>
+        <tr>
+          <td>tabs</td>
+          <td>Route responses to requesting tabs</td>
+        </tr>
+        <tr>
+          <td>activeTab</td>
+          <td>Validate origin of connection requests</td>
+        </tr>
+        <tr>
+          <td>sidePanel</td>
+          <td>Provide persistent wallet view option</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Host Permissions</h2>
+    <p>The extension requests access to HTTPS websites to enable dApp connections:</p>
+    <ul>
+      <li><strong>https://*/*</strong> - Required to inject wallet provider on any dApp the user visits</li>
+      <li><strong>localhost</strong> - Development and testing</li>
+      <li><strong>api.hiro.so</strong> - Blockchain API access</li>
+    </ul>
+
+    <div class="highlight-box">
+      <h3>Single Purpose Declaration</h3>
+      <p>
+        This extension's single purpose is to enable users to manage Stacks blockchain wallets and
+        interact with decentralized applications. The broad host permission (https://*/*) is necessary
+        because users may connect to any legitimate Stacks dApp. The extension:
+      </p>
+      <ul>
+        <li>Does NOT read or collect browsing history</li>
+        <li>Does NOT track user behavior across websites</li>
+        <li>Does NOT inject content unless the user initiates a wallet connection</li>
+        <li>Only responds to explicit wallet requests from dApps</li>
+      </ul>
+    </div>
+
+    <h2>What We Do NOT Do</h2>
+    <ul>
+      <li>We do NOT collect analytics or telemetry</li>
+      <li>We do NOT track your browsing history</li>
+      <li>We do NOT share any data with third parties</li>
+      <li>We do NOT store your seed phrase on any server</li>
+      <li>We do NOT have access to your wallet or funds</li>
+      <li>We do NOT use your data for advertising</li>
+    </ul>
+
+    <h2>Data Deletion</h2>
+    <p>You can delete all wallet data at any time:</p>
+    <ol>
+      <li>Open the extension</li>
+      <li>Go to Settings (menu icon)</li>
+      <li>Select "Delete Wallet"</li>
+    </ol>
+    <p>This permanently removes all stored data from your browser.</p>
+
+    <div class="warning">
+      <strong>Educational Use Notice:</strong> This extension is provided for educational purposes.
+      For managing significant funds, we recommend production-grade wallets like Leather or Xverse.
+    </div>
+
+    <h2>Open Source</h2>
+    <p>
+      This extension is open source. You can review the code at:<br>
+      <strong>NEEDS_INPUT:</strong> <a href="https://github.com/NEEDS_INPUT/stack-sats" target="_blank">GitHub Repository</a>
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      For privacy concerns or questions:<br>
+      <strong>NEEDS_INPUT:</strong> <a href="mailto:NEEDS_INPUT@example.com">NEEDS_INPUT@example.com</a>
+    </p>
+
+    <h2>Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. Changes will be posted on this page
+      with an updated "Last Updated" date.
+    </p>
+
+    <footer>
+      <p>
+        <a href="index.html">Home</a> |
+        <a href="support.html">Support</a> |
+        <a href="https://github.com/NEEDS_INPUT/stack-sats" target="_blank">GitHub</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

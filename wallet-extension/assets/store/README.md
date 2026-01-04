@@ -1,190 +1,150 @@
 # Chrome Web Store Assets
 
-## Required Assets Checklist
+## Required Assets for Submission
 
-### Icons
+### Status Checklist
 
-| Asset | Size | Format | Status |
-|-------|------|--------|--------|
-| Store icon | 128x128 | PNG | NEEDS_INPUT |
-
-**Note:** The extension uses `ironvault.png` for all icon sizes. A dedicated 128x128 store icon with higher detail is recommended.
-
-### Screenshots (Minimum 1, Recommended 3-5)
-
-| Screenshot | Size | Description | Status |
-|------------|------|-------------|--------|
-| Screenshot 1 | 1280x800 or 640x400 | Wallet Home | NEEDS_INPUT |
-| Screenshot 2 | 1280x800 or 640x400 | Send Transaction | NEEDS_INPUT |
-| Screenshot 3 | 1280x800 or 640x400 | dApp Connection | NEEDS_INPUT |
-| Screenshot 4 | 1280x800 or 640x400 | Network Selection | NEEDS_INPUT |
-| Screenshot 5 | 1280x800 or 640x400 | Token View | NEEDS_INPUT |
-
-### Promotional Tiles
-
-| Asset | Size | Format | Status |
-|-------|------|--------|--------|
-| Small promo tile | 440x280 | PNG/JPEG | NEEDS_INPUT |
-| Marquee promo | 1400x560 | PNG/JPEG | Optional |
-
-### Video
-
-| Asset | Format | Status |
-|-------|--------|--------|
-| YouTube video | Unlisted OK | Optional |
+| Asset | Required | Spec | Status |
+|-------|----------|------|--------|
+| Store Icon | Yes | 128x128 PNG | icon_128.png (from ironvault.png) |
+| Screenshot 1 | Yes | 1280x800 or 640x400 | NEEDS_INPUT |
+| Screenshot 2 | Recommended | 1280x800 or 640x400 | NEEDS_INPUT |
+| Screenshot 3 | Recommended | 1280x800 or 640x400 | NEEDS_INPUT |
+| Small Promo Tile | Required | 440x280 PNG/JPEG | NEEDS_INPUT |
+| Large Promo Tile | Optional | 920x680 | Optional |
+| Marquee | Optional | 1400x560 | Optional |
+| YouTube Video | Dashboard field | Unlisted OK | NEEDS_INPUT |
 
 ---
 
-## Screenshot Plan
+## Icon (icon_128.png)
 
-### Screenshot 1: Wallet Home
-**What to capture:**
-- Full wallet popup showing:
-  - Wallet name
-  - STX address
-  - STX balance
-  - BTC address
-  - Tokens section (expanded)
+**Status:** Available (copied from ironvault.png)
 
-**Suggested copy:**
-> "Manage your STX and tokens in one place"
-
-### Screenshot 2: Send Transaction
-**What to capture:**
-- Send form with:
-  - Recipient address field
-  - Amount field
-  - Fee display
-  - Review button
-
-**Suggested copy:**
-> "Send STX with a simple, secure interface"
-
-### Screenshot 3: dApp Connection
-**What to capture:**
-- Connection approval popup showing:
-  - dApp origin/URL
-  - Request method
-  - Approve/Reject buttons
-
-**Suggested copy:**
-> "Connect securely to your favorite dApps"
-
-### Screenshot 4: Network Selection
-**What to capture:**
-- Settings/menu with network options:
-  - Mainnet
-  - Testnet
-  - Devnet
-
-**Suggested copy:**
-> "Switch between Mainnet, Testnet, and Devnet"
-
-### Screenshot 5: SIP-010 Tokens
-**What to capture:**
-- Token list showing:
-  - Token icons
-  - Token names/symbols
-  - Balances
-
-**Suggested copy:**
-> "View all your SIP-010 fungible tokens"
+**Requirements:**
+- 128x128 pixels
+- PNG format
+- No transparency issues
+- Clear at small sizes
 
 ---
 
-## Design Guidelines
+## Screenshots (NEEDS_INPUT)
 
-### Colors
-- Primary: `#646cff` (button background)
-- Background: `#1a1a1a` (dark mode)
-- Text: `#ffffff` (primary)
-- Text secondary: `#888888`
+**Requirements:**
+- Minimum 1, recommended 3-5
+- Size: 1280x800 or 640x400 pixels
+- PNG or JPEG
+- Must show actual extension UI
 
-### Typography
-- Font: System default (Inter-like sans-serif)
-- Headings: 700 weight
-- Body: 400 weight
+### Recommended Screenshots to Capture
 
-### Screenshots Tips
-1. Use a clean browser with no other extensions visible
-2. Ensure testnet/devnet with test data
-3. Show realistic (but fake) balances
-4. Capture at 2x resolution for retina displays
-5. Add subtle shadows/borders if placing on colored background
+1. **Wallet Home Screen**
+   - Show STX balance
+   - Show addresses
+   - Show tokens section
+   - Caption: "Manage your STX and tokens in one place"
 
----
+2. **Unlock Screen**
+   - Show PIN entry
+   - Caption: "Secure access with 6-digit PIN"
 
-## How to Capture Screenshots
+3. **Send Transaction**
+   - Show send form with recipient and amount
+   - Caption: "Send STX with a simple interface"
 
-### macOS
+4. **dApp Connection**
+   - Show approval popup
+   - Show origin URL
+   - Caption: "Connect securely to Stacks dApps"
 
-```bash
-# Full screen capture
-Cmd + Shift + 3
+5. **Network Selection**
+   - Show network menu
+   - Caption: "Switch between Mainnet, Testnet, and Devnet"
 
-# Selection capture
-Cmd + Shift + 4
+### How to Capture Screenshots
 
-# Window capture
-Cmd + Shift + 4, then Space
-```
-
-### Extension Popup
-
+**Method 1: Chrome DevTools**
 1. Open extension popup
 2. Right-click → Inspect
-3. In DevTools, click device toolbar (mobile icon)
-4. Set custom resolution: 640x400 or 1280x800
-5. Capture with browser DevTools screenshot feature
+3. In DevTools, press Cmd+Shift+P (Mac) or Ctrl+Shift+P (Win)
+4. Type "screenshot" and select "Capture full size screenshot"
 
-### Chrome DevTools
+**Method 2: Browser Extension**
+Use a screenshot extension set to capture at 1280x800 or 640x400.
 
-1. Open popup
-2. Right-click → Inspect
-3. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Win)
-4. Type "screenshot"
-5. Select "Capture node screenshot"
+**Method 3: Manual Resize**
+1. Capture popup
+2. Place on background matching your design
+3. Export at required dimensions
 
 ---
 
-## Promotional Copy
+## Small Promo Tile (NEEDS_INPUT)
 
-### Short Description (132 chars max)
-```
-Educational Stacks wallet extension for developers. Supports STX transfers, SIP-010 tokens, and dApp connections on Bitcoin Layer 2.
-```
+**Requirements:**
+- 440x280 pixels
+- PNG or JPEG
+- Include extension name/logo
+- Eye-catching design
 
-### Taglines for Tiles
-- "Your Gateway to Stacks"
-- "Bitcoin Layer 2 Wallet"
-- "STX + Tokens + dApps"
+**Suggested Design:**
+- Dark background (#1a1a1a)
+- Extension icon centered or left
+- "Stacks Wallet" text
+- "Bitcoin Layer 2" tagline
+
+---
+
+## YouTube Video (NEEDS_INPUT)
+
+**Requirements:**
+- Can be unlisted
+- Should demonstrate key features
+- 1-3 minutes recommended
+
+**Suggested Content:**
+1. Extension installation
+2. Create/import wallet
+3. View balance
+4. Send transaction
+5. Connect to dApp
 
 ---
 
 ## File Naming Convention
 
 ```
-stacks-wallet-screenshot-1-home.png
-stacks-wallet-screenshot-2-send.png
-stacks-wallet-screenshot-3-connect.png
-stacks-wallet-screenshot-4-network.png
-stacks-wallet-screenshot-5-tokens.png
-stacks-wallet-promo-small.png
-stacks-wallet-promo-marquee.png
-stacks-wallet-icon-128.png
+icon_128.png           # Store icon
+screenshot_1_home.png  # Wallet home
+screenshot_2_unlock.png # Unlock screen
+screenshot_3_send.png  # Send transaction
+screenshot_4_connect.png # dApp connection
+screenshot_5_network.png # Network selection
+promo_440x280.png      # Small promo tile
 ```
 
 ---
 
 ## Upload Checklist
 
-- [ ] Icon 128x128 uploaded
-- [ ] At least 1 screenshot uploaded
+Before submitting to Chrome Web Store:
+
+- [ ] icon_128.png uploaded (128x128)
+- [ ] At least 1 screenshot uploaded (1280x800 or 640x400)
+- [ ] Small promo tile uploaded (440x280)
 - [ ] All screenshots have captions
-- [ ] Small promo tile uploaded (if using)
-- [ ] Video link added (if using)
-- [ ] Preview tested in store listing
+- [ ] Preview verified in store listing
+- [ ] YouTube video link added (if available)
 
 ---
 
-*Place completed assets in this directory before store submission.*
+## NEEDS_INPUT Summary
+
+| Item | Action Required |
+|------|-----------------|
+| Screenshots | Capture 3-5 screenshots of extension UI |
+| Small promo tile | Create 440x280 promotional image |
+| YouTube video | Record demo video (optional but recommended) |
+| Contact email | Provide support email for store listing |
+| GitHub repo URL | Provide public repository URL |
