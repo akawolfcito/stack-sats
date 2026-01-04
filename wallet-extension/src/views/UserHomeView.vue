@@ -104,10 +104,10 @@ function getDisplayName(index: number): string {
 }
 
 // Load account names from settings
-function loadAccountNames() {
+async function loadAccountNames() {
   const names: Record<number, string> = {};
   for (let i = 0; i < accountCount.value; i++) {
-    const customName = getAccountName(i);
+    const customName = await getAccountName(i);
     if (customName !== `Account ${i + 1}`) {
       names[i] = customName;
     }
@@ -122,14 +122,14 @@ function startEditName() {
 }
 
 // Save edited name
-function saveAccountName() {
+async function saveAccountName() {
   const trimmed = editingName.value.trim();
   if (trimmed && trimmed !== `Account ${accountIndexToDisplay.value + 1}`) {
-    setAccountName(accountIndexToDisplay.value, trimmed);
+    await setAccountName(accountIndexToDisplay.value, trimmed);
     accountNames.value[accountIndexToDisplay.value] = trimmed;
   } else {
     // Clear custom name if empty or same as default
-    setAccountName(accountIndexToDisplay.value, "");
+    await setAccountName(accountIndexToDisplay.value, "");
     delete accountNames.value[accountIndexToDisplay.value];
   }
   isEditingName.value = false;
@@ -166,7 +166,7 @@ async function loadAccounts(mnemonic: string, network: NetworkName, count?: numb
 
 async function handleAddAccount() {
   if (!currentMnemonic.value) return;
-  const newCount = addAccount();
+  const newCount = await addAccount();
   accountCount.value = newCount;
   await loadAccounts(currentMnemonic.value, selectedNetwork.value, newCount);
   // Select the new account
@@ -181,7 +181,7 @@ async function handleRemoveAccount() {
     accountIndexToDisplay.value = accountCount.value - 2;
   }
 
-  const newCount = removeLastAccount();
+  const newCount = await removeLastAccount();
   accountCount.value = newCount;
   await loadAccounts(currentMnemonic.value, selectedNetwork.value, newCount);
 }
@@ -260,8 +260,8 @@ async function refreshBalance() {
 
 onBeforeMount(async () => {
   // Load account settings
-  accountCount.value = getAccountCount();
-  loadAccountNames();
+  accountCount.value = await getAccountCount();
+  await loadAccountNames();
 
   // Check for encrypted wallet first
   if (sessionManager.hasWallet) {
@@ -669,24 +669,32 @@ const closeReceiveModal = () => {
 <style scoped>
 select {
   cursor: pointer;
-  border: none;
-  background: transparent;
-  color: inherit;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
 }
 
 small {
-  color: #8c877d;
+  color: var(--color-text-muted);
 }
 
 .laser-logo {
   cursor: pointer;
+  border-radius: 50%;
 }
 
 .assets-display-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
-  font-family: monospace;
+  font-family: var(--font-mono);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
 }
 
 .assets-display {
@@ -695,13 +703,14 @@ small {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  row-gap: 10px;
+  gap: var(--space-sm);
 }
 
 .value-display {
-  font-size: 3rem;
-  font-weight: bolder;
-  font-family: monospace;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono);
+  color: var(--color-text-primary);
 }
 
 .loading {
@@ -709,58 +718,59 @@ small {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .address-copy {
   cursor: pointer;
-  transition: all 0.2s;
-  padding: 2px 6px;
-  border-radius: 4px;
+  transition: all var(--transition-fast);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
 }
 
 .address-copy:hover {
-  background: rgba(100, 108, 255, 0.2);
-  color: #646cff;
+  background: var(--color-accent-primary-muted);
+  color: var(--color-accent-primary);
 }
 
 .address-copy.copied {
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.1);
+  color: var(--color-success);
+  background: var(--color-success-muted);
 }
 
 .header-selects {
   display: flex;
-  gap: 8px;
+  gap: var(--space-sm);
   align-items: center;
 }
 
 .account-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .account-btn {
-  width: 24px;
-  height: 24px;
-  border: 1px solid rgba(100, 108, 255, 0.3);
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
   background: transparent;
-  color: #646cff;
-  border-radius: 4px;
+  color: var(--color-accent-primary);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .account-btn:hover:not(:disabled) {
-  background: rgba(100, 108, 255, 0.2);
-  border-color: #646cff;
+  background: var(--color-accent-primary-muted);
+  border-color: var(--color-accent-primary);
 }
 
 .account-btn:disabled {
@@ -769,15 +779,15 @@ small {
 }
 
 .account-btn.add:hover:not(:disabled) {
-  color: #4ade80;
-  border-color: #4ade80;
-  background: rgba(74, 222, 128, 0.1);
+  color: var(--color-success);
+  border-color: var(--color-success);
+  background: var(--color-success-muted);
 }
 
 .account-btn.remove:hover:not(:disabled) {
-  color: #f87171;
-  border-color: #f87171;
-  background: rgba(248, 113, 113, 0.1);
+  color: var(--color-error);
+  border-color: var(--color-error);
+  background: var(--color-error-muted);
 }
 
 /* Account name editing */
@@ -790,21 +800,23 @@ small {
 
 .editable-name {
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.2s;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
   margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
 }
 
 .editable-name:hover {
-  background: rgba(100, 108, 255, 0.15);
+  background: var(--color-accent-primary-muted);
 }
 
 .editable-name::after {
   content: " \270E";
   font-size: 0.7em;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
 }
 
 .editable-name:hover::after {
@@ -814,53 +826,56 @@ small {
 .name-edit-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .name-input {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   text-align: center;
-  background: rgba(100, 108, 255, 0.1);
-  border: 2px solid #646cff;
-  border-radius: 8px;
-  color: #fff;
-  padding: 4px 12px;
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-accent-primary);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+  padding: var(--space-xs) var(--space-md);
   width: 180px;
   outline: none;
+  height: auto;
 }
 
 .name-input:focus {
-  background: rgba(100, 108, 255, 0.2);
+  background: var(--color-bg-elevated);
 }
 
 .account-select {
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
 }
 
 .network-select {
-  font-size: 0.75rem;
-  padding: 2px 4px;
-  background: rgba(100, 108, 255, 0.2);
-  border-radius: 4px;
-  color: #646cff;
+  font-size: var(--font-size-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-accent-primary-muted);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent-primary);
+  border: 1px solid var(--color-accent-primary);
 }
 
 .refresh-btn {
-  margin-top: 8px;
-  padding: 4px 12px;
-  font-size: 0.75rem;
+  margin-top: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-xs);
   background: transparent;
-  border: 1px solid rgba(100, 108, 255, 0.3);
-  border-radius: 4px;
-  color: #646cff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent-primary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
+  width: auto;
 }
 
 .refresh-btn:hover:not(:disabled) {
-  background: rgba(100, 108, 255, 0.1);
-  border-color: #646cff;
+  background: var(--color-accent-primary-muted);
+  border-color: var(--color-accent-primary);
 }
 
 .refresh-btn:disabled {
@@ -873,47 +888,48 @@ small {
 }
 
 .balance-value {
-  color: #4ade80;
-  font-weight: bold;
+  color: var(--color-success);
+  font-weight: var(--font-weight-bold);
 }
 
 /* Transaction History Styles */
 .tx-section {
-  margin-top: 16px;
+  margin-top: var(--space-lg);
 }
 
 .tx-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-md);
 }
 
 .show-all-btn {
   background: transparent;
   border: none;
-  color: #646cff;
-  font-size: 0.75rem;
+  color: var(--color-accent-primary);
+  font-size: var(--font-size-xs);
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  width: auto;
 }
 
 .show-all-btn:hover {
-  color: #535bf2;
+  color: var(--color-accent-primary-hover);
 }
 
 .tx-loading,
 .tx-empty {
   text-align: center;
-  color: #8c877d;
-  padding: 20px;
-  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding: var(--space-xl);
+  font-size: var(--font-size-sm);
 }
 
 .tx-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-sm);
   max-height: 300px;
   overflow-y: auto;
 }
@@ -921,21 +937,23 @@ small {
 .tx-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: rgba(100, 108, 255, 0.05);
-  border-radius: 8px;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .tx-item:hover {
-  background: rgba(100, 108, 255, 0.12);
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-card-hover);
 }
 
 .tx-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -945,18 +963,18 @@ small {
 }
 
 .tx-icon.tx-success {
-  background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
+  background: var(--color-success-muted);
+  color: var(--color-success);
 }
 
 .tx-icon.tx-pending {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
+  background: var(--color-warning-muted);
+  color: var(--color-warning);
 }
 
 .tx-icon.tx-failed {
-  background: rgba(248, 113, 113, 0.15);
-  color: #f87171;
+  background: var(--color-error-muted);
+  color: var(--color-error);
 }
 
 .tx-details {
@@ -966,30 +984,30 @@ small {
 }
 
 .tx-type {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .tx-function {
-  color: #646cff;
-  font-weight: normal;
-  font-size: 0.8rem;
+  color: var(--color-accent-primary);
+  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-xs);
 }
 
 .tx-meta {
   display: flex;
-  gap: 8px;
-  font-size: 0.75rem;
-  color: #8c877d;
+  gap: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   margin-top: 2px;
 }
 
 .tx-time {
-  color: #6b6b6b;
+  color: var(--color-text-muted);
 }
 
 .tx-amount {
@@ -998,171 +1016,177 @@ small {
 }
 
 .tx-amount span {
-  font-family: monospace;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
 }
 
 .tx-amount small {
   display: block;
-  font-size: 0.65rem;
-  color: #6b6b6b;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 .amount-in {
-  color: #4ade80;
+  color: var(--color-success);
 }
 
 .amount-out {
-  color: #f87171;
+  color: var(--color-error);
 }
 
 .tx-status {
   width: 20px;
   text-align: center;
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   flex-shrink: 0;
 }
 
 .tx-status.tx-success {
-  color: #4ade80;
+  color: var(--color-success);
 }
 
 .tx-status.tx-pending {
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 .tx-status.tx-failed {
-  color: #f87171;
+  color: var(--color-error);
 }
 
 /* Header actions (expand + menu) */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .expand-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   background: transparent;
-  border: 1px solid rgba(100, 108, 255, 0.3);
-  border-radius: 6px;
-  color: #646cff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
   font-size: 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .expand-btn:hover {
-  background: rgba(100, 108, 255, 0.15);
-  border-color: #646cff;
+  background: var(--color-bg-card);
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
 }
 
 /* QR button in assets rows */
 .qr-btn {
-  padding: 2px 6px;
+  padding: var(--space-xs) var(--space-sm);
   background: transparent;
-  border: 1px solid rgba(100, 108, 255, 0.3);
-  border-radius: 4px;
-  color: #646cff;
-  font-size: 0.65rem;
-  font-weight: 600;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
   flex-shrink: 0;
+  width: auto;
 }
 
 .qr-btn:hover {
-  background: rgba(100, 108, 255, 0.15);
-  border-color: #646cff;
+  background: var(--color-bg-card-hover);
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
 }
 
 .send-btn {
-  padding: 2px 8px;
-  background: rgba(100, 108, 255, 0.2);
-  border: 1px solid #646cff;
-  border-radius: 4px;
-  color: #646cff;
-  font-size: 0.65rem;
-  font-weight: 600;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-accent-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-bg-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
   flex-shrink: 0;
+  width: auto;
 }
 
 .send-btn:hover {
-  background: #646cff;
-  color: #fff;
+  background: var(--color-accent-primary-hover);
 }
 
 /* Tokens Section Styles */
 .tokens-section {
-  margin-top: 16px;
+  margin-top: var(--space-lg);
 }
 
 .tokens-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-md);
 }
 
 .toggle-tokens-btn {
   background: transparent;
   border: none;
-  color: #646cff;
-  font-size: 0.75rem;
+  color: var(--color-accent-primary);
+  font-size: var(--font-size-xs);
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  width: auto;
 }
 
 .toggle-tokens-btn:hover {
-  color: #535bf2;
+  color: var(--color-accent-primary-hover);
 }
 
 .tokens-loading,
 .tokens-empty {
   text-align: center;
-  color: #8c877d;
-  padding: 16px;
-  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding: var(--space-lg);
+  font-size: var(--font-size-sm);
 }
 
 .tokens-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .token-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: rgba(100, 108, 255, 0.05);
-  border-radius: 8px;
-  transition: background 0.2s;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
 }
 
 .token-item:hover {
-  background: rgba(100, 108, 255, 0.12);
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-card-hover);
 }
 
 .token-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(100, 108, 255, 0.15);
+  background: var(--color-accent-primary-muted);
   flex-shrink: 0;
 }
 
@@ -1173,9 +1197,9 @@ small {
 }
 
 .token-icon-fallback {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #646cff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-primary);
   text-transform: uppercase;
 }
 
@@ -1188,24 +1212,24 @@ small {
 }
 
 .token-symbol {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .token-name {
-  font-size: 0.7rem;
-  color: #8c877d;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .token-balance {
-  font-family: monospace;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #4ade80;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success);
   flex-shrink: 0;
 }
 </style>
