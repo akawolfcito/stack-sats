@@ -13,6 +13,7 @@ const tabId = ref<string>("");
 const origin = ref<string>("");
 const hasWallet = ref(false);
 const isLocked = ref(true);
+const isInitializing = ref(true);
 
 // Check wallet state
 const checkWalletState = () => {
@@ -32,9 +33,29 @@ watch(
   }
 );
 
+// Watch for initialization completion
+watch(
+  () => sessionManager.state.isInitialized.value,
+  (initialized) => {
+    if (initialized) {
+      isInitializing.value = false;
+      checkWalletState();
+    }
+  }
+);
+
 // Checking if popup was opened from a webpage with a payload, or via the extension icon.
 // The `tabId` and `payload` are passed as query params from the openPopupConfirmation function of background.js.
-onBeforeMount(() => {
+onBeforeMount(async () => {
+  // Initialize session manager (handles migration from localStorage to chrome.storage.local)
+  try {
+    await sessionManager.initialize();
+    isInitializing.value = false;
+  } catch (error) {
+    secureLog("Session initialization error", error);
+    isInitializing.value = false;
+  }
+
   checkWalletState();
 
   const capturedSearchParams = new URLSearchParams(document.location.search);
@@ -68,8 +89,14 @@ const canShowConfirmation = () => {
 </script>
 
 <template>
+  <!-- Show loading while initializing -->
+  <div v-if="isInitializing" class="initializing">
+    <div class="loader"></div>
+    <p>Initializing...</p>
+  </div>
+
   <!-- If payload is present and wallet is available, show Confirmation -->
-  <div v-if="payload && canShowConfirmation()">
+  <div v-else-if="payload && canShowConfirmation()">
     <Confirmation :payload="payload" :tabId="tabId" :origin="origin" />
   </div>
 
@@ -126,5 +153,34 @@ const canShowConfirmation = () => {
 
 .btn-primary:hover {
   background: #535bf2;
+}
+
+.initializing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.initializing p {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #333;
+  border-top-color: #646cff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
