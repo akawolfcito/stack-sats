@@ -5,12 +5,12 @@ import PinInput from "@/components/PinInput.vue";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import {
-  getWallets,
-  getActiveWalletId,
-  getActiveWallet,
-  deleteWallet as deleteWalletEntry,
-  importWallet,
-  walletExists,
+  getWalletsAsync,
+  getActiveWalletIdAsync,
+  getActiveWalletAsync,
+  deleteWalletAsync,
+  importWalletAsync,
+  walletExistsAsync,
   type WalletEntry,
 } from "@/utils/wallets";
 import {
@@ -42,22 +42,22 @@ const pendingImportWallet = ref<WalletEntry | null>(null);
 const showBackupPinInput = ref(false);
 const backupPinError = ref("");
 
-onMounted(() => {
-  loadWallets();
+onMounted(async () => {
+  await loadWallets();
 });
 
-function loadWallets() {
-  wallets.value = getWallets();
-  activeWalletId.value = getActiveWalletId();
+async function loadWallets() {
+  wallets.value = await getWalletsAsync();
+  activeWalletId.value = await getActiveWalletIdAsync();
 }
 
 function handleUserHome() {
   router.push({ path: "/user" });
 }
 
-function switchWallet(walletId: string) {
+async function switchWallet(walletId: string) {
   if (walletId === activeWalletId.value) return;
-  sessionManager.switchWallet(walletId);
+  await sessionManager.switchWalletAsync(walletId);
   router.push({ path: "/unlock" });
 }
 
@@ -103,16 +103,16 @@ async function handlePinComplete(pin: string) {
   secureWipeAndDelete();
 }
 
-function secureWipeAndDelete() {
+async function secureWipeAndDelete() {
   secureLog("Iniciando eliminación segura de wallet");
 
   if (walletToDelete.value) {
     // Delete specific wallet
     const isActive = walletToDelete.value === activeWalletId.value;
-    deleteWalletEntry(walletToDelete.value);
+    await deleteWalletAsync(walletToDelete.value);
 
     // Refresh wallet list
-    loadWallets();
+    await loadWallets();
 
     if (wallets.value.length === 0) {
       // No wallets left, go to start
@@ -128,7 +128,7 @@ function secureWipeAndDelete() {
     }
   } else {
     // Delete all wallets (legacy behavior)
-    sessionManager.deleteWallet();
+    await sessionManager.deleteWalletAsync();
     router.push({ path: "/" });
   }
 
@@ -141,11 +141,11 @@ function handlePinCancel() {
 }
 
 // Backup functions
-function handleExportBackup() {
+async function handleExportBackup() {
   backupMessage.value = null;
   backupPinError.value = "";
 
-  const activeWallet = getActiveWallet();
+  const activeWallet = await getActiveWalletAsync();
   if (!activeWallet) {
     backupMessage.value = { type: "error", text: "No hay wallet activa para exportar" };
     return;
@@ -164,7 +164,7 @@ async function handleBackupPinComplete(pin: string) {
   }
 
   // PIN verified, proceed with backup
-  const activeWallet = getActiveWallet();
+  const activeWallet = await getActiveWalletAsync();
   if (!activeWallet) {
     backupMessage.value = { type: "error", text: "No hay wallet activa para exportar" };
     showBackupPinInput.value = false;
@@ -217,25 +217,25 @@ async function handleFileSelected(event: Event) {
   }
 
   // Check if wallet already exists
-  if (walletExists(backup.wallet.id)) {
+  if (await walletExistsAsync(backup.wallet.id)) {
     pendingImportWallet.value = backup.wallet;
     showImportConfirm.value = true;
     return;
   }
 
   // Import directly
-  completeImport(backup.wallet, false);
+  await completeImport(backup.wallet, false);
 }
 
-function completeImport(wallet: WalletEntry, replace: boolean) {
-  const result = importWallet(wallet, replace);
+async function completeImport(wallet: WalletEntry, replace: boolean) {
+  const result = await importWalletAsync(wallet, replace);
 
   if (result) {
     backupMessage.value = {
       type: "success",
       text: result === "replaced" ? "Wallet reemplazada correctamente" : "Wallet importada correctamente",
     };
-    loadWallets();
+    await loadWallets();
     secureLog("Wallet imported from backup", { walletId: wallet.id, result });
   } else {
     backupMessage.value = { type: "error", text: "Error al importar la wallet" };
@@ -415,7 +415,7 @@ function cancelImport() {
 
 <style scoped>
 .menu-page {
-  padding: 1rem;
+  padding: var(--space-lg);
   max-width: 360px;
   margin: 0 auto;
 }
@@ -423,123 +423,141 @@ function cancelImport() {
 .menu-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
 }
 
 .menu-header h2 {
   margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   flex: 1;
+  text-align: center;
 }
 
 .back-btn {
   background: none;
   border: none;
-  color: #5546ff;
+  color: var(--color-text-primary);
   cursor: pointer;
-  font-size: 1rem;
-  padding: 0.5rem;
+  font-size: var(--font-size-base);
+  padding: var(--space-sm);
+  width: auto;
+}
+
+.back-btn:hover {
+  opacity: 0.7;
 }
 
 .menu-options {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-lg);
 }
 
 .delete-btn {
-  background: #dc3545;
-  color: white;
+  background: var(--color-error);
+  color: var(--color-text-primary);
   border: none;
-  padding: 1rem;
-  border-radius: 8px;
+  padding: var(--space-lg);
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
 }
 
 .delete-btn:hover {
-  background: #c82333;
+  background: #FF5252;
 }
 
 .delete-confirmation {
-  background: #1a1a2e;
-  padding: 1.5rem;
-  border-radius: 12px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  padding: var(--space-xl);
+  border-radius: var(--radius-xl);
 }
 
 .warning-box {
-  background: rgba(220, 53, 69, 0.1);
-  border: 1px solid #dc3545;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  background: var(--color-error-muted);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
 .warning-title {
-  color: #dc3545;
-  font-weight: bold;
-  margin: 0 0 0.5rem 0;
+  color: var(--color-error);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--space-sm) 0;
 }
 
 .warning-box p {
   margin: 0;
-  color: #ccc;
-  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .confirm-label {
   display: block;
-  margin-bottom: 0.5rem;
-  color: #fff;
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
 }
 
 .confirm-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #0f0f1a;
-  color: #fff;
-  font-size: 1rem;
-  margin-bottom: 1rem;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-lg);
   box-sizing: border-box;
+  height: auto;
+}
+
+.confirm-input:focus {
+  outline: none;
+  border-color: var(--color-error);
 }
 
 .button-group {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-md);
 }
 
 .cancel-btn {
   flex: 1;
-  padding: 0.75rem;
-  background: #333;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
+  padding: var(--space-lg);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
   cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+}
+
+.cancel-btn:hover {
+  border-color: var(--color-border-hover);
 }
 
 .confirm-btn {
   flex: 1;
-  padding: 0.75rem;
-  background: #dc3545;
-  color: #fff;
+  padding: var(--space-lg);
+  background: var(--color-error);
+  color: var(--color-text-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
-}
-
-.error-text {
-  color: #dc3545;
-  font-size: 0.85rem;
-  margin: 0.5rem 0;
+  font-weight: var(--font-weight-semibold);
 }
 
 .pin-prompt {
-  color: #fff;
-  margin-bottom: 1rem;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
   text-align: center;
+  font-size: var(--font-size-sm);
 }
 
 .pin-step {
@@ -548,173 +566,177 @@ function cancelImport() {
 
 /* Wallets Section */
 .wallets-section {
-  background: #1a1a2e;
-  border-radius: 12px;
-  padding: 1rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-lg);
 }
 
 .section-header h3 {
   margin: 0;
-  font-size: 1rem;
-  color: #fff;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .add-wallet-btn {
-  background: #5546ff;
-  color: white;
+  background: var(--color-accent-primary);
+  color: var(--color-bg-primary);
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  width: auto;
 }
 
 .add-wallet-btn:hover {
-  background: #4438cc;
+  background: var(--color-accent-primary-hover);
 }
 
 .wallet-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
 .wallet-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem;
-  background: #0f0f1a;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  transition: all 0.2s;
+  padding: var(--space-md);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-fast);
 }
 
 .wallet-item:hover {
-  border-color: #5546ff;
+  border-color: var(--color-border-hover);
 }
 
 .wallet-item.active {
-  border-color: #5546ff;
-  background: rgba(85, 70, 255, 0.1);
+  border-color: var(--color-accent-primary);
+  background: var(--color-accent-primary-muted);
 }
 
 .wallet-info {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   cursor: pointer;
   flex: 1;
 }
 
 .wallet-name {
-  color: #fff;
-  font-weight: 500;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
 }
 
 .active-badge {
-  background: #5546ff;
-  color: white;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: var(--color-accent-primary);
+  color: var(--color-bg-primary);
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-semibold);
 }
 
 .delete-wallet-btn {
   background: none;
   border: none;
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 1.2rem;
   cursor: pointer;
-  padding: 0 0.5rem;
+  padding: 0 var(--space-sm);
   line-height: 1;
+  width: auto;
 }
 
 .delete-wallet-btn:hover {
-  color: #dc3545;
+  color: var(--color-error);
 }
 
 .divider {
   border: none;
-  border-top: 1px solid #333;
-  margin: 1rem 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--space-lg) 0;
 }
 
 .danger-zone {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.danger-zone small {
-  color: #888;
+  gap: var(--space-sm);
 }
 
 /* Backup Section */
 .backup-section {
-  background: #1a1a2e;
-  border-radius: 12px;
-  padding: 1rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
 }
 
 .backup-buttons {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-md);
 }
 
 .backup-btn {
   flex: 1;
-  padding: 0.75rem;
-  border-radius: 8px;
+  padding: var(--space-md);
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-fast);
 }
 
 .backup-btn.export {
   background: transparent;
-  border: 1px solid #5546ff;
-  color: #5546ff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .backup-btn.export:hover {
-  background: rgba(85, 70, 255, 0.1);
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-card-hover);
 }
 
 .backup-btn.import {
   background: transparent;
-  border: 1px solid #4ade80;
-  color: #4ade80;
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
 }
 
 .backup-btn.import:hover {
-  background: rgba(74, 222, 128, 0.1);
+  background: var(--color-success-muted);
 }
 
 .backup-message {
-  margin: 0.75rem 0 0 0;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  margin: var(--space-md) 0 0 0;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
   text-align: center;
 }
 
 .backup-message.success {
-  background: rgba(74, 222, 128, 0.1);
-  color: #4ade80;
+  background: var(--color-success-muted);
+  color: var(--color-success);
 }
 
 .backup-message.error {
-  background: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
+  background: var(--color-error-muted);
+  color: var(--color-error);
 }
 
 /* Import Confirmation Modal */
@@ -724,45 +746,47 @@ function cancelImport() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(1, 7, 14, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  padding: 1rem;
+  padding: var(--space-lg);
 }
 
 .import-confirm-modal {
-  background: #1a1a2e;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
   max-width: 320px;
   width: 100%;
 }
 
 .import-confirm-modal h3 {
-  margin: 0 0 1rem 0;
-  color: #fbbf24;
+  margin: 0 0 var(--space-lg) 0;
+  color: var(--color-warning);
+  font-size: var(--font-size-lg);
 }
 
 .import-confirm-modal p {
-  margin: 0 0 0.75rem 0;
-  color: #ccc;
-  font-size: 0.9rem;
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .import-question {
-  color: #fff !important;
-  font-weight: 500;
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-weight-medium);
 }
 
 .confirm-btn.replace {
-  background: #fbbf24;
-  color: #000;
+  background: var(--color-warning);
+  color: var(--color-bg-primary);
 }
 
 .confirm-btn.replace:hover {
-  background: #f59e0b;
+  filter: brightness(1.1);
 }
 
 /* Backup PIN Modal */
@@ -771,15 +795,15 @@ function cancelImport() {
 }
 
 .backup-pin-modal h3 {
-  color: #5546ff;
+  color: var(--color-accent-primary);
 }
 
 .backup-pin-modal p {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-lg);
 }
 
 .full-width {
   width: 100%;
-  margin-top: 1rem;
+  margin-top: var(--space-lg);
 }
 </style>
