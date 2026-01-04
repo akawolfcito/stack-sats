@@ -1,9 +1,10 @@
 /**
  * Account settings management per wallet
  * Stores account count and visibility preferences
+ * Now uses async wallet ID retrieval from chrome.storage.local
  */
 
-import { getActiveWalletId } from "../wallets";
+import { getActiveWalletIdAsync } from "../wallets";
 
 const ACCOUNT_SETTINGS_KEY = "account_settings";
 
@@ -48,10 +49,10 @@ function getDefaultSettings(): AccountSettings {
 }
 
 /**
- * Get account settings for a specific wallet
+ * Get account settings for a specific wallet (async)
  */
-export function getAccountSettings(walletId?: string): AccountSettings {
-  const id = walletId || getActiveWalletId();
+export async function getAccountSettings(walletId?: string): Promise<AccountSettings> {
+  const id = walletId || await getActiveWalletIdAsync();
   if (!id) {
     return getDefaultSettings();
   }
@@ -66,17 +67,18 @@ export function getAccountSettings(walletId?: string): AccountSettings {
 }
 
 /**
- * Get account count for active wallet
+ * Get account count for active wallet (async)
  */
-export function getAccountCount(walletId?: string): number {
-  return getAccountSettings(walletId).count;
+export async function getAccountCount(walletId?: string): Promise<number> {
+  const settings = await getAccountSettings(walletId);
+  return settings.count;
 }
 
 /**
- * Set account count for active wallet
+ * Set account count for active wallet (async)
  */
-export function setAccountCount(count: number, walletId?: string): void {
-  const id = walletId || getActiveWalletId();
+export async function setAccountCount(count: number, walletId?: string): Promise<void> {
+  const id = walletId || await getActiveWalletIdAsync();
   if (!id) return;
 
   const clampedCount = Math.max(MIN_ACCOUNT_COUNT, Math.min(MAX_ACCOUNT_COUNT, count));
@@ -92,37 +94,38 @@ export function setAccountCount(count: number, walletId?: string): void {
 }
 
 /**
- * Add one more account
+ * Add one more account (async)
  */
-export function addAccount(walletId?: string): number {
-  const currentCount = getAccountCount(walletId);
+export async function addAccount(walletId?: string): Promise<number> {
+  const currentCount = await getAccountCount(walletId);
   const newCount = Math.min(currentCount + 1, MAX_ACCOUNT_COUNT);
-  setAccountCount(newCount, walletId);
+  await setAccountCount(newCount, walletId);
   return newCount;
 }
 
 /**
- * Remove the last account (if more than minimum)
+ * Remove the last account (if more than minimum) (async)
  */
-export function removeLastAccount(walletId?: string): number {
-  const currentCount = getAccountCount(walletId);
+export async function removeLastAccount(walletId?: string): Promise<number> {
+  const currentCount = await getAccountCount(walletId);
   const newCount = Math.max(currentCount - 1, MIN_ACCOUNT_COUNT);
-  setAccountCount(newCount, walletId);
+  await setAccountCount(newCount, walletId);
   return newCount;
 }
 
 /**
- * Check if an account is hidden
+ * Check if an account is hidden (async)
  */
-export function isAccountHidden(index: number, walletId?: string): boolean {
-  return getAccountSettings(walletId).hiddenIndices.includes(index);
+export async function isAccountHidden(index: number, walletId?: string): Promise<boolean> {
+  const settings = await getAccountSettings(walletId);
+  return settings.hiddenIndices.includes(index);
 }
 
 /**
- * Hide an account (doesn't delete, just hides from view)
+ * Hide an account (doesn't delete, just hides from view) (async)
  */
-export function hideAccount(index: number, walletId?: string): void {
-  const id = walletId || getActiveWalletId();
+export async function hideAccount(index: number, walletId?: string): Promise<void> {
+  const id = walletId || await getActiveWalletIdAsync();
   if (!id) return;
 
   const allSettings = getAllSettings();
@@ -136,10 +139,10 @@ export function hideAccount(index: number, walletId?: string): void {
 }
 
 /**
- * Show a hidden account
+ * Show a hidden account (async)
  */
-export function showAccount(index: number, walletId?: string): void {
-  const id = walletId || getActiveWalletId();
+export async function showAccount(index: number, walletId?: string): Promise<void> {
+  const id = walletId || await getActiveWalletIdAsync();
   if (!id) return;
 
   const allSettings = getAllSettings();
@@ -154,10 +157,10 @@ export function showAccount(index: number, walletId?: string): void {
 }
 
 /**
- * Get visible accounts count (total - hidden)
+ * Get visible accounts count (total - hidden) (async)
  */
-export function getVisibleAccountCount(walletId?: string): number {
-  const settings = getAccountSettings(walletId);
+export async function getVisibleAccountCount(walletId?: string): Promise<number> {
+  const settings = await getAccountSettings(walletId);
   return settings.count - settings.hiddenIndices.filter((i) => i < settings.count).length;
 }
 
@@ -171,25 +174,26 @@ export function deleteAccountSettings(walletId: string): void {
 }
 
 /**
- * Get custom name for an account (or default "Account X")
+ * Get custom name for an account (or default "Account X") (async)
  */
-export function getAccountName(index: number, walletId?: string): string {
-  const settings = getAccountSettings(walletId);
+export async function getAccountName(index: number, walletId?: string): Promise<string> {
+  const settings = await getAccountSettings(walletId);
   return settings.names[index] || `Account ${index + 1}`;
 }
 
 /**
- * Get all account names for the active wallet
+ * Get all account names for the active wallet (async)
  */
-export function getAllAccountNames(walletId?: string): Record<number, string> {
-  return getAccountSettings(walletId).names;
+export async function getAllAccountNames(walletId?: string): Promise<Record<number, string>> {
+  const settings = await getAccountSettings(walletId);
+  return settings.names;
 }
 
 /**
- * Set custom name for an account
+ * Set custom name for an account (async)
  */
-export function setAccountName(index: number, name: string, walletId?: string): void {
-  const id = walletId || getActiveWalletId();
+export async function setAccountName(index: number, name: string, walletId?: string): Promise<void> {
+  const id = walletId || await getActiveWalletIdAsync();
   if (!id) return;
 
   const allSettings = getAllSettings();
@@ -208,10 +212,10 @@ export function setAccountName(index: number, name: string, walletId?: string): 
 }
 
 /**
- * Clear custom name for an account (revert to default)
+ * Clear custom name for an account (revert to default) (async)
  */
-export function clearAccountName(index: number, walletId?: string): void {
-  setAccountName(index, "", walletId);
+export async function clearAccountName(index: number, walletId?: string): Promise<void> {
+  await setAccountName(index, "", walletId);
 }
 
 export { DEFAULT_ACCOUNT_COUNT, MIN_ACCOUNT_COUNT, MAX_ACCOUNT_COUNT };
