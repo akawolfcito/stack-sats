@@ -36,6 +36,7 @@ export function createBackup(wallet: WalletEntry): BackupFile {
       name: wallet.name,
       encryptedData: wallet.encryptedData,
       createdAt: wallet.createdAt,
+      version: wallet.version || 1,
     },
   };
 }
@@ -121,6 +122,7 @@ export function validateBackup(data: unknown): BackupFile | null {
       name: wallet.name as string,
       encryptedData: validEncryptedData,
       createdAt: wallet.createdAt as number,
+      version: (wallet.version as number) || 1,
     },
   };
 }

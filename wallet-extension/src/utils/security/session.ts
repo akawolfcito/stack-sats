@@ -1,18 +1,29 @@
 /**
  * Session management module
  * Handles wallet lock/unlock state and auto-lock timeout
+ * Now uses WalletVault for secure chrome.storage.local access
  */
 
 import { ref, type Ref } from "vue";
 import { decryptWithPIN, isValidPIN } from "./encryption";
+import { walletVault } from "./vault";
 import {
   getActiveWallet,
+  getActiveWalletAsync,
   hasWallets,
+  hasWalletsAsync,
   deleteAllWallets,
+  deleteAllWalletsAsync,
   addWallet,
+  addWalletAsync,
   setActiveWalletId,
+  setActiveWalletIdAsync,
+  initializeWallets,
+  migrateLegacyStorage,
+  hasLegacyData,
   type WalletEntry,
 } from "../wallets";
+import { scheduleCleanup } from "./memory";
 
 const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_UNLOCK_ATTEMPTS = 3;
@@ -21,20 +32,52 @@ export interface SessionState {
   isLocked: Ref<boolean>;
   hasWallet: Ref<boolean>;
   failedAttempts: Ref<number>;
+  isInitialized: Ref<boolean>;
 }
 
 class SessionManager {
   private _isLocked = ref(true);
   private _hasWallet = ref(false);
   private _failedAttempts = ref(0);
+  private _isInitialized = ref(false);
   private _lastActivity: number = Date.now();
   private _timeoutId: ReturnType<typeof setTimeout> | null = null;
   private _decryptedMnemonic: string | null = null;
   private _activeWalletId: string | null = null;
 
   constructor() {
-    this.checkWalletExists();
+    // Don't auto-initialize - wait for explicit init call
     this.setupActivityListeners();
+  }
+
+  /**
+   * Initialize the session manager (must be called on app start)
+   * Handles migration from localStorage to chrome.storage.local
+   */
+  async initialize(): Promise<void> {
+    if (this._isInitialized.value) return;
+
+    try {
+      // Initialize wallet system (includes migration)
+      await initializeWallets();
+
+      // Check if migration was needed
+      if (hasLegacyData()) {
+        const result = await migrateLegacyStorage();
+        if (result.migrated) {
+          console.log(`[SessionManager] Migrated ${result.count} wallet(s) to secure storage`);
+        }
+      }
+
+      // Check wallet exists (async)
+      this._hasWallet.value = await hasWalletsAsync();
+      this._isInitialized.value = true;
+    } catch (error) {
+      console.error("[SessionManager] Initialization error:", error);
+      // Fallback to sync check
+      this._hasWallet.value = hasWallets();
+      this._isInitialized.value = true;
+    }
   }
 
   get state(): SessionState {
@@ -42,6 +85,7 @@ class SessionManager {
       isLocked: this._isLocked,
       hasWallet: this._hasWallet,
       failedAttempts: this._failedAttempts,
+      isInitialized: this._isInitialized,
     };
   }
 
@@ -65,8 +109,21 @@ class SessionManager {
     return this._activeWalletId;
   }
 
+  get isInitialized(): boolean {
+    return this._isInitialized.value;
+  }
+
   /**
-   * Check if wallet exists in storage
+   * Check if wallet exists in storage (async)
+   */
+  async checkWalletExistsAsync(): Promise<boolean> {
+    this._hasWallet.value = await hasWalletsAsync();
+    return this._hasWallet.value;
+  }
+
+  /**
+   * Check if wallet exists in storage (sync - for backwards compatibility)
+   * @deprecated Use checkWalletExistsAsync() instead
    */
   checkWalletExists(): boolean {
     this._hasWallet.value = hasWallets();
@@ -74,15 +131,35 @@ class SessionManager {
   }
 
   /**
-   * Get active wallet entry
+   * Get active wallet entry (async)
+   */
+  async getActiveWalletEntryAsync(): Promise<WalletEntry | null> {
+    return getActiveWalletAsync();
+  }
+
+  /**
+   * Get active wallet entry (sync - for backwards compatibility)
+   * @deprecated Use getActiveWalletEntryAsync() instead
    */
   getActiveWalletEntry(): WalletEntry | null {
     return getActiveWallet();
   }
 
   /**
-   * Save new encrypted wallet to storage
-   * Returns the new wallet entry
+   * Save new encrypted wallet to storage (async)
+   */
+  async saveEncryptedWalletAsync(
+    encryptedData: import("./encryption").EncryptedData,
+    name?: string
+  ): Promise<WalletEntry> {
+    const wallet = await addWalletAsync(encryptedData, name);
+    this._hasWallet.value = true;
+    return wallet;
+  }
+
+  /**
+   * Save new encrypted wallet to storage (sync - for backwards compatibility)
+   * @deprecated Use saveEncryptedWalletAsync() instead
    */
   saveEncryptedWallet(
     encryptedData: import("./encryption").EncryptedData,
@@ -94,7 +171,17 @@ class SessionManager {
   }
 
   /**
-   * Switch to a different wallet
+   * Switch to a different wallet (async)
+   */
+  async switchWalletAsync(walletId: string): Promise<void> {
+    await setActiveWalletIdAsync(walletId);
+    // Lock when switching wallets for security
+    this.lock();
+  }
+
+  /**
+   * Switch to a different wallet (sync - for backwards compatibility)
+   * @deprecated Use switchWalletAsync() instead
    */
   switchWallet(walletId: string): void {
     setActiveWalletId(walletId);
@@ -103,7 +190,7 @@ class SessionManager {
   }
 
   /**
-   * Attempt to unlock wallet with PIN
+   * Attempt to unlock wallet with PIN (async - preferred)
    * Returns decrypted mnemonic if successful, null otherwise
    */
   async unlock(pin: string): Promise<string | null> {
@@ -111,7 +198,14 @@ class SessionManager {
       return null;
     }
 
-    const activeWallet = getActiveWallet();
+    // Try async first (chrome.storage.local)
+    let activeWallet = await getActiveWalletAsync();
+
+    // Fallback to sync if async returns null
+    if (!activeWallet) {
+      activeWallet = getActiveWallet();
+    }
+
     if (!activeWallet) {
       return null;
     }
@@ -144,6 +238,7 @@ class SessionManager {
     this._isLocked.value = true;
     this._decryptedMnemonic = null;
     this.clearAutoLockTimer();
+    scheduleCleanup();
   }
 
   /**
@@ -161,6 +256,7 @@ class SessionManager {
    */
   clearMnemonic(): void {
     this._decryptedMnemonic = null;
+    scheduleCleanup();
   }
 
   /**
@@ -222,7 +318,22 @@ class SessionManager {
   }
 
   /**
-   * Delete all wallets completely
+   * Delete all wallets completely (async)
+   */
+  async deleteWalletAsync(): Promise<void> {
+    await deleteAllWalletsAsync();
+
+    this._hasWallet.value = false;
+    this._isLocked.value = true;
+    this._decryptedMnemonic = null;
+    this._activeWalletId = null;
+    this._failedAttempts.value = 0;
+    scheduleCleanup();
+  }
+
+  /**
+   * Delete all wallets completely (sync - for backwards compatibility)
+   * @deprecated Use deleteWalletAsync() instead
    */
   deleteWallet(): void {
     deleteAllWallets();
@@ -232,6 +343,7 @@ class SessionManager {
     this._decryptedMnemonic = null;
     this._activeWalletId = null;
     this._failedAttempts.value = 0;
+    scheduleCleanup();
   }
 
   /**
