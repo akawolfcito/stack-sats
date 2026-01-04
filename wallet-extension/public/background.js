@@ -7,11 +7,13 @@
 // Users can also right-click the icon and select "Open side panel"
 chrome.sidePanel?.setOptions({ enabled: true }).catch(() => {});
 
-// Domain whitelist - only localhost allowed for development
-const ALLOWED_ORIGINS = [
-  "http://localhost",
-  "http://127.0.0.1",
-  "https://localhost",
+// Allowed origin patterns for production
+// - localhost for development
+// - All HTTPS sites for production dApps
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^http:\/\/localhost(:\d+)?$/,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+  /^https:\/\/.+$/,
 ];
 
 // Methods that can be auto-approved after first confirmation
@@ -40,10 +42,11 @@ const rateLimiter = {
 
 /**
  * Check if origin is allowed
+ * Allows localhost (dev) and all HTTPS sites (production)
  */
 function isOriginAllowed(origin) {
   if (!origin) return false;
-  return ALLOWED_ORIGINS.some((allowed) => origin.startsWith(allowed));
+  return ALLOWED_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
 }
 
 /**
