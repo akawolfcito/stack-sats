@@ -2,6 +2,9 @@
 
 **Stacks Wallet Browser Extension**
 
+> **Public URL:** https://OWNER.github.io/stack-sats/support.html
+> (Replace OWNER with your GitHub username after deploying)
+
 ## Getting Help
 
 ### Documentation

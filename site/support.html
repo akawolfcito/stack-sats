@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support - Stacks Wallet</title>
+  <meta name="description" content="Get help with Stacks Wallet browser extension. FAQ, troubleshooting, and contact information.">
+  <link rel="icon" type="image/png" href="icon.png">
+  <style>
+    :root {
+      --primary: #646cff;
+      --bg: #1a1a1a;
+      --surface: #242424;
+      --text: #ffffff;
+      --text-muted: #888888;
+      --border: #333333;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    nav {
+      margin-bottom: 40px;
+    }
+    nav a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 30px;
+    }
+    h2 {
+      font-size: 1.4rem;
+      margin: 40px 0 20px;
+      color: var(--primary);
+    }
+    h3 {
+      font-size: 1.1rem;
+      margin: 25px 0 10px;
+    }
+    p, li {
+      color: var(--text-muted);
+      margin-bottom: 15px;
+    }
+    ul, ol {
+      padding-left: 25px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+    .faq-item h3 {
+      margin: 0 0 10px;
+      color: var(--text);
+    }
+    .faq-item p {
+      margin: 0;
+    }
+    .contact-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      margin: 40px 0;
+    }
+    .contact-box h3 {
+      margin-bottom: 15px;
+      color: var(--text);
+    }
+    .contact-box a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .warning {
+      background: #3d2f00;
+      border: 1px solid #665200;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+    .warning strong {
+      color: #ffd700;
+    }
+    code {
+      background: var(--surface);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">&larr; Back to Home</a>
+    </nav>
+
+    <h1>Support</h1>
+
+    <h2>Frequently Asked Questions</h2>
+
+    <div class="faq-item">
+      <h3>How do I create a wallet?</h3>
+      <p>Click the extension icon, then "Create New Wallet". Write down your 24-word seed phrase securely offline, then set a 6-digit PIN.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>How do I import an existing wallet?</h3>
+      <p>Click the extension icon, then "Import Existing Wallet". Enter your 24-word seed phrase and set a new PIN.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>I forgot my PIN. What do I do?</h3>
+      <p>You'll need your original 24-word seed phrase. Delete the current wallet and import it again using your seed phrase to set a new PIN.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Why does the wallet auto-lock?</h3>
+      <p>For security, the wallet automatically locks after 5 minutes of inactivity. This prevents unauthorized access if you leave your computer unattended.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>What networks are supported?</h3>
+      <p>Mainnet (production), Testnet (for testing), and Devnet (local development). Switch networks via the menu.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>How do I connect to a dApp?</h3>
+      <p>Visit a Stacks dApp, click "Connect Wallet", and approve the connection request in the popup. Your addresses will be shared with the dApp.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Is my seed phrase safe?</h3>
+      <p>Your seed phrase is encrypted with AES-256-GCM and protected by your PIN. It's stored only locally and never transmitted to any server.</p>
+    </div>
+
+    <h2>Troubleshooting</h2>
+
+    <h3>Extension not loading</h3>
+    <ol>
+      <li>Go to <code>chrome://extensions</code></li>
+      <li>Enable "Developer mode"</li>
+      <li>Click "Load unpacked" and select the extension folder</li>
+      <li>Click the reload button if needed</li>
+    </ol>
+
+    <h3>dApp connection not working</h3>
+    <ol>
+      <li>Verify you're on localhost or an HTTPS site</li>
+      <li>Check browser console for errors</li>
+      <li>Refresh the page and try again</li>
+      <li>Reload the extension</li>
+    </ol>
+
+    <h3>Transaction failed</h3>
+    <ol>
+      <li>Check you have enough STX for amount + fee</li>
+      <li>Verify the recipient address format</li>
+      <li>Ensure correct network is selected</li>
+      <li>Check the blockchain explorer for status</li>
+    </ol>
+
+    <div class="warning">
+      <strong>Important:</strong> This is an educational wallet template. For significant funds, use production wallets like Leather or Xverse.
+    </div>
+
+    <div class="contact-box">
+      <h3>Need More Help?</h3>
+      <p>
+        <strong>GitHub Issues:</strong><br>
+        <a href="https://github.com/NEEDS_INPUT/stack-sats/issues" target="_blank">Report a bug or request a feature</a>
+      </p>
+      <p style="margin-top: 15px;">
+        <strong>Email:</strong><br>
+        <a href="mailto:NEEDS_INPUT@example.com">NEEDS_INPUT@example.com</a>
+      </p>
+      <p style="margin-top: 15px;">
+        <strong>Community:</strong><br>
+        <a href="https://discord.gg/stacks" target="_blank">Stacks Discord</a>
+      </p>
+    </div>
+
+    <footer>
+      <p>
+        <a href="index.html">Home</a> |
+        <a href="privacy.html">Privacy Policy</a> |
+        <a href="https://github.com/NEEDS_INPUT/stack-sats" target="_blank">GitHub</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

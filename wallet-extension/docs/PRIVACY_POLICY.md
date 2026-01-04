@@ -3,6 +3,9 @@
 **Stacks Wallet Browser Extension**
 **Last Updated:** January 2025
 
+> **Public URL:** https://OWNER.github.io/stack-sats/privacy.html
+> (Replace OWNER with your GitHub username after deploying)
+
 ## Overview
 
 Stacks Wallet is a browser extension that enables users to manage Stacks blockchain wallets, view token balances, and authorize transactions for decentralized applications (dApps).
