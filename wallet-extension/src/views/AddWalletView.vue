@@ -154,21 +154,21 @@ function handleStepBack() {
   <section class="add-wallet-page">
     <div class="page-header">
       <button class="back-btn" @click="handleBack">
-        &larr; Cancelar
+        &larr; Cancel
       </button>
-      <h2>Agregar Wallet</h2>
+      <h2>Add Wallet</h2>
     </div>
 
     <div class="page-content">
       <!-- Step 1: Choose action -->
       <div v-if="currentStep === 'start'" class="step-container">
-        <p class="subtitle">Crea una nueva wallet o importa una existente</p>
+        <p class="subtitle">Create a new wallet or import an existing one</p>
 
         <button @click="handleGenerateSecret" class="btn-primary">
-          Crear Nueva Wallet
+          Create New Wallet
         </button>
         <button @click="handleImportMnemonic" class="btn-secondary">
-          Importar Wallet Existente
+          Import Existing Wallet
         </button>
         <p v-if="importError" class="error-text">{{ importError }}</p>
       </div>
@@ -176,8 +176,8 @@ function handleStepBack() {
       <!-- Step 2: Show Mnemonic -->
       <div v-else-if="currentStep === 'mnemonic'" class="step-container">
         <div class="mnemonic-warning">
-          <strong>Guarda tu frase de recuperaci&oacute;n</strong>
-          <p>Cualquiera con esta frase puede acceder a tu wallet.</p>
+          <strong>Save your recovery phrase</strong>
+          <p>Anyone with this phrase can access your wallet.</p>
         </div>
 
         <div class="mnemonic-display">
@@ -192,35 +192,35 @@ function handleStepBack() {
         </div>
 
         <div class="button-group">
-          <button @click="handleStepBack" class="btn-secondary">Atr&aacute;s</button>
+          <button @click="handleStepBack" class="btn-secondary">Back</button>
           <button @click="handleContinueToName" class="btn-primary">
-            La guard&eacute;
+            I saved it
           </button>
         </div>
       </div>
 
       <!-- Step 3: Name wallet -->
       <div v-else-if="currentStep === 'name'" class="step-container">
-        <label class="input-label">Nombre de la wallet (opcional)</label>
+        <label class="input-label">Wallet name (optional)</label>
         <input
           v-model="walletName"
           type="text"
           class="name-input"
-          placeholder="Mi Wallet"
+          placeholder="My Wallet"
           maxlength="30"
         />
 
         <div class="button-group">
-          <button @click="handleStepBack" class="btn-secondary">Atr&aacute;s</button>
+          <button @click="handleStepBack" class="btn-secondary">Back</button>
           <button @click="handleContinueToPin" class="btn-primary">
-            Continuar
+            Continue
           </button>
         </div>
       </div>
 
       <!-- Step 4: Create PIN -->
       <div v-else-if="currentStep === 'pin-create'" class="step-container">
-        <p class="subtitle">Crea un PIN de 6 d&iacute;gitos</p>
+        <p class="subtitle">Create a 6-digit PIN</p>
         <PinInput
           ref="pinInputRef"
           mode="create"
@@ -231,14 +231,14 @@ function handleStepBack() {
 
         <div class="button-group">
           <button @click="handleStepBack" class="btn-secondary" :disabled="isLoading">
-            Atr&aacute;s
+            Back
           </button>
         </div>
       </div>
 
       <!-- Step 5: Confirm PIN -->
       <div v-else-if="currentStep === 'pin-confirm'" class="step-container">
-        <p class="subtitle">Confirma tu PIN</p>
+        <p class="subtitle">Confirm your PIN</p>
         <PinInput
           ref="pinInputRef"
           mode="confirm"
@@ -249,11 +249,11 @@ function handleStepBack() {
 
         <div class="button-group">
           <button @click="handleStepBack" class="btn-secondary" :disabled="isLoading">
-            Atr&aacute;s
+            Back
           </button>
         </div>
 
-        <p v-if="isLoading" class="loading-text">Creando wallet...</p>
+        <p v-if="isLoading" class="loading-text">Creating wallet...</p>
       </div>
     </div>
   </section>

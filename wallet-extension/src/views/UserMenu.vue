@@ -32,7 +32,7 @@ const showPinInput = ref(false);
 const deleteError = ref("");
 const walletToDelete = ref<string | null>(null);
 
-const CONFIRM_WORD = "ELIMINAR";
+const CONFIRM_WORD = "DELETE";
 
 // Backup state
 const backupMessage = ref<{ type: "success" | "error"; text: string } | null>(null);
@@ -84,7 +84,7 @@ function cancelDelete() {
 
 function confirmDeleteText() {
   if (confirmText.value.toUpperCase() !== CONFIRM_WORD) {
-    deleteError.value = `Por favor escribe "${CONFIRM_WORD}" para confirmar`;
+    deleteError.value = `Please type "${CONFIRM_WORD}" to confirm`;
     return;
   }
   showPinInput.value = true;
@@ -95,7 +95,7 @@ async function handlePinComplete(pin: string) {
   const mnemonic = await sessionManager.unlock(pin);
 
   if (!mnemonic) {
-    deleteError.value = "PIN incorrecto. Intentos restantes: " + (3 - sessionManager.failedAttempts);
+    deleteError.value = "Incorrect PIN. Attempts remaining: " + (3 - sessionManager.failedAttempts);
     return;
   }
 
@@ -104,7 +104,7 @@ async function handlePinComplete(pin: string) {
 }
 
 async function secureWipeAndDelete() {
-  secureLog("Iniciando eliminación segura de wallet");
+  secureLog("Starting secure wallet deletion");
 
   if (walletToDelete.value) {
     // Delete specific wallet
@@ -132,7 +132,7 @@ async function secureWipeAndDelete() {
     router.push({ path: "/" });
   }
 
-  secureLog("Wallet eliminada de forma segura");
+  secureLog("Wallet deleted securely");
 }
 
 function handlePinCancel() {
@@ -147,7 +147,7 @@ async function handleExportBackup() {
 
   const activeWallet = await getActiveWalletAsync();
   if (!activeWallet) {
-    backupMessage.value = { type: "error", text: "No hay wallet activa para exportar" };
+    backupMessage.value = { type: "error", text: "No active wallet to export" };
     return;
   }
 
@@ -159,14 +159,14 @@ async function handleBackupPinComplete(pin: string) {
   const mnemonic = await sessionManager.unlock(pin);
 
   if (!mnemonic) {
-    backupPinError.value = "PIN incorrecto. Intentos restantes: " + (3 - sessionManager.failedAttempts);
+    backupPinError.value = "Incorrect PIN. Attempts remaining: " + (3 - sessionManager.failedAttempts);
     return;
   }
 
   // PIN verified, proceed with backup
   const activeWallet = await getActiveWalletAsync();
   if (!activeWallet) {
-    backupMessage.value = { type: "error", text: "No hay wallet activa para exportar" };
+    backupMessage.value = { type: "error", text: "No active wallet to export" };
     showBackupPinInput.value = false;
     return;
   }
@@ -175,10 +175,10 @@ async function handleBackupPinComplete(pin: string) {
     const backup = createBackup(activeWallet);
     const filename = generateBackupFilename(activeWallet.name);
     downloadBackup(backup, filename);
-    backupMessage.value = { type: "success", text: "Backup descargado correctamente" };
+    backupMessage.value = { type: "success", text: "Backup downloaded successfully" };
     secureLog("Backup exported", { walletId: activeWallet.id });
   } catch (error) {
-    backupMessage.value = { type: "error", text: "Error al crear el backup" };
+    backupMessage.value = { type: "error", text: "Failed to create backup" };
     secureLog("Backup export failed", { error: String(error) });
   }
 
@@ -212,7 +212,7 @@ async function handleFileSelected(event: Event) {
 
   const backup = await parseBackupFile(file);
   if (!backup) {
-    backupMessage.value = { type: "error", text: "Archivo de backup inválido" };
+    backupMessage.value = { type: "error", text: "Invalid backup file" };
     return;
   }
 
@@ -233,12 +233,12 @@ async function completeImport(wallet: WalletEntry, replace: boolean) {
   if (result) {
     backupMessage.value = {
       type: "success",
-      text: result === "replaced" ? "Wallet reemplazada correctamente" : "Wallet importada correctamente",
+      text: result === "replaced" ? "Wallet replaced successfully" : "Wallet imported successfully",
     };
     await loadWallets();
     secureLog("Wallet imported from backup", { walletId: wallet.id, result });
   } else {
-    backupMessage.value = { type: "error", text: "Error al importar la wallet" };
+    backupMessage.value = { type: "error", text: "Failed to import wallet" };
   }
 
   showImportConfirm.value = false;
@@ -259,17 +259,17 @@ function cancelImport() {
   <section class="menu-page">
     <div class="menu-header">
       <button class="back-btn" @click="handleUserHome">
-        ← Volver
+        ← Back
       </button>
-      <h2>Configuración</h2>
+      <h2>Settings</h2>
     </div>
 
     <div v-if="!showDeleteConfirm" class="menu-options">
       <!-- Wallet List -->
       <div class="wallets-section">
         <div class="section-header">
-          <h3>Tus Wallets</h3>
-          <button class="add-wallet-btn" @click="handleAddWallet">+ Agregar</button>
+          <h3>Your Wallets</h3>
+          <button class="add-wallet-btn" @click="handleAddWallet">+ Add</button>
         </div>
 
         <div class="wallet-list">
@@ -281,12 +281,12 @@ function cancelImport() {
           >
             <div class="wallet-info" @click="switchWallet(wallet.id)">
               <span class="wallet-name">{{ wallet.name }}</span>
-              <span v-if="wallet.id === activeWalletId" class="active-badge">Activa</span>
+              <span v-if="wallet.id === activeWalletId" class="active-badge">Active</span>
             </div>
             <button
               class="delete-wallet-btn"
               @click.stop="initiateDelete(wallet.id)"
-              title="Eliminar wallet"
+              title="Delete wallet"
             >
               &times;
             </button>
@@ -299,15 +299,15 @@ function cancelImport() {
       <!-- Backup Section -->
       <div class="backup-section">
         <div class="section-header">
-          <h3>Respaldo</h3>
+          <h3>Backup</h3>
         </div>
 
         <div class="backup-buttons">
           <button class="backup-btn export" @click="handleExportBackup">
-            Exportar Backup
+            Export Backup
           </button>
           <button class="backup-btn import" @click="triggerFileInput">
-            Importar Backup
+            Import Backup
           </button>
         </div>
 
@@ -328,9 +328,9 @@ function cancelImport() {
 
       <!-- Danger Zone -->
       <div class="danger-zone">
-        <small>Zona de peligro</small>
+        <small>Danger Zone</small>
         <button class="delete-btn" @click="initiateDelete()">
-          Eliminar Todas las Wallets
+          Delete All Wallets
         </button>
       </div>
     </div>
@@ -339,15 +339,15 @@ function cancelImport() {
     <div v-else class="delete-confirmation">
       <div v-if="!showPinInput" class="confirm-text-step">
         <div class="warning-box">
-          <p class="warning-title">⚠️ Advertencia</p>
+          <p class="warning-title">⚠️ Warning</p>
           <p>
-            Esta acción eliminará permanentemente tu wallet de esta extensión.
-            Asegúrate de tener tu frase de recuperación guardada.
+            This action will permanently delete your wallet from this extension.
+            Make sure you have your recovery phrase saved.
           </p>
         </div>
 
         <label class="confirm-label">
-          Escribe <strong>{{ CONFIRM_WORD }}</strong> para confirmar:
+          Type <strong>{{ CONFIRM_WORD }}</strong> to confirm:
         </label>
         <input
           v-model="confirmText"
@@ -360,15 +360,15 @@ function cancelImport() {
         <p v-if="deleteError" class="error-text">{{ deleteError }}</p>
 
         <div class="button-group">
-          <button class="cancel-btn" @click="cancelDelete">Cancelar</button>
+          <button class="cancel-btn" @click="cancelDelete">Cancel</button>
           <button class="confirm-btn" @click="confirmDeleteText">
-            Continuar
+            Continue
           </button>
         </div>
       </div>
 
       <div v-else class="pin-step">
-        <p class="pin-prompt">Ingresa tu PIN para confirmar la eliminación:</p>
+        <p class="pin-prompt">Enter your PIN to confirm deletion:</p>
         <PinInput
           mode="unlock"
           @complete="handlePinComplete"
@@ -381,31 +381,31 @@ function cancelImport() {
     <!-- Backup PIN Modal -->
     <div v-if="showBackupPinInput" class="import-confirm-overlay">
       <div class="import-confirm-modal backup-pin-modal">
-        <h3>Verificar PIN</h3>
-        <p>Ingresa tu PIN para exportar el backup:</p>
+        <h3>Verify PIN</h3>
+        <p>Enter your PIN to export backup:</p>
         <PinInput
           mode="unlock"
           @complete="handleBackupPinComplete"
           @cancel="cancelBackupPin"
         />
         <p v-if="backupPinError" class="error-text">{{ backupPinError }}</p>
-        <button class="cancel-btn full-width" @click="cancelBackupPin">Cancelar</button>
+        <button class="cancel-btn full-width" @click="cancelBackupPin">Cancel</button>
       </div>
     </div>
 
     <!-- Import Confirmation Modal -->
     <div v-if="showImportConfirm" class="import-confirm-overlay">
       <div class="import-confirm-modal">
-        <h3>Wallet ya existe</h3>
+        <h3>Wallet already exists</h3>
         <p>
-          La wallet "<strong>{{ pendingImportWallet?.name }}</strong>" ya existe en tu extensión.
+          The wallet "<strong>{{ pendingImportWallet?.name }}</strong>" already exists in your extension.
         </p>
-        <p class="import-question">¿Deseas reemplazarla con el backup?</p>
+        <p class="import-question">Do you want to replace it with the backup?</p>
 
         <div class="button-group">
-          <button class="cancel-btn" @click="cancelImport">Cancelar</button>
+          <button class="cancel-btn" @click="cancelImport">Cancel</button>
           <button class="confirm-btn replace" @click="completeImport(pendingImportWallet!, true)">
-            Reemplazar
+            Replace
           </button>
         </div>
       </div>
