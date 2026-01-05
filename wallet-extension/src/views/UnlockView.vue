@@ -83,7 +83,7 @@ onMounted(() => {
 <template>
   <section class="unlock-page">
     <div class="page-top">
-      <img src="/denvault-128.png" width="100px" alt="DenVault" />
+      <img src="/denvault-i.png" width="120px" alt="DenVault" />
       <h1>Welcome Back</h1>
       <p>Enter your PIN to unlock your wallet</p>
     </div>
