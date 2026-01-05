@@ -36,23 +36,23 @@ const displayOrigin = computed(() => {
       return props.origin;
     }
   }
-  return "Origen desconocido";
+  return "Unknown origin";
 });
 
 // Get human-readable method description
 const methodDescription = computed(() => {
   const descriptions: Record<string, string> = {
-    getAddresses: "Solicitar direcciones de tu wallet",
-    stx_getAddresses: "Solicitar direcciones de tu wallet",
-    stx_signMessage: "Firmar un mensaje",
-    stx_callContract: "Llamar un contrato inteligente",
-    stx_transferStx: "Transferir STX",
-    stx_transferSip10Ft: "Transferir token fungible",
-    stx_signTransaction: "Firmar una transacción",
-    stx_signStructuredMessage: "Firmar mensaje estructurado",
-    stx_deployContract: "Desplegar contrato",
-    signPsbt: "Firmar PSBT (Bitcoin)",
-    sendTransfer: "Enviar transferencia",
+    getAddresses: "Request wallet addresses",
+    stx_getAddresses: "Request wallet addresses",
+    stx_signMessage: "Sign a message",
+    stx_callContract: "Call a smart contract",
+    stx_transferStx: "Transfer STX",
+    stx_transferSip10Ft: "Transfer fungible token",
+    stx_signTransaction: "Sign a transaction",
+    stx_signStructuredMessage: "Sign structured message",
+    stx_deployContract: "Deploy contract",
+    signPsbt: "Sign PSBT (Bitcoin)",
+    sendTransfer: "Send transfer",
   };
   return descriptions[props.payload.method] || props.payload.method;
 });
@@ -66,25 +66,25 @@ const formattedParams = computed(() => {
 
   // Show relevant fields based on method
   if (params.message) {
-    formatted["Mensaje"] = String(params.message).substring(0, 100);
+    formatted["Message"] = String(params.message).substring(0, 100);
   }
   if (params.contract) {
-    formatted["Contrato"] = String(params.contract);
+    formatted["Contract"] = String(params.contract);
   }
   if (params.contractAddress) {
-    formatted["Dirección del contrato"] = String(params.contractAddress);
+    formatted["Contract Address"] = String(params.contractAddress);
   }
   if (params.contractName) {
-    formatted["Nombre del contrato"] = String(params.contractName);
+    formatted["Contract Name"] = String(params.contractName);
   }
   if (params.functionName) {
-    formatted["Función"] = String(params.functionName);
+    formatted["Function"] = String(params.functionName);
   }
   if (params.amount !== undefined) {
-    formatted["Cantidad"] = String(params.amount) + " microSTX";
+    formatted["Amount"] = String(params.amount) + " microSTX";
   }
   if (params.recipient) {
-    formatted["Destinatario"] = String(params.recipient);
+    formatted["Recipient"] = String(params.recipient);
   }
 
   return Object.keys(formatted).length > 0 ? formatted : null;
@@ -115,9 +115,9 @@ async function handlePinComplete(pin: string) {
     pinError.value = "";
   } else {
     const remaining = 3 - sessionManager.failedAttempts;
-    pinError.value = `PIN incorrecto. Intentos restantes: ${remaining}`;
+    pinError.value = `Incorrect PIN. Attempts remaining: ${remaining}`;
     if (remaining <= 0) {
-      handleReject("Demasiados intentos fallidos");
+      handleReject("Too many failed attempts");
     }
   }
 }
@@ -137,7 +137,7 @@ async function handleConfirm() {
   const mnemonic = sessionManager.getMnemonic();
   if (!mnemonic) {
     secureWarn("No mnemonic available in session");
-    handleReject("Sesión no válida");
+    handleReject("Invalid session");
     return;
   }
 
@@ -251,7 +251,7 @@ function handleReject(reason?: string) {
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
-      <h2>CONFIRMAR ACCION</h2>
+      <h2>CONFIRM ACTION</h2>
       <div class="header-spacer"></div>
     </div>
 
@@ -261,7 +261,7 @@ function handleReject(reason?: string) {
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
-      <span>Solicitado por: <strong>{{ displayOrigin }}</strong></span>
+      <span>Requested by: <strong>{{ displayOrigin }}</strong></span>
     </div>
 
     <!-- Method icon and description -->
@@ -273,7 +273,7 @@ function handleReject(reason?: string) {
         </svg>
       </div>
       <h3 class="method-title">{{ methodDescription }}</h3>
-      <p class="method-subtitle">Esta accion permitira a la aplicacion ver tus saldos y actividad.</p>
+      <p class="method-subtitle">This action will allow the app to view your balances and activity.</p>
     </div>
 
     <!-- Transaction details -->
@@ -293,7 +293,7 @@ function handleReject(reason?: string) {
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14 2 14 8 20 8"/>
         </svg>
-        <span>Ver datos completos</span>
+        <span>View full data</span>
         <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
@@ -303,7 +303,7 @@ function handleReject(reason?: string) {
 
     <!-- PIN input if not unlocked -->
     <div v-if="!isUnlocked" class="pin-section">
-      <p class="pin-required">INGRESA TU PIN PARA CONFIRMAR</p>
+      <p class="pin-required">ENTER YOUR PIN TO CONFIRM</p>
       <PinInput mode="unlock" @complete="handlePinComplete" />
       <p v-if="pinError" class="error-text">{{ pinError }}</p>
     </div>
@@ -311,14 +311,14 @@ function handleReject(reason?: string) {
     <!-- Action buttons -->
     <div class="action-buttons">
       <button class="reject-btn" @click="handleReject()" :disabled="isProcessing">
-        Rechazar
+        Reject
       </button>
       <button
         class="confirm-btn"
         @click="handleConfirm"
         :disabled="!isUnlocked || isProcessing"
       >
-        {{ isProcessing ? "Procesando..." : "Confirmar" }}
+        {{ isProcessing ? "Processing..." : "Confirm" }}
       </button>
     </div>
   </section>

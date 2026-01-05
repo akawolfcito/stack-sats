@@ -160,9 +160,9 @@ onBeforeMount(() => {
           <img src="/denvault-i.png" width="100" alt="DenVault" />
         </div>
       </div>
-      <h1 class="title">Configura tu Billetera</h1>
+      <h1 class="title">Set Up Your Wallet</h1>
       <p class="subtitle">
-        Crea una nueva wallet o importa una existente para comenzar a gestionar tus activos de forma segura.
+        Create a new wallet or import an existing one to start managing your assets securely.
       </p>
     </div>
 
@@ -172,8 +172,8 @@ onBeforeMount(() => {
         <button @click="handleGenerateSecret" class="action-card primary">
           <span class="action-icon primary">+</span>
           <span class="action-content">
-            <span class="action-title">Crear Nueva Wallet</span>
-            <span class="action-desc">Generar nueva frase de recuperacion</span>
+            <span class="action-title">Create New Wallet</span>
+            <span class="action-desc">Generate new recovery phrase</span>
           </span>
           <span class="action-arrow">›</span>
         </button>
@@ -186,8 +186,8 @@ onBeforeMount(() => {
             </svg>
           </span>
           <span class="action-content">
-            <span class="action-title">Importar Wallet Existente</span>
-            <span class="action-desc">Usar frase de recuperacion o clave</span>
+            <span class="action-title">Import Existing Wallet</span>
+            <span class="action-desc">Use recovery phrase or key</span>
           </span>
           <span class="action-arrow">›</span>
         </button>
@@ -198,15 +198,15 @@ onBeforeMount(() => {
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
-          <span>CIFRADO DE EXTREMO A EXTREMO</span>
+          <span>END-TO-END ENCRYPTED</span>
         </div>
       </div>
 
       <!-- Step 2: Show Mnemonic -->
       <div v-else-if="currentStep === 'mnemonic'" class="step-container">
         <div class="mnemonic-warning">
-          <strong>Guarda tu frase de recuperacion</strong>
-          <p>Almacenala de forma segura. Cualquier persona con esta frase puede acceder a tu wallet.</p>
+          <strong>Save your recovery phrase</strong>
+          <p>Store it securely. Anyone with this phrase can access your wallet.</p>
         </div>
 
         <div class="mnemonic-display">
@@ -221,9 +221,9 @@ onBeforeMount(() => {
         </div>
 
         <div class="button-group">
-          <button @click="handleBack" class="btn-secondary">Atras</button>
+          <button @click="handleBack" class="btn-secondary">Back</button>
           <button @click="handleContinueToPin" class="btn-primary">
-            La guarde
+            I saved it
           </button>
         </div>
       </div>
@@ -240,7 +240,7 @@ onBeforeMount(() => {
 
         <div class="button-group">
           <button @click="handleBack" class="btn-secondary" :disabled="isLoading">
-            Atras
+            Back
           </button>
         </div>
       </div>
@@ -257,11 +257,11 @@ onBeforeMount(() => {
 
         <div class="button-group">
           <button @click="handleBack" class="btn-secondary" :disabled="isLoading">
-            Atras
+            Back
           </button>
         </div>
 
-        <p v-if="isLoading" class="loading-text">Creando wallet...</p>
+        <p v-if="isLoading" class="loading-text">Creating wallet...</p>
       </div>
     </div>
   </section>
