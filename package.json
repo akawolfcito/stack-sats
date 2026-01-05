@@ -1,6 +1,7 @@
 {
   "name": "wallet-app-template",
   "private": true,
+  "license": "Apache-2.0",
   "scripts": {
     "build": "pnpm --filter wallet-extension build",
     "dev": "pnpm --filter wallet-extension dev",

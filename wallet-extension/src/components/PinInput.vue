@@ -167,13 +167,13 @@ const modeLabels = {
 
     <p class="pin-hint">
       <template v-if="mode === 'create'">
-        Elige un PIN de 6 digitos para proteger tu wallet
+        Choose a 6-digit PIN to protect your wallet
       </template>
       <template v-else-if="mode === 'confirm'">
-        Re-ingresa tu PIN para confirmar
+        Re-enter your PIN to confirm
       </template>
       <template v-else>
-        Ingresa tu PIN de 6 digitos para desbloquear
+        Enter your 6-digit PIN to unlock
       </template>
     </p>
   </div>
