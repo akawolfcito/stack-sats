@@ -2,8 +2,7 @@
 
 **Stacks Wallet Browser Extension**
 
-> **Public URL:** https://OWNER.github.io/stack-sats/support.html
-> (Replace OWNER with your GitHub username after deploying)
+> **Public URL:** https://wolfcito.github.io/stack-sats/support.html
 
 ## Getting Help
 
@@ -16,7 +15,7 @@
 ### Issue Tracker
 
 Report bugs and request features:
-**NEEDS_INPUT:** [Add GitHub Issues URL]
+https://github.com/wolfcito/stack-sats/issues
 
 ### Community
 
@@ -120,9 +119,8 @@ However, this is an educational wallet. For significant funds, use a production-
 
 ## Contact
 
-**NEEDS_INPUT:** [Add support email]
-
-**NEEDS_INPUT:** [Add Twitter/X handle]
+- Email: wolfcito.learn+support@gmail.com
+- Twitter/X: @wolfcito
 
 ---
 

@@ -157,7 +157,7 @@ onBeforeMount(() => {
     <div class="page-top">
       <div class="logo-container">
         <div class="logo-ring">
-          <img src="/ironvault.png" width="64" alt="Stack-SATs logo" />
+          <img src="/denvault-128.png" width="80" alt="DenVault" />
         </div>
       </div>
       <h1 class="title">Configura tu Billetera</h1>

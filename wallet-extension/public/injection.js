@@ -114,15 +114,15 @@ window.StacksWallet = StacksWallet;
 // Reference: https://wbips.netlify.app/wbips/WBIP004
 window.wbip_providers = window.wbip_providers || [];
 window.wbip_providers.push({
-  id: "StacksWallet",
+  id: "DenVault",
   icon: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSIyNCIgZmlsbD0iIzU1NDZGRiIvPjxwYXRoIGQ9Ik0xNiAyMEgyNE0yNCAyMFYyOE0yNCAyMEwzMiAyOE0zMiAyMEwyNCAyOCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=",
-  name: "Stacks Wallet",
-  webUrl: "https://stacks.co",
+  name: "DenVault",
+  webUrl: "https://github.com/denvault/denvault",
   methods: SUPPORTED_METHODS,
 });
 
 console.log(
-  `[StacksWallet] ${
+  `[DenVault] ${
     window.StacksWallet.isStacksWallet
       ? "Wallet registered at window.StacksWallet"
       : "Registration failed"

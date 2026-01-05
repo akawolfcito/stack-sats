@@ -1,14 +1,13 @@
 # Privacy Policy
 
-**Stacks Wallet Browser Extension**
+**DenVault - Stacks Wallet Browser Extension**
 **Last Updated:** January 2025
 
-> **Public URL:** https://OWNER.github.io/stack-sats/privacy.html
-> (Replace OWNER with your GitHub username after deploying)
+> **Public URL:** https://wolfcito.github.io/stack-sats/privacy.html
 
 ## Overview
 
-Stacks Wallet is a browser extension that enables users to manage Stacks blockchain wallets, view token balances, and authorize transactions for decentralized applications (dApps).
+DenVault is a browser extension that enables users to manage Stacks blockchain wallets, view token balances, and authorize transactions for decentralized applications (dApps).
 
 ## Data Collection
 
@@ -83,12 +82,13 @@ This permanently removes all stored data from your browser.
 ## Open Source
 
 This extension is open source. You can review the code at:
-**NEEDS_INPUT:** [Add your GitHub repository URL]
+https://github.com/wolfcito/stack-sats
 
 ## Contact
 
 For privacy concerns or questions:
-**NEEDS_INPUT:** [Add contact email or support URL]
+- Email: wolfcito.learn+privacy@gmail.com
+- Support: https://wolfcito.github.io/stack-sats/support.html
 
 ## Changes to This Policy
 
@@ -96,4 +96,4 @@ We may update this Privacy Policy from time to time. Changes will be posted in t
 
 ---
 
-*This extension is provided for educational purposes. Use at your own risk.*
+*This extension is provided by DenLabs. Use at your own risk.*
