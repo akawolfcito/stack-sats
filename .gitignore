@@ -42,5 +42,5 @@ pnpm-debug.log*
 CLAUDE.md
 PROGRESS.md
 .claude/
-docs/
+internal-docs/
 mocks/
