@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Stacks-Wallet",
+  "name": "DenVault",
   "version": "1.0.0",
-  "description": "Stacks Wallet - Your Bitcoin Layer 2 experience, secured.",
+  "description": "DenVault - Your Bitcoin Layer 2 wallet for the Stacks ecosystem.",
   "action": {
     "default_popup": "index.html"
   },
@@ -23,10 +23,10 @@
     "https://stacks-node-api.mainnet.stacks.co/*"
   ],
   "icons": {
-    "16": "ironvault.png",
-    "32": "ironvault.png",
-    "48": "ironvault.png",
-    "128": "ironvault.png"
+    "16": "denvault-16.png",
+    "32": "denvault-32.png",
+    "48": "denvault-48.png",
+    "128": "denvault-128.png"
   },
   "background": {
     "service_worker": "background.js"

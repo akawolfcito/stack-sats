@@ -237,4 +237,4 @@ This extension enables users to manage Stacks blockchain wallets, view balances,
 
 ---
 
-*For questions, contact: **NEEDS_INPUT***
+*For questions, contact: wolfcito.learn+testing@gmail.com*

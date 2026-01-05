@@ -3,8 +3,7 @@
 **Stacks Wallet Browser Extension**
 **Version:** 1.0.0
 
-> **Homepage URL:** https://OWNER.github.io/stack-sats/
-> (Replace OWNER with your GitHub username after deploying)
+> **Homepage URL:** https://wolfcito.github.io/stack-sats/
 
 ## Security Model
 
@@ -173,7 +172,7 @@ The extension uses `chrome.storage.local` for all sensitive data.
 If you discover a security vulnerability:
 
 1. **Do NOT** create a public GitHub issue
-2. Contact us privately at: **NEEDS_INPUT:** [security contact]
+2. Contact us privately at: wolfcito.learn+security@gmail.com
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
