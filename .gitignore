@@ -44,3 +44,6 @@ PROGRESS.md
 .claude/
 internal-docs/
 mocks/
+
+# CWS build artifacts
+*.zip
