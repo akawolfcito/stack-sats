@@ -133,6 +133,17 @@ const modeLabels = {
   <div class="pin-input-container">
     <label class="pin-label">{{ modeLabels[mode] }}</label>
 
+    <!-- Visual dots indicator -->
+    <div class="pin-dots">
+      <span
+        v-for="(_, index) in PIN_LENGTH"
+        :key="'dot-' + index"
+        class="pin-dot"
+        :class="{ filled: digits[index] !== '', error: error }"
+      ></span>
+    </div>
+
+    <!-- Hidden inputs for actual entry -->
     <div class="pin-inputs">
       <input
         v-for="(_, index) in PIN_LENGTH"
@@ -143,7 +154,7 @@ const modeLabels = {
         maxlength="1"
         :value="digits[index]"
         :disabled="disabled"
-        :class="{ 'pin-digit': true, 'has-error': error }"
+        class="pin-digit-hidden"
         @input="handleInput(index, $event)"
         @keydown="handleKeydown(index, $event)"
         @paste="handlePaste"
@@ -156,13 +167,13 @@ const modeLabels = {
 
     <p class="pin-hint">
       <template v-if="mode === 'create'">
-        Choose a 6-digit PIN to secure your wallet
+        Elige un PIN de 6 digitos para proteger tu wallet
       </template>
       <template v-else-if="mode === 'confirm'">
-        Re-enter your PIN to confirm
+        Re-ingresa tu PIN para confirmar
       </template>
       <template v-else>
-        Enter your 6-digit PIN to unlock
+        Ingresa tu PIN de 6 digitos para desbloquear
       </template>
     </p>
   </div>
@@ -173,60 +184,77 @@ const modeLabels = {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-lg);
   width: 100%;
 }
 
 .pin-label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.pin-inputs {
+/* Visual PIN Dots */
+.pin-dots {
   display: flex;
-  gap: 8px;
+  gap: var(--space-md);
   justify-content: center;
 }
 
-.pin-digit {
-  width: 40px;
-  height: 48px;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  border: 2px solid #444;
-  border-radius: 8px;
-  background: #1a1a1a;
-  color: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  transition: all var(--transition-fast);
 }
 
-.pin-digit:focus {
-  outline: none;
-  border-color: #646cff;
-  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.3);
+.pin-dot.filled {
+  background: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
 }
 
-.pin-digit.has-error {
-  border-color: #ff4444;
+.pin-dot.error {
+  border-color: var(--color-error);
   animation: shake 0.3s ease-in-out;
 }
 
-.pin-digit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.pin-dot.error.filled {
+  background: var(--color-error);
+}
+
+/* Hidden inputs positioned over dots */
+.pin-inputs {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  position: relative;
+  margin-top: -32px;
+  height: 32px;
+}
+
+.pin-digit-hidden {
+  width: 32px;
+  height: 32px;
+  opacity: 0;
+  background: transparent;
+  border: none;
+  text-align: center;
+  font-size: 1rem;
 }
 
 .pin-error {
-  color: #ff4444;
-  font-size: 0.875rem;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
   margin: 0;
 }
 
 .pin-hint {
-  color: #888;
-  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
   margin: 0;
   text-align: center;
 }

@@ -243,29 +243,44 @@ function handleReject(reason?: string) {
 
 <template>
   <section class="confirmation-page">
-    <!-- Header with origin -->
+    <!-- Header -->
     <div class="confirmation-header">
-      <img src="/ironvault.png" width="40px" alt="logo" />
-      <h2>Confirmar Acción</h2>
+      <button class="close-btn" @click="handleReject()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <h2>CONFIRMAR ACCION</h2>
+      <div class="header-spacer"></div>
     </div>
 
     <!-- Origin badge -->
     <div class="origin-badge">
-      <span class="origin-label">Solicitado por:</span>
-      <span class="origin-value">{{ displayOrigin }}</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span>Solicitado por: <strong>{{ displayOrigin }}</strong></span>
     </div>
 
-    <!-- Method description -->
-    <div class="method-info">
-      <p class="method-description">{{ methodDescription }}</p>
+    <!-- Method icon and description -->
+    <div class="method-section">
+      <div class="method-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <h3 class="method-title">{{ methodDescription }}</h3>
+      <p class="method-subtitle">Esta accion permitira a la aplicacion ver tus saldos y actividad.</p>
     </div>
 
     <!-- Transaction details -->
     <div v-if="formattedParams" class="params-section">
-      <h3>Detalles</h3>
       <div class="params-list">
         <div v-for="(value, key) in formattedParams" :key="key" class="param-row">
-          <span class="param-key">{{ key }}:</span>
+          <span class="param-key">{{ key }}</span>
           <span class="param-value">{{ value }}</span>
         </div>
       </div>
@@ -273,13 +288,22 @@ function handleReject(reason?: string) {
 
     <!-- Raw payload (collapsible) -->
     <details class="raw-details">
-      <summary>Ver datos completos</summary>
+      <summary>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span>Ver datos completos</span>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </summary>
       <pre class="raw-payload">{{ JSON.stringify(props.payload, null, 2) }}</pre>
     </details>
 
     <!-- PIN input if not unlocked -->
     <div v-if="!isUnlocked" class="pin-section">
-      <p class="pin-required">Ingresa tu PIN para confirmar</p>
+      <p class="pin-required">INGRESA TU PIN PARA CONFIRMAR</p>
       <PinInput mode="unlock" @complete="handlePinComplete" />
       <p v-if="pinError" class="error-text">{{ pinError }}</p>
     </div>
@@ -302,12 +326,12 @@ function handleReject(reason?: string) {
 
 <style scoped>
 .confirmation-page {
-  padding: 1rem;
+  padding: var(--space-lg);
   max-width: 360px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-lg);
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -315,170 +339,233 @@ function handleReject(reason?: string) {
 .confirmation-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #333;
+  justify-content: space-between;
+}
+
+.close-btn {
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.close-btn:hover {
+  opacity: 0.7;
+}
+
+.header-spacer {
+  width: 40px;
 }
 
 .confirmation-header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 1px;
+  color: var(--color-text-primary);
 }
 
 .origin-badge {
-  background: #1a1a2e;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.origin-badge svg {
+  stroke: var(--color-accent-primary);
+}
+
+.origin-badge strong {
+  color: var(--color-text-primary);
+}
+
+.method-section {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-md);
 }
 
-.origin-label {
-  font-size: 0.75rem;
-  color: #888;
+.method-icon {
+  width: 72px;
+  height: 72px;
+  background: var(--color-accent-primary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.origin-value {
-  font-size: 0.9rem;
-  color: #5546ff;
-  font-weight: 500;
-  word-break: break-all;
+.method-icon svg {
+  stroke: var(--color-bg-primary);
 }
 
-.method-info {
-  background: rgba(85, 70, 255, 0.1);
-  border: 1px solid rgba(85, 70, 255, 0.3);
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.method-description {
+.method-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
   margin: 0;
-  color: #fff;
-  font-weight: 500;
+  font-style: italic;
+}
+
+.method-subtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
 }
 
 .params-section {
-  background: #1a1a2e;
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.params-section h3 {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.9rem;
-  color: #888;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
 }
 
 .params-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
 .param-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.param-row:last-child {
+  border-bottom: none;
 }
 
 .param-key {
-  font-size: 0.75rem;
-  color: #888;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
 }
 
 .param-value {
-  font-size: 0.85rem;
-  color: #fff;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  text-align: right;
   word-break: break-all;
+  max-width: 60%;
 }
 
 .raw-details {
-  background: #0f0f1a;
-  border-radius: 8px;
-  padding: 0.75rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 
 .raw-details summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
   cursor: pointer;
-  color: #888;
-  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.raw-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.raw-details summary .chevron {
+  margin-left: auto;
+  transition: transform var(--transition-base);
+}
+
+.raw-details[open] summary .chevron {
+  transform: rotate(180deg);
 }
 
 .raw-payload {
-  margin: 0.75rem 0 0 0;
-  font-size: 0.7rem;
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
   overflow-x: auto;
   max-height: 150px;
-  color: #aaa;
+  color: var(--color-text-muted);
+  background: var(--color-bg-elevated);
+  border-top: 1px solid var(--color-border);
 }
 
 .pin-section {
-  background: #1a1a2e;
-  border-radius: 8px;
-  padding: 1rem;
   text-align: center;
 }
 
 .pin-required {
-  margin: 0 0 1rem 0;
-  color: #fff;
-  font-size: 0.9rem;
-}
-
-.error-text {
-  color: #dc3545;
-  font-size: 0.85rem;
-  margin: 0.5rem 0 0 0;
+  margin: 0 0 var(--space-lg) 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  letter-spacing: 1px;
 }
 
 .action-buttons {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-md);
   margin-top: auto;
-  padding-top: 1rem;
+  padding-top: var(--space-lg);
 }
 
 .reject-btn {
   flex: 1;
-  padding: 1rem;
-  background: #dc3545;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  padding: var(--space-lg);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
 
 .reject-btn:hover:not(:disabled) {
-  background: #c82333;
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-card-hover);
 }
 
 .reject-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .confirm-btn {
   flex: 1;
-  padding: 1rem;
-  background: #5546ff;
-  color: #fff;
+  padding: var(--space-lg);
+  background: var(--color-accent-primary);
+  color: var(--color-bg-primary);
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
 
 .confirm-btn:hover:not(:disabled) {
-  background: #4438cc;
+  background: var(--color-accent-primary-hover);
 }
 
 .confirm-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 </style>
