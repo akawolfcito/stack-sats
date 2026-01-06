@@ -14,8 +14,6 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none';"
   },
   "host_permissions": [
-    "http://localhost/*",
-    "http://127.0.0.1/*",
     "https://*/*",
     "https://api.platform.hiro.so/*",
     "https://api.hiro.so/*",
@@ -33,11 +31,7 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "http://localhost/*",
-        "http://127.0.0.1/*",
-        "https://*/*"
-      ],
+      "matches": ["https://*/*"],
       "js": ["content.js"],
       "run_at": "document_start",
       "all_frames": false
@@ -46,11 +40,7 @@
   "web_accessible_resources": [
     {
       "resources": ["injection.js"],
-      "matches": [
-        "http://localhost/*",
-        "http://127.0.0.1/*",
-        "https://*/*"
-      ]
+      "matches": ["https://*/*"]
     }
   ]
 }
