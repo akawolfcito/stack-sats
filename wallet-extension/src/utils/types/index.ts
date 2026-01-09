@@ -17,7 +17,7 @@ type JsonRpcRequest = {
 type Result = {
   method: string;
   status: string;
-  data: Object;
+  data: object;
 };
 
 export type { Account, JsonRpcRequest, Result };

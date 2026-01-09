@@ -16,7 +16,7 @@ async function generateInitialAccounts(
   count: number = 20,
   network?: NetworkName
 ): Promise<Account[]> {
-  let wallet = await generateWallet({
+  const wallet = await generateWallet({
     secretKey: mnemonic,
     password: "",
   });

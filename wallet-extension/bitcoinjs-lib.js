@@ -8636,7 +8636,7 @@
                * @author   Feross Aboukhadijeh <https://feross.org>
                * @license  MIT
                */
-              /* eslint-disable no-proto */
+               
 
               "use strict";
 
@@ -8975,7 +8975,7 @@
 
               function SlowBuffer(length) {
                 if (+length != length) {
-                  // eslint-disable-line eqeqeq
+                   
                   length = 0;
                 }
                 return Buffer.alloc(+length);
@@ -10479,7 +10479,7 @@
               }
               function numberIsNaN(obj) {
                 // For IE11 support
-                return obj !== obj; // eslint-disable-line no-self-compare
+                return obj !== obj;  
               }
             }).call(this);
           }).call(this, require("buffer").Buffer);
@@ -10843,7 +10843,7 @@
               if (m > 0 && existing.length > m && !existing.warned) {
                 existing.warned = true;
                 // No error code for this since it is a Warning
-                // eslint-disable-next-line no-restricted-syntax
+                 
                 var w = new Error(
                   "Possible EventEmitter memory leak detected. " +
                     existing.length +
