@@ -372,7 +372,7 @@ const closeReceiveModal = () => {
       <!-- Header -->
       <header class="header">
         <!-- Menu Button -->
-        <button class="header-btn menu-btn" @click="handleOpenUserMenu" title="Menu">
+        <button class="btn-icon header-btn menu-btn" @click="handleOpenUserMenu" title="Menu">
           <span class="menu-icon-text">☰</span>
         </button>
 

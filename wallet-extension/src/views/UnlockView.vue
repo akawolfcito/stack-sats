@@ -128,10 +128,8 @@ onMounted(() => {
       <div class="reset-content">
         <!-- Header -->
         <header class="reset-header">
-          <button class="back-btn" @click="handleCancelDelete">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
+          <button class="btn-icon back-btn" @click="handleCancelDelete">
+            <span class="back-icon">←</span>
           </button>
           <h1>Reset Wallet</h1>
           <div class="header-spacer"></div>
@@ -392,26 +390,10 @@ onMounted(() => {
   letter-spacing: -0.02em;
 }
 
-.back-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.back-btn:active {
-  background: rgba(255, 255, 255, 0.2);
+.back-icon {
+  font-size: 20px;
+  line-height: 1;
+  color: #FFFFFF;
 }
 
 .header-spacer {

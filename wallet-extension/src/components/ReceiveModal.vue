@@ -143,7 +143,7 @@ function setBtcType(type: BtcAddressType) {
               </div>
               <h2>Receive {{ activeTab === 'stx' ? 'STX' : 'Bitcoin' }}</h2>
             </div>
-            <button class="close-btn" @click="handleClose">
+            <button class="btn-icon close-btn" @click="handleClose">
               <span class="close-icon">×</span>
             </button>
           </div>

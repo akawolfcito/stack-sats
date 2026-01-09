@@ -45,6 +45,26 @@ button {
   gap: var(--space-sm);
 }
 
+/* Icon-only Button - Circular */
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-primary);
+}
+
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-icon:active {
+  transform: scale(0.95);
+}
+
 /* Primary Button - Electric Lime CTA */
 .btn-primary {
   background: var(--color-accent-primary);

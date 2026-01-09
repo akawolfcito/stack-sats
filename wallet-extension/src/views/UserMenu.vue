@@ -247,7 +247,7 @@ function cancelImport() {
 
     <!-- Header -->
     <header class="page-header">
-      <button class="back-btn" @click="handleUserHome">
+      <button class="btn-icon back-btn" @click="handleUserHome">
         <span class="back-icon">←</span>
       </button>
       <h1>Settings</h1>
