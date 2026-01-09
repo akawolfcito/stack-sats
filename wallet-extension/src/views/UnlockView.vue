@@ -16,6 +16,8 @@ const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
 
 const attemptsRemaining = computed(() => sessionManager.attemptsRemaining);
 
+const canDelete = computed(() => deleteConfirmText.value.toUpperCase() === "DELETE");
+
 const handleUnlock = async (pin: string) => {
   pinError.value = "";
   isLoading.value = true;
@@ -54,9 +56,7 @@ const handleCancelDelete = () => {
 };
 
 const handleConfirmDelete = async () => {
-  if (deleteConfirmText.value.toUpperCase() !== "DELETE") {
-    return;
-  }
+  if (!canDelete.value) return;
 
   await sessionManager.deleteWalletAsync();
   secureLog("Wallet deleted");
@@ -64,13 +64,11 @@ const handleConfirmDelete = async () => {
 };
 
 onMounted(() => {
-  // Check if wallet exists
   if (!sessionManager.hasWallet) {
     router.push({ path: "/" });
     return;
   }
 
-  // Check if already unlocked
   if (!sessionManager.isLocked) {
     router.push({ path: "/user" });
     return;
@@ -83,7 +81,7 @@ onMounted(() => {
 <template>
   <section class="unlock-view">
     <!-- Ambient Glow -->
-    <div class="ambient-glow"></div>
+    <div class="ambient-glow" :class="{ 'ambient-glow--danger': showDeleteConfirm }"></div>
 
     <!-- Normal unlock view -->
     <template v-if="!showDeleteConfirm">
@@ -125,50 +123,111 @@ onMounted(() => {
       </div>
     </template>
 
-    <!-- Delete confirmation view -->
+    <!-- Reset Wallet Confirmation -->
     <template v-else>
-      <div class="delete-content">
-        <!-- Warning Card -->
-        <div class="danger-card">
-          <div class="danger-icon">
-            <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
+      <div class="reset-content">
+        <!-- Header -->
+        <header class="reset-header">
+          <button class="back-btn" @click="handleCancelDelete">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
+          </button>
+          <h1>Reset Wallet</h1>
+          <div class="header-spacer"></div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="reset-main">
+          <!-- Danger Zone Card -->
+          <div class="danger-card">
+            <!-- Inner Glow -->
+            <div class="danger-card-glow"></div>
+
+            <!-- Content -->
+            <div class="danger-card-content">
+              <!-- Warning Icon -->
+              <div class="warning-icon-wrapper">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+
+              <!-- Headline -->
+              <h2 class="danger-headline">Danger Zone</h2>
+
+              <!-- Warning Text -->
+              <p class="danger-text">
+                This action is <span class="text-danger">irreversible</span>. It will permanently delete all your wallets, keys, and transaction history from this device.
+              </p>
+
+              <!-- Input Section -->
+              <div class="input-section">
+                <label class="input-label" for="delete-input">
+                  Type 'DELETE' to confirm
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    id="delete-input"
+                    v-model="deleteConfirmText"
+                    type="text"
+                    placeholder="DELETE"
+                    class="delete-input"
+                    autocomplete="off"
+                  />
+                  <div class="input-icon" :class="{ 'input-icon--valid': canDelete }">
+                    <svg v-if="canDelete" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Stripe -->
+            <div class="danger-stripe"></div>
           </div>
-          <h2 class="danger-title">Reset Wallet</h2>
-          <p class="danger-text">
-            This will permanently delete your wallet from this device.
-            Make sure you have your recovery phrase saved!
-          </p>
-        </div>
 
-        <!-- Confirm Input -->
-        <div class="confirm-section">
-          <label class="confirm-label">Type DELETE to confirm:</label>
-          <input
-            v-model="deleteConfirmText"
-            type="text"
-            placeholder="DELETE"
-            class="confirm-input"
-            autocomplete="off"
-          />
-        </div>
+          <!-- Spacer -->
+          <div class="flex-spacer"></div>
 
-        <!-- Actions -->
-        <div class="delete-actions">
-          <button class="btn-secondary" @click="handleCancelDelete">
-            Cancel
-          </button>
-          <button
-            class="btn-danger"
-            :disabled="deleteConfirmText.toUpperCase() !== 'DELETE'"
-            @click="handleConfirmDelete"
-          >
-            Reset Wallet
-          </button>
-        </div>
+          <!-- Info Note -->
+          <div class="info-note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <p>
+              Make sure you have backed up your Secret Recovery Phrase. Without it, you will lose access to your funds forever.
+            </p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button class="btn-cancel" @click="handleCancelDelete">
+              Cancel
+            </button>
+            <button
+              class="btn-reset"
+              :disabled="!canDelete"
+              @click="handleConfirmDelete"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+              Reset Wallet
+            </button>
+          </div>
+        </main>
       </div>
     </template>
   </section>
@@ -197,6 +256,12 @@ onMounted(() => {
   filter: blur(100px);
   border-radius: 50%;
   pointer-events: none;
+  transition: all 0.5s ease;
+}
+
+.ambient-glow--danger {
+  background: #ef4444;
+  opacity: 0.08;
 }
 
 /* Unlock Content */
@@ -300,134 +365,292 @@ onMounted(() => {
   margin: 0;
 }
 
-/* Delete Content */
-.delete-content {
+/* ========== RESET WALLET FLOW ========== */
+
+.reset-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-xl);
-  gap: var(--space-xl);
   position: relative;
   z-index: 10;
 }
 
+/* Reset Header */
+.reset-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  flex-shrink: 0;
+}
+
+.reset-header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.back-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header-spacer {
+  width: 40px;
+}
+
+/* Reset Main */
+.reset-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  padding-bottom: 24px;
+  overflow-y: auto;
+}
+
 /* Danger Card */
 .danger-card {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: #282828;
+  overflow: hidden;
+  box-shadow: 0 0 25px -5px rgba(239, 68, 68, 0.3);
+}
+
+.danger-card-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 20px 0 rgba(239, 68, 68, 0.1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.danger-card-content {
+  position: relative;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 24px;
   text-align: center;
-  padding: var(--space-xl);
+}
+
+/* Warning Icon */
+.warning-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
   background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: var(--radius-2xl);
-  max-width: 320px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  margin-bottom: 20px;
 }
 
-.danger-icon {
-  color: var(--color-error);
-  margin-bottom: var(--space-lg);
-}
-
-.danger-title {
+/* Headline */
+.danger-headline {
   font-size: 24px;
   font-weight: 700;
-  color: var(--color-error);
-  margin: 0 0 var(--space-md);
+  color: var(--color-text-primary);
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
 }
 
+/* Danger Text */
 .danger-text {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  font-size: 14px;
+  color: #9ca3af;
   line-height: 1.6;
-  margin: 0;
+  margin: 0 0 24px;
+  padding: 0 8px;
 }
 
-/* Confirm Section */
-.confirm-section {
+.text-danger {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* Input Section */
+.input-section {
   width: 100%;
-  max-width: 320px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 12px;
 }
 
-.confirm-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+.input-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: left;
+  margin-left: 4px;
 }
 
-.confirm-input {
+.input-wrapper {
+  position: relative;
   width: 100%;
-  height: 56px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: 0 var(--space-lg);
-  font-size: var(--font-size-base);
+}
+
+.delete-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 48px 0 16px;
+  background: #101818;
+  border: 1px solid #374151;
+  border-radius: 12px;
   color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.3em;
   outline: none;
   transition: all 0.2s ease;
 }
 
-.confirm-input:focus {
-  border-color: var(--color-error);
+.delete-input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5);
 }
 
-.confirm-input::placeholder {
-  color: var(--color-text-muted);
+.delete-input::placeholder {
+  color: #4b5563;
   text-transform: uppercase;
+  letter-spacing: 0.3em;
 }
 
-/* Delete Actions */
-.delete-actions {
-  display: flex;
-  gap: var(--space-md);
+.input-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4b5563;
+  transition: color 0.2s ease;
+}
+
+.input-icon--valid {
+  color: #22c55e;
+}
+
+/* Danger Stripe */
+.danger-stripe {
+  height: 4px;
   width: 100%;
-  max-width: 320px;
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.5), transparent);
 }
 
-.btn-secondary {
+/* Flex Spacer */
+.flex-spacer {
+  flex: 1;
+  min-height: 40px;
+}
+
+/* Info Note */
+.info-note {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 0 8px;
+  margin-bottom: 24px;
+  opacity: 0.7;
+}
+
+.info-note svg {
+  color: #6b7280;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.info-note p {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-cancel {
   flex: 1;
   height: 56px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 9999px;
+  border-radius: 12px;
+  background: #282828;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--color-text-primary);
-  font-size: var(--font-size-base);
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.btn-secondary:hover {
-  background: var(--color-bg-elevated);
+.btn-cancel:hover {
+  background: #333333;
 }
 
-.btn-danger {
-  flex: 1;
+.btn-cancel:active {
+  transform: scale(0.98);
+}
+
+.btn-reset {
+  flex: 1.5;
   height: 56px;
-  background: var(--color-error);
+  border-radius: 12px;
+  background: #ef4444;
   border: none;
-  border-radius: 9999px;
   color: white;
-  font-size: var(--font-size-base);
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
   transition: all 0.2s ease;
 }
 
-.btn-danger:hover:not(:disabled) {
+.btn-reset:hover:not(:disabled) {
   background: #dc2626;
 }
 
-.btn-danger:disabled {
+.btn-reset:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-reset:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 </style>
