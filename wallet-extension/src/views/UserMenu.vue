@@ -62,8 +62,6 @@ async function switchWallet(walletId: string) {
 }
 
 function handleAddWallet() {
-  // Navigate to start view to create/import new wallet
-  // The StartView should detect existing wallets and offer to add, not replace
   router.push({ path: "/add-wallet" });
 }
 
@@ -99,7 +97,6 @@ async function handlePinComplete(pin: string) {
     return;
   }
 
-  // Securely delete wallet data
   secureWipeAndDelete();
 }
 
@@ -107,27 +104,21 @@ async function secureWipeAndDelete() {
   secureLog("Starting secure wallet deletion");
 
   if (walletToDelete.value) {
-    // Delete specific wallet
     const isActive = walletToDelete.value === activeWalletId.value;
     await deleteWalletAsync(walletToDelete.value);
 
-    // Refresh wallet list
     await loadWallets();
 
     if (wallets.value.length === 0) {
-      // No wallets left, go to start
       sessionManager.lock();
       router.push({ path: "/" });
     } else if (isActive) {
-      // Deleted active wallet, need to unlock another
       sessionManager.lock();
       router.push({ path: "/unlock" });
     } else {
-      // Deleted inactive wallet, stay on menu
       cancelDelete();
     }
   } else {
-    // Delete all wallets (legacy behavior)
     await sessionManager.deleteWalletAsync();
     router.push({ path: "/" });
   }
@@ -151,7 +142,6 @@ async function handleExportBackup() {
     return;
   }
 
-  // Show PIN input for verification
   showBackupPinInput.value = true;
 }
 
@@ -163,7 +153,6 @@ async function handleBackupPinComplete(pin: string) {
     return;
   }
 
-  // PIN verified, proceed with backup
   const activeWallet = await getActiveWalletAsync();
   if (!activeWallet) {
     backupMessage.value = { type: "error", text: "No active wallet to export" };
@@ -185,7 +174,6 @@ async function handleBackupPinComplete(pin: string) {
   showBackupPinInput.value = false;
   backupPinError.value = "";
 
-  // Clear message after 3 seconds
   setTimeout(() => {
     backupMessage.value = null;
   }, 3000);
@@ -207,7 +195,6 @@ async function handleFileSelected(event: Event) {
 
   if (!file) return;
 
-  // Reset input for future selections
   input.value = "";
 
   const backup = await parseBackupFile(file);
@@ -216,14 +203,12 @@ async function handleFileSelected(event: Event) {
     return;
   }
 
-  // Check if wallet already exists
   if (await walletExistsAsync(backup.wallet.id)) {
     pendingImportWallet.value = backup.wallet;
     showImportConfirm.value = true;
     return;
   }
 
-  // Import directly
   await completeImport(backup.wallet, false);
 }
 
@@ -256,58 +241,105 @@ function cancelImport() {
 </script>
 
 <template>
-  <section class="menu-page">
-    <div class="menu-header">
+  <section class="settings-page">
+    <!-- Ambient Glow -->
+    <div class="ambient-glow"></div>
+
+    <!-- Header -->
+    <header class="page-header">
       <button class="back-btn" @click="handleUserHome">
-        ← Back
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
       </button>
-      <h2>Settings</h2>
-    </div>
+      <h1>Settings</h1>
+      <div class="header-spacer"></div>
+    </header>
 
-    <div v-if="!showDeleteConfirm" class="menu-options">
-      <!-- Wallet List -->
-      <div class="wallets-section">
-        <div class="section-header">
-          <h3>Your Wallets</h3>
-          <button class="add-wallet-btn" @click="handleAddWallet">+ Add</button>
-        </div>
-
+    <!-- Main Content -->
+    <main v-if="!showDeleteConfirm" class="page-content">
+      <!-- Your Wallets Section -->
+      <section class="section">
+        <h3 class="section-title">Your Wallets</h3>
         <div class="wallet-list">
           <div
             v-for="wallet in wallets"
             :key="wallet.id"
             class="wallet-item"
-            :class="{ active: wallet.id === activeWalletId }"
+            :class="{ 'wallet-item--active': wallet.id === activeWalletId }"
+            @click="switchWallet(wallet.id)"
           >
-            <div class="wallet-info" @click="switchWallet(wallet.id)">
+            <div class="wallet-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+                <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
+              </svg>
+            </div>
+            <div class="wallet-info">
               <span class="wallet-name">{{ wallet.name }}</span>
               <span v-if="wallet.id === activeWalletId" class="active-badge">Active</span>
             </div>
             <button
-              class="delete-wallet-btn"
+              class="wallet-delete"
               @click.stop="initiateDelete(wallet.id)"
               title="Delete wallet"
             >
-              &times;
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
             </button>
+            <svg class="wallet-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
           </div>
-        </div>
-      </div>
 
-      <hr class="divider" />
-
-      <!-- Backup Section -->
-      <div class="backup-section">
-        <div class="section-header">
-          <h3>Backup</h3>
-        </div>
-
-        <div class="backup-buttons">
-          <button class="backup-btn export" @click="handleExportBackup">
-            Export Backup
+          <!-- Add Wallet Button -->
+          <button class="add-wallet-btn" @click="handleAddWallet">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="16"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            Add Wallet
           </button>
-          <button class="backup-btn import" @click="triggerFileInput">
-            Import Backup
+        </div>
+      </section>
+
+      <!-- Security & Backup Section -->
+      <section class="section">
+        <h3 class="section-title">Security & Backup</h3>
+        <div class="security-options">
+          <button class="option-card" @click="handleExportBackup">
+            <div class="option-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+            </div>
+            <div class="option-content">
+              <span class="option-title">Export Secret Key</span>
+              <span class="option-subtitle">Download encrypted backup</span>
+            </div>
+            <svg class="option-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M7 17L17 7M17 7H7M17 7V17"/>
+            </svg>
+          </button>
+
+          <button class="option-card" @click="triggerFileInput">
+            <div class="option-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <div class="option-content">
+              <span class="option-title">Import Wallet</span>
+              <span class="option-subtitle">Restore from backup file</span>
+            </div>
+            <svg class="option-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
           </button>
         </div>
 
@@ -322,48 +354,64 @@ function cancelImport() {
         <p v-if="backupMessage" class="backup-message" :class="backupMessage.type">
           {{ backupMessage.text }}
         </p>
-      </div>
-
-      <hr class="divider" />
+      </section>
 
       <!-- Danger Zone -->
-      <div class="danger-zone">
-        <small>Danger Zone</small>
-        <button class="delete-btn" @click="initiateDelete()">
-          Delete All Wallets
-        </button>
-      </div>
-    </div>
+      <section class="danger-section">
+        <div class="danger-card">
+          <h3 class="danger-title">Danger Zone</h3>
+          <p class="danger-text">
+            Deleting your wallets will remove them from this device permanently.
+            Make sure you have your secret keys backed up safely.
+          </p>
+          <button class="danger-btn" @click="initiateDelete()">
+            Delete All Wallets
+          </button>
+        </div>
+      </section>
 
-    <!-- Delete confirmation flow -->
-    <div v-else class="delete-confirmation">
-      <div v-if="!showPinInput" class="confirm-text-step">
-        <div class="warning-box">
-          <p class="warning-title">⚠️ Warning</p>
+      <!-- Version Footer -->
+      <footer class="version-footer">
+        DENVAULT V1.0.1
+      </footer>
+    </main>
+
+    <!-- Delete Confirmation Flow -->
+    <div v-else class="delete-flow">
+      <div v-if="!showPinInput" class="confirm-step">
+        <div class="warning-card">
+          <div class="warning-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <h3>Delete Wallet</h3>
           <p>
             This action will permanently delete your wallet from this extension.
             Make sure you have your recovery phrase saved.
           </p>
         </div>
 
-        <label class="confirm-label">
-          Type <strong>{{ CONFIRM_WORD }}</strong> to confirm:
-        </label>
-        <input
-          v-model="confirmText"
-          type="text"
-          class="confirm-input"
-          :placeholder="CONFIRM_WORD"
-          autocomplete="off"
-        />
+        <div class="confirm-input-section">
+          <label class="confirm-label">
+            Type <strong>{{ CONFIRM_WORD }}</strong> to confirm:
+          </label>
+          <input
+            v-model="confirmText"
+            type="text"
+            class="confirm-input"
+            :placeholder="CONFIRM_WORD"
+            autocomplete="off"
+          />
+        </div>
 
         <p v-if="deleteError" class="error-text">{{ deleteError }}</p>
 
         <div class="button-group">
-          <button class="cancel-btn" @click="cancelDelete">Cancel</button>
-          <button class="confirm-btn" @click="confirmDeleteText">
-            Continue
-          </button>
+          <button class="btn-secondary" @click="cancelDelete">Cancel</button>
+          <button class="btn-danger" @click="confirmDeleteText">Continue</button>
         </div>
       </div>
 
@@ -379,142 +427,496 @@ function cancelImport() {
     </div>
 
     <!-- Backup PIN Modal -->
-    <div v-if="showBackupPinInput" class="import-confirm-overlay">
-      <div class="import-confirm-modal backup-pin-modal">
-        <h3>Verify PIN</h3>
-        <p>Enter your PIN to export backup:</p>
-        <PinInput
-          mode="unlock"
-          @complete="handleBackupPinComplete"
-          @cancel="cancelBackupPin"
-        />
-        <p v-if="backupPinError" class="error-text">{{ backupPinError }}</p>
-        <button class="cancel-btn full-width" @click="cancelBackupPin">Cancel</button>
-      </div>
-    </div>
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showBackupPinInput" class="modal-overlay" @click.self="cancelBackupPin">
+          <div class="modal-card">
+            <div class="modal-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h3>Verify PIN</h3>
+            <p>Enter your PIN to export backup</p>
+            <PinInput
+              mode="unlock"
+              @complete="handleBackupPinComplete"
+              @cancel="cancelBackupPin"
+            />
+            <p v-if="backupPinError" class="error-text">{{ backupPinError }}</p>
+            <button class="btn-secondary full-width" @click="cancelBackupPin">Cancel</button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Import Confirmation Modal -->
-    <div v-if="showImportConfirm" class="import-confirm-overlay">
-      <div class="import-confirm-modal">
-        <h3>Wallet already exists</h3>
-        <p>
-          The wallet "<strong>{{ pendingImportWallet?.name }}</strong>" already exists in your extension.
-        </p>
-        <p class="import-question">Do you want to replace it with the backup?</p>
-
-        <div class="button-group">
-          <button class="cancel-btn" @click="cancelImport">Cancel</button>
-          <button class="confirm-btn replace" @click="completeImport(pendingImportWallet!, true)">
-            Replace
-          </button>
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showImportConfirm" class="modal-overlay" @click.self="cancelImport">
+          <div class="modal-card">
+            <div class="modal-icon modal-icon--warning">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <h3>Wallet Already Exists</h3>
+            <p>
+              The wallet "<strong>{{ pendingImportWallet?.name }}</strong>" already exists in your extension.
+            </p>
+            <p class="modal-question">Do you want to replace it with the backup?</p>
+            <div class="button-group">
+              <button class="btn-secondary" @click="cancelImport">Cancel</button>
+              <button class="btn-warning" @click="completeImport(pendingImportWallet!, true)">
+                Replace
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
   </section>
 </template>
 
 <style scoped>
-.menu-page {
-  padding: var(--space-lg);
-  max-width: 360px;
-  margin: 0 auto;
+/* Base Layout */
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--color-bg-primary);
+  position: relative;
 }
 
-.menu-header {
+/* Ambient Glow */
+.ambient-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150%;
+  height: 40%;
+  background: var(--color-accent-primary);
+  opacity: 0.05;
+  filter: blur(100px);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Header */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-xl);
+  padding: 48px 20px 16px;
+  background: rgba(23, 24, 17, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-.menu-header h2 {
+.page-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
   margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  flex: 1;
-  text-align: center;
+  letter-spacing: -0.02em;
 }
 
 .back-btn {
-  background: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #282828;
   border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-text-primary);
   cursor: pointer;
-  font-size: var(--font-size-base);
-  padding: var(--space-sm);
-  width: auto;
+  transition: all 0.2s ease;
 }
 
 .back-btn:hover {
-  opacity: 0.7;
+  background: #333333;
 }
 
-.menu-options {
+.back-btn:active {
+  transform: scale(0.95);
+}
+
+.header-spacer {
+  width: 40px;
+}
+
+/* Main Content */
+.page-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: 32px;
+  padding: 8px 16px 24px;
+  overflow-y: auto;
 }
 
-.delete-btn {
-  background: var(--color-error);
-  color: var(--color-text-primary);
-  border: none;
-  padding: var(--space-lg);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
+/* Section Styles */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.delete-btn:hover {
-  background: #FF5252;
-}
-
-.delete-confirmation {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  padding: var(--space-xl);
-  border-radius: var(--radius-xl);
-}
-
-.warning-box {
-  background: var(--color-error-muted);
-  border: 1px solid var(--color-error);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-xl);
-}
-
-.warning-title {
-  color: var(--color-error);
-  font-weight: var(--font-weight-bold);
-  margin: 0 0 var(--space-sm) 0;
-}
-
-.warning-box p {
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9ca3af;
   margin: 0;
+  padding-left: 8px;
+}
+
+/* Wallet List */
+.wallet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wallet-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #282828;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wallet-item:hover {
+  background: #333333;
+}
+
+.wallet-item:active {
+  transform: scale(0.99);
+}
+
+.wallet-item--active {
+  border-color: var(--color-accent-primary);
+  background: rgba(232, 248, 89, 0.05);
+}
+
+.wallet-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(232, 248, 89, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-primary);
+  flex-shrink: 0;
+}
+
+.wallet-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wallet-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.active-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0a0a0a;
+  background: var(--color-accent-primary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.wallet-delete {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wallet-delete:hover {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.wallet-arrow {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+/* Add Wallet Button */
+.add-wallet-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 9999px;
+  border: 2px dashed #4b5563;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.add-wallet-btn:hover {
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+.add-wallet-btn:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Security Options */
+.security-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  background: #282828;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.option-card:hover {
+  background: #333333;
+}
+
+.option-card:active {
+  background: #3a3a3a;
+}
+
+.option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+
+.option-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.option-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.option-subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.option-arrow {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+/* Backup Message */
+.backup-message {
+  margin: 8px 0 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.backup-message.success {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--color-success);
+}
+
+.backup-message.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+}
+
+/* Danger Section */
+.danger-section {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.danger-card {
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.danger-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-error);
+  margin: 0 0 8px;
+}
+
+.danger-text {
+  font-size: 12px;
+  color: rgba(239, 68, 68, 0.7);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.danger-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 9999px;
+  background: var(--color-error);
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  transition: all 0.2s ease;
+}
+
+.danger-btn:hover {
+  background: #dc2626;
+}
+
+.danger-btn:active {
+  transform: scale(0.98);
+}
+
+/* Version Footer */
+.version-footer {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 500;
+  color: #4b5563;
+  letter-spacing: 0.15em;
+  padding: 24px 0 16px;
+}
+
+/* Delete Flow */
+.delete-flow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+}
+
+.confirm-step {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.warning-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 20px;
+}
+
+.warning-icon {
+  color: var(--color-error);
+  margin-bottom: 16px;
+}
+
+.warning-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-error);
+  margin: 0 0 12px;
+}
+
+.warning-card p {
+  font-size: 14px;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.confirm-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .confirm-label {
-  display: block;
-  margin-bottom: var(--space-sm);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.confirm-label strong {
+  color: var(--color-error);
 }
 
 .confirm-input {
   width: 100%;
-  padding: var(--space-lg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  background: var(--color-bg-elevated);
+  height: 56px;
+  padding: 0 20px;
+  background: #16180c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   color: var(--color-text-primary);
-  font-size: var(--font-size-base);
-  margin-bottom: var(--space-lg);
-  box-sizing: border-box;
-  height: auto;
+  font-size: 16px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .confirm-input:focus {
@@ -522,288 +924,179 @@ function cancelImport() {
   border-color: var(--color-error);
 }
 
+.confirm-input::placeholder {
+  color: #4b5563;
+  text-transform: uppercase;
+}
+
+.error-text {
+  color: var(--color-error);
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+}
+
 .button-group {
   display: flex;
-  gap: var(--space-md);
+  gap: 12px;
 }
 
-.cancel-btn {
+.btn-secondary {
   flex: 1;
-  padding: var(--space-lg);
-  background: var(--color-bg-card);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  font-weight: var(--font-weight-semibold);
-}
-
-.cancel-btn:hover {
-  border-color: var(--color-border-hover);
-}
-
-.confirm-btn {
-  flex: 1;
-  padding: var(--space-lg);
-  background: var(--color-error);
-  color: var(--color-text-primary);
+  height: 56px;
+  border-radius: 9999px;
+  background: #282828;
   border: none;
-  border-radius: var(--radius-pill);
+  color: var(--color-text-primary);
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: var(--font-weight-semibold);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #333333;
+}
+
+.btn-danger {
+  flex: 1;
+  height: 56px;
+  border-radius: 9999px;
+  background: var(--color-error);
+  border: none;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-warning {
+  flex: 1;
+  height: 56px;
+  border-radius: 9999px;
+  background: var(--color-warning);
+  border: none;
+  color: #0a0a0a;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-warning:hover {
+  filter: brightness(1.1);
+}
+
+/* PIN Step */
+.pin-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
 }
 
 .pin-prompt {
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-lg);
+  font-size: 16px;
+  color: var(--color-text-secondary);
   text-align: center;
-  font-size: var(--font-size-sm);
-}
-
-.pin-step {
-  text-align: center;
-}
-
-/* Wallets Section */
-.wallets-section {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-lg);
-}
-
-.section-header h3 {
   margin: 0;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
 }
 
-.add-wallet-btn {
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  width: auto;
-}
-
-.add-wallet-btn:hover {
-  background: var(--color-accent-primary-hover);
-}
-
-.wallet-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.wallet-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-md);
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  transition: all var(--transition-fast);
-}
-
-.wallet-item:hover {
-  border-color: var(--color-border-hover);
-}
-
-.wallet-item.active {
-  border-color: var(--color-accent-primary);
-  background: var(--color-accent-primary-muted);
-}
-
-.wallet-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  cursor: pointer;
-  flex: 1;
-}
-
-.wallet-name {
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
-}
-
-.active-badge {
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
-  font-size: var(--font-size-xs);
-  padding: 2px var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.delete-wallet-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0 var(--space-sm);
-  line-height: 1;
-  width: auto;
-}
-
-.delete-wallet-btn:hover {
-  color: var(--color-error);
-}
-
-.divider {
-  border: none;
-  border-top: 1px solid var(--color-border);
-  margin: var(--space-lg) 0;
-}
-
-.danger-zone {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-/* Backup Section */
-.backup-section {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
-}
-
-.backup-buttons {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.backup-btn {
-  flex: 1;
-  padding: var(--space-md);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  transition: all var(--transition-fast);
-}
-
-.backup-btn.export {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-}
-
-.backup-btn.export:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card-hover);
-}
-
-.backup-btn.import {
-  background: transparent;
-  border: 1px solid var(--color-success);
-  color: var(--color-success);
-}
-
-.backup-btn.import:hover {
-  background: var(--color-success-muted);
-}
-
-.backup-message {
-  margin: var(--space-md) 0 0 0;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  text-align: center;
-}
-
-.backup-message.success {
-  background: var(--color-success-muted);
-  color: var(--color-success);
-}
-
-.backup-message.error {
-  background: var(--color-error-muted);
-  color: var(--color-error);
-}
-
-/* Import Confirmation Modal */
-.import-confirm-overlay {
+/* Modal Styles */
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(1, 7, 14, 0.95);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
-  padding: var(--space-lg);
+  z-index: 1000;
+  padding: 24px;
 }
 
-.import-confirm-modal {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-xl);
-  max-width: 320px;
+.modal-card {
   width: 100%;
-}
-
-.import-confirm-modal h3 {
-  margin: 0 0 var(--space-lg) 0;
-  color: var(--color-warning);
-  font-size: var(--font-size-lg);
-}
-
-.import-confirm-modal p {
-  margin: 0 0 var(--space-md) 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.import-question {
-  color: var(--color-text-primary) !important;
-  font-weight: var(--font-weight-medium);
-}
-
-.confirm-btn.replace {
-  background: var(--color-warning);
-  color: var(--color-bg-primary);
-}
-
-.confirm-btn.replace:hover {
-  filter: brightness(1.1);
-}
-
-/* Backup PIN Modal */
-.backup-pin-modal {
+  max-width: 340px;
+  background: #1a1c0d;
+  border-radius: 24px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.backup-pin-modal h3 {
+.modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(232, 248, 89, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-accent-primary);
+  margin-bottom: 8px;
 }
 
-.backup-pin-modal p {
-  margin-bottom: var(--space-lg);
+.modal-icon--warning {
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--color-warning);
+}
+
+.modal-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.modal-card p {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.modal-question {
+  color: var(--color-text-primary) !important;
+  font-weight: 500;
 }
 
 .full-width {
   width: 100%;
-  margin-top: var(--space-lg);
+  margin-top: 8px;
+}
+
+/* Modal Transitions */
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-enter-active .modal-card,
+.modal-leave-active .modal-card {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-card,
+.modal-leave-to .modal-card {
+  transform: scale(0.95);
 }
 </style>
