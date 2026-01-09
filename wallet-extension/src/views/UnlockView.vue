@@ -86,20 +86,18 @@ onMounted(() => {
     <!-- Normal unlock view -->
     <template v-if="!showDeleteConfirm">
       <div class="unlock-content">
-        <!-- Logo -->
-        <div class="logo-container">
-          <div class="logo-glow"></div>
-          <div class="logo-box">
-            <img src="/denvault-i.png" alt="DenVault" class="logo-image" />
+        <!-- Header: Logo + Title -->
+        <div class="unlock-header">
+          <div class="logo-container">
+            <div class="logo-glow"></div>
+            <div class="logo-box">
+              <img src="/denvault-i.png" alt="DenVault" class="logo-image" />
+            </div>
           </div>
-        </div>
-
-        <!-- Text -->
-        <div class="text-section">
           <h1 class="title">Welcome Back</h1>
         </div>
 
-        <!-- PIN Input -->
+        <!-- PIN Input (with keypad at bottom) -->
         <PinInput
           ref="pinInputRef"
           mode="unlock"
@@ -107,16 +105,18 @@ onMounted(() => {
           :disabled="isLoading || attemptsRemaining <= 0"
           :show-biometric="true"
           @complete="handleUnlock"
-        />
-
-        <!-- Forgot PIN -->
-        <button
-          class="forgot-btn"
-          :disabled="isLoading"
-          @click="handleForgotPin"
         >
-          Forgot PIN?
-        </button>
+          <!-- Slot: Forgot PIN link above keypad -->
+          <template #above-keypad>
+            <button
+              class="forgot-btn"
+              :disabled="isLoading"
+              @click="handleForgotPin"
+            >
+              Forgot PIN?
+            </button>
+          </template>
+        </PinInput>
 
         <p v-if="isLoading" class="loading-text">Unlocking...</p>
       </div>
@@ -266,18 +266,22 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: var(--space-lg) var(--space-md);
-  padding-top: 40px;
-  gap: var(--space-md);
   position: relative;
   z-index: 10;
+}
+
+/* Unlock Header */
+.unlock-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 16px 16px;
+  gap: 12px;
 }
 
 /* Logo */
 .logo-container {
   position: relative;
-  margin-bottom: var(--space-xs);
 }
 
 .logo-glow {
@@ -287,19 +291,18 @@ onMounted(() => {
   opacity: 0.2;
   filter: blur(24px);
   border-radius: 50%;
-  transition: opacity 0.5s ease;
 }
 
 .logo-box {
   position: relative;
-  width: 72px;
-  height: 72px;
-  border-radius: 24px;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #2a2d15, #1a1c0d);
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow:
-    6px 6px 12px rgba(18, 20, 9, 0.8),
-    -6px -6px 12px rgba(46, 48, 23, 0.3);
+    4px 4px 8px rgba(18, 20, 9, 0.8),
+    -4px -4px 8px rgba(46, 48, 23, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -307,42 +310,34 @@ onMounted(() => {
 }
 
 .logo-image {
-  width: 54px;
-  height: 54px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   object-fit: cover;
 }
 
-/* Text Section */
-.text-section {
-  text-align: center;
-  margin-bottom: var(--space-xs);
-}
-
 .title {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
   margin: 0;
 }
 
-/* Forgot Button */
+/* Forgot Button - Green accent color */
 .forgot-btn {
   background: transparent;
   border: none;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  color: var(--color-accent-primary);
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  padding: var(--space-xs) var(--space-md);
-  border-radius: var(--radius-lg);
-  transition: all 0.2s ease;
-  margin-top: var(--space-xs);
+  padding: 8px 16px;
+  transition: opacity 0.2s ease;
 }
 
 .forgot-btn:hover:not(:disabled) {
-  color: var(--color-accent-primary);
+  opacity: 0.8;
 }
 
 .forgot-btn:disabled {
