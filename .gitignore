@@ -48,6 +48,7 @@ mocks/
 # Ralph Agent (internal docs - do not commit)
 .agent-template/
 AGENTS.md
+guides-matching.md
 CONTEXT.md
 prd.json
 ralph-progress.md
