@@ -203,7 +203,7 @@ onBeforeMount(() => {
     <!-- Step 2: Show Mnemonic -->
     <div v-else-if="currentStep === 'mnemonic'" class="mnemonic-content">
       <!-- Header -->
-      <button class="back-button" @click="handleBack">
+      <button class="btn-icon back-button" @click="handleBack">
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
@@ -247,7 +247,7 @@ onBeforeMount(() => {
     <!-- Step 3 & 4: PIN -->
     <div v-else class="pin-content">
       <!-- Header -->
-      <button class="back-button" @click="handleBack">
+      <button class="btn-icon back-button" @click="handleBack">
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>

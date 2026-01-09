@@ -258,7 +258,7 @@ function truncateAddress(address: string): string {
     <header class="header">
       <button
         v-if="currentStep === 'form' || currentStep === 'confirm'"
-        class="back-btn"
+        class="btn-icon back-btn"
         @click="handleBack"
       >
         <span class="back-icon">←</span>
