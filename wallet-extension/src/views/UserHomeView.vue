@@ -372,12 +372,12 @@ const closeReceiveModal = () => {
       <!-- Header -->
       <header class="header">
         <!-- Menu Button -->
-        <button class="header-btn" @click="handleOpenUserMenu" title="Menu">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
+        <button class="header-btn menu-btn" @click="handleOpenUserMenu" title="Menu">
+          <span class="menu-icon">
+            <span class="menu-line"></span>
+            <span class="menu-line"></span>
+            <span class="menu-line"></span>
+          </span>
         </button>
 
         <!-- Account Selector Pill -->
@@ -765,6 +765,25 @@ const closeReceiveModal = () => {
 
 .header-btn:active {
   transform: scale(0.95);
+}
+
+/* Menu Icon - Hamburger */
+.menu-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 18px;
+  height: 18px;
+}
+
+.menu-line {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: #FFFFFF;
+  border-radius: 1px;
 }
 
 /* Account Pill */
