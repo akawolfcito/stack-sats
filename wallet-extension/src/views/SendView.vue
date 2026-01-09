@@ -8,7 +8,7 @@ import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network"
 import { fetchStxBalance } from "@/utils/balance";
 import {
   transferStx,
-  validateStxAddress,
+  validateStxAddressWithError,
   stxToMicroStx,
   microStxToStx,
   formatStxDisplay,
@@ -139,8 +139,9 @@ function validateRecipient() {
   if (!recipient.value.trim()) {
     return;
   }
-  if (!validateStxAddress(recipient.value.trim(), network.value)) {
-    recipientError.value = `Invalid address. Must start with ${NETWORKS[network.value].addressPrefix}`;
+  const result = validateStxAddressWithError(recipient.value.trim(), network.value);
+  if (!result.valid) {
+    recipientError.value = result.error || "Invalid address";
   }
 }
 
