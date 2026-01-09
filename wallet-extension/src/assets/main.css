@@ -4,6 +4,9 @@
 /* Tailwind CSS */
 @import "tailwindcss";
 
+/* Load Tailwind config */
+@config "../../tailwind.config.js";
+
 /* App Container */
 #app {
   width: 390px;
