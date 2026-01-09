@@ -16,6 +16,7 @@ const emit = defineEmits<{
 
 const PIN_LENGTH = 6;
 const digits = ref<string[]>(Array(PIN_LENGTH).fill(""));
+const isFocused = ref(false);
 
 // Keypad layout
 const keypadRows = [
@@ -103,47 +104,34 @@ watch(
 defineExpose({ clear, focus });
 
 const modeLabels = {
-  create: "Create your PIN",
-  confirm: "Confirm your PIN",
-  unlock: "Enter your PIN",
-};
-
-const modeDescriptions = {
-  create: "Choose a 6-digit PIN to protect your wallet",
-  confirm: "Re-enter your PIN to confirm",
-  unlock: "Enter your 6-digit PIN to unlock",
+  create: "Create PIN",
+  confirm: "Confirm PIN",
+  unlock: "Enter PIN",
 };
 </script>
 
 <template>
   <div
-    class="pin-input-container flex flex-col items-center gap-6 w-full outline-none"
+    class="pin-input-container"
     tabindex="0"
     @keydown="handleKeydown"
+    @focus="isFocused = true"
+    @blur="isFocused = false"
   >
     <!-- Label -->
-    <div class="text-center space-y-1">
-      <p class="text-sm font-semibold text-text-secondary uppercase tracking-widest">
-        {{ modeLabels[mode] }}
-      </p>
-    </div>
-
-    <!-- Security Icon -->
-    <div class="flex items-center justify-center text-accent-primary opacity-80">
-      <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
+    <div class="pin-label">
+      <p>{{ modeLabels[mode] }}</p>
     </div>
 
     <!-- PIN Dots -->
-    <div class="flex items-center justify-center gap-5">
+    <div class="pin-dots">
       <div
         v-for="(digit, index) in PIN_LENGTH"
         :key="index"
         class="pin-dot"
         :class="{
           'pin-dot--filled': digits[index] !== '',
+          'pin-dot--active': isFocused && index === currentIndex && !error && !disabled,
           'pin-dot--error': error,
           'animate-shake': error
         }"
@@ -151,12 +139,7 @@ const modeDescriptions = {
     </div>
 
     <!-- Error Message -->
-    <p v-if="error" class="text-error text-sm font-medium">{{ error }}</p>
-
-    <!-- Description -->
-    <p v-else class="text-text-muted text-xs text-center">
-      {{ modeDescriptions[mode] }}
-    </p>
+    <p v-if="error" class="error-message">{{ error }}</p>
 
     <!-- Numeric Keypad -->
     <div class="keypad">
@@ -172,6 +155,7 @@ const modeDescriptions = {
             'invisible': key === 'biometric' && !showBiometric
           }"
           :disabled="disabled"
+          @mousedown.prevent
           @click="handleKeyPress(key)"
         >
           <!-- Biometric Icon -->
@@ -201,13 +185,47 @@ const modeDescriptions = {
 </template>
 
 <style scoped>
+/* Container */
+.pin-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 0 16px;
+  gap: 12px;
+  outline: none;
+}
+
+/* Label */
+.pin-label {
+  text-align: center;
+}
+
+.pin-label p {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin: 0;
+}
+
+/* PIN Dots Container */
+.pin-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 40px;
+}
+
 /* PIN Dots */
 .pin-dot {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--color-bg-primary);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     inset 2px 2px 4px rgba(0, 0, 0, 0.5),
     inset -1px -1px 2px rgba(255, 255, 255, 0.05);
@@ -217,7 +235,7 @@ const modeDescriptions = {
 .pin-dot--filled {
   background: var(--color-accent-primary);
   border-color: var(--color-accent-primary);
-  box-shadow: 0 0 12px rgba(232, 248, 89, 0.6);
+  box-shadow: 0 0 10px rgba(232, 248, 89, 0.6);
 }
 
 .pin-dot--error {
@@ -226,7 +244,34 @@ const modeDescriptions = {
 
 .pin-dot--error.pin-dot--filled {
   background: var(--color-error);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+/* Active cursor (blinking) */
+.pin-dot--active {
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 6px rgba(232, 248, 89, 0.4);
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 6px rgba(232, 248, 89, 0.4);
+  }
+  50% {
+    border-color: rgba(232, 248, 89, 0.3);
+    box-shadow: 0 0 3px rgba(232, 248, 89, 0.2);
+  }
+}
+
+/* Error Message */
+.error-message {
+  color: var(--color-error);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+  min-height: 20px;
 }
 
 /* Shake animation */
@@ -244,25 +289,26 @@ const modeDescriptions = {
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px 24px;
-  max-width: 280px;
-  margin-top: 8px;
+  gap: 10px 12px;
+  width: 100%;
+  max-width: 220px;
+  margin-top: 4px;
 }
 
 .keypad-btn {
-  width: 72px;
-  height: 72px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 300;
   color: var(--color-text-primary);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
@@ -283,8 +329,10 @@ const modeDescriptions = {
 }
 
 .keypad-btn--action {
+  width: 60px;
+  height: 60px;
   background: transparent;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: none;
   color: var(--color-text-muted);
 }
@@ -292,6 +340,11 @@ const modeDescriptions = {
 .keypad-btn--action:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.05);
   color: var(--color-text-primary);
+}
+
+.keypad-btn--action svg {
+  width: 22px;
+  height: 22px;
 }
 
 .keypad-btn--biometric {

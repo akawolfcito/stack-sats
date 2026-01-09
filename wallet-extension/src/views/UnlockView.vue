@@ -97,7 +97,6 @@ onMounted(() => {
         <!-- Text -->
         <div class="text-section">
           <h1 class="title">Welcome Back</h1>
-          <p class="subtitle">Enter your PIN to unlock your wallet</p>
         </div>
 
         <!-- PIN Input -->
@@ -268,9 +267,9 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-xl);
-  padding-top: 60px;
-  gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-md);
+  padding-top: 40px;
+  gap: var(--space-md);
   position: relative;
   z-index: 10;
 }
@@ -278,29 +277,29 @@ onMounted(() => {
 /* Logo */
 .logo-container {
   position: relative;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-xs);
 }
 
 .logo-glow {
   position: absolute;
-  inset: -16px;
+  inset: -12px;
   background: var(--color-accent-primary);
   opacity: 0.2;
-  filter: blur(32px);
+  filter: blur(24px);
   border-radius: 50%;
   transition: opacity 0.5s ease;
 }
 
 .logo-box {
   position: relative;
-  width: 96px;
-  height: 96px;
-  border-radius: 32px;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
   background: linear-gradient(135deg, #2a2d15, #1a1c0d);
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow:
-    8px 8px 16px rgba(18, 20, 9, 0.8),
-    -8px -8px 16px rgba(46, 48, 23, 0.3);
+    6px 6px 12px rgba(18, 20, 9, 0.8),
+    -6px -6px 12px rgba(46, 48, 23, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -308,29 +307,23 @@ onMounted(() => {
 }
 
 .logo-image {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
   object-fit: cover;
 }
 
 /* Text Section */
 .text-section {
   text-align: center;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-xs);
 }
 
 .title {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
-  margin: 0 0 var(--space-sm);
-}
-
-.subtitle {
-  font-size: var(--font-size-base);
-  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -342,10 +335,10 @@ onMounted(() => {
   font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-md);
   border-radius: var(--radius-lg);
   transition: all 0.2s ease;
-  margin-top: var(--space-md);
+  margin-top: var(--space-xs);
 }
 
 .forgot-btn:hover:not(:disabled) {
