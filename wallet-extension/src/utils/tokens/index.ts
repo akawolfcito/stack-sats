@@ -57,9 +57,19 @@ export interface FungibleTokenBalance {
 const metadataCache = new Map<string, TokenMetadata>();
 
 /**
- * Parse token contract ID from the full key format
- * Input: "SP32XCD69XPS3GKDEXAQ29PJRDSD5AR643GNEEBXZ.fari-token::fari"
- * Output: { address: "SP32XCD69XPS3GKDEXAQ29PJRDSD5AR643GNEEBXZ.fari-token", tokenName: "fari" }
+ * Parse token contract ID from the full key format.
+ *
+ * @param fullKey - The full token identifier from the balances API
+ * @returns Object with contract address and token name
+ *
+ * @example
+ * ```ts
+ * const { address, tokenName } = parseTokenContractId(
+ *   "SP32XCD69XPS3GKDEXAQ29PJRDSD5AR643GNEEBXZ.fari-token::fari"
+ * );
+ * // address: "SP32XCD69XPS3GKDEXAQ29PJRDSD5AR643GNEEBXZ.fari-token"
+ * // tokenName: "fari"
+ * ```
  */
 export function parseTokenContractId(fullKey: string): {
   address: string;
@@ -73,9 +83,16 @@ export function parseTokenContractId(fullKey: string): {
 }
 
 /**
- * Extract just the contract name from full contract ID
- * Input: "SP32XCD69XPS3GKDEXAQ29PJRDSD5AR643GNEEBXZ.fari-token"
- * Output: "fari-token"
+ * Extract just the contract name from a full contract ID.
+ *
+ * @param contractAddress - Full contract address (e.g., "SP...XYZ.contract-name")
+ * @returns The contract name portion after the dot
+ *
+ * @example
+ * ```ts
+ * const name = extractContractName("SP32XCD69XPS3GKDEXAQ29PJRDSD5AR643GNEEBXZ.fari-token");
+ * // name: "fari-token"
+ * ```
  */
 export function extractContractName(contractAddress: string): string {
   const parts = contractAddress.split(".");
@@ -83,7 +100,18 @@ export function extractContractName(contractAddress: string): string {
 }
 
 /**
- * Format token balance with proper decimals
+ * Format a token balance with proper decimal placement and thousand separators.
+ *
+ * @param balance - Raw balance string (in smallest unit, e.g., microunits)
+ * @param decimals - Number of decimal places for the token
+ * @returns Formatted balance string with decimals and commas
+ *
+ * @example
+ * ```ts
+ * formatTokenBalance("1500000", 6);  // "1.5"
+ * formatTokenBalance("1234567890", 6);  // "1,234.56789"
+ * formatTokenBalance("0", 6);  // "0"
+ * ```
  */
 export function formatTokenBalance(balance: string, decimals: number): string {
   if (!balance || balance === "0") return "0";
@@ -123,7 +151,20 @@ function formatWithCommas(value: string): string {
 }
 
 /**
- * Fetch token metadata from Hiro API
+ * Fetch SIP-010 token metadata from the Hiro Metadata API.
+ * Results are cached in memory to avoid repeated API calls.
+ *
+ * @param contractAddress - The token contract address (e.g., "SP...XYZ.token-contract")
+ * @param network - Optional network override (defaults to selected network)
+ * @returns Token metadata or null if fetch fails
+ *
+ * @example
+ * ```ts
+ * const metadata = await fetchTokenMetadata("SP32XCD69XPS3GKDEXAQ29PJRDSD5AR643GNEEBXZ.fari-token");
+ * if (metadata) {
+ *   console.log(metadata.symbol, metadata.decimals);
+ * }
+ * ```
  */
 export async function fetchTokenMetadata(
   contractAddress: string,
@@ -169,7 +210,22 @@ export async function fetchTokenMetadata(
 }
 
 /**
- * Build TokenInfo from balance and metadata
+ * Build a TokenInfo object from raw balance data and optional metadata.
+ * Falls back to contract info if metadata is unavailable.
+ *
+ * @param contractId - Full contract identifier (with :: separator)
+ * @param balance - Balance data from the balances API
+ * @param metadata - Optional token metadata from the metadata API
+ * @returns Complete TokenInfo object for UI display
+ *
+ * @example
+ * ```ts
+ * const tokenInfo = buildTokenInfo(
+ *   "SP...XYZ.token::tkn",
+ *   { balance: "1000000", total_sent: "0", total_received: "1000000" },
+ *   { name: "My Token", symbol: "TKN", decimals: 6 }
+ * );
+ * ```
  */
 export function buildTokenInfo(
   contractId: string,
@@ -196,7 +252,19 @@ export function buildTokenInfo(
 }
 
 /**
- * Fetch all token info for a list of fungible tokens
+ * Fetch metadata and build TokenInfo for all fungible tokens.
+ * Limits to first 20 tokens for performance. Fetches metadata in parallel.
+ *
+ * @param fungibleTokens - Record of token balances keyed by contract ID
+ * @param network - Optional network override (defaults to selected network)
+ * @returns Array of TokenInfo objects ready for UI display
+ *
+ * @example
+ * ```ts
+ * const balances = await fetchAccountBalances(address);
+ * const tokens = await fetchAllTokenInfo(balances.fungible_tokens);
+ * tokens.forEach(t => console.log(t.symbol, t.formattedBalance));
+ * ```
  */
 export async function fetchAllTokenInfo(
   fungibleTokens: Record<string, FungibleTokenBalance>,
@@ -224,7 +292,14 @@ export async function fetchAllTokenInfo(
 }
 
 /**
- * Clear the metadata cache (useful for testing or refresh)
+ * Clear the in-memory token metadata cache.
+ * Useful for testing or forcing a refresh of token data.
+ *
+ * @example
+ * ```ts
+ * clearTokenMetadataCache();
+ * // Next fetchTokenMetadata call will hit the API
+ * ```
  */
 export function clearTokenMetadataCache(): void {
   metadataCache.clear();
