@@ -14,7 +14,6 @@ import {
 import {
   fetchStxBalance,
   fetchFungibleTokens,
-  formatStxBalance,
   microStxToStx,
   formatUsdValue,
 } from "../utils/balance";
@@ -25,9 +24,7 @@ import {
 import {
   getAccountCount,
   addAccount,
-  removeLastAccount,
   getAccountName,
-  setAccountName,
   DEFAULT_ACCOUNT_COUNT,
 } from "../utils/accounts/settings";
 import {
@@ -72,8 +69,6 @@ const stxPriceUsd = ref(0); // TODO: Fetch from price API
 const accountCount = ref(DEFAULT_ACCOUNT_COUNT);
 
 // Account naming state
-const isEditingName = ref(false);
-const editingName = ref("");
 const accountNames = ref<Record<number, string>>({});
 
 // Transaction history state
@@ -102,7 +97,6 @@ const toggleBalanceVisibility = () => {
 };
 
 // Computed properties for balance display
-const formattedStxBalance = computed(() => formatStxBalance(stxBalanceMicro.value));
 const stxBalanceNumber = computed(() => microStxToStx(stxBalanceMicro.value));
 
 // Short balance format (2 decimals)
@@ -140,41 +134,6 @@ async function loadAccountNames() {
   accountNames.value = names;
 }
 
-// Start editing name
-function startEditName() {
-  editingName.value = currentAccountName.value;
-  isEditingName.value = true;
-}
-
-// Save edited name
-async function saveAccountName() {
-  const trimmed = editingName.value.trim();
-  if (trimmed && trimmed !== `Account ${accountIndexToDisplay.value + 1}`) {
-    await setAccountName(accountIndexToDisplay.value, trimmed);
-    accountNames.value[accountIndexToDisplay.value] = trimmed;
-  } else {
-    // Clear custom name if empty or same as default
-    await setAccountName(accountIndexToDisplay.value, "");
-    delete accountNames.value[accountIndexToDisplay.value];
-  }
-  isEditingName.value = false;
-}
-
-// Cancel editing
-function cancelEditName() {
-  isEditingName.value = false;
-  editingName.value = "";
-}
-
-// Handle enter key in name input
-function handleNameKeydown(event: KeyboardEvent) {
-  if (event.key === "Enter") {
-    saveAccountName();
-  } else if (event.key === "Escape") {
-    cancelEditName();
-  }
-}
-
 async function loadAccounts(mnemonic: string, network: NetworkName, count?: number) {
   isLoading.value = true;
   try {
@@ -196,19 +155,6 @@ async function handleAddAccount() {
   await loadAccounts(currentMnemonic.value, selectedNetwork.value, newCount);
   // Select the new account
   accountIndexToDisplay.value = newCount - 1;
-}
-
-async function handleRemoveAccount() {
-  if (!currentMnemonic.value || accountCount.value <= 1) return;
-
-  // If current selection is the last account, move to previous
-  if (accountIndexToDisplay.value >= accountCount.value - 1) {
-    accountIndexToDisplay.value = accountCount.value - 2;
-  }
-
-  const newCount = await removeLastAccount();
-  accountCount.value = newCount;
-  await loadAccounts(currentMnemonic.value, selectedNetwork.value, newCount);
 }
 
 async function loadBalance() {
