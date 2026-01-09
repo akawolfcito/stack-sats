@@ -1,6 +1,6 @@
 {
   "name": "wallet-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
@@ -18,6 +18,8 @@
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.2.0",
     "@stacks/connect": "^8.1.7",
+    "@stacks/encryption": "7",
+    "@stacks/network": "7",
     "@stacks/transactions": "^7.0.4",
     "@stacks/wallet-sdk": "^7.0.4",
     "bitcoinjs-lib": "^6.1.7",
