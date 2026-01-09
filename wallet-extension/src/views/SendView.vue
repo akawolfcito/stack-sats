@@ -164,6 +164,18 @@ function handleMaxAmount() {
   validateAmount();
 }
 
+async function handlePaste() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text) {
+      recipient.value = text.trim();
+      validateRecipient();
+    }
+  } catch (err) {
+    console.error("Failed to paste:", err);
+  }
+}
+
 function handleBack() {
   if (currentStep.value === "confirm") {
     currentStep.value = "form";
@@ -307,11 +319,12 @@ function truncateAddress(address: string): string {
             v-model="recipient"
             type="text"
             class="form-input input-mono"
+            :class="{ 'input-truncated': recipient.length > 20 }"
             placeholder="Address or BNS Name"
             @blur="validateRecipient"
           />
-          <button class="input-action-btn" title="Scan QR">
-            <span class="qr-icon">⊞</span>
+          <button class="input-action-btn" title="Paste address" @click="handlePaste">
+            <span class="paste-icon">📋</span>
           </button>
         </div>
         <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
@@ -532,11 +545,6 @@ function truncateAddress(address: string): string {
   color: #FFFFFF;
 }
 
-.qr-icon {
-  font-size: 18px;
-  line-height: 1;
-  color: #FFFFFF;
-}
 
 .back-spacer {
   width: 40px;
@@ -747,7 +755,9 @@ function truncateAddress(address: string): string {
   align-items: center;
   justify-content: center;
   width: 44px;
+  min-width: 44px;
   height: 44px;
+  padding: 0;
   margin-right: var(--space-sm);
   background: transparent;
   border: none;
@@ -762,7 +772,19 @@ function truncateAddress(address: string): string {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.paste-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.input-truncated {
+  text-overflow: ellipsis;
+}
+
 .max-btn {
+  width: auto;
+  min-width: auto;
+  height: auto;
   margin-right: var(--space-md);
   padding: var(--space-sm) var(--space-md);
   background: var(--color-accent-primary);
