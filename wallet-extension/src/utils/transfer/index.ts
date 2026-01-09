@@ -76,8 +76,30 @@ export async function transferStx(params: TransferParams): Promise<TransferResul
       txid: result.txid,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    secureLog("STX transfer failed", { error: errorMessage });
+    const rawError = error instanceof Error ? error.message : String(error);
+
+    // Build descriptive error message with context
+    let errorMessage = rawError;
+
+    // Detect common error types and provide helpful messages
+    if (rawError.includes("NotEnoughFunds") || rawError.includes("insufficient")) {
+      errorMessage = `Insufficient funds to transfer ${formatStxDisplay(microStxToStx(params.amountMicroStx))} STX (plus ${formatStxDisplay(microStxToStx(TRANSFER_FEE_MICRO_STX))} STX fee)`;
+    } else if (rawError.includes("BadNonce") || rawError.includes("nonce")) {
+      errorMessage = `Transaction nonce error. Please try again in a few seconds.`;
+    } else if (rawError.includes("InvalidAddress") || rawError.includes("address")) {
+      errorMessage = `Invalid recipient address: ${params.recipient.slice(0, 10)}...`;
+    } else if (rawError.includes("Network") || rawError.includes("fetch") || rawError.includes("ECONNREFUSED")) {
+      errorMessage = `Network error on ${params.network}. Please check your connection and try again.`;
+    } else if (rawError.includes("broadcast") || rawError.includes("rejected")) {
+      errorMessage = `Transaction rejected by network (${params.network}): ${rawError}`;
+    }
+
+    secureLog("STX transfer failed", {
+      error: rawError,
+      recipient: params.recipient.slice(0, 10) + "...",
+      amount: params.amountMicroStx.toString(),
+      network: params.network,
+    });
 
     return {
       success: false,
@@ -91,66 +113,140 @@ export async function transferStx(params: TransferParams): Promise<TransferResul
 }
 
 /**
- * Validate STX address format
+ * Validation result with optional error message
+ */
+export interface ValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+/**
+ * Validate STX address format with detailed error messages
  * Stacks addresses use c32check encoding (not base58)
  * c32 alphabet: 0123456789ABCDEFGHJKMNPQRSTVWXYZ (no I, L, O, U)
  */
-export function validateStxAddress(address: string, network: NetworkName): boolean {
+export function validateStxAddressWithError(address: string, network: NetworkName): ValidationResult {
   if (!address || typeof address !== "string") {
-    return false;
+    return { valid: false, error: "Address is required" };
   }
 
   const prefix = NETWORKS[network].addressPrefix;
   const trimmed = address.trim().toUpperCase();
 
+  if (trimmed.length === 0) {
+    return { valid: false, error: "Address cannot be empty" };
+  }
+
   // STX addresses are typically 41-42 characters
-  // Format: [SP|ST] + 39-40 c32 characters
-  if (trimmed.length < 39 || trimmed.length > 42) {
-    return false;
+  if (trimmed.length < 39) {
+    return {
+      valid: false,
+      error: `Address too short (${trimmed.length} chars). STX addresses are 39-42 characters.`,
+    };
+  }
+
+  if (trimmed.length > 42) {
+    return {
+      valid: false,
+      error: `Address too long (${trimmed.length} chars). STX addresses are 39-42 characters.`,
+    };
   }
 
   if (!trimmed.startsWith(prefix)) {
-    return false;
+    const expectedPrefix = network === "mainnet" ? "SP" : "ST";
+    const gotPrefix = trimmed.slice(0, 2);
+    return {
+      valid: false,
+      error: `Invalid prefix "${gotPrefix}" for ${network}. Expected "${expectedPrefix}".`,
+    };
   }
 
   // Check for valid c32 characters (no I, L, O, U)
-  // c32 alphabet: 0123456789ABCDEFGHJKMNPQRSTVWXYZ
   const validC32Chars = /^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]+$/;
-  return validC32Chars.test(trimmed.slice(2));
+  const addressBody = trimmed.slice(2);
+
+  if (!validC32Chars.test(addressBody)) {
+    // Find invalid characters
+    const invalidChars = addressBody.split("").filter((c) => !/[0123456789ABCDEFGHJKMNPQRSTVWXYZ]/.test(c));
+    return {
+      valid: false,
+      error: `Invalid characters in address: "${invalidChars.join(", ")}". STX addresses cannot contain I, L, O, or U.`,
+    };
+  }
+
+  return { valid: true };
 }
 
 /**
- * Convert STX amount (string with decimals) to microSTX (bigint)
- * Example: "10.5" -> 10500000n
+ * Validate STX address format (simple boolean version)
+ * Use validateStxAddressWithError for detailed error messages
  */
-export function stxToMicroStx(stx: string): bigint {
+export function validateStxAddress(address: string, network: NetworkName): boolean {
+  return validateStxAddressWithError(address, network).valid;
+}
+
+/**
+ * Result of parsing STX amount
+ */
+export interface ParseAmountResult {
+  success: boolean;
+  amount: bigint;
+  error?: string;
+}
+
+/**
+ * Convert STX amount (string with decimals) to microSTX with validation
+ * Returns detailed error messages for invalid input
+ */
+export function parseStxAmount(stx: string): ParseAmountResult {
   if (!stx || stx.trim() === "") {
-    return 0n;
+    return { success: false, amount: 0n, error: "Amount is required" };
   }
 
   const trimmed = stx.trim();
 
   // Handle negative numbers
   if (trimmed.startsWith("-")) {
-    return 0n;
+    return { success: false, amount: 0n, error: "Amount cannot be negative" };
+  }
+
+  // Check for multiple decimal points
+  if ((trimmed.match(/\./g) || []).length > 1) {
+    return { success: false, amount: 0n, error: "Invalid amount format: multiple decimal points" };
   }
 
   const [whole, decimal = ""] = trimmed.split(".");
 
   // Validate whole part
   if (!/^\d+$/.test(whole)) {
-    return 0n;
+    return { success: false, amount: 0n, error: `Invalid amount: "${whole}" is not a valid number` };
   }
 
   // Validate decimal part (if present)
   if (decimal && !/^\d+$/.test(decimal)) {
-    return 0n;
+    return { success: false, amount: 0n, error: `Invalid decimal part: "${decimal}"` };
+  }
+
+  // Warn about precision loss (more than 6 decimals)
+  if (decimal.length > 6) {
+    // Still process but truncate
   }
 
   // Pad or truncate decimal to 6 places
   const paddedDecimal = decimal.padEnd(6, "0").slice(0, 6);
+  const amount = BigInt(whole + paddedDecimal);
 
-  return BigInt(whole + paddedDecimal);
+  return { success: true, amount };
+}
+
+/**
+ * Convert STX amount (string with decimals) to microSTX (bigint)
+ * Returns 0n for invalid input. Use parseStxAmount for error details.
+ * Example: "10.5" -> 10500000n
+ */
+export function stxToMicroStx(stx: string): bigint {
+  const result = parseStxAmount(stx);
+  return result.amount;
 }
 
 /**
