@@ -144,10 +144,7 @@ function setBtcType(type: BtcAddressType) {
               <h2>Receive {{ activeTab === 'stx' ? 'STX' : 'Bitcoin' }}</h2>
             </div>
             <button class="close-btn" @click="handleClose">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
+              <span class="close-icon">×</span>
             </button>
           </div>
 
@@ -194,15 +191,6 @@ function setBtcType(type: BtcAddressType) {
               <div class="qr-container" :class="{ 'qr-container--btc': activeTab === 'btc' }">
                 <div class="qr-inner">
                   <canvas ref="qrCanvas"></canvas>
-                  <!-- Center Icon -->
-                  <div class="qr-center-icon" :class="{ 'qr-center-icon--btc': activeTab === 'btc' }">
-                    <svg v-if="activeTab === 'stx'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3">
-                      <path d="M4 4l16 16M4 20L20 4M4 12h16"/>
-                    </svg>
-                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                    </svg>
-                  </div>
                 </div>
               </div>
             </div>
@@ -381,6 +369,12 @@ function setBtcType(type: BtcAddressType) {
     inset -3px -3px 6px #323423;
 }
 
+.close-icon {
+  font-size: 24px;
+  line-height: 1;
+  color: #FFFFFF;
+}
+
 /* Asset Tabs */
 .asset-tabs {
   position: relative;
@@ -518,24 +512,6 @@ function setBtcType(type: BtcAddressType) {
 
 .qr-inner canvas {
   border-radius: 8px;
-}
-
-.qr-center-icon {
-  position: absolute;
-  width: 36px;
-  height: 36px;
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-accent-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  border: 2px solid white;
-}
-
-.qr-center-icon--btc {
-  color: #F7931A;
 }
 
 /* Helper Text */
