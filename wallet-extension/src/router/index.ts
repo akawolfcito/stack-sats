@@ -59,6 +59,11 @@ const router = createRouter({
       name: "add-network",
       component: () => import("../views/AddNetworkView.vue"),
     },
+    {
+      path: "/swap",
+      name: "swap",
+      component: () => import("../views/SwapView.vue"),
+    },
   ],
 });
 
