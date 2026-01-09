@@ -1,4 +1,8 @@
+/* Keep existing CSS variables for backward compatibility */
 @import "./base.css";
+
+/* Tailwind CSS */
+@import "tailwindcss";
 
 /* App Container */
 #app {
