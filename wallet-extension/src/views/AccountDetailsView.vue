@@ -1,0 +1,767 @@
+<script setup lang="ts">
+import { ref, computed, onBeforeMount } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { generateInitialAccounts } from "@/utils/accounts";
+import { type Account } from "@/utils/types";
+import { sessionManager } from "@/utils/security/session";
+import { getSelectedNetwork, type NetworkName } from "@/utils/network";
+import {
+  getAccountName,
+  setAccountName,
+  isAccountHidden,
+  hideAccount,
+  showAccount,
+} from "@/utils/accounts/settings";
+
+const router = useRouter();
+const route = useRoute();
+
+// State
+const account = ref<Account | null>(null);
+const accountName = ref("");
+const isHidden = ref(false);
+const isLoading = ref(true);
+const isSavingName = ref(false);
+const copiedField = ref<string | null>(null);
+const network = ref<NetworkName>("devnet");
+
+// Get account index from route params
+const accountIndex = computed(() => {
+  const idx = route.params.index;
+  return typeof idx === "string" ? parseInt(idx, 10) : 0;
+});
+
+// Truncate address for display
+function truncateAddress(address: string, chars: number = 6): string {
+  if (!address || address.length <= chars * 2 + 3) return address;
+  return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+}
+
+// Load account data
+onBeforeMount(async () => {
+  network.value = getSelectedNetwork();
+
+  if (!sessionManager.hasWallet || sessionManager.isLocked) {
+    router.push({ path: "/unlock" });
+    return;
+  }
+
+  const mnemonic = sessionManager.getMnemonic();
+  if (!mnemonic) {
+    router.push({ path: "/unlock" });
+    return;
+  }
+
+  try {
+    const accounts = await generateInitialAccounts(mnemonic, accountIndex.value + 1, network.value);
+    account.value = accounts[accountIndex.value];
+
+    // Load account settings
+    accountName.value = await getAccountName(accountIndex.value);
+    isHidden.value = await isAccountHidden(accountIndex.value);
+  } catch (error) {
+    console.error("Failed to load account", error);
+    router.push({ path: "/user" });
+  } finally {
+    isLoading.value = false;
+  }
+});
+
+// Actions
+function handleBack() {
+  router.back();
+}
+
+async function saveName() {
+  if (isSavingName.value) return;
+
+  isSavingName.value = true;
+  try {
+    await setAccountName(accountIndex.value, accountName.value);
+  } finally {
+    isSavingName.value = false;
+  }
+}
+
+async function toggleHidden() {
+  const newValue = !isHidden.value;
+  isHidden.value = newValue;
+
+  if (newValue) {
+    await hideAccount(accountIndex.value);
+  } else {
+    await showAccount(accountIndex.value);
+  }
+}
+
+async function copyToClipboard(text: string, field: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    copiedField.value = field;
+    setTimeout(() => {
+      copiedField.value = null;
+    }, 2000);
+  } catch (error) {
+    console.error("Failed to copy:", error);
+  }
+}
+
+function handleViewPrivateKey() {
+  // TODO: Implement with PIN verification
+  alert("This feature requires PIN verification. Coming soon!");
+}
+
+function handleViewSecretPhrase() {
+  // TODO: Implement with PIN verification
+  alert("This feature requires PIN verification. Coming soon!");
+}
+
+function handleClose() {
+  router.push({ path: "/user" });
+}
+</script>
+
+<template>
+  <div class="account-details-view">
+    <!-- Header -->
+    <header class="header">
+      <button class="back-btn" @click="handleBack">
+        <span class="back-arrow">&larr;</span>
+      </button>
+      <h1 class="title">Account Details</h1>
+      <div class="header-spacer"></div>
+    </header>
+
+    <!-- Loading -->
+    <div v-if="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading account...</p>
+    </div>
+
+    <!-- Content -->
+    <main v-else-if="account" class="content">
+      <!-- Profile Section -->
+      <div class="profile-section">
+        <!-- Avatar -->
+        <div class="avatar-wrapper">
+          <div class="avatar">
+            <span class="avatar-text">{{ accountIndex + 1 }}</span>
+          </div>
+        </div>
+
+        <!-- Account Name -->
+        <div class="name-section">
+          <label class="name-label">Account Name</label>
+          <div class="name-input-wrapper">
+            <input
+              v-model="accountName"
+              type="text"
+              class="name-input"
+              placeholder="Enter account name"
+              @blur="saveName"
+              @keydown.enter="($event.target as HTMLInputElement).blur()"
+            />
+            <span class="edit-icon">&#9998;</span>
+          </div>
+          <p class="address-preview">{{ truncateAddress(account.stxAddress, 4) }}</p>
+        </div>
+      </div>
+
+      <!-- Addresses Section -->
+      <div class="section">
+        <h3 class="section-title">Addresses</h3>
+        <div class="card">
+          <!-- STX Address -->
+          <div class="address-row">
+            <div class="address-info">
+              <div class="address-icon stx">STX</div>
+              <div class="address-content">
+                <p class="address-label">Stacks Address</p>
+                <p class="address-value">{{ truncateAddress(account.stxAddress, 8) }}</p>
+              </div>
+            </div>
+            <button
+              class="copy-btn"
+              :class="{ copied: copiedField === 'stx' }"
+              @click="copyToClipboard(account.stxAddress, 'stx')"
+            >
+              {{ copiedField === 'stx' ? '&#10003;' : '&#x2398;' }}
+            </button>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- BTC P2PKH Address -->
+          <div class="address-row">
+            <div class="address-info">
+              <div class="address-icon btc">BTC</div>
+              <div class="address-content">
+                <p class="address-label">Bitcoin (P2PKH)</p>
+                <p class="address-value">{{ truncateAddress(account.btcP2PKHAddress, 8) }}</p>
+              </div>
+            </div>
+            <button
+              class="copy-btn"
+              :class="{ copied: copiedField === 'btc-p2pkh' }"
+              @click="copyToClipboard(account.btcP2PKHAddress, 'btc-p2pkh')"
+            >
+              {{ copiedField === 'btc-p2pkh' ? '&#10003;' : '&#x2398;' }}
+            </button>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- BTC P2TR Address -->
+          <div class="address-row">
+            <div class="address-info">
+              <div class="address-icon btc-tr">P2TR</div>
+              <div class="address-content">
+                <p class="address-label">Bitcoin (Taproot)</p>
+                <p class="address-value">{{ truncateAddress(account.btcP2TRAddress, 8) }}</p>
+              </div>
+            </div>
+            <button
+              class="copy-btn"
+              :class="{ copied: copiedField === 'btc-p2tr' }"
+              @click="copyToClipboard(account.btcP2TRAddress, 'btc-p2tr')"
+            >
+              {{ copiedField === 'btc-p2tr' ? '&#10003;' : '&#x2398;' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Section -->
+      <div class="section">
+        <h3 class="section-title">Security</h3>
+        <div class="card">
+          <!-- View Private Key -->
+          <button class="action-row" @click="handleViewPrivateKey">
+            <div class="action-icon key-icon">
+              <span>&#128273;</span>
+            </div>
+            <div class="action-content">
+              <p class="action-title">View Private Key</p>
+              <p class="action-subtitle">Requires PIN verification</p>
+            </div>
+            <span class="chevron">&rsaquo;</span>
+          </button>
+
+          <div class="divider"></div>
+
+          <!-- View Secret Phrase -->
+          <button class="action-row" @click="handleViewSecretPhrase">
+            <div class="action-icon phrase-icon">
+              <span>&#128274;</span>
+            </div>
+            <div class="action-content">
+              <p class="action-title">View Secret Phrase</p>
+              <p class="action-subtitle">Requires PIN verification</p>
+            </div>
+            <span class="chevron">&rsaquo;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Preferences Section -->
+      <div class="section">
+        <h3 class="section-title">Preferences</h3>
+        <div class="card">
+          <div class="preference-row">
+            <div class="preference-info">
+              <div class="preference-icon">
+                <span v-if="isHidden">&#128065;</span>
+                <span v-else>&#128064;</span>
+              </div>
+              <div class="preference-content">
+                <p class="preference-title">Hide Account</p>
+                <p class="preference-subtitle">Hidden accounts can be unhidden in Settings</p>
+              </div>
+            </div>
+            <label class="toggle">
+              <input
+                type="checkbox"
+                :checked="isHidden"
+                @change="toggleHidden"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Close Button -->
+      <button class="close-btn" @click="handleClose">
+        Close
+      </button>
+    </main>
+  </div>
+</template>
+
+<style scoped>
+.account-details-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-primary);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg);
+  padding-top: var(--space-xl);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--color-bg-primary);
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: var(--space-sm);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+}
+
+.back-btn:hover {
+  background: var(--color-bg-card);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.header-spacer {
+  width: 40px;
+}
+
+/* Loading State */
+.loading-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  color: var(--color-text-muted);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-bg-card);
+  border-top-color: var(--color-accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Content */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-lg) var(--space-xl);
+  overflow-y: auto;
+  gap: var(--space-xl);
+}
+
+/* Profile Section */
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+}
+
+.avatar-wrapper {
+  position: relative;
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-bg-elevated), var(--color-bg-card));
+  border: 2px solid var(--color-accent-primary);
+  box-shadow: 0 0 20px var(--color-accent-primary-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-text {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent-primary);
+}
+
+.name-section {
+  text-align: center;
+  width: 100%;
+  max-width: 280px;
+}
+
+.name-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-sm);
+}
+
+.name-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--color-border);
+}
+
+.name-input-wrapper:focus-within {
+  border-color: var(--color-accent-primary);
+}
+
+.name-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  text-align: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.name-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.edit-icon {
+  color: var(--color-accent-primary);
+  font-size: var(--font-size-lg);
+  margin-left: var(--space-sm);
+}
+
+.address-preview {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-accent-primary);
+  margin-top: var(--space-sm);
+  opacity: 0.8;
+}
+
+/* Sections */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.section-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  margin: 0;
+  padding-left: var(--space-sm);
+}
+
+.card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 var(--space-lg);
+}
+
+/* Address Row */
+.address-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.address-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.address-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.address-icon.stx {
+  background: linear-gradient(135deg, rgba(85, 70, 255, 0.2), rgba(124, 58, 237, 0.2));
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.address-icon.btc {
+  background: linear-gradient(135deg, rgba(247, 147, 26, 0.2), rgba(255, 184, 77, 0.2));
+  color: #f7931a;
+  border: 1px solid rgba(247, 147, 26, 0.3);
+}
+
+.address-icon.btc-tr {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(244, 114, 182, 0.2));
+  color: #ec4899;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.address-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.address-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.address-value {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  padding: var(--space-sm);
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-sm);
+  width: auto;
+  transition: all var(--transition-fast);
+}
+
+.copy-btn:hover {
+  color: var(--color-accent-primary);
+  background: var(--color-bg-elevated);
+}
+
+.copy-btn.copied {
+  color: var(--color-success);
+}
+
+/* Action Row */
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.action-row:hover {
+  background: var(--color-bg-elevated);
+}
+
+.action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+.key-icon {
+  background: var(--color-accent-primary-muted);
+  color: var(--color-accent-primary);
+}
+
+.phrase-icon {
+  background: var(--color-accent-primary-muted);
+  color: var(--color-accent-primary);
+}
+
+.action-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.action-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.action-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.chevron {
+  color: var(--color-text-muted);
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* Preference Row */
+.preference-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.preference-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.preference-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.preference-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.preference-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.preference-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Toggle Switch */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  transition: all var(--transition-base);
+}
+
+.toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 3px;
+  background-color: var(--color-text-muted);
+  border-radius: 50%;
+  transition: all var(--transition-base);
+}
+
+.toggle input:checked + .toggle-slider {
+  background-color: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+}
+
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background-color: var(--color-bg-primary);
+}
+
+/* Close Button */
+.close-btn {
+  width: 100%;
+  background: var(--color-accent-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: var(--space-lg);
+  color: var(--color-bg-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  margin-top: auto;
+  transition: all var(--transition-base);
+  box-shadow: 0 0 15px var(--color-accent-primary-muted);
+}
+
+.close-btn:hover {
+  background: var(--color-accent-primary-hover);
+  transform: translateY(-1px);
+}
+
+.close-btn:active {
+  transform: scale(0.99);
+}
+</style>

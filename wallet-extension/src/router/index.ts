@@ -39,6 +39,11 @@ const router = createRouter({
       name: "transaction-details",
       component: () => import("../views/TransactionDetailsView.vue"),
     },
+    {
+      path: "/account/:index",
+      name: "account-details",
+      component: () => import("../views/AccountDetailsView.vue"),
+    },
   ],
 });
 
