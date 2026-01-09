@@ -44,6 +44,11 @@ const router = createRouter({
       name: "account-details",
       component: () => import("../views/AccountDetailsView.vue"),
     },
+    {
+      path: "/manage-tokens",
+      name: "manage-tokens",
+      component: () => import("../views/ManageTokensView.vue"),
+    },
   ],
 });
 
