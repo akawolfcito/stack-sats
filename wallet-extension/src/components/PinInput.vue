@@ -130,21 +130,28 @@ const modeLabels = {
 </script>
 
 <template>
-  <div class="pin-input-container">
-    <label class="pin-label">{{ modeLabels[mode] }}</label>
+  <div class="flex flex-col items-center gap-4 w-full">
+    <label class="text-sm font-medium text-text-secondary uppercase tracking-wider">
+      {{ modeLabels[mode] }}
+    </label>
 
     <!-- Visual dots indicator -->
-    <div class="pin-dots">
+    <div class="flex gap-3 justify-center">
       <span
         v-for="(_, index) in PIN_LENGTH"
         :key="'dot-' + index"
-        class="pin-dot"
-        :class="{ filled: digits[index] !== '', error: error }"
+        class="w-4 h-4 rounded-full bg-bg-card border-2 border-border-default transition-all duration-150"
+        :class="{
+          'bg-primary border-primary shadow-[0_0_12px_rgba(232,248,89,0.6)]': digits[index] !== '' && !error,
+          'border-error': error,
+          'bg-error border-error': error && digits[index] !== '',
+          'animate-shake': error
+        }"
       ></span>
     </div>
 
     <!-- Hidden inputs for actual entry -->
-    <div class="pin-inputs">
+    <div class="flex gap-3 justify-center relative -mt-8 h-8">
       <input
         v-for="(_, index) in PIN_LENGTH"
         :key="index"
@@ -154,7 +161,7 @@ const modeLabels = {
         maxlength="1"
         :value="digits[index]"
         :disabled="disabled"
-        class="pin-digit-hidden"
+        class="w-8 h-8 opacity-0 bg-transparent border-none text-center text-base"
         @input="handleInput(index, $event)"
         @keydown="handleKeydown(index, $event)"
         @paste="handlePaste"
@@ -163,9 +170,9 @@ const modeLabels = {
       />
     </div>
 
-    <p v-if="error" class="pin-error">{{ error }}</p>
+    <p v-if="error" class="text-error text-sm m-0">{{ error }}</p>
 
-    <p class="pin-hint">
+    <p class="text-text-muted text-xs m-0 text-center">
       <template v-if="mode === 'create'">
         Choose a 6-digit PIN to protect your wallet
       </template>
@@ -178,97 +185,3 @@ const modeLabels = {
     </p>
   </div>
 </template>
-
-<style scoped>
-.pin-input-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-lg);
-  width: 100%;
-}
-
-.pin-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-/* Visual PIN Dots */
-.pin-dots {
-  display: flex;
-  gap: var(--space-md);
-  justify-content: center;
-}
-
-.pin-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-border);
-  transition: all var(--transition-fast);
-}
-
-.pin-dot.filled {
-  background: var(--color-accent-primary);
-  border-color: var(--color-accent-primary);
-}
-
-.pin-dot.error {
-  border-color: var(--color-error);
-  animation: shake 0.3s ease-in-out;
-}
-
-.pin-dot.error.filled {
-  background: var(--color-error);
-}
-
-/* Hidden inputs positioned over dots */
-.pin-inputs {
-  display: flex;
-  gap: var(--space-md);
-  justify-content: center;
-  position: relative;
-  margin-top: -32px;
-  height: 32px;
-}
-
-.pin-digit-hidden {
-  width: 32px;
-  height: 32px;
-  opacity: 0;
-  background: transparent;
-  border: none;
-  text-align: center;
-  font-size: 1rem;
-}
-
-.pin-error {
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-.pin-hint {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  margin: 0;
-  text-align: center;
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-4px);
-  }
-  75% {
-    transform: translateX(4px);
-  }
-}
-</style>
