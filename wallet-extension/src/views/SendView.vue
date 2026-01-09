@@ -261,9 +261,7 @@ function truncateAddress(address: string): string {
         class="back-btn"
         @click="handleBack"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
+        <span class="back-icon">←</span>
       </button>
       <div v-else class="back-spacer"></div>
       <h1 class="title">
@@ -313,15 +311,7 @@ function truncateAddress(address: string): string {
             @blur="validateRecipient"
           />
           <button class="input-action-btn" title="Scan QR">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="3" height="3"/>
-              <rect x="18" y="14" width="3" height="3"/>
-              <rect x="14" y="18" width="3" height="3"/>
-              <rect x="18" y="18" width="3" height="3"/>
-            </svg>
+            <span class="qr-icon">⊞</span>
           </button>
         </div>
         <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
@@ -534,6 +524,18 @@ function truncateAddress(address: string): string {
 
 .back-btn:active {
   transform: scale(0.95);
+}
+
+.back-icon {
+  font-size: 20px;
+  line-height: 1;
+  color: #FFFFFF;
+}
+
+.qr-icon {
+  font-size: 18px;
+  line-height: 1;
+  color: #FFFFFF;
 }
 
 .back-spacer {
