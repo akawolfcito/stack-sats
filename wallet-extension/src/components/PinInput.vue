@@ -130,7 +130,7 @@ const modeDescriptions = {
 
     <!-- Security Icon -->
     <div class="flex items-center justify-center text-accent-primary opacity-80">
-      <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
@@ -176,14 +176,14 @@ const modeDescriptions = {
         >
           <!-- Biometric Icon -->
           <template v-if="key === 'biometric'">
-            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5">
               <path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04A12.054 12.054 0 0 1 4 11V7a8 8 0 0 1 16 0v4a12.01 12.01 0 0 1-.553 3.618M10.042 21.39A12.054 12.054 0 0 1 12 11m0 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>
             </svg>
           </template>
 
           <!-- Backspace Icon -->
           <template v-else-if="key === 'backspace'">
-            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
               <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
               <line x1="18" y1="9" x2="12" y2="15"/>
               <line x1="12" y1="9" x2="18" y2="15"/>

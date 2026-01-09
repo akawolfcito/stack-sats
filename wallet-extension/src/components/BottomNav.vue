@@ -34,7 +34,7 @@ function isActive(path: string): boolean {
       title="Home"
     >
       <span class="nav-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
@@ -50,7 +50,7 @@ function isActive(path: string): boolean {
       title="Swap"
     >
       <span class="nav-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5">
           <path d="M16 3l4 4-4 4"/>
           <path d="M20 7H4"/>
           <path d="M8 21l-4-4 4-4"/>
@@ -63,7 +63,7 @@ function isActive(path: string): boolean {
     <!-- Central QR Button -->
     <div class="qr-button-wrapper">
       <button class="qr-button" @click="handleReceive" title="Scan QR">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
           <rect x="3" y="3" width="7" height="7" rx="1"/>
           <rect x="14" y="3" width="7" height="7" rx="1"/>
           <rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -83,7 +83,7 @@ function isActive(path: string): boolean {
       title="Earn"
     >
       <span class="nav-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5">
           <path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2"/>
           <path d="M2 9v1c0 1.1.9 2 2 2h1"/>
           <circle cx="16" cy="11" r="1"/>
@@ -100,7 +100,7 @@ function isActive(path: string): boolean {
       title="Activity"
     >
       <span class="nav-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5">
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
         </svg>
