@@ -266,9 +266,17 @@ async function loadTokens() {
 
 function getStatusClass(status: TransactionStatus): string {
   switch (status) {
-    case "success": return "tx-success";
-    case "pending": return "tx-pending";
-    default: return "tx-failed";
+    case "success": return "bg-success-muted text-success";
+    case "pending": return "bg-warning-muted text-warning";
+    default: return "bg-error-muted text-error";
+  }
+}
+
+function getStatusTextClass(status: TransactionStatus): string {
+  switch (status) {
+    case "success": return "text-success";
+    case "pending": return "text-warning";
+    default: return "text-error";
   }
 }
 
@@ -412,12 +420,18 @@ const closeReceiveModal = () => {
 </script>
 
 <template>
-  <section class="user-page">
-    <div v-if="isLoading" class="loading">Loading accounts...</div>
+  <section class="h-full flex flex-col justify-start gap-6 pb-20">
+    <div v-if="isLoading" class="flex items-center justify-center h-full text-text-muted">Loading accounts...</div>
 
     <template v-else>
-      <div class="user-page-header">
-        <button class="menu-btn" @click="handleOpenUserMenu" title="Menu">
+      <!-- Header -->
+      <div class="flex items-center justify-between gap-3 py-3 mb-4">
+        <!-- Menu Button -->
+        <button
+          class="w-10 h-10 rounded-lg bg-bg-card border border-border-default cursor-pointer flex items-center justify-center transition-all duration-150 shrink-0 text-text-secondary hover:bg-bg-card-hover hover:border-border-hover hover:text-text-primary"
+          @click="handleOpenUserMenu"
+          title="Menu"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="3" y1="6" x2="21" y2="6"/>
             <line x1="3" y1="12" x2="21" y2="12"/>
@@ -425,28 +439,32 @@ const closeReceiveModal = () => {
           </svg>
         </button>
 
-        <div class="account-info-header" @click="toggleAccountDropdown">
-          <div class="account-name-row">
-            <span class="header-account-name">{{ currentAccountName }}</span>
-            <span class="dropdown-chevron">▼</span>
+        <!-- Account Info -->
+        <div class="flex-1 cursor-pointer relative py-1 px-2 rounded-lg transition-colors hover:bg-bg-card" @click="toggleAccountDropdown">
+          <div class="flex items-center gap-1">
+            <span class="text-base font-semibold text-text-primary">{{ currentAccountName }}</span>
+            <span class="text-[8px] text-text-muted transition-transform">▼</span>
           </div>
-          <span class="header-address">{{ truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}</span>
+          <span class="text-xs font-mono text-text-muted">{{ truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}</span>
 
           <!-- Account Dropdown -->
-          <div v-if="showAccountDropdown" class="account-dropdown">
+          <div
+            v-if="showAccountDropdown"
+            class="absolute top-full left-0 right-0 mt-1 min-w-[220px] bg-bg-elevated border border-border-default rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-[100] overflow-hidden"
+          >
             <div
               v-for="(account, index) in userAccounts"
               :key="index"
-              class="account-dropdown-item"
-              :class="{ active: index === accountIndexToDisplay }"
+              class="p-3 cursor-pointer transition-colors border-b border-border-default last:border-b-0 hover:bg-bg-card-hover"
+              :class="{ 'bg-primary-muted': index === accountIndexToDisplay }"
               @click.stop="selectAccount(index)"
             >
-              <span class="dropdown-account-name">{{ getDisplayName(index) }}</span>
-              <span class="dropdown-account-address">{{ truncateAddress(account.stxAddress) }}</span>
+              <span class="block text-sm font-medium text-text-primary">{{ getDisplayName(index) }}</span>
+              <span class="block text-xs font-mono text-text-muted mt-0.5">{{ truncateAddress(account.stxAddress) }}</span>
             </div>
-            <div class="account-dropdown-actions">
+            <div class="p-2 bg-bg-card border-t border-border-default">
               <button
-                class="dropdown-action-btn"
+                class="w-full p-2 bg-transparent border border-dashed border-border-default rounded-sm text-text-secondary text-sm cursor-pointer transition-all hover:bg-bg-card-hover hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
                 @click.stop="handleAddAccount"
                 :disabled="accountCount >= 100"
               >
@@ -456,27 +474,45 @@ const closeReceiveModal = () => {
           </div>
         </div>
 
-        <div class="header-right">
-          <div class="network-selector" @click="toggleNetworkDropdown">
-            <span class="network-badge" :class="selectedNetwork">
+        <!-- Header Right -->
+        <div class="flex items-center gap-2">
+          <!-- Network Selector -->
+          <div class="relative cursor-pointer" @click="toggleNetworkDropdown">
+            <span
+              class="py-2 px-4 text-xs font-bold tracking-wider rounded-lg uppercase transition-all"
+              :class="{
+                'bg-primary/10 text-primary border-[1.5px] border-primary/40 hover:bg-primary/15 hover:border-primary/60': selectedNetwork === 'testnet',
+                'bg-success/10 text-success border-[1.5px] border-success/40 hover:bg-success/15 hover:border-success/60': selectedNetwork === 'mainnet',
+                'bg-warning/10 text-warning border-[1.5px] border-warning/40 hover:bg-warning/15 hover:border-warning/60': selectedNetwork === 'devnet'
+              }"
+            >
               {{ NETWORKS[selectedNetwork]?.name.toUpperCase() }}
             </span>
 
             <!-- Network Dropdown -->
-            <div v-if="showNetworkDropdown" class="network-dropdown">
+            <div
+              v-if="showNetworkDropdown"
+              class="absolute top-full right-0 mt-1 min-w-[140px] bg-bg-elevated border border-border-default rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-[100] overflow-hidden"
+            >
               <div
                 v-for="(network, key) in NETWORKS"
                 :key="key"
-                class="network-dropdown-item"
-                :class="{ active: key === selectedNetwork }"
+                class="p-3 cursor-pointer flex items-center justify-between transition-colors border-b border-border-default last:border-b-0 hover:bg-bg-card-hover"
+                :class="{ 'bg-primary-muted': key === selectedNetwork }"
                 @click.stop="selectNetwork(key as NetworkName)"
               >
-                <span class="network-name">{{ network.name }}</span>
-                <span class="network-check" v-if="key === selectedNetwork">✓</span>
+                <span class="text-sm font-medium text-text-primary capitalize">{{ network.name }}</span>
+                <span v-if="key === selectedNetwork" class="text-primary text-sm">✓</span>
               </div>
             </div>
           </div>
-          <button class="expand-btn" @click="openFullPage" title="Abrir en pestaña">
+
+          <!-- Expand Button -->
+          <button
+            class="w-10 h-10 rounded-lg bg-bg-card border border-border-default cursor-pointer flex items-center justify-center text-text-secondary transition-all hover:bg-bg-card-hover hover:border-border-hover hover:text-text-primary"
+            @click="openFullPage"
+            title="Abrir en pestaña"
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polyline points="15 3 21 3 21 9"/>
               <line x1="21" y1="3" x2="14" y2="10"/>
@@ -487,10 +523,15 @@ const closeReceiveModal = () => {
         </div>
       </div>
 
-      <div class="balance-section">
-        <div class="balance-label">
-          <span>TOTAL BALANCE</span>
-          <button class="visibility-toggle" @click="toggleBalanceVisibility" :title="showBalance ? 'Hide balance' : 'Show balance'">
+      <!-- Balance Section -->
+      <div class="py-4 text-center mb-4">
+        <div class="flex items-center justify-center gap-2 mb-3">
+          <span class="text-xs font-medium text-text-muted tracking-widest uppercase">TOTAL BALANCE</span>
+          <button
+            class="bg-transparent border-none p-1 cursor-pointer text-text-muted flex items-center justify-center rounded-sm transition-all w-auto hover:text-text-secondary hover:bg-bg-card-hover"
+            @click="toggleBalanceVisibility"
+            :title="showBalance ? 'Hide balance' : 'Show balance'"
+          >
             <svg v-if="showBalance" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
@@ -501,23 +542,31 @@ const closeReceiveModal = () => {
             </svg>
           </button>
         </div>
-        <div class="balance-amount" :class="{ loading: isLoadingBalance }">
-          <span class="balance-value">{{ showBalance ? (isLoadingBalance ? '...' : shortBalance) : '******' }}</span>
-          <span class="balance-currency">STX</span>
+
+        <div class="flex items-baseline justify-center gap-2 mb-1 min-h-14" :class="{ 'opacity-50': isLoadingBalance }">
+          <span class="text-5xl font-bold font-mono text-text-primary leading-none tracking-wider">{{ showBalance ? (isLoadingBalance ? '...' : shortBalance) : '******' }}</span>
+          <span class="text-xl font-medium text-text-muted">STX</span>
         </div>
-        <div class="balance-usd">
+
+        <div class="text-sm text-text-muted mb-6 min-h-5 tracking-wider">
           {{ showBalance ? `≈ ${totalValueUsd || '$0.00'} USD` : '******' }}
         </div>
 
-        <div class="balance-actions">
-          <button class="action-btn-large send" @click="handleSend">
+        <div class="flex gap-3 justify-center">
+          <button
+            class="flex-1 max-w-[160px] flex items-center justify-center gap-2 py-3 px-6 text-base font-semibold rounded-full cursor-pointer transition-all bg-primary border-none text-bg-primary hover:bg-primary-hover hover:-translate-y-0.5"
+            @click="handleSend"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="12" y1="19" x2="12" y2="5"/>
               <polyline points="5 12 12 5 19 12"/>
             </svg>
             Send
           </button>
-          <button class="action-btn-large receive" @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')">
+          <button
+            class="flex-1 max-w-[160px] flex items-center justify-center gap-2 py-3 px-6 text-base font-semibold rounded-full cursor-pointer transition-all bg-transparent border border-border-default text-text-primary hover:bg-bg-card-hover hover:border-border-hover hover:-translate-y-0.5"
+            @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="12" y1="5" x2="12" y2="19"/>
               <polyline points="19 12 12 19 5 12"/>
@@ -527,158 +576,177 @@ const closeReceiveModal = () => {
         </div>
       </div>
 
-      <div class="assets-section">
-        <div class="assets-header">
-          <span class="assets-title">Assets</span>
-          <button class="refresh-icon-btn" @click="refreshBalance" :disabled="isLoadingBalance" title="Refresh">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ spinning: isLoadingBalance }">
+      <!-- Assets Section -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-base font-semibold text-text-primary">Assets</span>
+          <button
+            class="w-8 h-8 p-0 bg-transparent border-none cursor-pointer text-text-muted flex items-center justify-center rounded-sm transition-all hover:text-text-secondary hover:bg-bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="refreshBalance"
+            :disabled="isLoadingBalance"
+            title="Refresh"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
               <path d="M23 4v6h-6M1 20v-6h6"/>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
           </button>
         </div>
 
-        <div class="assets-list">
+        <div class="flex flex-col gap-2">
           <!-- Stacks Card -->
-          <div class="asset-card-new stx" @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.stxAddress || '')">
-            <div class="asset-accent"></div>
-            <div class="asset-icon-new">S</div>
-            <div class="asset-details">
-              <span class="asset-title">Stacks</span>
-              <span class="asset-subtitle">STX • {{ NETWORKS[selectedNetwork]?.name }}</span>
+          <div
+            class="flex items-center gap-3 p-4 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all relative overflow-hidden hover:bg-bg-card-hover hover:border-border-hover active:scale-[0.99]"
+            @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.stxAddress || '')"
+          >
+            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-gradient-to-b from-[#5546ff] to-[#7c3aed]"></div>
+            <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ml-2 bg-gradient-to-br from-[#5546ff]/20 to-[#7c3aed]/20 text-[#7c3aed] border-2 border-[#7c3aed]/30">S</div>
+            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+              <span class="text-base font-semibold text-text-primary">Stacks</span>
+              <span class="text-xs text-text-muted">STX • {{ NETWORKS[selectedNetwork]?.name }}</span>
             </div>
-            <div class="asset-values">
-              <span class="asset-amount">{{ shortBalance }}</span>
-              <span class="asset-usd">{{ totalValueUsd || '$0.00' }}</span>
+            <div class="flex flex-col items-end gap-0.5 shrink-0">
+              <span class="font-mono text-base font-semibold text-text-primary">{{ shortBalance }}</span>
+              <span class="text-xs text-text-muted">{{ totalValueUsd || '$0.00' }}</span>
             </div>
           </div>
 
           <!-- Bitcoin Card -->
-          <div class="asset-card-new btc" @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || '')">
-            <div class="asset-accent"></div>
-            <div class="asset-icon-new">B</div>
-            <div class="asset-details">
-              <span class="asset-title">Bitcoin</span>
-              <span class="asset-subtitle">BTC • Native Segwit</span>
+          <div
+            class="flex items-center gap-3 p-4 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all relative overflow-hidden hover:bg-bg-card-hover hover:border-border-hover active:scale-[0.99]"
+            @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || '')"
+          >
+            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-gradient-to-b from-[#f7931a] to-[#ffb84d]"></div>
+            <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ml-2 bg-gradient-to-br from-[#f7931a]/20 to-[#ffb84d]/20 text-[#f7931a] border-2 border-[#f7931a]/30">B</div>
+            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+              <span class="text-base font-semibold text-text-primary">Bitcoin</span>
+              <span class="text-xs text-text-muted">BTC • Native Segwit</span>
             </div>
-            <div class="asset-values">
-              <span class="asset-amount">0.0000</span>
-              <span class="asset-usd">$0.00</span>
+            <div class="flex flex-col items-end gap-0.5 shrink-0">
+              <span class="font-mono text-base font-semibold text-text-primary">0.0000</span>
+              <span class="text-xs text-text-muted">$0.00</span>
             </div>
           </div>
 
           <!-- Runes Card -->
-          <div class="asset-card-new runes" @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')">
-            <div class="asset-accent"></div>
-            <div class="asset-icon-new">R</div>
-            <div class="asset-details">
-              <span class="asset-title">Runes</span>
-              <span class="asset-subtitle">Token • Etchings</span>
+          <div
+            class="flex items-center gap-3 p-4 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all relative overflow-hidden hover:bg-bg-card-hover hover:border-border-hover active:scale-[0.99]"
+            @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')"
+          >
+            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-gradient-to-b from-[#ec4899] to-[#f472b6]"></div>
+            <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ml-2 bg-gradient-to-br from-[#ec4899]/20 to-[#f472b6]/20 text-[#ec4899] border-2 border-[#ec4899]/30">R</div>
+            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+              <span class="text-base font-semibold text-text-primary">Runes</span>
+              <span class="text-xs text-text-muted">Token • Etchings</span>
             </div>
-            <div class="asset-values">
-              <span class="asset-amount">0</span>
-              <span class="asset-usd">$0.00</span>
+            <div class="flex flex-col items-end gap-0.5 shrink-0">
+              <span class="font-mono text-base font-semibold text-text-primary">0</span>
+              <span class="text-xs text-text-muted">$0.00</span>
             </div>
           </div>
 
           <!-- Ordinals Card -->
-          <div class="asset-card-new ordinals" @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')">
-            <div class="asset-accent"></div>
-            <div class="asset-icon-new">O</div>
-            <div class="asset-details">
-              <span class="asset-title">Ordinals</span>
-              <span class="asset-subtitle">NFT • Inscriptions</span>
+          <div
+            class="flex items-center gap-3 p-4 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all relative overflow-hidden hover:bg-bg-card-hover hover:border-border-hover active:scale-[0.99]"
+            @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')"
+          >
+            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-gradient-to-b from-[#eab308] to-[#fbbf24]"></div>
+            <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ml-2 bg-gradient-to-br from-[#eab308]/20 to-[#fbbf24]/20 text-[#eab308] border-2 border-[#eab308]/30">O</div>
+            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+              <span class="text-base font-semibold text-text-primary">Ordinals</span>
+              <span class="text-xs text-text-muted">NFT • Inscriptions</span>
             </div>
-            <div class="asset-values">
-              <span class="asset-badge">Collectibles</span>
+            <div class="flex flex-col items-end gap-0.5 shrink-0">
+              <span class="text-xs font-medium text-text-secondary bg-bg-elevated py-1 px-2 rounded-sm">Collectibles</span>
             </div>
           </div>
         </div>
 
         <!-- Manage Token List Button -->
-        <button class="manage-tokens-btn">
-          <span>+</span> Manage Token List
+        <button class="w-full p-3 mt-3 bg-transparent border border-dashed border-border-default rounded-lg text-text-muted text-sm cursor-pointer transition-all flex items-center justify-center gap-2 hover:bg-bg-card hover:border-primary hover:text-primary">
+          <span class="text-lg font-light">+</span> Manage Token List
         </button>
       </div>
 
       <!-- SIP-010 Tokens Section -->
-      <div class="page-bottom tokens-section">
-        <div class="tokens-header">
-          <small>Tokens ({{ tokens.length }})</small>
+      <div class="w-full flex flex-col items-center justify-start gap-4 mt-4">
+        <div class="flex justify-between items-center w-full mb-3">
+          <small class="text-text-muted text-xs uppercase tracking-wider">Tokens ({{ tokens.length }})</small>
           <button
             v-if="tokens.length > 0 || isLoadingTokens"
-            class="toggle-tokens-btn"
+            class="bg-transparent border-none text-primary text-xs cursor-pointer w-auto hover:text-primary-hover"
             @click="showTokens = !showTokens"
           >
             {{ showTokens ? 'Hide' : 'Show' }}
           </button>
         </div>
 
-        <div v-if="showTokens">
-          <div v-if="isLoadingTokens" class="tokens-loading">
+        <div v-if="showTokens" class="w-full">
+          <div v-if="isLoadingTokens" class="text-center text-text-muted py-6 text-sm">
             Loading tokens...
           </div>
 
-          <div v-else-if="tokens.length === 0" class="tokens-empty">
+          <div v-else-if="tokens.length === 0" class="text-center text-text-muted py-4 text-sm">
             No tokens found
           </div>
 
-          <div v-else class="tokens-list">
+          <div v-else class="flex flex-col gap-2">
             <div
               v-for="token in tokens"
               :key="token.contractId"
-              class="token-item"
+              class="flex items-center gap-3 p-3 bg-bg-card border border-border-default rounded-lg transition-all hover:border-border-hover hover:bg-bg-card-hover"
               :title="token.contractId"
             >
-              <div class="token-icon">
+              <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-primary-muted shrink-0">
                 <img
                   v-if="token.imageUri"
                   :src="token.imageUri"
                   :alt="token.symbol"
+                  class="w-full h-full object-cover"
                   @error="($event.target as HTMLImageElement).style.display = 'none'"
                 />
-                <span v-else class="token-icon-fallback">{{ token.symbol.charAt(0) }}</span>
+                <span v-else class="text-sm font-semibold text-primary uppercase">{{ token.symbol.charAt(0) }}</span>
               </div>
-              <div class="token-info">
-                <span class="token-symbol">{{ token.symbol }}</span>
-                <span class="token-name">{{ token.name }}</span>
+              <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+                <span class="text-sm font-semibold text-text-primary">{{ token.symbol }}</span>
+                <span class="text-xs text-text-muted whitespace-nowrap overflow-hidden text-ellipsis">{{ token.name }}</span>
               </div>
-              <span class="token-balance">{{ token.formattedBalance }}</span>
+              <span class="font-mono text-sm font-semibold text-success shrink-0">{{ token.formattedBalance }}</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Transaction History -->
-      <div class="page-bottom tx-section">
-        <div class="tx-header">
-          <small>Recent Activity</small>
+      <div class="w-full flex flex-col items-center justify-start gap-4 mt-4">
+        <div class="flex justify-between items-center w-full mb-3">
+          <small class="text-text-muted text-xs uppercase tracking-wider">Recent Activity</small>
           <button
             v-if="transactions.length > 5"
-            class="show-all-btn"
+            class="bg-transparent border-none text-primary text-xs cursor-pointer w-auto hover:text-primary-hover"
             @click="showAllTx = !showAllTx"
           >
             {{ showAllTx ? 'Show Less' : 'Show All' }}
           </button>
         </div>
 
-        <div v-if="isLoadingTx" class="tx-loading">
+        <div v-if="isLoadingTx" class="text-center text-text-muted py-6 text-sm w-full">
           Loading transactions...
         </div>
 
-        <div v-else-if="transactions.length === 0" class="tx-empty">
+        <div v-else-if="transactions.length === 0" class="text-center text-text-muted py-4 text-sm w-full">
           No transactions yet
         </div>
 
-        <div v-else class="tx-list">
+        <div v-else class="flex flex-col gap-2 max-h-[300px] overflow-y-auto w-full">
           <div
             v-for="tx in (showAllTx ? transactions : transactions.slice(0, 5))"
             :key="tx.txId"
-            class="tx-item"
+            class="flex items-center gap-3 p-3 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all hover:border-border-hover hover:bg-bg-card-hover"
             @click="openExplorer(tx.txId)"
             :title="'View on Explorer: ' + tx.txId"
           >
-            <div class="tx-icon" :class="getStatusClass(tx.status)">
+            <div class="w-9 h-9 flex items-center justify-center rounded-full text-base shrink-0" :class="getStatusClass(tx.status)">
               <span v-if="tx.type === 'token_transfer'">
                 {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? '↑' : '↓' }}
               </span>
@@ -687,14 +755,14 @@ const closeReceiveModal = () => {
               <span v-else>•</span>
             </div>
 
-            <div class="tx-details">
-              <div class="tx-type">
+            <div class="flex-1 min-w-0 overflow-hidden">
+              <div class="text-sm font-medium text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
                 {{ getTransactionTypeLabel(tx.type) }}
-                <span v-if="tx.functionName" class="tx-function">
+                <span v-if="tx.functionName" class="text-primary font-normal text-xs">
                   .{{ tx.functionName }}
                 </span>
               </div>
-              <div class="tx-meta">
+              <div class="flex gap-2 text-xs text-text-muted mt-0.5">
                 <span v-if="tx.type === 'token_transfer' && tx.recipient">
                   {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress
                     ? 'To: ' + truncateTxAddress(tx.recipient, 4)
@@ -703,18 +771,21 @@ const closeReceiveModal = () => {
                 <span v-else-if="tx.contractId">
                   {{ truncateTxAddress(tx.contractId.split('.')[0], 4) }}.{{ tx.contractId.split('.')[1] }}
                 </span>
-                <span class="tx-time">{{ formatRelativeTime(tx.timestamp) }}</span>
+                <span class="text-text-muted">{{ formatRelativeTime(tx.timestamp) }}</span>
               </div>
             </div>
 
-            <div class="tx-amount" v-if="tx.amount">
-              <span :class="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? 'amount-out' : 'amount-in'">
+            <div v-if="tx.amount" class="text-right shrink-0">
+              <span
+                class="font-mono text-sm font-semibold"
+                :class="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? 'text-error' : 'text-success'"
+              >
                 {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? '-' : '+' }}{{ formatAmount(tx.amount) }}
               </span>
-              <small>STX</small>
+              <small class="block text-xs text-text-muted">STX</small>
             </div>
 
-            <div class="tx-status" :class="getStatusClass(tx.status)">
+            <div class="w-5 text-center text-sm shrink-0" :class="getStatusTextClass(tx.status)">
               {{ tx.status === 'success' ? '✓' : tx.status === 'pending' ? '⏳' : '✗' }}
             </div>
           </div>
@@ -734,1375 +805,3 @@ const closeReceiveModal = () => {
     <BottomNav @open-receive="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')" />
   </section>
 </template>
-
-<style scoped>
-select {
-  cursor: pointer;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-card);
-  color: var(--color-text-primary);
-  font-family: var(--font-family);
-}
-
-small {
-  color: var(--color-text-muted);
-}
-
-.laser-logo {
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.assets-display-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  font-family: var(--font-mono);
-  padding: var(--space-md) var(--space-lg);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-}
-
-.assets-display {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-}
-
-.value-display {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  font-family: var(--font-mono);
-  color: var(--color-text-primary);
-}
-
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--color-text-muted);
-}
-
-.address-copy {
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  padding: 2px var(--space-sm);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-}
-
-.address-copy:hover {
-  background: var(--color-accent-primary-muted);
-  color: var(--color-accent-primary);
-}
-
-.address-copy.copied {
-  color: var(--color-success);
-  background: var(--color-success-muted);
-}
-
-.header-selects {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: center;
-}
-
-.account-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.account-btn {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-accent-primary);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: var(--font-weight-bold);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-}
-
-.account-btn:hover:not(:disabled) {
-  background: var(--color-accent-primary-muted);
-  border-color: var(--color-accent-primary);
-}
-
-.account-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.account-btn.add:hover:not(:disabled) {
-  color: var(--color-success);
-  border-color: var(--color-success);
-  background: var(--color-success-muted);
-}
-
-.account-btn.remove:hover:not(:disabled) {
-  color: var(--color-error);
-  border-color: var(--color-error);
-  background: var(--color-error-muted);
-}
-
-/* Account name editing */
-.account-name-header {
-  min-height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.editable-name {
-  cursor: pointer;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  transition: background var(--transition-fast);
-  margin: 0;
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-}
-
-.editable-name:hover {
-  background: var(--color-accent-primary-muted);
-}
-
-.editable-name::after {
-  content: " \270E";
-  font-size: 0.7em;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.editable-name:hover::after {
-  opacity: 0.5;
-}
-
-.name-edit-container {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.name-input {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  text-align: center;
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-accent-primary);
-  border-radius: var(--radius-lg);
-  color: var(--color-text-primary);
-  padding: var(--space-xs) var(--space-md);
-  width: 180px;
-  outline: none;
-  height: auto;
-}
-
-.name-input:focus {
-  background: var(--color-bg-elevated);
-}
-
-.account-select {
-  font-size: var(--font-size-sm);
-}
-
-.network-select {
-  font-size: var(--font-size-xs);
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--color-accent-primary-muted);
-  border-radius: var(--radius-sm);
-  color: var(--color-accent-primary);
-  border: 1px solid var(--color-accent-primary);
-}
-
-.refresh-btn {
-  margin-top: var(--space-sm);
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-xs);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-accent-primary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  width: auto;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: var(--color-accent-primary-muted);
-  border-color: var(--color-accent-primary);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.value-display.loading {
-  opacity: 0.5;
-}
-
-.balance-value {
-  color: var(--color-success);
-  font-weight: var(--font-weight-bold);
-}
-
-/* Transaction History Styles */
-.tx-section {
-  margin-top: var(--space-lg);
-}
-
-.tx-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-md);
-}
-
-.show-all-btn {
-  background: transparent;
-  border: none;
-  color: var(--color-accent-primary);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-  text-decoration: none;
-  width: auto;
-}
-
-.show-all-btn:hover {
-  color: var(--color-accent-primary-hover);
-}
-
-.tx-loading,
-.tx-empty {
-  text-align: center;
-  color: var(--color-text-muted);
-  padding: var(--space-xl);
-  font-size: var(--font-size-sm);
-}
-
-.tx-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.tx-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.tx-item:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card-hover);
-}
-
-.tx-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.tx-icon.tx-success {
-  background: var(--color-success-muted);
-  color: var(--color-success);
-}
-
-.tx-icon.tx-pending {
-  background: var(--color-warning-muted);
-  color: var(--color-warning);
-}
-
-.tx-icon.tx-failed {
-  background: var(--color-error-muted);
-  color: var(--color-error);
-}
-
-.tx-details {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.tx-type {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tx-function {
-  color: var(--color-accent-primary);
-  font-weight: var(--font-weight-normal);
-  font-size: var(--font-size-xs);
-}
-
-.tx-meta {
-  display: flex;
-  gap: var(--space-sm);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
-.tx-time {
-  color: var(--color-text-muted);
-}
-
-.tx-amount {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.tx-amount span {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.tx-amount small {
-  display: block;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-.amount-in {
-  color: var(--color-success);
-}
-
-.amount-out {
-  color: var(--color-error);
-}
-
-.tx-status {
-  width: 20px;
-  text-align: center;
-  font-size: var(--font-size-sm);
-  flex-shrink: 0;
-}
-
-.tx-status.tx-success {
-  color: var(--color-success);
-}
-
-.tx-status.tx-pending {
-  color: var(--color-warning);
-}
-
-.tx-status.tx-failed {
-  color: var(--color-error);
-}
-
-/* Header actions (expand + menu) */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.expand-btn {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-}
-
-.expand-btn:hover {
-  background: var(--color-bg-card);
-  border-color: var(--color-border-hover);
-  color: var(--color-text-primary);
-}
-
-/* QR button in assets rows */
-.qr-btn {
-  padding: var(--space-xs) var(--space-sm);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-  width: auto;
-}
-
-.qr-btn:hover {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border-hover);
-  color: var(--color-text-primary);
-}
-
-.send-btn {
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--color-bg-primary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-  width: auto;
-}
-
-.send-btn:hover {
-  background: var(--color-accent-primary-hover);
-}
-
-/* Tokens Section Styles */
-.tokens-section {
-  margin-top: var(--space-lg);
-}
-
-.tokens-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-md);
-}
-
-.toggle-tokens-btn {
-  background: transparent;
-  border: none;
-  color: var(--color-accent-primary);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-  text-decoration: none;
-  width: auto;
-}
-
-.toggle-tokens-btn:hover {
-  color: var(--color-accent-primary-hover);
-}
-
-.tokens-loading,
-.tokens-empty {
-  text-align: center;
-  color: var(--color-text-muted);
-  padding: var(--space-lg);
-  font-size: var(--font-size-sm);
-}
-
-.tokens-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.token-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-fast);
-}
-
-.token-item:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card-hover);
-}
-
-.token-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-accent-primary-muted);
-  flex-shrink: 0;
-}
-
-.token-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.token-icon-fallback {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-accent-primary);
-  text-transform: uppercase;
-}
-
-.token-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.token-symbol {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.token-name {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.token-balance {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-success);
-  flex-shrink: 0;
-}
-
-/* Section Title */
-.section-title {
-  display: block;
-  margin-bottom: var(--space-md);
-  font-size: var(--font-size-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Asset Card Styles */
-.asset-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-fast);
-}
-
-.asset-card:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card-hover);
-}
-
-.asset-left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  flex: 1;
-  min-width: 0;
-}
-
-.asset-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  flex-shrink: 0;
-}
-
-/* Asset Icon */
-.asset-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-base);
-  flex-shrink: 0;
-}
-
-.asset-icon.stx-icon {
-  background: linear-gradient(135deg, #5546ff 0%, #7c3aed 100%);
-  color: white;
-}
-
-.asset-icon.btc-icon {
-  background: linear-gradient(135deg, #f7931a 0%, #ffb84d 100%);
-  color: white;
-}
-
-.asset-icon.runes-icon {
-  background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
-  color: white;
-}
-
-.asset-icon.ordinals-icon {
-  background: linear-gradient(135deg, #eab308 0%, #fbbf24 100%);
-  color: white;
-}
-
-/* Asset Info */
-.asset-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.asset-name {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.asset-address {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  padding: 2px var(--space-xs);
-  margin-left: calc(-1 * var(--space-xs));
-  border-radius: var(--radius-sm);
-}
-
-.asset-address:hover {
-  background: var(--color-accent-primary-muted);
-  color: var(--color-accent-primary);
-}
-
-.asset-address.copied {
-  color: var(--color-success);
-  background: var(--color-success-muted);
-}
-
-/* Asset Actions */
-.asset-actions {
-  display: flex;
-  gap: var(--space-xs);
-}
-
-.action-btn {
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  width: auto;
-  min-width: 40px;
-}
-
-.action-btn.qr {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-.action-btn.qr:hover {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border-hover);
-  color: var(--color-text-primary);
-}
-
-.action-btn.send {
-  background: var(--color-accent-primary);
-  border: none;
-  color: var(--color-bg-primary);
-}
-
-.action-btn.send:hover:not(.disabled) {
-  background: var(--color-accent-primary-hover);
-}
-
-.action-btn.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-}
-
-/* Asset Balance */
-.asset-balance {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-muted);
-  min-width: 60px;
-  text-align: right;
-}
-
-.asset-balance.has-balance {
-  color: var(--color-success);
-}
-
-/* ========== NEW HEADER STYLES ========== */
-.user-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  padding: var(--space-md) 0;
-  margin-bottom: var(--space-lg);
-}
-
-.menu-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-  color: var(--color-text-secondary);
-}
-
-.menu-btn:hover {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border-hover);
-  color: var(--color-text-primary);
-}
-
-.menu-btn svg {
-  flex-shrink: 0;
-}
-
-.account-info-header {
-  flex: 1;
-  cursor: pointer;
-  position: relative;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-md);
-  transition: background var(--transition-fast);
-}
-
-.account-info-header:hover {
-  background: var(--color-bg-card);
-}
-
-.account-name-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.header-account-name {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.dropdown-chevron {
-  font-size: 8px;
-  color: var(--color-text-muted);
-  transition: transform var(--transition-fast);
-}
-
-.account-info-header:hover .dropdown-chevron {
-  color: var(--color-text-secondary);
-}
-
-.header-address {
-  font-size: var(--font-size-xs);
-  font-family: var(--font-mono);
-  color: var(--color-text-muted);
-}
-
-/* Account Dropdown */
-.account-dropdown {
-  position: absolute;
-  top: calc(100% + var(--space-xs));
-  left: 0;
-  right: 0;
-  min-width: 220px;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  z-index: 100;
-  overflow: hidden;
-}
-
-.account-dropdown-item {
-  padding: var(--space-md);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.account-dropdown-item:last-of-type {
-  border-bottom: none;
-}
-
-.account-dropdown-item:hover {
-  background: var(--color-bg-card-hover);
-}
-
-.account-dropdown-item.active {
-  background: var(--color-accent-primary-muted);
-}
-
-.dropdown-account-name {
-  display: block;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
-
-.dropdown-account-address {
-  display: block;
-  font-size: var(--font-size-xs);
-  font-family: var(--font-mono);
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
-.account-dropdown-actions {
-  padding: var(--space-sm);
-  background: var(--color-bg-card);
-  border-top: 1px solid var(--color-border);
-}
-
-.dropdown-action-btn {
-  width: 100%;
-  padding: var(--space-sm);
-  background: transparent;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.dropdown-action-btn:hover:not(:disabled) {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
-}
-
-.dropdown-action-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Header Right Section */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-/* Network Selector */
-.network-selector {
-  position: relative;
-  cursor: pointer;
-}
-
-.network-badge {
-  padding: var(--space-sm) var(--space-lg);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 1px;
-  border-radius: var(--radius-md);
-  text-transform: uppercase;
-  transition: all var(--transition-fast);
-}
-
-.network-badge.testnet {
-  background: rgba(190, 242, 100, 0.1);
-  color: var(--color-accent-primary);
-  border: 1.5px solid rgba(190, 242, 100, 0.4);
-}
-
-.network-badge.testnet:hover {
-  background: rgba(190, 242, 100, 0.15);
-  border-color: rgba(190, 242, 100, 0.6);
-}
-
-.network-badge.mainnet {
-  background: rgba(34, 197, 94, 0.1);
-  color: var(--color-success);
-  border: 1.5px solid rgba(34, 197, 94, 0.4);
-}
-
-.network-badge.mainnet:hover {
-  background: rgba(34, 197, 94, 0.15);
-  border-color: rgba(34, 197, 94, 0.6);
-}
-
-.network-badge.devnet {
-  background: rgba(251, 191, 36, 0.1);
-  color: var(--color-warning);
-  border: 1.5px solid rgba(251, 191, 36, 0.4);
-}
-
-.network-badge.devnet:hover {
-  background: rgba(251, 191, 36, 0.15);
-  border-color: rgba(251, 191, 36, 0.6);
-}
-
-/* Network Dropdown */
-.network-dropdown {
-  position: absolute;
-  top: calc(100% + var(--space-xs));
-  right: 0;
-  min-width: 140px;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  z-index: 100;
-  overflow: hidden;
-}
-
-.network-dropdown-item {
-  padding: var(--space-md);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: background var(--transition-fast);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.network-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.network-dropdown-item:hover {
-  background: var(--color-bg-card-hover);
-}
-
-.network-dropdown-item.active {
-  background: var(--color-accent-primary-muted);
-}
-
-.network-name {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  text-transform: capitalize;
-}
-
-.network-check {
-  color: var(--color-accent-primary);
-  font-size: var(--font-size-sm);
-}
-
-.expand-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.expand-btn:hover {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border-hover);
-  color: var(--color-text-primary);
-}
-
-.expand-btn svg {
-  flex-shrink: 0;
-}
-
-/* ========== BALANCE SECTION STYLES ========== */
-.balance-section {
-  padding: var(--space-lg) 0;
-  text-align: center;
-  margin-bottom: var(--space-lg);
-}
-
-.balance-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-md);
-}
-
-.balance-label span {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}
-
-.visibility-toggle {
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-  width: auto;
-}
-
-.visibility-toggle:hover {
-  color: var(--color-text-secondary);
-  background: var(--color-bg-card-hover);
-}
-
-.balance-amount {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-xs);
-  min-height: 3.5rem;
-}
-
-.balance-amount.loading {
-  opacity: 0.5;
-}
-
-.balance-value {
-  font-size: 3rem;
-  font-weight: var(--font-weight-bold);
-  font-family: var(--font-mono);
-  color: var(--color-text-primary);
-  line-height: 1;
-  letter-spacing: 2px;
-}
-
-.balance-currency {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
-}
-
-.balance-usd {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-xl);
-  min-height: 1.25rem;
-  letter-spacing: 1px;
-}
-
-.balance-actions {
-  display: flex;
-  gap: var(--space-md);
-  justify-content: center;
-}
-
-.action-btn-large {
-  flex: 1;
-  max-width: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-md) var(--space-xl);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.action-btn-large.send {
-  background: var(--color-accent-primary);
-  border: none;
-  color: var(--color-bg-primary);
-}
-
-.action-btn-large.send:hover {
-  background: var(--color-accent-primary-hover);
-  transform: translateY(-1px);
-}
-
-.action-btn-large.receive {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-}
-
-.action-btn-large.receive:hover {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border-hover);
-  transform: translateY(-1px);
-}
-
-.action-btn-large svg {
-  flex-shrink: 0;
-}
-
-/* ========== ASSETS SECTION STYLES ========== */
-.assets-section {
-  margin-bottom: var(--space-xl);
-}
-
-.assets-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-lg);
-}
-
-.assets-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.refresh-icon-btn {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-}
-
-.refresh-icon-btn:hover:not(:disabled) {
-  color: var(--color-text-secondary);
-  background: var(--color-bg-card);
-}
-
-.refresh-icon-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.refresh-icon-btn svg.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.assets-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-/* New Asset Card */
-.asset-card-new {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-lg);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  position: relative;
-  overflow: hidden;
-}
-
-.asset-card-new:hover {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border-hover);
-}
-
-.asset-card-new:active {
-  transform: scale(0.99);
-}
-
-/* Left Accent Border */
-.asset-accent {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-}
-
-.asset-card-new.stx .asset-accent {
-  background: linear-gradient(180deg, #5546ff 0%, #7c3aed 100%);
-}
-
-.asset-card-new.btc .asset-accent {
-  background: linear-gradient(180deg, #f7931a 0%, #ffb84d 100%);
-}
-
-.asset-card-new.runes .asset-accent {
-  background: linear-gradient(180deg, #ec4899 0%, #f472b6 100%);
-}
-
-.asset-card-new.ordinals .asset-accent {
-  background: linear-gradient(180deg, #eab308 0%, #fbbf24 100%);
-}
-
-/* Asset Icon */
-.asset-icon-new {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-lg);
-  flex-shrink: 0;
-  margin-left: var(--space-sm);
-}
-
-.asset-card-new.stx .asset-icon-new {
-  background: linear-gradient(135deg, rgba(85, 70, 255, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
-  color: #7c3aed;
-  border: 2px solid rgba(124, 58, 237, 0.3);
-}
-
-.asset-card-new.btc .asset-icon-new {
-  background: linear-gradient(135deg, rgba(247, 147, 26, 0.2) 0%, rgba(255, 184, 77, 0.2) 100%);
-  color: #f7931a;
-  border: 2px solid rgba(247, 147, 26, 0.3);
-}
-
-.asset-card-new.runes .asset-icon-new {
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(244, 114, 182, 0.2) 100%);
-  color: #ec4899;
-  border: 2px solid rgba(236, 72, 153, 0.3);
-}
-
-.asset-card-new.ordinals .asset-icon-new {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2) 0%, rgba(251, 191, 36, 0.2) 100%);
-  color: #eab308;
-  border: 2px solid rgba(234, 179, 8, 0.3);
-}
-
-/* Asset Details */
-.asset-details {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.asset-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.asset-subtitle {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-/* Asset Values */
-.asset-values {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
-.asset-amount {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.asset-usd {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-.asset-badge {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  background: var(--color-bg-elevated);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-}
-
-/* Manage Token List Button */
-.manage-tokens-btn {
-  width: 100%;
-  padding: var(--space-md);
-  margin-top: var(--space-md);
-  background: transparent;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-}
-
-.manage-tokens-btn:hover {
-  background: var(--color-bg-card);
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
-}
-
-.manage-tokens-btn span {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-light);
-}
-</style>

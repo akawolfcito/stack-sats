@@ -153,48 +153,65 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <section class="start-page">
-    <div class="page-top">
-      <div class="logo-container">
-        <div class="logo-ring">
-          <img src="/denvault-i.png" width="100" alt="DenVault" />
+  <section class="flex flex-col min-h-full p-4">
+    <!-- Header -->
+    <div class="text-center pt-6 mb-6">
+      <!-- Logo with glow ring -->
+      <div class="flex justify-center mb-6">
+        <div class="relative">
+          <div class="absolute -inset-2 rounded-full border border-border-default"></div>
+          <div class="w-[100px] h-[100px] rounded-full bg-bg-card border border-border-default flex items-center justify-center relative">
+            <img src="/denvault-i.png" width="80" alt="DenVault" class="rounded-full" />
+          </div>
         </div>
       </div>
-      <h1 class="title">Set Up Your Wallet</h1>
-      <p class="subtitle">
+      <h1 class="text-2xl font-bold text-text-primary mb-3">Set Up Your Wallet</h1>
+      <p class="text-text-secondary text-sm leading-relaxed max-w-[300px] mx-auto">
         Create a new wallet or import an existing one to start managing your assets securely.
       </p>
     </div>
 
-    <div class="page-bottom">
+    <!-- Content -->
+    <div class="flex-1 flex flex-col">
       <!-- Step 1: Start -->
-      <div v-if="currentStep === 'start'" class="step-container">
-        <button @click="handleGenerateSecret" class="action-card primary">
-          <span class="action-icon primary">+</span>
-          <span class="action-content">
-            <span class="action-title">Create New Wallet</span>
-            <span class="action-desc">Generate new recovery phrase</span>
+      <div v-if="currentStep === 'start'" class="flex flex-col gap-3 w-full">
+        <!-- Create Wallet Card -->
+        <button
+          @click="handleGenerateSecret"
+          class="flex items-center gap-3 w-full p-4 bg-bg-card border border-primary/30 rounded-xl cursor-pointer transition-all duration-200 text-left hover:border-primary hover:bg-bg-card-hover active:scale-[0.99]"
+        >
+          <span class="w-12 h-12 rounded-full bg-primary text-bg-primary flex items-center justify-center shrink-0 text-2xl font-bold">+</span>
+          <span class="flex-1 flex flex-col gap-0.5">
+            <span class="text-text-primary font-semibold">Create New Wallet</span>
+            <span class="text-text-muted text-xs">Generate new recovery phrase</span>
           </span>
-          <span class="action-arrow">›</span>
+          <span class="text-text-muted text-2xl font-light">›</span>
         </button>
-        <button @click="handleImportMnemonic" class="action-card">
-          <span class="action-icon secondary">
+
+        <!-- Import Wallet Card -->
+        <button
+          @click="handleImportMnemonic"
+          class="flex items-center gap-3 w-full p-4 bg-bg-card border border-border-default rounded-xl cursor-pointer transition-all duration-200 text-left hover:border-border-hover hover:bg-bg-card-hover active:scale-[0.99]"
+        >
+          <span class="w-12 h-12 rounded-full bg-bg-elevated border border-border-default text-text-secondary flex items-center justify-center shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
           </span>
-          <span class="action-content">
-            <span class="action-title">Import Existing Wallet</span>
-            <span class="action-desc">Use recovery phrase or key</span>
+          <span class="flex-1 flex flex-col gap-0.5">
+            <span class="text-text-primary font-semibold">Import Existing Wallet</span>
+            <span class="text-text-muted text-xs">Use recovery phrase or key</span>
           </span>
-          <span class="action-arrow">›</span>
+          <span class="text-text-muted text-2xl font-light">›</span>
         </button>
-        <p v-if="importError" class="error-text">{{ importError }}</p>
 
-        <div class="security-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <p v-if="importError" class="text-error text-sm text-center">{{ importError }}</p>
+
+        <!-- Security Badge -->
+        <div class="flex items-center justify-center gap-2 mt-6 text-primary text-xs tracking-wider">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stroke-primary">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
@@ -203,33 +220,34 @@ onBeforeMount(() => {
       </div>
 
       <!-- Step 2: Show Mnemonic -->
-      <div v-else-if="currentStep === 'mnemonic'" class="step-container">
-        <div class="mnemonic-warning">
-          <strong>Save your recovery phrase</strong>
-          <p>Store it securely. Anyone with this phrase can access your wallet.</p>
+      <div v-else-if="currentStep === 'mnemonic'" class="flex flex-col gap-3 w-full">
+        <!-- Warning -->
+        <div class="bg-warning-muted border border-warning rounded-lg p-4 text-center">
+          <strong class="text-warning">Save your recovery phrase</strong>
+          <p class="mt-2 text-sm text-text-secondary">Store it securely. Anyone with this phrase can access your wallet.</p>
         </div>
 
-        <div class="mnemonic-display">
+        <!-- Mnemonic Grid -->
+        <div class="grid grid-cols-3 gap-2 bg-bg-card border border-border-default p-4 rounded-lg">
           <div
             v-for="(word, index) in mnemonic.split(' ')"
             :key="index"
-            class="mnemonic-word"
+            class="flex items-center gap-2 font-mono text-sm"
           >
-            <span class="word-number">{{ index + 1 }}</span>
-            <span class="word-text">{{ word }}</span>
+            <span class="text-text-muted text-xs min-w-[18px]">{{ index + 1 }}</span>
+            <span class="text-text-primary">{{ word }}</span>
           </div>
         </div>
 
-        <div class="button-group">
-          <button @click="handleBack" class="btn-secondary">Back</button>
-          <button @click="handleContinueToPin" class="btn-primary">
-            I saved it
-          </button>
+        <!-- Buttons -->
+        <div class="flex gap-3 mt-4">
+          <button @click="handleBack" class="btn-secondary flex-1">Back</button>
+          <button @click="handleContinueToPin" class="btn-primary flex-[2]">I saved it</button>
         </div>
       </div>
 
       <!-- Step 3: Create PIN -->
-      <div v-else-if="currentStep === 'pin-create'" class="step-container">
+      <div v-else-if="currentStep === 'pin-create'" class="flex flex-col gap-3 w-full">
         <PinInput
           ref="pinInputRef"
           mode="create"
@@ -238,15 +256,13 @@ onBeforeMount(() => {
           @complete="handlePinCreate"
         />
 
-        <div class="button-group">
-          <button @click="handleBack" class="btn-secondary" :disabled="isLoading">
-            Back
-          </button>
+        <div class="flex gap-3 mt-4">
+          <button @click="handleBack" class="btn-secondary flex-1" :disabled="isLoading">Back</button>
         </div>
       </div>
 
       <!-- Step 4: Confirm PIN -->
-      <div v-else-if="currentStep === 'pin-confirm'" class="step-container">
+      <div v-else-if="currentStep === 'pin-confirm'" class="flex flex-col gap-3 w-full">
         <PinInput
           ref="pinInputRef"
           mode="confirm"
@@ -255,248 +271,12 @@ onBeforeMount(() => {
           @complete="handlePinConfirm"
         />
 
-        <div class="button-group">
-          <button @click="handleBack" class="btn-secondary" :disabled="isLoading">
-            Back
-          </button>
+        <div class="flex gap-3 mt-4">
+          <button @click="handleBack" class="btn-secondary flex-1" :disabled="isLoading">Back</button>
         </div>
 
-        <p v-if="isLoading" class="loading-text">Creating wallet...</p>
+        <p v-if="isLoading" class="text-text-muted text-sm text-center">Creating wallet...</p>
       </div>
     </div>
   </section>
 </template>
-
-<style scoped>
-.start-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding: var(--space-lg);
-}
-
-.page-top {
-  text-align: center;
-  padding-top: var(--space-xl);
-  margin-bottom: var(--space-xl);
-}
-
-.logo-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--space-xl);
-}
-
-.logo-ring {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.logo-ring::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border);
-}
-
-.title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--space-md);
-}
-
-.subtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  margin: 0;
-  max-width: 300px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.page-bottom {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.step-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  width: 100%;
-}
-
-/* Action Cards */
-.action-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  width: 100%;
-  padding: var(--space-lg);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  cursor: pointer;
-  transition: all var(--transition-base);
-  text-align: left;
-}
-
-.action-card:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card-hover);
-}
-
-.action-card.primary {
-  border-color: var(--color-accent-primary-muted);
-}
-
-.action-card.primary:hover {
-  border-color: var(--color-accent-primary);
-}
-
-.action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 1.5rem;
-  font-weight: var(--font-weight-bold);
-}
-
-.action-icon.primary {
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
-}
-
-.action-icon.secondary {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-.action-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.action-title {
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-base);
-}
-
-.action-desc {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-}
-
-.action-arrow {
-  color: var(--color-text-muted);
-  font-size: 1.5rem;
-  font-weight: 300;
-}
-
-/* Security Badge */
-.security-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  margin-top: var(--space-xl);
-  color: var(--color-accent-primary);
-  font-size: var(--font-size-xs);
-  letter-spacing: 1px;
-}
-
-.security-badge svg {
-  stroke: var(--color-accent-primary);
-}
-
-/* Button Group */
-.button-group {
-  display: flex;
-  gap: var(--space-md);
-  margin-top: var(--space-lg);
-}
-
-.button-group .btn-secondary {
-  flex: 1;
-}
-
-.button-group .btn-primary {
-  flex: 2;
-}
-
-/* Mnemonic Warning */
-.mnemonic-warning {
-  background: var(--color-warning-muted);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  text-align: center;
-}
-
-.mnemonic-warning strong {
-  color: var(--color-warning);
-  font-size: var(--font-size-base);
-}
-
-.mnemonic-warning p {
-  margin: var(--space-sm) 0 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-/* Mnemonic Display */
-.mnemonic-display {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-sm);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  padding: var(--space-lg);
-  border-radius: var(--radius-lg);
-}
-
-.mnemonic-word {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-}
-
-.word-number {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  min-width: 18px;
-}
-
-.word-text {
-  color: var(--color-text-primary);
-}
-
-/* Loading Text */
-.loading-text {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  text-align: center;
-  margin: 0;
-}
-</style>

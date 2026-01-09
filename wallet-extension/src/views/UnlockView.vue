@@ -81,14 +81,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="unlock-page">
-    <div class="page-top">
-      <img src="/denvault-i.png" width="120px" alt="DenVault" />
-      <h1>Welcome Back</h1>
-      <p>Enter your PIN to unlock your wallet</p>
+  <section class="flex flex-col min-h-full p-4">
+    <!-- Header -->
+    <div class="text-center pt-12 mb-8">
+      <img src="/denvault-i.png" width="120" alt="DenVault" class="mx-auto mb-4" />
+      <h1 class="font-bold text-2xl mb-2 text-text-primary">Welcome Back</h1>
+      <p class="text-text-secondary text-sm m-0">Enter your PIN to unlock your wallet</p>
     </div>
 
-    <div class="page-content">
+    <!-- Content -->
+    <div class="flex-1 flex flex-col items-center gap-6">
       <!-- Normal unlock view -->
       <template v-if="!showDeleteConfirm">
         <PinInput
@@ -101,43 +103,43 @@ onMounted(() => {
 
         <button
           @click="handleForgotPin"
-          class="btn-link"
+          class="bg-transparent border-none text-text-muted text-sm cursor-pointer p-2 w-auto hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="isLoading"
         >
           Forgot PIN?
         </button>
 
-        <p v-if="isLoading" class="loading-text">Unlocking...</p>
+        <p v-if="isLoading" class="text-text-muted text-sm m-0">Unlocking...</p>
       </template>
 
       <!-- Delete confirmation view -->
       <template v-else>
-        <div class="delete-warning">
-          <strong>Reset Wallet</strong>
-          <p>
+        <div class="bg-error-muted border border-error rounded-lg p-4 text-center w-full">
+          <strong class="text-error text-lg">Reset Wallet</strong>
+          <p class="mt-3 text-sm text-text-secondary leading-relaxed">
             This will permanently delete your wallet from this device.
             Make sure you have your recovery phrase saved!
           </p>
         </div>
 
-        <div class="delete-confirm-input">
-          <label>Type DELETE to confirm:</label>
+        <div class="w-full flex flex-col gap-2">
+          <label class="text-sm text-text-secondary">Type DELETE to confirm:</label>
           <input
             v-model="deleteConfirmText"
             type="text"
             placeholder="DELETE"
-            class="confirm-input"
+            class="w-full p-4 text-base border border-border-default rounded-xl bg-bg-card text-text-primary text-center uppercase tracking-widest focus:outline-none focus:border-error"
             autocomplete="off"
           />
         </div>
 
-        <div class="button-group">
-          <button @click="handleCancelDelete" class="btn-secondary">
+        <div class="flex gap-3 w-full">
+          <button @click="handleCancelDelete" class="btn-secondary flex-1">
             Cancel
           </button>
           <button
             @click="handleConfirmDelete"
-            class="btn-danger"
+            class="btn-danger flex-1"
             :disabled="deleteConfirmText.toUpperCase() !== 'DELETE'"
           >
             Reset Wallet
@@ -147,127 +149,3 @@ onMounted(() => {
     </div>
   </section>
 </template>
-
-<style scoped>
-.unlock-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding: var(--space-lg);
-}
-
-.page-top {
-  text-align: center;
-  padding-top: var(--space-3xl);
-  margin-bottom: var(--space-2xl);
-}
-
-.page-top img {
-  margin-bottom: var(--space-lg);
-}
-
-.page-top h1 {
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-2xl);
-  margin: 0 0 var(--space-sm);
-  color: var(--color-text-primary);
-}
-
-.page-top p {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-.page-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-xl);
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  text-decoration: none;
-  padding: var(--space-sm);
-  width: auto;
-}
-
-.btn-link:hover:not(:disabled) {
-  color: var(--color-accent-primary);
-}
-
-.btn-link:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.loading-text {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-.delete-warning {
-  background: var(--color-error-muted);
-  border: 1px solid var(--color-error);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  text-align: center;
-  width: 100%;
-}
-
-.delete-warning strong {
-  color: var(--color-error);
-  font-size: var(--font-size-lg);
-}
-
-.delete-warning p {
-  margin: var(--space-md) 0 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.delete-confirm-input {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.delete-confirm-input label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.confirm-input {
-  width: 100%;
-  padding: var(--space-lg);
-  font-size: var(--font-size-base);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  background: var(--color-bg-card);
-  color: var(--color-text-primary);
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  height: auto;
-}
-
-.confirm-input:focus {
-  outline: none;
-  border-color: var(--color-error);
-}
-
-.button-group {
-  display: flex;
-  gap: var(--space-md);
-  width: 100%;
-}
-</style>
