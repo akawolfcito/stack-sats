@@ -325,8 +325,6 @@ const truncateAddress = (address: string) => {
 
 // Receive modal state
 const showReceiveModal = ref(false);
-const receiveAddress = ref("");
-const receiveType = ref("");
 
 // Account dropdown state
 const showAccountDropdown = ref(false);
@@ -354,9 +352,7 @@ const selectAccount = (index: number) => {
   showAccountDropdown.value = false;
 };
 
-const openReceiveModal = (address: string, type: string) => {
-  receiveAddress.value = address;
-  receiveType.value = type;
+const openReceiveModal = () => {
   showReceiveModal.value = true;
 };
 
@@ -488,7 +484,7 @@ const closeReceiveModal = () => {
           </svg>
           <span>Send</span>
         </button>
-        <button class="action-btn action-btn-secondary" @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')">
+        <button class="action-btn action-btn-secondary" @click="openReceiveModal">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <polyline points="19 12 12 19 5 12"/>
@@ -691,13 +687,14 @@ const closeReceiveModal = () => {
     <!-- Receive Modal -->
     <ReceiveModal
       :visible="showReceiveModal"
-      :address="receiveAddress"
-      :type="receiveType"
+      :stx-address="userAccounts[accountIndexToDisplay]?.stxAddress || ''"
+      :btc-p2-p-k-h-address="userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || ''"
+      :btc-p2-t-r-address="userAccounts[accountIndexToDisplay]?.btcP2TRAddress || ''"
       @close="closeReceiveModal"
     />
 
     <!-- Bottom Navigation -->
-    <BottomNav @open-receive="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')" />
+    <BottomNav @open-receive="openReceiveModal" />
   </section>
 </template>
 
