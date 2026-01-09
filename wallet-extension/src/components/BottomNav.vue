@@ -12,10 +12,6 @@ const router = useRouter();
 const currentPath = computed(() => route.path);
 
 function navigate(path: string) {
-  if (path === "/swap" || path === "/activity") {
-    // Coming soon - these routes don't exist yet
-    return;
-  }
   router.push(path);
 }
 
@@ -26,55 +22,48 @@ function handleReceive() {
 function isActive(path: string): boolean {
   return currentPath.value === path;
 }
-
-function isDisabled(path: string): boolean {
-  return path === "/swap" || path === "/activity";
-}
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 flex items-end justify-around bg-bg-primary border-t border-border-default py-2 px-1 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] z-[1000]">
-    <!-- Wallet -->
+  <nav class="bottom-nav">
+    <!-- Home -->
     <button
-      class="flex flex-col items-center gap-1 p-1 bg-transparent border-none cursor-pointer text-text-muted transition-all duration-150 min-w-[52px] w-auto hover:text-text-secondary"
-      :class="{ 'text-primary': isActive('/user') }"
+      class="nav-item"
+      :class="{ 'nav-item--active': isActive('/user') }"
       @click="navigate('/user')"
-      title="Wallet"
+      title="Home"
     >
-      <div class="flex items-center justify-center h-7">
-        <svg class="w-6 h-6 transition-all duration-150" viewBox="0 0 24 24" fill="none">
-          <rect x="2" y="5" width="20" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M2 9h20" stroke="currentColor" stroke-width="1.5"/>
-          <rect x="14" y="12" width="4" height="3" rx="0.5" fill="currentColor" :class="{ 'fill-primary': isActive('/user') }"/>
+      <span class="nav-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
-      </div>
-      <span class="text-[10px] font-medium tracking-wide">Wallet</span>
+      </span>
+      <span class="nav-label">Home</span>
     </button>
 
     <!-- Swap -->
     <button
-      class="flex flex-col items-center gap-1 p-1 bg-transparent border-none text-text-muted transition-all duration-150 min-w-[52px] w-auto"
-      :class="{ 'opacity-35 cursor-not-allowed': isDisabled('/swap'), 'cursor-pointer hover:text-text-secondary': !isDisabled('/swap') }"
+      class="nav-item"
+      :class="{ 'nav-item--active': isActive('/swap') }"
       @click="navigate('/swap')"
-      title="Coming soon"
+      title="Swap"
     >
-      <div class="flex items-center justify-center h-7">
-        <svg class="w-6 h-6 transition-all duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M7 4v16M7 4l-4 4M7 4l4 4"/>
-          <path d="M17 20V4M17 20l-4-4M17 20l4-4"/>
+      <span class="nav-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M16 3l4 4-4 4"/>
+          <path d="M20 7H4"/>
+          <path d="M8 21l-4-4 4-4"/>
+          <path d="M4 17h16"/>
         </svg>
-      </div>
-      <span class="text-[10px] font-medium tracking-wide">Swap</span>
+      </span>
+      <span class="nav-label">Swap</span>
     </button>
 
-    <!-- QR / Receive (Center Button) -->
-    <button
-      class="relative p-0 -mt-7 bg-transparent border-none cursor-pointer"
-      @click="handleReceive"
-      title="Receive"
-    >
-      <div class="w-[60px] h-[60px] rounded-full bg-primary flex items-center justify-center shadow-glow-primary-lg transition-all duration-150 border-[3px] border-bg-primary hover:scale-[1.08] hover:shadow-[0_6px_24px_rgba(232,248,89,0.5)] active:scale-95">
-        <svg class="w-7 h-7 text-bg-primary stroke-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <!-- Central QR Button -->
+    <div class="qr-button-wrapper">
+      <button class="qr-button" @click="handleReceive" title="Scan QR">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7" rx="1"/>
           <rect x="14" y="3" width="7" height="7" rx="1"/>
           <rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -83,41 +72,130 @@ function isDisabled(path: string): boolean {
           <rect x="14" y="18" width="3" height="3"/>
           <rect x="18" y="18" width="3" height="3"/>
         </svg>
-      </div>
+      </button>
+    </div>
+
+    <!-- Earn -->
+    <button
+      class="nav-item"
+      :class="{ 'nav-item--active': isActive('/earn') }"
+      @click="navigate('/swap')"
+      title="Earn"
+    >
+      <span class="nav-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2"/>
+          <path d="M2 9v1c0 1.1.9 2 2 2h1"/>
+          <circle cx="16" cy="11" r="1"/>
+        </svg>
+      </span>
+      <span class="nav-label">Earn</span>
     </button>
 
     <!-- Activity -->
     <button
-      class="flex flex-col items-center gap-1 p-1 bg-transparent border-none text-text-muted transition-all duration-150 min-w-[52px] w-auto"
-      :class="{ 'opacity-35 cursor-not-allowed': isDisabled('/activity'), 'cursor-pointer hover:text-text-secondary': !isDisabled('/activity') }"
-      @click="navigate('/activity')"
-      title="Coming soon"
+      class="nav-item"
+      :class="{ 'nav-item--active': isActive('/activity') }"
+      @click="navigate('/user')"
+      title="Activity"
     >
-      <div class="flex items-center justify-center h-7">
-        <svg class="w-6 h-6 transition-all duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M7 14v3"/>
-          <path d="M12 10v7"/>
-          <path d="M17 7v10"/>
+      <span class="nav-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
         </svg>
-      </div>
-      <span class="text-[10px] font-medium tracking-wide">Activity</span>
-    </button>
-
-    <!-- Settings -->
-    <button
-      class="flex flex-col items-center gap-1 p-1 bg-transparent border-none cursor-pointer text-text-muted transition-all duration-150 min-w-[52px] w-auto hover:text-text-secondary"
-      :class="{ 'text-primary': isActive('/usermenu') }"
-      @click="navigate('/usermenu')"
-      title="Settings"
-    >
-      <div class="flex items-center justify-center h-7">
-        <svg class="w-6 h-6 transition-all duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-        </svg>
-      </div>
-      <span class="text-[10px] font-medium tracking-wide">Settings</span>
+      </span>
+      <span class="nav-label">Activity</span>
     </button>
   </nav>
 </template>
+
+<style scoped>
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  background: rgba(26, 26, 26, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 32px 32px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 24px 0;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 1000;
+}
+
+/* Nav Item */
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 48px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  color: var(--color-text-primary);
+}
+
+.nav-item--active {
+  color: var(--color-accent-primary);
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Central QR Button */
+.qr-button-wrapper {
+  position: relative;
+  top: -40px;
+}
+
+.qr-button {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  border: 4px solid #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px rgba(232, 248, 89, 0.4);
+  transition: all 0.2s ease;
+}
+
+.qr-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(232, 248, 89, 0.5);
+}
+
+.qr-button:active {
+  transform: scale(0.95);
+}
+</style>
