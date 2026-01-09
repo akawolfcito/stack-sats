@@ -45,5 +45,19 @@ PROGRESS.md
 internal-docs/
 mocks/
 
+# Ralph Agent (internal docs - do not commit)
+.agent-template/
+AGENTS.md
+CONTEXT.md
+prd.json
+ralph-progress.md
+agent-prompt.md
+ALLOWLIST.md
+DENYLIST.md
+plan.md
+STOP_RALPH
+scripts/ralph.sh
+docs/agent-loop.md
+
 # CWS build artifacts
 *.zip
