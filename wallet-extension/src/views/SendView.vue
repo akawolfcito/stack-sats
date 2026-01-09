@@ -63,7 +63,6 @@ const explorerUrl = computed(() => {
   if (!txid.value) return "";
   const base = NETWORKS[network.value].explorerUrl;
   if (!base) return "";
-  // Ensure txid has 0x prefix and add chain param for non-mainnet
   const formattedTxId = txid.value.startsWith("0x") ? txid.value : `0x${txid.value}`;
   const chainParam = network.value === "mainnet" ? "" : `?chain=${network.value}`;
   return `${base}/txid/${formattedTxId}${chainParam}`;
@@ -85,11 +84,9 @@ onBeforeMount(async () => {
 
   network.value = getSelectedNetwork();
 
-  // Get saved account index
   const savedIndex = localStorage.getItem("selected_account_index");
   accountIndex.value = savedIndex ? parseInt(savedIndex, 10) : 0;
 
-  // Get account name
   const walletId = sessionManager.activeWalletId;
   if (walletId) {
     const namesKey = `account_names_${walletId}`;
@@ -106,11 +103,9 @@ onBeforeMount(async () => {
     }
   }
 
-  // Generate address - need to generate enough accounts to reach the selected index
   const mnemonic = sessionManager.getMnemonic();
   if (mnemonic) {
     const { generateInitialAccounts } = await import("@/utils/accounts");
-    // Generate accountIndex + 1 accounts to ensure we have the selected account
     const numAccounts = accountIndex.value + 1;
     const accounts = await generateInitialAccounts(mnemonic, numAccounts, network.value);
     if (accounts[accountIndex.value]) {
@@ -118,7 +113,6 @@ onBeforeMount(async () => {
     }
   }
 
-  // Fetch balance
   await loadBalance();
 });
 
@@ -133,7 +127,6 @@ async function loadBalance() {
   }
 }
 
-// Validation
 function validateRecipient() {
   recipientError.value = "";
   if (!recipient.value.trim()) {
@@ -171,7 +164,6 @@ function handleMaxAmount() {
   validateAmount();
 }
 
-// Navigation
 function handleBack() {
   if (currentStep.value === "confirm") {
     currentStep.value = "form";
@@ -195,27 +187,22 @@ function handleContinue() {
   });
 }
 
-// Send transaction
 async function handlePinComplete(pin: string) {
   pinError.value = "";
 
-  // Verify PIN by attempting unlock
   const mnemonic = await sessionManager.unlock(pin);
   if (!mnemonic) {
     pinError.value = `Invalid PIN. ${sessionManager.attemptsRemaining} attempts remaining`;
     return;
   }
 
-  // Start sending
   currentStep.value = "sending";
 
   let privateKey: string | null = null;
 
   try {
-    // Get private key
     privateKey = await getPrivateKey(mnemonic, accountIndex.value);
 
-    // Execute transfer
     const result = await transferStx({
       recipient: recipient.value.trim(),
       amountMicroStx: stxToMicroStx(amount.value),
@@ -235,7 +222,6 @@ async function handlePinComplete(pin: string) {
     errorMessage.value = error instanceof Error ? error.message : "Unknown error";
     currentStep.value = "error";
   } finally {
-    // Clear sensitive data
     privateKey = null;
     scheduleCleanup();
   }
@@ -269,100 +255,156 @@ function truncateAddress(address: string): string {
 <template>
   <div class="send-view">
     <!-- Header -->
-    <header class="send-header">
+    <header class="header">
       <button
         v-if="currentStep === 'form' || currentStep === 'confirm'"
         class="back-btn"
         @click="handleBack"
       >
-        <span class="back-arrow">&larr;</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
       </button>
-      <h1 class="send-title">
+      <div v-else class="back-spacer"></div>
+      <h1 class="title">
         <template v-if="currentStep === 'form'">Send STX</template>
         <template v-else-if="currentStep === 'confirm'">Confirm Send</template>
         <template v-else-if="currentStep === 'sending'">Sending...</template>
         <template v-else-if="currentStep === 'success'">Success!</template>
         <template v-else-if="currentStep === 'error'">Error</template>
       </h1>
-      <div class="header-spacer"></div>
+      <div class="back-spacer"></div>
     </header>
 
     <!-- Step: Form -->
-    <div v-if="currentStep === 'form'" class="send-content">
-      <!-- From info -->
-      <div class="from-info">
-        <span class="from-label">From:</span>
-        <span class="from-account">{{ accountName }}</span>
-        <span class="from-address">{{ truncateAddress(senderAddress) }}</span>
-        <span class="from-balance">Balance: {{ formattedBalance }} STX</span>
+    <main v-if="currentStep === 'form'" class="content">
+      <!-- From Account Card -->
+      <div class="from-card">
+        <div class="from-card-glow"></div>
+        <div class="from-card-content">
+          <div class="from-card-left">
+            <div class="from-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="5" width="20" height="15" rx="2"/>
+                <path d="M2 9h20"/>
+              </svg>
+            </div>
+            <div class="from-info">
+              <span class="from-name">{{ accountName }}</span>
+              <span class="from-address">{{ truncateAddress(senderAddress) }}</span>
+            </div>
+          </div>
+          <div class="from-balance">
+            <span class="balance-value">{{ formattedBalance }}</span>
+            <span class="balance-label">AVAILABLE</span>
+          </div>
+        </div>
       </div>
 
-      <!-- Recipient -->
+      <!-- Recipient Input -->
       <div class="form-group">
-        <label class="form-label">Recipient Address *</label>
-        <input
-          v-model="recipient"
-          type="text"
-          class="form-input"
-          :class="{ 'has-error': recipientError }"
-          placeholder="ST... or SP..."
-          @blur="validateRecipient"
-        />
+        <label class="form-label">To</label>
+        <div class="input-wrapper" :class="{ 'has-error': recipientError }">
+          <input
+            v-model="recipient"
+            type="text"
+            class="form-input input-mono"
+            placeholder="Address or BNS Name"
+            @blur="validateRecipient"
+          />
+          <button class="input-action-btn" title="Scan QR">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="3" height="3"/>
+              <rect x="18" y="14" width="3" height="3"/>
+              <rect x="14" y="18" width="3" height="3"/>
+              <rect x="18" y="18" width="3" height="3"/>
+            </svg>
+          </button>
+        </div>
         <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
       </div>
 
-      <!-- Amount -->
+      <!-- Amount Input -->
       <div class="form-group">
-        <label class="form-label">Amount (STX) *</label>
-        <div class="amount-input-wrapper">
+        <label class="form-label">Amount</label>
+        <div class="input-wrapper" :class="{ 'has-error': amountError }">
           <input
             v-model="amount"
             type="text"
-            class="form-input amount-input"
-            :class="{ 'has-error': amountError }"
+            class="form-input"
             placeholder="0.00"
             @blur="validateAmount"
           />
           <button class="max-btn" @click="handleMaxAmount">MAX</button>
         </div>
-        <p v-if="amountError" class="form-error">{{ amountError }}</p>
-        <p class="form-hint">Available: {{ formattedBalance }} STX</p>
+        <div class="input-hint-row">
+          <p v-if="amountError" class="form-error">{{ amountError }}</p>
+          <span v-else class="input-hint">Available: {{ formattedBalance }} STX</span>
+        </div>
       </div>
 
-      <!-- Memo -->
+      <!-- Memo Input -->
       <div class="form-group">
-        <label class="form-label">Memo (optional)</label>
-        <input
-          v-model="memo"
-          type="text"
-          class="form-input"
-          placeholder="Add a note..."
-          maxlength="34"
-        />
+        <div class="label-row">
+          <label class="form-label">Memo</label>
+          <span class="optional-label">Optional</span>
+        </div>
+        <div class="input-wrapper input-wrapper-small">
+          <input
+            v-model="memo"
+            type="text"
+            class="form-input"
+            placeholder="Enter a message to the recipient"
+            maxlength="34"
+          />
+        </div>
       </div>
 
-      <!-- Fee -->
-      <div class="fee-info">
-        <span>Network fee:</span>
-        <span>{{ formattedFee }} STX</span>
+      <!-- Fee Card -->
+      <div class="fee-card">
+        <div class="fee-left">
+          <div class="fee-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 22V8a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14"/>
+              <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+              <path d="M15 6h4a2 2 0 0 1 2 2v6a3 3 0 0 1-3 3h-1"/>
+              <path d="M15 22v-4"/>
+              <circle cx="6" cy="18" r="2"/>
+              <circle cx="18" cy="18" r="2"/>
+            </svg>
+          </div>
+          <span class="fee-label">Network Fee</span>
+        </div>
+        <div class="fee-right">
+          <span class="fee-value">{{ formattedFee }} STX</span>
+          <span class="fee-type">Standard</span>
+        </div>
       </div>
 
-      <!-- Submit -->
-      <button
-        class="submit-btn"
-        :disabled="!canSubmit"
-        @click="handleContinue"
-      >
-        Continue
-      </button>
-    </div>
+      <!-- Submit Button (sticky) -->
+      <div class="sticky-footer">
+        <button
+          class="continue-btn"
+          :disabled="!canSubmit"
+          @click="handleContinue"
+        >
+          <span>Continue</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </main>
 
     <!-- Step: Confirm -->
-    <div v-else-if="currentStep === 'confirm'" class="send-content confirm-content">
+    <main v-else-if="currentStep === 'confirm'" class="content content-center">
       <p class="confirm-label">You are sending:</p>
-      <p class="confirm-amount">{{ formattedAmount }} STX</p>
+      <p class="confirm-amount">{{ formattedAmount }} <span>STX</span></p>
 
-      <div class="confirm-details">
+      <div class="confirm-card">
         <div class="confirm-row">
           <span class="confirm-key">To:</span>
           <span class="confirm-value">{{ truncatedRecipient }}</span>
@@ -376,7 +418,7 @@ function truncateAddress(address: string): string {
           <span class="confirm-value">{{ formattedFee }} STX</span>
         </div>
         <hr class="confirm-divider" />
-        <div class="confirm-row total">
+        <div class="confirm-row confirm-row-total">
           <span class="confirm-key">Total:</span>
           <span class="confirm-value">{{ formattedTotal }} STX</span>
         </div>
@@ -390,20 +432,24 @@ function truncateAddress(address: string): string {
           @complete="handlePinComplete"
         />
       </div>
-    </div>
+    </main>
 
     <!-- Step: Sending -->
-    <div v-else-if="currentStep === 'sending'" class="send-content center-content">
+    <main v-else-if="currentStep === 'sending'" class="content content-center">
       <div class="spinner"></div>
-      <p class="sending-text">Broadcasting transaction...</p>
-    </div>
+      <p class="status-text">Broadcasting transaction...</p>
+    </main>
 
     <!-- Step: Success -->
-    <div v-else-if="currentStep === 'success'" class="send-content center-content">
-      <div class="success-icon">&#x2713;</div>
-      <p class="success-title">Transaction Sent</p>
+    <main v-else-if="currentStep === 'success'" class="content content-center">
+      <div class="result-icon result-icon-success">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <p class="result-title">Transaction Sent</p>
 
-      <div class="result-details">
+      <div class="result-card">
         <div class="result-row">
           <span class="result-key">Amount:</span>
           <span class="result-value">{{ formattedAmount }} STX</span>
@@ -422,26 +468,27 @@ function truncateAddress(address: string): string {
         </div>
       </div>
 
-      <button
-        v-if="explorerUrl"
-        class="explorer-btn"
-        @click="openExplorer"
-      >
+      <button v-if="explorerUrl" class="secondary-btn" @click="openExplorer">
         View in Explorer
       </button>
 
-      <button class="done-btn" @click="handleDone">Done</button>
-    </div>
+      <button class="primary-btn" @click="handleDone">Done</button>
+    </main>
 
     <!-- Step: Error -->
-    <div v-else-if="currentStep === 'error'" class="send-content center-content">
-      <div class="error-icon">&#x2717;</div>
-      <p class="error-title">Transaction Failed</p>
+    <main v-else-if="currentStep === 'error'" class="content content-center">
+      <div class="result-icon result-icon-error">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </div>
+      <p class="result-title">Transaction Failed</p>
       <p class="error-message">{{ errorMessage }}</p>
 
-      <button class="retry-btn" @click="handleTryAgain">Try Again</button>
-      <button class="cancel-btn" @click="handleDone">Cancel</button>
-    </div>
+      <button class="primary-btn" @click="handleTryAgain">Try Again</button>
+      <button class="secondary-btn" @click="handleDone">Cancel</button>
+    </main>
   </div>
 </template>
 
@@ -449,284 +496,466 @@ function truncateAddress(address: string): string {
 .send-view {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: var(--space-lg);
-  box-sizing: border-box;
+  min-height: 100%;
+  background: var(--color-bg-primary);
 }
 
 /* Header */
-.send-header {
+.header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-xl);
+  padding: var(--space-xl) var(--space-lg) var(--space-md);
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .back-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 1.25rem;
-  cursor: pointer;
-  padding: var(--space-sm);
-  width: 40px;
-  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .back-btn:hover {
-  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-accent-primary);
 }
 
-.send-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
+.back-btn:active {
+  transform: scale(0.95);
 }
 
-.header-spacer {
+.back-spacer {
   width: 40px;
 }
 
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
 /* Content */
-.send-content {
+.content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
+  padding: 0 var(--space-lg);
+  padding-bottom: 140px;
   overflow-y: auto;
 }
 
-.center-content {
+.content-center {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  padding-bottom: var(--space-xl);
 }
 
-/* From info card */
-.from-info {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
+/* From Card */
+.from-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-sm) var(--space-md) var(--space-sm) var(--space-sm);
+  margin-top: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.from-card-glow {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 96px;
+  height: 96px;
+  background: rgba(232, 248, 89, 0.2);
+  border-radius: 50%;
+  filter: blur(32px);
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+
+.from-card:hover .from-card-glow {
+  background: rgba(232, 248, 89, 0.3);
+}
+
+.from-card-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.from-card-left {
   display: flex;
   align-items: center;
   gap: var(--space-md);
 }
 
-.from-info::before {
-  content: '';
-  width: 40px;
-  height: 40px;
-  background: var(--color-accent-primary);
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
+.from-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #353823, #1a1c0d);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--color-accent-primary);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.from-details {
-  flex: 1;
+.from-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
-.from-label {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-}
-
-.from-account {
+.from-name {
+  font-size: 16px;
+  font-weight: 600;
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
 }
 
 .from-address {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  font-family: var(--font-mono);
+  font-size: 12px;
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.03em;
 }
 
 .from-balance {
-  color: var(--color-accent-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  margin-left: auto;
+  text-align: right;
 }
 
-/* Form */
+.balance-value {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-accent-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.balance-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Form Group */
 .form-group {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
 
 .form-label {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: var(--space-sm);
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 var(--space-sm);
+}
+
+.optional-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* Input Wrapper - Neumorphic */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #16180c;
+  border-radius: 16px;
+  border: none;
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.input-wrapper:focus-within {
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.05),
+    0 0 0 1px rgba(232, 248, 89, 0.5);
+}
+
+.input-wrapper.has-error {
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.05),
+    0 0 0 1px rgba(239, 68, 68, 0.5);
+}
+
+.input-wrapper-small .form-input {
+  height: 56px;
 }
 
 .form-input {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-base);
-  height: auto;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--color-accent-primary);
-}
-
-.form-input.has-error {
-  border-color: var(--color-error);
-}
-
-.form-error {
-  color: var(--color-error);
-  font-size: var(--font-size-xs);
-  margin: 0;
-}
-
-.form-hint {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  margin: 0;
-  text-align: right;
-}
-
-/* Amount input */
-.amount-input-wrapper {
-  display: flex;
-  align-items: center;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding-right: var(--space-md);
-  transition: border-color var(--transition-base);
-}
-
-.amount-input-wrapper:focus-within {
-  border-color: var(--color-accent-primary);
-}
-
-.amount-input {
   flex: 1;
+  height: 64px;
   background: transparent;
   border: none;
-  padding: var(--space-lg);
-  font-size: var(--font-size-base);
-}
-
-.amount-input:focus {
+  padding: 0 var(--space-lg);
+  color: var(--color-text-primary);
+  font-size: 16px;
   outline: none;
-  border: none;
 }
 
-.amount-suffix {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  padding: 0 var(--space-sm);
-  border-right: 1px solid var(--color-border);
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.input-mono {
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.input-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: var(--space-sm);
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.input-action-btn:hover {
+  color: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .max-btn {
-  background: transparent;
-  border: none;
+  margin-right: var(--space-md);
   padding: var(--space-sm) var(--space-md);
-  color: var(--color-accent-primary);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
+  background: var(--color-accent-primary);
+  border: none;
+  border-radius: 12px;
+  color: #0a0a0a;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  width: auto;
+  transition: all 0.15s ease;
+  box-shadow: 0 0 10px rgba(232, 248, 89, 0.2);
 }
 
 .max-btn:hover {
-  color: var(--color-accent-primary-hover);
+  filter: brightness(1.1);
 }
 
-/* Fee */
-.fee-info {
+.max-btn:active {
+  transform: scale(0.95);
+}
+
+.input-hint-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--color-bg-card);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-lg);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  justify-content: flex-end;
+  padding: 0 var(--space-sm);
+  min-height: 20px;
 }
 
-/* Submit */
-.submit-btn {
+.input-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.02em;
+}
+
+.form-error {
+  font-size: 12px;
+  color: var(--color-error);
+  margin: 0;
+}
+
+/* Fee Card */
+.fee-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  margin-top: var(--space-md);
+  cursor: help;
+  transition: background 0.15s ease;
+}
+
+.fee-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.fee-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.fee-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.15s ease;
+}
+
+.fee-card:hover .fee-icon {
+  color: var(--color-accent-primary);
+}
+
+.fee-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.fee-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.fee-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-family: monospace;
+}
+
+.fee-type {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.03em;
+}
+
+/* Sticky Footer */
+.sticky-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-lg);
+  padding-top: 40px;
+  background: linear-gradient(to top, var(--color-bg-primary) 60%, transparent);
+  z-index: 10;
+}
+
+.continue-btn {
+  width: 100%;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
   background: var(--color-accent-primary);
   border: none;
-  border-radius: var(--radius-pill);
-  padding: var(--space-lg);
-  color: var(--color-bg-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
+  border-radius: 9999px;
+  color: #0a0a0a;
+  font-size: 18px;
+  font-weight: 700;
   cursor: pointer;
-  margin-top: auto;
-  transition: all var(--transition-base);
+  box-shadow: 0 0 20px rgba(232, 248, 89, 0.25);
+  transition: all 0.2s ease;
 }
 
-.submit-btn:disabled {
+.continue-btn:hover:not(:disabled) {
+  box-shadow: 0 0 35px rgba(232, 248, 89, 0.4);
+}
+
+.continue-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.continue-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.submit-btn:hover:not(:disabled) {
-  background: var(--color-accent-primary-hover);
-  transform: translateY(-1px);
+.continue-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.continue-btn:hover:not(:disabled) svg {
+  transform: translateX(4px);
 }
 
 /* Confirm */
-.confirm-content {
-  align-items: center;
-}
-
 .confirm-label {
-  color: var(--color-text-secondary);
-  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 var(--space-sm);
 }
 
 .confirm-amount {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: var(--space-sm) 0 var(--space-xl);
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--color-accent-primary);
+  margin: 0 0 var(--space-xl);
 }
 
-.confirm-details {
+.confirm-amount span {
+  color: var(--color-text-primary);
+}
+
+.confirm-card {
   width: 100%;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
   padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
 .confirm-row {
   display: flex;
   justify-content: space-between;
-  padding: var(--space-sm) 0;
+  padding: var(--space-xs) 0;
 }
 
-.confirm-row.total {
-  font-weight: var(--font-weight-semibold);
+.confirm-row-total {
+  font-weight: 600;
 }
 
 .confirm-key {
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .confirm-value {
@@ -738,61 +967,70 @@ function truncateAddress(address: string): string {
 
 .confirm-divider {
   border: none;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin: var(--space-sm) 0;
 }
 
 .pin-section {
-  margin-top: var(--space-xl);
   width: 100%;
+  margin-top: var(--space-md);
 }
 
-/* Sending */
+/* Spinner */
 .spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid var(--color-bg-card);
+  border: 4px solid rgba(255, 255, 255, 0.1);
   border-top-color: var(--color-accent-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-.sending-text {
-  color: var(--color-text-muted);
+.status-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
   margin-top: var(--space-lg);
 }
 
-/* Success */
-.success-icon {
-  width: 72px;
-  height: 72px;
-  background: var(--color-success);
+/* Result */
+.result-icon {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
-  color: var(--color-bg-primary);
+  margin-bottom: var(--space-lg);
 }
 
-.success-title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
+.result-icon-success {
+  background: var(--color-success);
+  color: #0a0a0a;
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+}
+
+.result-icon-error {
+  background: var(--color-error);
   color: var(--color-text-primary);
-  margin: var(--space-lg) 0;
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
 }
 
-.result-details {
+.result-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-lg);
+}
+
+.result-card {
   width: 100%;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
   padding: var(--space-lg);
   margin-bottom: var(--space-lg);
 }
@@ -804,7 +1042,7 @@ function truncateAddress(address: string): string {
 }
 
 .result-key {
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .result-value {
@@ -817,9 +1055,9 @@ function truncateAddress(address: string): string {
 }
 
 .txid-label {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  margin: 0 0 var(--space-sm);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 var(--space-xs);
 }
 
 .txid-row {
@@ -830,117 +1068,69 @@ function truncateAddress(address: string): string {
 }
 
 .txid-value {
+  font-size: 13px;
+  font-family: monospace;
   color: var(--color-accent-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
 }
 
 .copy-btn {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
   padding: var(--space-xs) var(--space-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
   color: var(--color-text-primary);
-  font-size: var(--font-size-xs);
+  font-size: 12px;
   cursor: pointer;
-  width: auto;
+  transition: all 0.15s ease;
 }
 
 .copy-btn:hover {
-  border-color: var(--color-border-hover);
-}
-
-.explorer-btn {
-  width: 100%;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  padding: var(--space-md);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-base);
-  cursor: pointer;
-  margin-bottom: var(--space-sm);
-}
-
-.explorer-btn:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card);
-}
-
-.done-btn {
-  width: 100%;
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: var(--radius-pill);
-  padding: var(--space-lg);
-  color: var(--color-bg-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-
-.done-btn:hover {
-  background: var(--color-accent-primary-hover);
-}
-
-/* Error */
-.error-icon {
-  width: 72px;
-  height: 72px;
-  background: var(--color-error);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: var(--color-text-primary);
-}
-
-.error-title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: var(--space-lg) 0 var(--space-sm);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .error-message {
+  font-size: 14px;
   color: var(--color-error);
-  font-size: var(--font-size-sm);
   margin: 0 0 var(--space-xl);
   max-width: 100%;
   word-break: break-word;
 }
 
-.retry-btn {
+/* Buttons */
+.primary-btn {
   width: 100%;
+  height: 56px;
   background: var(--color-accent-primary);
   border: none;
-  border-radius: var(--radius-pill);
-  padding: var(--space-lg);
-  color: var(--color-bg-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
+  border-radius: 9999px;
+  color: #0a0a0a;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s ease;
   margin-bottom: var(--space-sm);
 }
 
-.retry-btn:hover {
-  background: var(--color-accent-primary-hover);
+.primary-btn:hover {
+  filter: brightness(1.1);
 }
 
-.cancel-btn {
+.secondary-btn {
   width: 100%;
+  height: 56px;
   background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  padding: var(--space-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
   color: var(--color-text-primary);
-  font-size: var(--font-size-base);
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: var(--space-sm);
 }
 
-.cancel-btn:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card);
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 </style>
