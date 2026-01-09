@@ -58,28 +58,28 @@ function handleBack() {
           >
             <path
               d="M16 3L20 7L16 11"
-              stroke="currentColor"
+              stroke="#FFFFFF"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
             />
             <path
               d="M4 7H20"
-              stroke="currentColor"
+              stroke="#FFFFFF"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
             />
             <path
               d="M8 21L4 17L8 13"
-              stroke="currentColor"
+              stroke="#FFFFFF"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
             />
             <path
               d="M20 17H4"
-              stroke="currentColor"
+              stroke="#FFFFFF"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"

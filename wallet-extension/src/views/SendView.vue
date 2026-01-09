@@ -261,7 +261,7 @@ function truncateAddress(address: string): string {
         class="back-btn"
         @click="handleBack"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
       </button>
@@ -284,7 +284,7 @@ function truncateAddress(address: string): string {
         <div class="from-card-content">
           <div class="from-card-left">
             <div class="from-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5">
                 <rect x="2" y="5" width="20" height="15" rx="2"/>
                 <path d="M2 9h20"/>
               </svg>
@@ -313,7 +313,7 @@ function truncateAddress(address: string): string {
             @blur="validateRecipient"
           />
           <button class="input-action-btn" title="Scan QR">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
               <rect x="3" y="3" width="7" height="7" rx="1"/>
               <rect x="14" y="3" width="7" height="7" rx="1"/>
               <rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -367,7 +367,7 @@ function truncateAddress(address: string): string {
       <div class="fee-card">
         <div class="fee-left">
           <div class="fee-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
               <path d="M3 22V8a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14"/>
               <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
               <path d="M15 6h4a2 2 0 0 1 2 2v6a3 3 0 0 1-3 3h-1"/>
@@ -392,7 +392,7 @@ function truncateAddress(address: string): string {
           @click="handleContinue"
         >
           <span>Continue</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </button>
@@ -443,7 +443,7 @@ function truncateAddress(address: string): string {
     <!-- Step: Success -->
     <main v-else-if="currentStep === 'success'" class="content content-center">
       <div class="result-icon result-icon-success">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       </div>
@@ -478,7 +478,7 @@ function truncateAddress(address: string): string {
     <!-- Step: Error -->
     <main v-else-if="currentStep === 'error'" class="content content-center">
       <div class="result-icon result-icon-error">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>

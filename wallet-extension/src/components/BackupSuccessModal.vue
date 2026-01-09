@@ -74,7 +74,7 @@ function handleClose() {
             >
               <path
                 d="M9 12L11 14L15 10"
-                stroke="currentColor"
+                stroke="#FFFFFF"
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -83,7 +83,7 @@ function handleClose() {
                 cx="12"
                 cy="12"
                 r="9"
-                stroke="currentColor"
+                stroke="#FFFFFF"
                 stroke-width="2"
               />
             </svg>
@@ -106,7 +106,7 @@ function handleClose() {
             >
               <path
                 d="M18 6L6 18M6 6L18 18"
-                stroke="currentColor"
+                stroke="#FFFFFF"
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"

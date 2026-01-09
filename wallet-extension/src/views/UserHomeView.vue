@@ -383,7 +383,7 @@ const closeReceiveModal = () => {
             <span class="account-pill-label">{{ currentAccountName }}</span>
             <span class="account-pill-address">{{ truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}</span>
           </div>
-          <svg class="account-pill-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="account-pill-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
             <polyline points="6 9 12 15 18 9"/>
           </svg>
 
@@ -421,7 +421,7 @@ const closeReceiveModal = () => {
               'network-devnet': selectedNetwork === 'devnet'
             }"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
               <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
               <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
               <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
@@ -450,11 +450,11 @@ const closeReceiveModal = () => {
         <div class="balance-label">
           <span>Total Balance</span>
           <button class="visibility-btn" @click="toggleBalanceVisibility" :title="showBalance ? 'Hide balance' : 'Show balance'">
-            <svg v-if="showBalance" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg v-if="showBalance" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
-            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
               <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
               <line x1="1" y1="1" x2="23" y2="23"/>
             </svg>
@@ -474,14 +474,14 @@ const closeReceiveModal = () => {
       <!-- Action Buttons -->
       <section class="actions">
         <button class="action-btn action-btn-primary" @click="handleSend">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
             <line x1="12" y1="19" x2="12" y2="5"/>
             <polyline points="5 12 12 5 19 12"/>
           </svg>
           <span>Send</span>
         </button>
         <button class="action-btn action-btn-secondary" @click="openReceiveModal">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <polyline points="19 12 12 19 5 12"/>
           </svg>
@@ -499,7 +499,7 @@ const closeReceiveModal = () => {
             :disabled="isLoadingBalance"
             title="Refresh"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
               <path d="M23 4v6h-6M1 20v-6h6"/>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
@@ -639,14 +639,14 @@ const closeReceiveModal = () => {
             :title="'View on Explorer: ' + tx.txId"
           >
             <div class="tx-icon" :class="getStatusClass(tx.status)">
-              <svg v-if="tx.type === 'token_transfer'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg v-if="tx.type === 'token_transfer'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
                 <path v-if="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress" d="M7 17L17 7M17 7H7M17 7V17"/>
                 <path v-else d="M17 7L7 17M7 17H17M7 17V7"/>
               </svg>
-              <svg v-else-if="tx.type === 'contract_call'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg v-else-if="tx.type === 'contract_call'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
               </svg>
-              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>

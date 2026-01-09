@@ -134,7 +134,7 @@ function setBtcType(type: BtcAddressType) {
           <div class="modal-header">
             <div class="header-title">
               <div class="asset-icon" :class="{ 'asset-icon--btc': activeTab === 'btc' }">
-                <svg v-if="activeTab === 'stx'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <svg v-if="activeTab === 'stx'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
                   <path d="M4 4l16 16M4 20L20 4M4 12h16"/>
                 </svg>
                 <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -144,7 +144,7 @@ function setBtcType(type: BtcAddressType) {
               <h2>Receive {{ activeTab === 'stx' ? 'STX' : 'Bitcoin' }}</h2>
             </div>
             <button class="close-btn" @click="handleClose">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
@@ -196,7 +196,7 @@ function setBtcType(type: BtcAddressType) {
                   <canvas ref="qrCanvas"></canvas>
                   <!-- Center Icon -->
                   <div class="qr-center-icon" :class="{ 'qr-center-icon--btc': activeTab === 'btc' }">
-                    <svg v-if="activeTab === 'stx'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <svg v-if="activeTab === 'stx'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3">
                       <path d="M4 4l16 16M4 20L20 4M4 12h16"/>
                     </svg>
                     <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -219,14 +219,14 @@ function setBtcType(type: BtcAddressType) {
             <!-- Action Buttons -->
             <div class="action-buttons">
               <button class="btn-primary" :class="{ 'btn-primary--btc': activeTab === 'btc', copied }" @click="copyAddress">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                 </svg>
                 {{ copied ? 'Copied!' : 'Copy Address' }}
               </button>
               <button class="btn-secondary" @click="shareAddress">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
                   <polyline points="16 6 12 2 8 6"/>
                   <line x1="12" y1="2" x2="12" y2="15"/>
