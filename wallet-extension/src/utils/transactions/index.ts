@@ -91,9 +91,9 @@ interface ApiTransaction {
 }
 
 /**
- * API response for transactions list
+ * API response for transactions list (internal)
  */
-interface TransactionsResponse {
+interface ApiTransactionsResponse {
   limit: number;
   offset: number;
   total: number;
@@ -101,7 +101,29 @@ interface TransactionsResponse {
 }
 
 /**
+ * Paginated transaction list result
+ */
+export interface TransactionList {
+  transactions: Transaction[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+/**
+ * Options for fetching transactions
+ */
+export interface FetchTransactionsOptions {
+  limit?: number;
+  offset?: number;
+  network?: NetworkName;
+}
+
+/**
  * Transform API transaction to our simplified format
+ * @param tx - Raw API transaction
+ * @returns Simplified transaction for display
  */
 function transformTransaction(tx: ApiTransaction): Transaction {
   const base: Transaction = {
@@ -134,6 +156,11 @@ function transformTransaction(tx: ApiTransaction): Transaction {
 
 /**
  * Fetch transaction history for an address
+ * @param address - Stacks address to fetch transactions for
+ * @param limit - Maximum number of transactions to return (default 10)
+ * @param offset - Number of transactions to skip (default 0)
+ * @param network - Network to fetch from (default: selected network)
+ * @returns Array of transactions or null on error
  */
 export async function fetchTransactions(
   address: string,
@@ -141,6 +168,21 @@ export async function fetchTransactions(
   offset: number = 0,
   network?: NetworkName
 ): Promise<Transaction[] | null> {
+  const result = await fetchTransactionList(address, { limit, offset, network });
+  return result ? result.transactions : null;
+}
+
+/**
+ * Fetch paginated transaction list for an address
+ * @param address - Stacks address to fetch transactions for
+ * @param options - Fetch options (limit, offset, network)
+ * @returns TransactionList with pagination info or null on error
+ */
+export async function fetchTransactionList(
+  address: string,
+  options: FetchTransactionsOptions = {}
+): Promise<TransactionList | null> {
+  const { limit = 10, offset = 0, network } = options;
   const apiUrl = getApiUrl(network);
   const url = `${apiUrl}/extended/v1/address/${address}/transactions?limit=${limit}&offset=${offset}`;
 
@@ -152,15 +194,22 @@ export async function fetchTransactions(
       return null;
     }
 
-    const data = (await response.json()) as TransactionsResponse;
+    const data = (await response.json()) as ApiTransactionsResponse;
     const transactions = data.results.map(transformTransaction);
 
     secureLog("Transactions fetched", {
       address: address.slice(0, 8) + "...",
       count: transactions.length,
+      total: data.total,
     });
 
-    return transactions;
+    return {
+      transactions,
+      total: data.total,
+      limit: data.limit,
+      offset: data.offset,
+      hasMore: data.offset + data.results.length < data.total,
+    };
   } catch (error) {
     secureLog("Transactions fetch error", { error: String(error) });
     return null;
