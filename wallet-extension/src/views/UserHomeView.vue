@@ -366,18 +366,17 @@ const closeReceiveModal = () => {
 </script>
 
 <template>
-  <section class="h-full flex flex-col justify-start gap-6 pb-20">
-    <div v-if="isLoading" class="flex items-center justify-center h-full text-text-muted">Loading accounts...</div>
+  <section class="user-home-view">
+    <!-- Ambient Glow -->
+    <div class="ambient-glow"></div>
+
+    <div v-if="isLoading" class="loading-state">Loading accounts...</div>
 
     <template v-else>
       <!-- Header -->
-      <div class="flex items-center justify-between gap-3 py-3 mb-4">
+      <header class="header">
         <!-- Menu Button -->
-        <button
-          class="w-10 h-10 rounded-lg bg-bg-card border border-border-default cursor-pointer flex items-center justify-center transition-all duration-150 shrink-0 text-text-secondary hover:bg-bg-card-hover hover:border-border-hover hover:text-text-primary"
-          @click="handleOpenUserMenu"
-          title="Menu"
-        >
+        <button class="header-btn" @click="handleOpenUserMenu" title="Menu">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="3" y1="6" x2="21" y2="6"/>
             <line x1="3" y1="12" x2="21" y2="12"/>
@@ -385,32 +384,32 @@ const closeReceiveModal = () => {
           </svg>
         </button>
 
-        <!-- Account Info -->
-        <div class="flex-1 cursor-pointer relative py-1 px-2 rounded-lg transition-colors hover:bg-bg-card" @click="toggleAccountDropdown">
-          <div class="flex items-center gap-1">
-            <span class="text-base font-semibold text-text-primary">{{ currentAccountName }}</span>
-            <span class="text-[8px] text-text-muted transition-transform">▼</span>
+        <!-- Account Selector Pill -->
+        <div class="account-pill" @click="toggleAccountDropdown">
+          <div class="account-pill-dot"></div>
+          <div class="account-pill-info">
+            <span class="account-pill-label">{{ currentAccountName }}</span>
+            <span class="account-pill-address">{{ truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}</span>
           </div>
-          <span class="text-xs font-mono text-text-muted">{{ truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}</span>
+          <svg class="account-pill-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
 
           <!-- Account Dropdown -->
-          <div
-            v-if="showAccountDropdown"
-            class="absolute top-full left-0 right-0 mt-1 min-w-[220px] bg-bg-elevated border border-border-default rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-[100] overflow-hidden"
-          >
+          <div v-if="showAccountDropdown" class="account-dropdown">
             <div
               v-for="(account, index) in userAccounts"
               :key="index"
-              class="p-3 cursor-pointer transition-colors border-b border-border-default last:border-b-0 hover:bg-bg-card-hover"
-              :class="{ 'bg-primary-muted': index === accountIndexToDisplay }"
+              class="account-dropdown-item"
+              :class="{ 'active': index === accountIndexToDisplay }"
               @click.stop="selectAccount(index)"
             >
-              <span class="block text-sm font-medium text-text-primary">{{ getDisplayName(index) }}</span>
-              <span class="block text-xs font-mono text-text-muted mt-0.5">{{ truncateAddress(account.stxAddress) }}</span>
+              <span class="account-dropdown-name">{{ getDisplayName(index) }}</span>
+              <span class="account-dropdown-address">{{ truncateAddress(account.stxAddress) }}</span>
             </div>
-            <div class="p-2 bg-bg-card border-t border-border-default">
+            <div class="account-dropdown-footer">
               <button
-                class="w-full p-2 bg-transparent border border-dashed border-border-default rounded-sm text-text-secondary text-sm cursor-pointer transition-all hover:bg-bg-card-hover hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                class="add-account-btn"
                 @click.stop="handleAddAccount"
                 :disabled="accountCount >= 100"
               >
@@ -420,64 +419,45 @@ const closeReceiveModal = () => {
           </div>
         </div>
 
-        <!-- Header Right -->
-        <div class="flex items-center gap-2">
-          <!-- Network Selector -->
-          <div class="relative cursor-pointer" @click="toggleNetworkDropdown">
-            <span
-              class="py-2 px-4 text-xs font-bold tracking-wider rounded-lg uppercase transition-all"
-              :class="{
-                'bg-primary/10 text-primary border-[1.5px] border-primary/40 hover:bg-primary/15 hover:border-primary/60': selectedNetwork === 'testnet',
-                'bg-success/10 text-success border-[1.5px] border-success/40 hover:bg-success/15 hover:border-success/60': selectedNetwork === 'mainnet',
-                'bg-warning/10 text-warning border-[1.5px] border-warning/40 hover:bg-warning/15 hover:border-warning/60': selectedNetwork === 'devnet'
-              }"
-            >
-              {{ NETWORKS[selectedNetwork]?.name.toUpperCase() }}
-            </span>
-
-            <!-- Network Dropdown -->
-            <div
-              v-if="showNetworkDropdown"
-              class="absolute top-full right-0 mt-1 min-w-[140px] bg-bg-elevated border border-border-default rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-[100] overflow-hidden"
-            >
-              <div
-                v-for="(network, key) in NETWORKS"
-                :key="key"
-                class="p-3 cursor-pointer flex items-center justify-between transition-colors border-b border-border-default last:border-b-0 hover:bg-bg-card-hover"
-                :class="{ 'bg-primary-muted': key === selectedNetwork }"
-                @click.stop="selectNetwork(key as NetworkName)"
-              >
-                <span class="text-sm font-medium text-text-primary capitalize">{{ network.name }}</span>
-                <span v-if="key === selectedNetwork" class="text-primary text-sm">✓</span>
-              </div>
-            </div>
+        <!-- Network Badge -->
+        <div class="network-badge-wrapper" @click="toggleNetworkDropdown">
+          <div
+            class="network-badge"
+            :class="{
+              'network-testnet': selectedNetwork === 'testnet',
+              'network-mainnet': selectedNetwork === 'mainnet',
+              'network-devnet': selectedNetwork === 'devnet'
+            }"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+              <line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
           </div>
 
-          <!-- Expand Button -->
-          <button
-            class="w-10 h-10 rounded-lg bg-bg-card border border-border-default cursor-pointer flex items-center justify-center text-text-secondary transition-all hover:bg-bg-card-hover hover:border-border-hover hover:text-text-primary"
-            @click="openFullPage"
-            title="Abrir en pestaña"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="21" y1="3" x2="14" y2="10"/>
-              <polyline points="9 21 3 21 3 15"/>
-              <line x1="3" y1="21" x2="10" y2="14"/>
-            </svg>
-          </button>
+          <!-- Network Dropdown -->
+          <div v-if="showNetworkDropdown" class="network-dropdown">
+            <div
+              v-for="(network, key) in NETWORKS"
+              :key="key"
+              class="network-dropdown-item"
+              :class="{ 'active': key === selectedNetwork }"
+              @click.stop="selectNetwork(key as NetworkName)"
+            >
+              <span>{{ network.name }}</span>
+              <span v-if="key === selectedNetwork" class="checkmark">✓</span>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <!-- Balance Section -->
-      <div class="py-4 text-center mb-4">
-        <div class="flex items-center justify-center gap-2 mb-3">
-          <span class="text-xs font-medium text-text-muted tracking-widest uppercase">TOTAL BALANCE</span>
-          <button
-            class="bg-transparent border-none p-1 cursor-pointer text-text-muted flex items-center justify-center rounded-sm transition-all w-auto hover:text-text-secondary hover:bg-bg-card-hover"
-            @click="toggleBalanceVisibility"
-            :title="showBalance ? 'Hide balance' : 'Show balance'"
-          >
+      <!-- Hero Balance Section -->
+      <section class="balance-hero">
+        <div class="balance-label">
+          <span>Total Balance</span>
+          <button class="visibility-btn" @click="toggleBalanceVisibility" :title="showBalance ? 'Hide balance' : 'Show balance'">
             <svg v-if="showBalance" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
@@ -489,45 +469,40 @@ const closeReceiveModal = () => {
           </button>
         </div>
 
-        <div class="flex items-baseline justify-center gap-2 mb-1 min-h-14" :class="{ 'opacity-50': isLoadingBalance }">
-          <span class="text-5xl font-bold font-mono text-text-primary leading-none tracking-wider">{{ showBalance ? (isLoadingBalance ? '...' : shortBalance) : '******' }}</span>
-          <span class="text-xl font-medium text-text-muted">STX</span>
-        </div>
+        <h1 class="balance-amount" :class="{ 'loading': isLoadingBalance }">
+          <span class="balance-value">{{ showBalance ? (isLoadingBalance ? '...' : shortBalance) : '******' }}</span>
+          <span class="balance-unit">STX</span>
+        </h1>
 
-        <div class="text-sm text-text-muted mb-6 min-h-5 tracking-wider">
-          {{ showBalance ? `≈ ${totalValueUsd || '$0.00'} USD` : '******' }}
+        <div class="balance-usd">
+          <span>{{ showBalance ? `${totalValueUsd || '$0.00'} USD` : '******' }}</span>
         </div>
+      </section>
 
-        <div class="flex gap-3 justify-center">
-          <button
-            class="flex-1 max-w-[160px] flex items-center justify-center gap-2 py-3 px-6 text-base font-semibold rounded-full cursor-pointer transition-all bg-primary border-none text-bg-primary hover:bg-primary-hover hover:-translate-y-0.5"
-            @click="handleSend"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="19" x2="12" y2="5"/>
-              <polyline points="5 12 12 5 19 12"/>
-            </svg>
-            Send
-          </button>
-          <button
-            class="flex-1 max-w-[160px] flex items-center justify-center gap-2 py-3 px-6 text-base font-semibold rounded-full cursor-pointer transition-all bg-transparent border border-border-default text-text-primary hover:bg-bg-card-hover hover:border-border-hover hover:-translate-y-0.5"
-            @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <polyline points="19 12 12 19 5 12"/>
-            </svg>
-            Receive
-          </button>
-        </div>
-      </div>
+      <!-- Action Buttons -->
+      <section class="actions">
+        <button class="action-btn action-btn-primary" @click="handleSend">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="19" x2="12" y2="5"/>
+            <polyline points="5 12 12 5 19 12"/>
+          </svg>
+          <span>Send</span>
+        </button>
+        <button class="action-btn action-btn-secondary" @click="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <polyline points="19 12 12 19 5 12"/>
+          </svg>
+          <span>Receive</span>
+        </button>
+      </section>
 
       <!-- Assets Section -->
-      <div class="mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-base font-semibold text-text-primary">Assets</span>
+      <section class="assets-section">
+        <div class="section-header">
+          <h2 class="section-title">Assets</h2>
           <button
-            class="w-8 h-8 p-0 bg-transparent border-none cursor-pointer text-text-muted flex items-center justify-center rounded-sm transition-all hover:text-text-secondary hover:bg-bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+            class="refresh-btn"
             @click="refreshBalance"
             :disabled="isLoadingBalance"
             title="Refresh"
@@ -539,204 +514,178 @@ const closeReceiveModal = () => {
           </button>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <!-- Stacks Card -->
+        <div class="assets-grid">
+          <!-- STX Card -->
           <div
-            class="flex items-center gap-3 p-4 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all relative overflow-hidden hover:bg-bg-card-hover hover:border-border-hover active:scale-[0.99]"
+            class="asset-card asset-card-stx"
             @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.stxAddress || '')"
           >
-            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-gradient-to-b from-[#5546ff] to-[#7c3aed]"></div>
-            <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ml-2 bg-gradient-to-br from-[#5546ff]/20 to-[#7c3aed]/20 text-[#7c3aed] border-2 border-[#7c3aed]/30">S</div>
-            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-              <span class="text-base font-semibold text-text-primary">Stacks</span>
-              <span class="text-xs text-text-muted">STX • {{ NETWORKS[selectedNetwork]?.name }}</span>
-            </div>
-            <div class="flex flex-col items-end gap-0.5 shrink-0">
-              <span class="font-mono text-base font-semibold text-text-primary">{{ shortBalance }}</span>
-              <span class="text-xs text-text-muted">{{ totalValueUsd || '$0.00' }}</span>
+            <div class="asset-card-glow asset-glow-purple"></div>
+            <div class="asset-card-content">
+              <div class="asset-card-header">
+                <div class="asset-icon asset-icon-purple">S</div>
+              </div>
+              <div class="asset-card-body">
+                <span class="asset-balance">{{ shortBalance }}</span>
+                <span class="asset-name">Stacks</span>
+              </div>
             </div>
           </div>
 
-          <!-- Bitcoin Card -->
+          <!-- BTC Card -->
           <div
-            class="flex items-center gap-3 p-4 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all relative overflow-hidden hover:bg-bg-card-hover hover:border-border-hover active:scale-[0.99]"
+            class="asset-card asset-card-btc"
             @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || '')"
           >
-            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-gradient-to-b from-[#f7931a] to-[#ffb84d]"></div>
-            <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ml-2 bg-gradient-to-br from-[#f7931a]/20 to-[#ffb84d]/20 text-[#f7931a] border-2 border-[#f7931a]/30">B</div>
-            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-              <span class="text-base font-semibold text-text-primary">Bitcoin</span>
-              <span class="text-xs text-text-muted">BTC • Native Segwit</span>
-            </div>
-            <div class="flex flex-col items-end gap-0.5 shrink-0">
-              <span class="font-mono text-base font-semibold text-text-primary">0.0000</span>
-              <span class="text-xs text-text-muted">$0.00</span>
+            <div class="asset-card-glow asset-glow-orange"></div>
+            <div class="asset-card-content">
+              <div class="asset-card-header">
+                <div class="asset-icon asset-icon-orange">B</div>
+              </div>
+              <div class="asset-card-body">
+                <span class="asset-balance">0.00</span>
+                <span class="asset-name">Bitcoin</span>
+              </div>
             </div>
           </div>
 
           <!-- Runes Card -->
           <div
-            class="flex items-center gap-3 p-4 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all relative overflow-hidden hover:bg-bg-card-hover hover:border-border-hover active:scale-[0.99]"
+            class="asset-card asset-card-runes"
             @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')"
           >
-            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-gradient-to-b from-[#ec4899] to-[#f472b6]"></div>
-            <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ml-2 bg-gradient-to-br from-[#ec4899]/20 to-[#f472b6]/20 text-[#ec4899] border-2 border-[#ec4899]/30">R</div>
-            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-              <span class="text-base font-semibold text-text-primary">Runes</span>
-              <span class="text-xs text-text-muted">Token • Etchings</span>
-            </div>
-            <div class="flex flex-col items-end gap-0.5 shrink-0">
-              <span class="font-mono text-base font-semibold text-text-primary">0</span>
-              <span class="text-xs text-text-muted">$0.00</span>
+            <div class="asset-card-glow asset-glow-pink"></div>
+            <div class="asset-card-content">
+              <div class="asset-card-header">
+                <div class="asset-icon asset-icon-pink">R</div>
+              </div>
+              <div class="asset-card-body">
+                <span class="asset-balance">0</span>
+                <span class="asset-name">Runes</span>
+              </div>
             </div>
           </div>
 
           <!-- Ordinals Card -->
           <div
-            class="flex items-center gap-3 p-4 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all relative overflow-hidden hover:bg-bg-card-hover hover:border-border-hover active:scale-[0.99]"
+            class="asset-card asset-card-ordinals"
             @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')"
           >
-            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg bg-gradient-to-b from-[#eab308] to-[#fbbf24]"></div>
-            <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ml-2 bg-gradient-to-br from-[#eab308]/20 to-[#fbbf24]/20 text-[#eab308] border-2 border-[#eab308]/30">O</div>
-            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-              <span class="text-base font-semibold text-text-primary">Ordinals</span>
-              <span class="text-xs text-text-muted">NFT • Inscriptions</span>
-            </div>
-            <div class="flex flex-col items-end gap-0.5 shrink-0">
-              <span class="text-xs font-medium text-text-secondary bg-bg-elevated py-1 px-2 rounded-sm">Collectibles</span>
+            <div class="asset-card-glow asset-glow-yellow"></div>
+            <div class="asset-card-content">
+              <div class="asset-card-header">
+                <div class="asset-icon asset-icon-yellow">O</div>
+              </div>
+              <div class="asset-card-body">
+                <span class="asset-balance">0</span>
+                <span class="asset-name">Inscriptions</span>
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- Manage Token List Button -->
-        <button class="w-full p-3 mt-3 bg-transparent border border-dashed border-border-default rounded-lg text-text-muted text-sm cursor-pointer transition-all flex items-center justify-center gap-2 hover:bg-bg-card hover:border-primary hover:text-primary">
-          <span class="text-lg font-light">+</span> Manage Token List
-        </button>
-      </div>
+      </section>
 
       <!-- SIP-010 Tokens Section -->
-      <div class="w-full flex flex-col items-center justify-start gap-4 mt-4">
-        <div class="flex justify-between items-center w-full mb-3">
-          <small class="text-text-muted text-xs uppercase tracking-wider">Tokens ({{ tokens.length }})</small>
-          <button
-            v-if="tokens.length > 0 || isLoadingTokens"
-            class="bg-transparent border-none text-primary text-xs cursor-pointer w-auto hover:text-primary-hover"
-            @click="showTokens = !showTokens"
-          >
+      <section v-if="tokens.length > 0 || isLoadingTokens" class="tokens-section">
+        <div class="section-header">
+          <h2 class="section-title">Tokens <span class="token-count">({{ tokens.length }})</span></h2>
+          <button class="toggle-btn" @click="showTokens = !showTokens">
             {{ showTokens ? 'Hide' : 'Show' }}
           </button>
         </div>
 
-        <div v-if="showTokens" class="w-full">
-          <div v-if="isLoadingTokens" class="text-center text-text-muted py-6 text-sm">
-            Loading tokens...
-          </div>
+        <div v-if="showTokens">
+          <div v-if="isLoadingTokens" class="empty-state">Loading tokens...</div>
 
-          <div v-else-if="tokens.length === 0" class="text-center text-text-muted py-4 text-sm">
-            No tokens found
-          </div>
+          <div v-else-if="tokens.length === 0" class="empty-state">No tokens found</div>
 
-          <div v-else class="flex flex-col gap-2">
+          <div v-else class="tokens-list">
             <div
               v-for="token in tokens"
               :key="token.contractId"
-              class="flex items-center gap-3 p-3 bg-bg-card border border-border-default rounded-lg transition-all hover:border-border-hover hover:bg-bg-card-hover"
+              class="token-item"
               :title="token.contractId"
             >
-              <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-primary-muted shrink-0">
+              <div class="token-icon">
                 <img
                   v-if="token.imageUri"
                   :src="token.imageUri"
                   :alt="token.symbol"
-                  class="w-full h-full object-cover"
                   @error="($event.target as HTMLImageElement).style.display = 'none'"
                 />
-                <span v-else class="text-sm font-semibold text-primary uppercase">{{ token.symbol.charAt(0) }}</span>
+                <span v-else>{{ token.symbol.charAt(0) }}</span>
               </div>
-              <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-                <span class="text-sm font-semibold text-text-primary">{{ token.symbol }}</span>
-                <span class="text-xs text-text-muted whitespace-nowrap overflow-hidden text-ellipsis">{{ token.name }}</span>
+              <div class="token-info">
+                <span class="token-symbol">{{ token.symbol }}</span>
+                <span class="token-name">{{ token.name }}</span>
               </div>
-              <span class="font-mono text-sm font-semibold text-success shrink-0">{{ token.formattedBalance }}</span>
+              <span class="token-balance">{{ token.formattedBalance }}</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Transaction History -->
-      <div class="w-full flex flex-col items-center justify-start gap-4 mt-4">
-        <div class="flex justify-between items-center w-full mb-3">
-          <small class="text-text-muted text-xs uppercase tracking-wider">Recent Activity</small>
-          <button
-            v-if="transactions.length > 5"
-            class="bg-transparent border-none text-primary text-xs cursor-pointer w-auto hover:text-primary-hover"
-            @click="showAllTx = !showAllTx"
-          >
-            {{ showAllTx ? 'Show Less' : 'Show All' }}
+      <section class="history-section">
+        <div class="section-header">
+          <h2 class="section-title">History</h2>
+          <button v-if="transactions.length > 5" class="see-all-btn" @click="showAllTx = !showAllTx">
+            {{ showAllTx ? 'Show Less' : 'See All' }}
           </button>
         </div>
 
-        <div v-if="isLoadingTx" class="text-center text-text-muted py-6 text-sm w-full">
-          Loading transactions...
-        </div>
+        <div v-if="isLoadingTx" class="empty-state">Loading transactions...</div>
 
-        <div v-else-if="transactions.length === 0" class="text-center text-text-muted py-4 text-sm w-full">
-          No transactions yet
-        </div>
+        <div v-else-if="transactions.length === 0" class="empty-state">No transactions yet</div>
 
-        <div v-else class="flex flex-col gap-2 max-h-[300px] overflow-y-auto w-full">
+        <div v-else class="tx-list">
           <div
             v-for="tx in (showAllTx ? transactions : transactions.slice(0, 5))"
             :key="tx.txId"
-            class="flex items-center gap-3 p-3 bg-bg-card border border-border-default rounded-lg cursor-pointer transition-all hover:border-border-hover hover:bg-bg-card-hover"
+            class="tx-item"
             @click="openExplorer(tx.txId)"
             :title="'View on Explorer: ' + tx.txId"
           >
-            <div class="w-9 h-9 flex items-center justify-center rounded-full text-base shrink-0" :class="getStatusClass(tx.status)">
-              <span v-if="tx.type === 'token_transfer'">
-                {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? '↑' : '↓' }}
-              </span>
-              <span v-else-if="tx.type === 'contract_call'">⚡</span>
-              <span v-else-if="tx.type === 'smart_contract'">📄</span>
-              <span v-else>•</span>
+            <div class="tx-icon" :class="getStatusClass(tx.status)">
+              <svg v-if="tx.type === 'token_transfer'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path v-if="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress" d="M7 17L17 7M17 7H7M17 7V17"/>
+                <path v-else d="M17 7L7 17M7 17H17M7 17V7"/>
+              </svg>
+              <svg v-else-if="tx.type === 'contract_call'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
             </div>
 
-            <div class="flex-1 min-w-0 overflow-hidden">
-              <div class="text-sm font-medium text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
+            <div class="tx-details">
+              <span class="tx-type">
                 {{ getTransactionTypeLabel(tx.type) }}
-                <span v-if="tx.functionName" class="text-primary font-normal text-xs">
-                  .{{ tx.functionName }}
-                </span>
-              </div>
-              <div class="flex gap-2 text-xs text-text-muted mt-0.5">
-                <span v-if="tx.type === 'token_transfer' && tx.recipient">
+                <span v-if="tx.functionName" class="tx-function">.{{ tx.functionName }}</span>
+              </span>
+              <span class="tx-meta">
+                <template v-if="tx.type === 'token_transfer' && tx.recipient">
                   {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress
                     ? 'To: ' + truncateTxAddress(tx.recipient, 4)
                     : 'From: ' + truncateTxAddress(tx.sender, 4) }}
-                </span>
-                <span v-else-if="tx.contractId">
+                </template>
+                <template v-else-if="tx.contractId">
                   {{ truncateTxAddress(tx.contractId.split('.')[0], 4) }}.{{ tx.contractId.split('.')[1] }}
-                </span>
-                <span class="text-text-muted">{{ formatRelativeTime(tx.timestamp) }}</span>
-              </div>
-            </div>
-
-            <div v-if="tx.amount" class="text-right shrink-0">
-              <span
-                class="font-mono text-sm font-semibold"
-                :class="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? 'text-error' : 'text-success'"
-              >
-                {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? '-' : '+' }}{{ formatAmount(tx.amount) }}
+                </template>
+                <span class="tx-time">{{ formatRelativeTime(tx.timestamp) }}</span>
               </span>
-              <small class="block text-xs text-text-muted">STX</small>
             </div>
 
-            <div class="w-5 text-center text-sm shrink-0" :class="getStatusTextClass(tx.status)">
-              {{ tx.status === 'success' ? '✓' : tx.status === 'pending' ? '⏳' : '✗' }}
+            <div v-if="tx.amount" class="tx-amount">
+              <span :class="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? 'amount-out' : 'amount-in'">
+                {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? '-' : '+' }}{{ formatAmount(tx.amount) }} STX
+              </span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </template>
 
     <!-- Receive Modal -->
@@ -751,3 +700,834 @@ const closeReceiveModal = () => {
     <BottomNav @open-receive="openReceiveModal(userAccounts[accountIndexToDisplay]?.stxAddress || '', 'STX')" />
   </section>
 </template>
+
+<style scoped>
+/* Base Layout */
+.user-home-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #0a0a0a;
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 100px;
+}
+
+/* Ambient Glow */
+.ambient-glow {
+  position: absolute;
+  top: -10%;
+  left: -20%;
+  width: 80%;
+  height: 40%;
+  background: var(--color-accent-primary);
+  opacity: 0.05;
+  filter: blur(100px);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted);
+}
+
+/* Header */
+.header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg);
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-sm);
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.header-btn:active {
+  transform: scale(0.95);
+}
+
+/* Account Pill */
+.account-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  box-shadow: inset 1px 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.account-pill:active {
+  transform: scale(0.95);
+}
+
+.account-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.account-pill-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.account-pill-label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.account-pill-address {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: monospace;
+}
+
+.account-pill-arrow {
+  color: var(--color-text-muted);
+}
+
+/* Account Dropdown */
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 240px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.account-dropdown-item {
+  padding: var(--space-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.account-dropdown-item:last-of-type {
+  border-bottom: none;
+}
+
+.account-dropdown-item:hover {
+  background: var(--color-bg-card-hover);
+}
+
+.account-dropdown-item.active {
+  background: rgba(232, 248, 89, 0.1);
+}
+
+.account-dropdown-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.account-dropdown-address {
+  display: block;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.account-dropdown-footer {
+  padding: var(--space-sm);
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-border);
+}
+
+.add-account-btn {
+  width: 100%;
+  padding: var(--space-sm);
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-account-btn:hover:not(:disabled) {
+  background: var(--color-bg-card-hover);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+.add-account-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Network Badge */
+.network-badge-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.network-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.network-badge.network-mainnet {
+  color: var(--color-accent-primary);
+}
+
+.network-badge.network-testnet {
+  color: var(--color-accent-primary);
+}
+
+.network-badge.network-devnet {
+  color: var(--color-warning);
+}
+
+/* Network Dropdown */
+.network-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 140px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.network-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-transform: capitalize;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.network-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.network-dropdown-item:hover {
+  background: var(--color-bg-card-hover);
+}
+
+.network-dropdown-item.active {
+  background: rgba(232, 248, 89, 0.1);
+}
+
+.checkmark {
+  color: var(--color-accent-primary);
+}
+
+/* Balance Hero */
+.balance-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-lg);
+}
+
+.balance-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  opacity: 0.6;
+  margin-bottom: var(--space-xs);
+}
+
+.balance-label span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.visibility-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.visibility-btn:hover {
+  color: var(--color-text-secondary);
+}
+
+.balance-amount {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-sm);
+  transition: opacity 0.2s ease;
+}
+
+.balance-amount.loading {
+  opacity: 0.5;
+}
+
+.balance-value {
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--color-accent-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.balance-unit {
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.balance-usd {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-md);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.balance-usd span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+/* Action Buttons */
+.actions {
+  display: flex;
+  gap: var(--space-md);
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.action-btn {
+  flex: 1;
+  height: 56px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.action-btn:active {
+  transform: scale(0.95);
+}
+
+.action-btn-primary {
+  background: var(--color-accent-primary);
+  color: #0a0a0a;
+  box-shadow: 0 0 20px -5px rgba(232, 248, 89, 0.3);
+}
+
+.action-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.action-btn-secondary {
+  background: #1a1a1a;
+  color: var(--color-text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Assets Section */
+.assets-section {
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-card);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Assets Grid */
+.assets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.asset-card {
+  position: relative;
+  overflow: hidden;
+  background: #1a1a1a;
+  padding: var(--space-md);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: inset 1px 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.asset-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.asset-card:active {
+  transform: scale(0.98);
+}
+
+.asset-card-glow {
+  position: absolute;
+  right: -16px;
+  top: -16px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  filter: blur(24px);
+  transition: all 0.3s ease;
+}
+
+.asset-card:hover .asset-card-glow {
+  opacity: 1.5;
+}
+
+.asset-glow-purple {
+  background: rgba(168, 85, 247, 0.15);
+}
+
+.asset-card-stx:hover {
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.asset-card-stx:hover .asset-glow-purple {
+  background: rgba(168, 85, 247, 0.25);
+}
+
+.asset-glow-orange {
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.asset-card-btc:hover {
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+.asset-card-btc:hover .asset-glow-orange {
+  background: rgba(249, 115, 22, 0.25);
+}
+
+.asset-glow-pink {
+  background: rgba(236, 72, 153, 0.15);
+}
+
+.asset-card-runes:hover {
+  border-color: rgba(236, 72, 153, 0.3);
+}
+
+.asset-card-runes:hover .asset-glow-pink {
+  background: rgba(236, 72, 153, 0.25);
+}
+
+.asset-glow-yellow {
+  background: rgba(234, 179, 8, 0.15);
+}
+
+.asset-card-ordinals:hover {
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+.asset-card-ordinals:hover .asset-glow-yellow {
+  background: rgba(234, 179, 8, 0.25);
+}
+
+.asset-card-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.asset-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.asset-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.asset-icon-purple {
+  color: #a855f7;
+}
+
+.asset-icon-orange {
+  color: #f97316;
+}
+
+.asset-icon-pink {
+  color: #ec4899;
+}
+
+.asset-icon-yellow {
+  color: #eab308;
+}
+
+.asset-card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.asset-balance {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.asset-name {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* Tokens Section */
+.tokens-section {
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.token-count {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.toggle-btn,
+.see-all-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-accent-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.toggle-btn:hover,
+.see-all-btn:hover {
+  opacity: 0.8;
+}
+
+.tokens-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.token-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: #1a1a1a;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.15s ease;
+}
+
+.token-item:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.token-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.token-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.token-icon span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent-primary);
+  text-transform: uppercase;
+}
+
+.token-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.token-symbol {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.token-name {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.token-balance {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-success);
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+/* History Section */
+.history-section {
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: var(--space-xl);
+  font-size: 14px;
+}
+
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md);
+  background: #1a1a1a;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tx-item:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tx-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tx-icon.bg-success-muted {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-accent-primary);
+}
+
+.tx-icon.bg-warning-muted {
+  background: rgba(234, 179, 8, 0.15);
+  color: var(--color-warning);
+}
+
+.tx-icon.bg-error-muted {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+}
+
+.tx-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: var(--space-md);
+}
+
+.tx-type {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.tx-function {
+  font-weight: 400;
+  color: var(--color-accent-primary);
+  font-size: 12px;
+}
+
+.tx-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.tx-time {
+  margin-left: var(--space-sm);
+}
+
+.tx-amount {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tx-amount span {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.amount-in {
+  color: var(--color-accent-primary);
+}
+
+.amount-out {
+  color: var(--color-text-primary);
+}
+
+/* Spin animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+</style>
