@@ -153,130 +153,434 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <section class="flex flex-col min-h-full p-4">
-    <!-- Header -->
-    <div class="text-center pt-6 mb-6">
-      <!-- Logo with glow ring -->
-      <div class="flex justify-center mb-6">
-        <div class="relative">
-          <div class="absolute -inset-2 rounded-full border border-border-default"></div>
-          <div class="w-[100px] h-[100px] rounded-full bg-bg-card border border-border-default flex items-center justify-center relative">
-            <img src="/denvault-i.png" width="80" alt="DenVault" class="rounded-full" />
-          </div>
+  <section class="start-view">
+    <!-- Ambient Glow -->
+    <div class="ambient-glow"></div>
+
+    <!-- Step 1: Start -->
+    <div v-if="currentStep === 'start'" class="start-content">
+      <!-- Logo -->
+      <div class="logo-container">
+        <div class="logo-glow"></div>
+        <div class="logo-box">
+          <img src="/denvault-i.png" alt="DenVault" class="logo-image" />
         </div>
       </div>
-      <h1 class="text-2xl font-bold text-text-primary mb-3">Set Up Your Wallet</h1>
-      <p class="text-text-secondary text-sm leading-relaxed max-w-[300px] mx-auto">
-        Create a new wallet or import an existing one to start managing your assets securely.
-      </p>
-    </div>
 
-    <!-- Content -->
-    <div class="flex-1 flex flex-col">
-      <!-- Step 1: Start -->
-      <div v-if="currentStep === 'start'" class="flex flex-col gap-3 w-full">
-        <!-- Create Wallet Card -->
-        <button
-          @click="handleGenerateSecret"
-          class="flex items-center gap-3 w-full p-4 bg-bg-card border border-primary/30 rounded-xl cursor-pointer transition-all duration-200 text-left hover:border-primary hover:bg-bg-card-hover active:scale-[0.99]"
-        >
-          <span class="w-12 h-12 rounded-full bg-primary text-bg-primary flex items-center justify-center shrink-0 text-2xl font-bold">+</span>
-          <span class="flex-1 flex flex-col gap-0.5">
-            <span class="text-text-primary font-semibold">Create New Wallet</span>
-            <span class="text-text-muted text-xs">Generate new recovery phrase</span>
-          </span>
-          <span class="text-text-muted text-2xl font-light">›</span>
+      <!-- Text -->
+      <div class="text-section">
+        <h1 class="title">Set Up Your Wallet</h1>
+        <p class="subtitle">
+          Securely store your Stacks (STX) and Bitcoin (BTC).
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <!-- Primary Button -->
+        <button class="btn-primary-neon" @click="handleGenerateSecret">
+          Create New Wallet
         </button>
 
-        <!-- Import Wallet Card -->
-        <button
-          @click="handleImportMnemonic"
-          class="flex items-center gap-3 w-full p-4 bg-bg-card border border-border-default rounded-xl cursor-pointer transition-all duration-200 text-left hover:border-border-hover hover:bg-bg-card-hover active:scale-[0.99]"
-        >
-          <span class="w-12 h-12 rounded-full bg-bg-elevated border border-border-default text-text-secondary flex items-center justify-center shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </span>
-          <span class="flex-1 flex flex-col gap-0.5">
-            <span class="text-text-primary font-semibold">Import Existing Wallet</span>
-            <span class="text-text-muted text-xs">Use recovery phrase or key</span>
-          </span>
-          <span class="text-text-muted text-2xl font-light">›</span>
+        <!-- Secondary Button -->
+        <button class="btn-secondary-neumorphic" @click="handleImportMnemonic">
+          Import Existing Wallet
         </button>
 
-        <p v-if="importError" class="text-error text-sm text-center">{{ importError }}</p>
+        <p v-if="importError" class="error-text">{{ importError }}</p>
 
         <!-- Security Badge -->
-        <div class="flex items-center justify-center gap-2 mt-6 text-primary text-xs tracking-wider">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stroke-primary">
+        <div class="security-badge">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
           <span>END-TO-END ENCRYPTED</span>
         </div>
       </div>
+    </div>
 
-      <!-- Step 2: Show Mnemonic -->
-      <div v-else-if="currentStep === 'mnemonic'" class="flex flex-col gap-3 w-full">
-        <!-- Warning -->
-        <div class="bg-warning-muted border border-warning rounded-lg p-4 text-center">
-          <strong class="text-warning">Save your recovery phrase</strong>
-          <p class="mt-2 text-sm text-text-secondary">Store it securely. Anyone with this phrase can access your wallet.</p>
+    <!-- Step 2: Show Mnemonic -->
+    <div v-else-if="currentStep === 'mnemonic'" class="mnemonic-content">
+      <!-- Header -->
+      <button class="back-button" @click="handleBack">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+
+      <h2 class="step-title">Recovery Phrase</h2>
+
+      <!-- Warning -->
+      <div class="warning-box">
+        <div class="warning-icon">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
         </div>
-
-        <!-- Mnemonic Grid -->
-        <div class="grid grid-cols-3 gap-2 bg-bg-card border border-border-default p-4 rounded-lg">
-          <div
-            v-for="(word, index) in mnemonic.split(' ')"
-            :key="index"
-            class="flex items-center gap-2 font-mono text-sm"
-          >
-            <span class="text-text-muted text-xs min-w-[18px]">{{ index + 1 }}</span>
-            <span class="text-text-primary">{{ word }}</span>
-          </div>
-        </div>
-
-        <!-- Buttons -->
-        <div class="flex gap-3 mt-4">
-          <button @click="handleBack" class="btn-secondary flex-1">Back</button>
-          <button @click="handleContinueToPin" class="btn-primary flex-[2]">I saved it</button>
-        </div>
-      </div>
-
-      <!-- Step 3: Create PIN -->
-      <div v-else-if="currentStep === 'pin-create'" class="flex flex-col gap-3 w-full">
-        <PinInput
-          ref="pinInputRef"
-          mode="create"
-          :error="pinError"
-          :disabled="isLoading"
-          @complete="handlePinCreate"
-        />
-
-        <div class="flex gap-3 mt-4">
-          <button @click="handleBack" class="btn-secondary flex-1" :disabled="isLoading">Back</button>
+        <div class="warning-text">
+          <strong>Save your recovery phrase</strong>
+          <p>Store it securely. Anyone with this phrase can access your wallet.</p>
         </div>
       </div>
 
-      <!-- Step 4: Confirm PIN -->
-      <div v-else-if="currentStep === 'pin-confirm'" class="flex flex-col gap-3 w-full">
-        <PinInput
-          ref="pinInputRef"
-          mode="confirm"
-          :error="pinError"
-          :disabled="isLoading"
-          @complete="handlePinConfirm"
-        />
-
-        <div class="flex gap-3 mt-4">
-          <button @click="handleBack" class="btn-secondary flex-1" :disabled="isLoading">Back</button>
+      <!-- Mnemonic Grid -->
+      <div class="mnemonic-grid">
+        <div
+          v-for="(word, index) in mnemonic.split(' ')"
+          :key="index"
+          class="mnemonic-word"
+        >
+          <span class="word-index">{{ index + 1 }}</span>
+          <span class="word-text">{{ word }}</span>
         </div>
-
-        <p v-if="isLoading" class="text-text-muted text-sm text-center">Creating wallet...</p>
       </div>
+
+      <!-- Continue Button -->
+      <button class="btn-primary-neon mt-auto" @click="handleContinueToPin">
+        I saved it securely
+      </button>
+    </div>
+
+    <!-- Step 3 & 4: PIN -->
+    <div v-else class="pin-content">
+      <!-- Header -->
+      <button class="back-button" @click="handleBack">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+
+      <PinInput
+        ref="pinInputRef"
+        :mode="currentStep === 'pin-create' ? 'create' : 'confirm'"
+        :error="pinError"
+        :disabled="isLoading"
+        @complete="currentStep === 'pin-create' ? handlePinCreate($event) : handlePinConfirm($event)"
+      />
+
+      <p v-if="isLoading" class="loading-text">Creating wallet...</p>
     </div>
   </section>
 </template>
+
+<style scoped>
+.start-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--color-bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient Glow */
+.ambient-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150%;
+  height: 50%;
+  background: var(--color-accent-primary);
+  opacity: 0.05;
+  filter: blur(100px);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Start Content */
+.start-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  gap: var(--space-xl);
+  position: relative;
+  z-index: 10;
+}
+
+/* Logo */
+.logo-container {
+  position: relative;
+}
+
+.logo-glow {
+  position: absolute;
+  inset: -16px;
+  background: var(--color-accent-primary);
+  opacity: 0.2;
+  filter: blur(32px);
+  border-radius: 50%;
+  transition: opacity 0.5s ease;
+}
+
+.logo-container:hover .logo-glow {
+  opacity: 0.4;
+}
+
+.logo-box {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #2a2d15, #1a1c0d);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    8px 8px 16px rgba(18, 20, 9, 0.8),
+    -8px -8px 16px rgba(46, 48, 23, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-image {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+/* Text Section */
+.text-section {
+  text-align: center;
+  max-width: 320px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-sm);
+}
+
+.subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Actions */
+.actions {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Primary Neon Button */
+.btn-primary-neon {
+  width: 100%;
+  height: 56px;
+  background: var(--color-accent-primary);
+  border: none;
+  border-radius: 9999px;
+  color: var(--color-bg-primary);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(232, 248, 89, 0.15);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-neon:hover {
+  background: #d9ea4d;
+  box-shadow: 0 0 35px rgba(232, 248, 89, 0.3);
+}
+
+.btn-primary-neon:active {
+  transform: scale(0.98);
+}
+
+/* Secondary Neumorphic Button */
+.btn-secondary-neumorphic {
+  width: 100%;
+  height: 56px;
+  background: #1a2424;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  color: var(--color-text-primary);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.3),
+    -2px -2px 5px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-neumorphic:hover {
+  color: var(--color-accent-primary);
+}
+
+.btn-secondary-neumorphic:active {
+  transform: scale(0.98);
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.03);
+}
+
+/* Security Badge */
+.security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  opacity: 0.5;
+  color: var(--color-text-primary);
+}
+
+.security-badge span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Error Text */
+.error-text {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  margin: 0;
+}
+
+/* Mnemonic Content */
+.mnemonic-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-xl);
+  padding-top: 60px;
+  gap: var(--space-lg);
+  position: relative;
+  z-index: 10;
+}
+
+.step-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin: 0;
+}
+
+/* Back Button */
+.back-button {
+  position: absolute;
+  top: var(--space-xl);
+  left: var(--space-lg);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-accent-primary);
+}
+
+/* Warning Box */
+.warning-box {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: var(--radius-xl);
+}
+
+.warning-icon {
+  flex-shrink: 0;
+  color: #eab308;
+}
+
+.warning-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.warning-text strong {
+  color: #eab308;
+  font-size: var(--font-size-sm);
+}
+
+.warning-text p {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Mnemonic Grid */
+.mnemonic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.mnemonic-word {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+}
+
+.word-index {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  min-width: 20px;
+}
+
+.word-text {
+  font-family: monospace;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+/* PIN Content */
+.pin-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  padding-top: 80px;
+  position: relative;
+  z-index: 10;
+}
+
+.loading-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-lg);
+}
+
+.mt-auto {
+  margin-top: auto;
+}
+</style>
