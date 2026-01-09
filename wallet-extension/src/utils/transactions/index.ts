@@ -285,6 +285,65 @@ export function truncateAddress(address: string, chars: number = 4): string {
 }
 
 /**
+ * Fetch a single transaction by ID
+ * @param txId - Transaction ID (with or without 0x prefix)
+ * @param network - Network to fetch from
+ * @returns Transaction or null if not found
+ */
+export async function fetchTransaction(
+  txId: string,
+  network?: NetworkName
+): Promise<Transaction | null> {
+  const apiUrl = getApiUrl(network);
+  const formattedTxId = txId.startsWith("0x") ? txId : `0x${txId}`;
+  const url = `${apiUrl}/extended/v1/tx/${formattedTxId}`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      secureLog("Transaction fetch failed", { status: response.status, txId });
+      return null;
+    }
+
+    const data = (await response.json()) as ApiTransaction;
+    return transformTransaction(data);
+  } catch (error) {
+    secureLog("Transaction fetch error", { error: String(error) });
+    return null;
+  }
+}
+
+/**
+ * Format timestamp to full date/time string
+ */
+export function formatFullDateTime(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+/**
+ * Get human-readable status label
+ */
+export function getStatusLabel(status: TransactionStatus): string {
+  const labels: Record<TransactionStatus, string> = {
+    success: "Confirmed",
+    pending: "Pending",
+    failed: "Failed",
+    abort_by_response: "Aborted",
+    abort_by_post_condition: "Aborted",
+  };
+  return labels[status] || status;
+}
+
+/**
  * Get explorer URL for transaction
  */
 export function getExplorerUrl(txId: string, network?: NetworkName): string {

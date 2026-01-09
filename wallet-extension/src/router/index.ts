@@ -34,6 +34,11 @@ const router = createRouter({
       name: "send",
       component: () => import("../views/SendView.vue"),
     },
+    {
+      path: "/transaction/:txId",
+      name: "transaction-details",
+      component: () => import("../views/TransactionDetailsView.vue"),
+    },
   ],
 });
 
