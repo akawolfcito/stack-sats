@@ -373,11 +373,7 @@ const closeReceiveModal = () => {
       <header class="header">
         <!-- Menu Button -->
         <button class="header-btn menu-btn" @click="handleOpenUserMenu" title="Menu">
-          <span class="menu-icon">
-            <span class="menu-line"></span>
-            <span class="menu-line"></span>
-            <span class="menu-line"></span>
-          </span>
+          <span class="menu-icon-text">☰</span>
         </button>
 
         <!-- Account Selector Pill -->
@@ -767,23 +763,11 @@ const closeReceiveModal = () => {
   transform: scale(0.95);
 }
 
-/* Menu Icon - Hamburger */
-.menu-icon {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  width: 18px;
-  height: 18px;
-}
-
-.menu-line {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background-color: #FFFFFF;
-  border-radius: 1px;
+/* Menu Icon */
+.menu-icon-text {
+  font-size: 20px;
+  line-height: 1;
+  color: #FFFFFF;
 }
 
 /* Account Pill */
