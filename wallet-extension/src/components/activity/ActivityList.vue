@@ -74,7 +74,7 @@ const skeletonCount = 4
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  /* No gap - dividers handled by parent ListGroup */
 }
 
 /* Skeleton loading */

@@ -51,6 +51,7 @@ import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
+import ListGroup from "../components/list/ListGroup.vue";
 import { useUiMode } from "../composables/useUiMode";
 
 const router = useRouter();
@@ -633,95 +634,105 @@ const handleManageTokens = () => {
       <div class="home-body">
         <!-- Assets Section (show when assets tab is active) -->
       <section v-if="activeTab === 'assets'" class="assets-section">
-        <div class="section-header">
-          <h2 class="section-title">Assets</h2>
-          <div class="section-actions">
-            <button class="manage-btn" @click="handleManageTokens">
-              Manage
-            </button>
-            <button
-              class="refresh-btn"
-              @click="refreshBalance"
-              :disabled="isLoadingBalance"
-              title="Refresh"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
-                <path d="M23 4v6h-6M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Asset List (rows) -->
-        <AssetList
-          :items="assetItems"
-          @item-click="handleAssetClick"
-        />
+        <ListGroup title="Assets">
+          <template #headerAction>
+            <div class="section-actions">
+              <button class="manage-btn" @click="handleManageTokens">
+                Manage
+              </button>
+              <button
+                class="refresh-btn"
+                @click="refreshBalance"
+                :disabled="isLoadingBalance"
+                title="Refresh"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
+                  <path d="M23 4v6h-6M1 20v-6h6"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </button>
+            </div>
+          </template>
+          <!-- Asset rows rendered inside card -->
+          <AssetList
+            :items="assetItems"
+            @item-click="handleAssetClick"
+          />
+        </ListGroup>
       </section>
 
       <!-- SIP-010 Tokens Section (show when assets tab is active) -->
       <section v-if="activeTab === 'assets' && (tokens.length > 0 || isLoadingTokens)" class="tokens-section">
-        <div class="section-header">
-          <h2 class="section-title">Tokens <span class="token-count">({{ tokens.length }})</span></h2>
-          <button class="toggle-btn" @click="showTokens = !showTokens">
-            {{ showTokens ? 'Hide' : 'Show' }}
-          </button>
-        </div>
-
-        <div v-if="showTokens">
-          <div v-if="isLoadingTokens" class="empty-state">Loading tokens...</div>
-
-          <div v-else-if="tokens.length === 0" class="empty-state">No tokens found</div>
-
-          <div v-else class="tokens-list">
-            <div
-              v-for="token in tokens"
-              :key="token.contractId"
-              class="token-item token-item--clickable"
-              :title="token.contractId"
-              @click="handleTokenClick(token)"
-            >
-              <div class="token-icon">
-                <img
-                  v-if="token.imageUri"
-                  :src="token.imageUri"
-                  :alt="token.symbol"
-                  @error="($event.target as HTMLImageElement).style.display = 'none'"
-                />
-                <span v-else>{{ token.symbol.charAt(0) }}</span>
-              </div>
-              <div class="token-info">
-                <span class="token-symbol">{{ token.symbol }}</span>
-                <span class="token-name">{{ token.name }}</span>
-              </div>
-              <span class="token-balance">{{ token.formattedBalance }}</span>
+        <ListGroup>
+          <template #headerAction>
+            <div class="tokens-header-row">
+              <span class="tokens-title">Tokens <span class="token-count">({{ tokens.length }})</span></span>
+              <button class="toggle-btn" @click="showTokens = !showTokens">
+                {{ showTokens ? 'Hide' : 'Show' }}
+              </button>
             </div>
-          </div>
-        </div>
+          </template>
+
+          <template v-if="showTokens">
+            <div v-if="isLoadingTokens" class="empty-state">Loading tokens...</div>
+
+            <template v-else-if="tokens.length === 0">
+              <div class="empty-state">No tokens found</div>
+            </template>
+
+            <template v-else>
+              <button
+                v-for="token in tokens"
+                :key="token.contractId"
+                class="token-row"
+                :title="token.contractId"
+                @click="handleTokenClick(token)"
+              >
+                <div class="token-icon">
+                  <img
+                    v-if="token.imageUri"
+                    :src="token.imageUri"
+                    :alt="token.symbol"
+                    @error="($event.target as HTMLImageElement).style.display = 'none'"
+                  />
+                  <span v-else>{{ token.symbol.charAt(0) }}</span>
+                </div>
+                <div class="token-info">
+                  <span class="token-symbol">{{ token.symbol }}</span>
+                  <span class="token-name">{{ token.name }}</span>
+                </div>
+                <span class="token-balance">{{ token.formattedBalance }}</span>
+                <svg class="token-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            </template>
+          </template>
+        </ListGroup>
       </section>
 
       <!-- Activity (show when activity tab is active) -->
       <section v-if="activeTab === 'activity'" class="activity-section">
-        <div class="section-header">
-          <h2 class="section-title">Recent Activity</h2>
-          <button
-            class="refresh-btn"
-            @click="loadTransactions"
-            :disabled="isLoadingTx"
-            title="Refresh"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" :class="{ 'animate-spin': isLoadingTx }">
-              <path d="M23 4v6h-6M1 20v-6h6"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-          </button>
-        </div>
-        <ActivityList
-          :items="activityItems"
-          :loading="isLoadingTx"
-          @item-click="handleActivityClick"
-        />
+        <ListGroup title="Recent Activity">
+          <template #headerAction>
+            <button
+              class="refresh-btn"
+              @click="loadTransactions"
+              :disabled="isLoadingTx"
+              title="Refresh"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingTx }">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </button>
+          </template>
+          <ActivityList
+            :items="activityItems"
+            :loading="isLoadingTx"
+            @item-click="handleActivityClick"
+          />
+        </ListGroup>
       </section>
       </div>
     </template>
@@ -941,31 +952,25 @@ const handleManageTokens = () => {
 /* Assets Section */
 .assets-section {
   padding: 0 var(--space-lg);
-  margin-bottom: var(--space-lg);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: var(--space-md);
 }
 
+/* Section actions for header slots */
 .section-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 
 .manage-btn {
   background: transparent;
   border: none;
   color: var(--color-accent-primary);
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-sm);
   transition: all 0.15s ease;
 }
 
@@ -973,30 +978,23 @@ const handleManageTokens = () => {
   background: rgba(232, 248, 89, 0.1);
 }
 
-.section-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
 .refresh-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
+  width: 28px;
+  height: 28px;
   background: transparent;
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   transition: all 0.15s ease;
 }
 
 .refresh-btn:hover:not(:disabled) {
   color: var(--color-text-secondary);
-  background: var(--color-bg-card);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .refresh-btn:disabled {
@@ -1004,12 +1002,26 @@ const handleManageTokens = () => {
   cursor: not-allowed;
 }
 
-/* Assets Section uses AssetList component */
-
 /* Tokens Section */
 .tokens-section {
   padding: 0 var(--space-lg);
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.tokens-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-md);
+}
+
+.tokens-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
 }
 
 .token-count {
@@ -1017,57 +1029,51 @@ const handleManageTokens = () => {
   color: var(--color-text-muted);
 }
 
-.toggle-btn,
-.see-all-btn {
+.toggle-btn {
   background: transparent;
   border: none;
   color: var(--color-accent-primary);
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.toggle-btn:hover,
-.see-all-btn:hover {
-  opacity: 0.8;
-}
-
-.tokens-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.token-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: #1a1a1a;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
   transition: all 0.15s ease;
 }
 
-.token-item:hover {
-  border-color: rgba(255, 255, 255, 0.1);
+.toggle-btn:hover {
+  background: rgba(232, 248, 89, 0.1);
+}
+
+/* Token rows inside ListGroup */
+.token-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--card-pad-y) var(--card-pad-x);
+  min-height: var(--row-h);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.token-row:hover {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.token-item--clickable {
-  cursor: pointer;
-}
-
-.token-item--clickable:active {
-  transform: scale(0.98);
+.token-row:active {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .token-icon {
-  width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   border-radius: 50%;
-  background: #2a2a2a;
+  background: rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1082,7 +1088,7 @@ const handleManageTokens = () => {
 }
 
 .token-icon span {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-accent-primary);
   text-transform: uppercase;
@@ -1093,17 +1099,17 @@ const handleManageTokens = () => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .token-symbol {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
 }
 
 .token-name {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -1111,17 +1117,22 @@ const handleManageTokens = () => {
 }
 
 .token-balance {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-success);
-  font-family: monospace;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.token-chevron {
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
 /* Activity Section */
 .activity-section {
   padding: 0 var(--space-lg);
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .empty-state {

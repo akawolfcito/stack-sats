@@ -75,24 +75,23 @@ const getStatusLabel = (status: ActivityStatus) => {
 .activity-row {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   width: 100%;
   min-height: var(--row-h);
   padding: var(--card-pad-y) var(--card-pad-x);
   background: transparent;
   border: none;
-  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--transition-fast);
   text-align: left;
 }
 
 .activity-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .activity-row:active {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Status dot */
@@ -206,11 +205,5 @@ const getStatusLabel = (status: ActivityStatus) => {
 .activity-row__chevron {
   flex-shrink: 0;
   color: var(--color-text-muted);
-  opacity: 0.5;
-  transition: opacity 0.15s ease;
-}
-
-.activity-row:hover .activity-row__chevron {
-  opacity: 1;
 }
 </style>

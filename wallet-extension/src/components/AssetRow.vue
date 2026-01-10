@@ -46,30 +46,29 @@ const emit = defineEmits<{
 .asset-row {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   width: 100%;
   min-height: var(--row-h);
   padding: var(--card-pad-y) var(--card-pad-x);
   background: transparent;
   border: none;
-  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--transition-fast);
   text-align: left;
 }
 
 .asset-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .asset-row:active {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .asset-icon {
-  width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
-  min-width: var(--icon-btn-size);
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(215, 248, 46, 0.2), rgba(153, 225, 142, 0.1));
   display: flex;
@@ -79,7 +78,7 @@ const emit = defineEmits<{
 }
 
 .asset-icon-text {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -87,18 +86,18 @@ const emit = defineEmits<{
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 
 .asset-symbol {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
 }
 
 .asset-name {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -109,27 +108,23 @@ const emit = defineEmits<{
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 1px;
 }
 
 .balance-primary {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
 }
 
 .balance-fiat {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-muted);
 }
 
 .asset-chevron {
   color: var(--color-text-muted);
-  opacity: 0.5;
-}
-
-.asset-row:hover .asset-chevron {
-  opacity: 1;
+  flex-shrink: 0;
 }
 </style>
