@@ -127,11 +127,11 @@ const hasSuffix = computed(() => !!slots.suffix);
   padding-right: var(--space-md);
 }
 
-/* Base input styles */
+/* Base input styles - using density-aware padding */
 .textfield__input {
   flex: 1;
   height: var(--control-h);
-  padding: 0 var(--space-lg);
+  padding: 0 var(--control-pad-x);
   background: transparent;
   border: none;
   color: var(--color-text-primary);

@@ -32,6 +32,14 @@ const savedDensity = localStorage.getItem(DENSITY_KEY);
 const densityMode: DensityMode = migrateDensityValue(savedDensity);
 applyDensityMode(densityMode);
 
+// Listen for storage changes from other documents (popup ↔ sidepanel sync)
+window.addEventListener('storage', (e: StorageEvent) => {
+  if (e.key === DENSITY_KEY && e.newValue) {
+    const newMode = migrateDensityValue(e.newValue);
+    applyDensityMode(newMode);
+  }
+});
+
 // Export for use in settings
 export { DENSITY_KEY, applyDensityMode };
 export type { DensityMode };

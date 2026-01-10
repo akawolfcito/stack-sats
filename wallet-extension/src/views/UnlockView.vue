@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
+import { Button, TextField } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 
@@ -208,21 +209,22 @@ onMounted(() => {
 
           <!-- Action Buttons -->
           <div class="action-buttons">
-            <button class="btn-cancel" @click="handleCancelDelete">
+            <Button variant="secondary" full-width @click="handleCancelDelete">
               Cancel
-            </button>
-            <button
-              class="btn-reset"
+            </Button>
+            <Button
+              variant="danger"
+              full-width
               :disabled="!canDelete"
               @click="handleConfirmDelete"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                 <line x1="10" y1="11" x2="10" y2="17"/>
                 <line x1="14" y1="11" x2="14" y2="17"/>
               </svg>
               Reset Wallet
-            </button>
+            </Button>
           </div>
         </main>
       </div>
@@ -568,59 +570,6 @@ onMounted(() => {
 /* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: 12px;
-}
-
-.btn-cancel {
-  flex: 1;
-  height: 56px;
-  border-radius: 12px;
-  background: #282828;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-cancel:hover {
-  background: #333333;
-}
-
-.btn-cancel:active {
-  transform: scale(0.98);
-}
-
-.btn-reset {
-  flex: 1.5;
-  height: 56px;
-  border-radius: 12px;
-  background: #ef4444;
-  border: none;
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
-  transition: all 0.2s ease;
-}
-
-.btn-reset:hover:not(:disabled) {
-  background: #dc2626;
-}
-
-.btn-reset:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.btn-reset:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
+  gap: var(--space-md);
 }
 </style>
