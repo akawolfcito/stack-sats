@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeMount } from "vue";
 import { useRouter } from "vue-router";
+import TokenList, { type TokenItem } from "@/components/tokens/TokenList.vue";
 
 const router = useRouter();
 
@@ -69,28 +70,35 @@ const filteredTokens = computed(() => {
   );
 });
 
-// Separate active and available tokens
-const activeTokens = computed(() => {
-  return filteredTokens.value.filter((t) => enabledTokens.value.has(t.contractId));
+// Map to TokenItem format
+const activeTokenItems = computed<TokenItem[]>(() => {
+  return filteredTokens.value
+    .filter((t) => enabledTokens.value.has(t.contractId))
+    .map((t) => ({
+      ...t,
+      enabled: true,
+      isLocked: t.contractId === "STX",
+    }));
 });
 
-const availableTokens = computed(() => {
-  return filteredTokens.value.filter((t) => !enabledTokens.value.has(t.contractId));
+const availableTokenItems = computed<TokenItem[]>(() => {
+  return filteredTokens.value
+    .filter((t) => !enabledTokens.value.has(t.contractId))
+    .map((t) => ({
+      ...t,
+      enabled: false,
+    }));
 });
 
-// Check if token is enabled
-function isEnabled(contractId: string): boolean {
-  return enabledTokens.value.has(contractId);
-}
+// Handle toggle from TokenList
+function handleToggle(contractId: string, enabled: boolean) {
+  // Don't allow disabling STX
+  if (contractId === "STX") return;
 
-// Toggle token
-function toggleToken(contractId: string) {
-  if (enabledTokens.value.has(contractId)) {
-    // Don't allow disabling STX
-    if (contractId === "STX") return;
-    enabledTokens.value.delete(contractId);
-  } else {
+  if (enabled) {
     enabledTokens.value.add(contractId);
+  } else {
+    enabledTokens.value.delete(contractId);
   }
   // Trigger reactivity
   enabledTokens.value = new Set(enabledTokens.value);
@@ -140,86 +148,35 @@ function handleAddToken() {
     <!-- Content -->
     <main v-else class="content">
       <!-- Active Assets Section -->
-      <div v-if="activeTokens.length > 0" class="section">
+      <div v-if="activeTokenItems.length > 0" class="section">
         <h3 class="section-title">Active Assets</h3>
-        <div class="token-list">
-          <div
-            v-for="token in activeTokens"
-            :key="token.contractId"
-            class="token-item"
-          >
-            <div class="token-info">
-              <div
-                class="token-icon"
-                :style="{ backgroundColor: token.color + '20', borderColor: token.color + '40' }"
-              >
-                <span class="token-letter" :style="{ color: token.color }">
-                  {{ token.symbol.charAt(0) }}
-                </span>
-              </div>
-              <div class="token-details">
-                <span class="token-symbol">{{ token.symbol }}</span>
-                <span class="token-name">{{ token.name }}</span>
-              </div>
-            </div>
-            <label class="toggle" :class="{ disabled: token.contractId === 'STX' }">
-              <input
-                type="checkbox"
-                :checked="isEnabled(token.contractId)"
-                :disabled="token.contractId === 'STX'"
-                @change="toggleToken(token.contractId)"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
+        <TokenList
+          :items="activeTokenItems"
+          @toggle="handleToggle"
+        />
       </div>
 
       <!-- Available Tokens Section -->
-      <div v-if="availableTokens.length > 0" class="section">
+      <div v-if="availableTokenItems.length > 0" class="section">
         <h3 class="section-title">Available Tokens</h3>
-        <div class="token-list">
-          <div
-            v-for="token in availableTokens"
-            :key="token.contractId"
-            class="token-item"
-          >
-            <div class="token-info">
-              <div
-                class="token-icon"
-                :style="{ backgroundColor: token.color + '20', borderColor: token.color + '40' }"
-              >
-                <span class="token-letter" :style="{ color: token.color }">
-                  {{ token.symbol.charAt(0) }}
-                </span>
-              </div>
-              <div class="token-details">
-                <span class="token-symbol">{{ token.symbol }}</span>
-                <span class="token-name">{{ token.name }}</span>
-              </div>
-            </div>
-            <label class="toggle">
-              <input
-                type="checkbox"
-                :checked="isEnabled(token.contractId)"
-                @change="toggleToken(token.contractId)"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
+        <TokenList
+          :items="availableTokenItems"
+          @toggle="handleToggle"
+        />
       </div>
 
       <!-- No Results -->
-      <div v-if="filteredTokens.length === 0" class="no-results">
-        <p class="no-results-text">No tokens found</p>
-        <p class="no-results-hint">Try a different search or add a custom token</p>
-      </div>
+      <TokenList
+        v-if="filteredTokens.length === 0"
+        :items="[]"
+        emptyText="No tokens found. Try a different search."
+      />
 
       <!-- Add Token Hint -->
       <div class="add-hint">
-        <p class="hint-text">Don't see your token?</p>
-        <p class="hint-subtext">Add it manually via contract address</p>
+        <button class="add-link" @click="handleAddToken">
+          + Add custom token
+        </button>
       </div>
     </main>
 
@@ -368,147 +325,6 @@ function handleAddToken() {
   margin: 0 0 var(--space-md) var(--space-sm);
 }
 
-/* Token List */
-.token-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.token-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-fast);
-}
-
-.token-item:hover {
-  border-color: var(--color-border-hover);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.token-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.token-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid;
-  flex-shrink: 0;
-}
-
-.token-letter {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-}
-
-.token-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.token-symbol {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-.token-name {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-/* Toggle Switch */
-.toggle {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.toggle.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--color-bg-elevated);
-  border-radius: 24px;
-  transition: all var(--transition-base);
-}
-
-.toggle-slider::before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 2px;
-  bottom: 2px;
-  background-color: var(--color-text-muted);
-  border-radius: 50%;
-  transition: all var(--transition-base);
-}
-
-.toggle input:checked + .toggle-slider {
-  background-color: var(--color-accent-primary);
-}
-
-.toggle input:checked + .toggle-slider::before {
-  transform: translateX(20px);
-  background-color: var(--color-bg-primary);
-}
-
-.toggle input:focus + .toggle-slider {
-  box-shadow: 0 0 0 2px var(--color-accent-primary-muted);
-}
-
-.toggle.disabled .toggle-slider {
-  cursor: not-allowed;
-}
-
-/* No Results */
-.no-results {
-  text-align: center;
-  padding: var(--space-2xl) var(--space-lg);
-}
-
-.no-results-text {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
-  margin: 0 0 var(--space-sm);
-}
-
-.no-results-hint {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
 /* Add Hint */
 .add-hint {
   text-align: center;
@@ -526,6 +342,22 @@ function handleAddToken() {
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   margin: 0;
+}
+
+.add-link {
+  background: none;
+  border: none;
+  color: var(--color-accent-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+}
+
+.add-link:hover {
+  background: rgba(232, 248, 89, 0.1);
 }
 
 /* FAB */
