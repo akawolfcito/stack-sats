@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { Sheet, Button } from "@/components/ui";
 
 const props = defineProps<{
   isOpen: boolean;
@@ -38,158 +39,91 @@ function handleConfirm() {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="isOpen" class="modal-overlay" @click.self="handleClose">
-        <div class="modal-container">
-          <!-- Header -->
-          <header class="modal-header">
-            <h2 class="modal-title">Confirm Transaction</h2>
-            <button class="close-btn" @click="handleClose">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </header>
+  <Sheet
+    :is-open="isOpen"
+    variant="center"
+    title="Confirm Transaction"
+    @close="handleClose"
+  >
+    <!-- Network Banner -->
+    <div class="network-banner" :class="{ 'network-warning': isTestOrDev }">
+      <span class="network-dot" :class="{ 'dot-warning': isTestOrDev }" />
+      <span class="network-text">{{ networkLabel }}</span>
+    </div>
 
-          <!-- Network Banner -->
-          <div class="network-banner" :class="{ 'network-warning': isTestOrDev }">
-            <span class="network-dot" :class="{ 'dot-warning': isTestOrDev }" />
-            <span class="network-text">{{ networkLabel }}</span>
-          </div>
-
-          <!-- Summary -->
-          <div class="summary">
-            <!-- From -->
-            <div class="summary-row">
-              <span class="summary-label">From</span>
-              <div class="summary-value">
-                <span v-if="fromLabel" class="value-label">{{ fromLabel }}</span>
-                <span class="value-address">{{ fromAddressShort }}</span>
-              </div>
-            </div>
-
-            <!-- To -->
-            <div class="summary-row">
-              <span class="summary-label">To</span>
-              <div class="summary-value summary-value-copyable">
-                <span class="value-address">{{ toAddressShort }}</span>
-                <button class="copy-btn" title="Copy address" @click="handleCopyTo">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Amount -->
-            <div class="summary-row">
-              <span class="summary-label">Amount</span>
-              <span class="summary-value value-amount">{{ amountText }}</span>
-            </div>
-
-            <!-- Fee -->
-            <div v-if="feeText" class="summary-row">
-              <span class="summary-label">Network Fee</span>
-              <span class="summary-value">{{ feeText }}</span>
-            </div>
-
-            <!-- Total -->
-            <div v-if="totalText" class="summary-row summary-row-total">
-              <span class="summary-label">Total</span>
-              <span class="summary-value value-total">{{ totalText }}</span>
-            </div>
-
-            <!-- Memo -->
-            <div v-if="memo" class="summary-row">
-              <span class="summary-label">Memo</span>
-              <span class="summary-value value-memo">{{ memo }}</span>
-            </div>
-          </div>
-
-          <!-- Warning -->
-          <div class="warning-banner">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 9v4M12 17h.01" />
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            </svg>
-            <span>Double-check the address and network. Transactions are irreversible.</span>
-          </div>
-
-          <!-- Actions -->
-          <div class="modal-actions">
-            <button class="action-btn action-btn-secondary" @click="handleClose">
-              Cancel
-            </button>
-            <button class="action-btn action-btn-primary" @click="handleConfirm">
-              Confirm & Send
-            </button>
-          </div>
+    <!-- Summary -->
+    <div class="summary">
+      <!-- From -->
+      <div class="summary-row">
+        <span class="summary-label">From</span>
+        <div class="summary-value">
+          <span v-if="fromLabel" class="value-label">{{ fromLabel }}</span>
+          <span class="value-address">{{ fromAddressShort }}</span>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+
+      <!-- To -->
+      <div class="summary-row">
+        <span class="summary-label">To</span>
+        <div class="summary-value summary-value-copyable">
+          <span class="value-address">{{ toAddressShort }}</span>
+          <button class="copy-btn" title="Copy address" @click="handleCopyTo">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Amount -->
+      <div class="summary-row">
+        <span class="summary-label">Amount</span>
+        <span class="summary-value value-amount">{{ amountText }}</span>
+      </div>
+
+      <!-- Fee -->
+      <div v-if="feeText" class="summary-row">
+        <span class="summary-label">Network Fee</span>
+        <span class="summary-value">{{ feeText }}</span>
+      </div>
+
+      <!-- Total -->
+      <div v-if="totalText" class="summary-row summary-row-total">
+        <span class="summary-label">Total</span>
+        <span class="summary-value value-total">{{ totalText }}</span>
+      </div>
+
+      <!-- Memo -->
+      <div v-if="memo" class="summary-row">
+        <span class="summary-label">Memo</span>
+        <span class="summary-value value-memo">{{ memo }}</span>
+      </div>
+    </div>
+
+    <!-- Warning -->
+    <div class="warning-banner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 9v4M12 17h.01" />
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      </svg>
+      <span>Double-check the address and network. Transactions are irreversible.</span>
+    </div>
+
+    <template #footer>
+      <div class="modal-actions">
+        <Button variant="secondary" full-width @click="handleClose">
+          Cancel
+        </Button>
+        <Button variant="primary" full-width @click="handleConfirm">
+          Confirm & Send
+        </Button>
+      </div>
+    </template>
+  </Sheet>
 </template>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: var(--space-md);
-}
-
-.modal-container {
-  width: 100%;
-  max-width: 360px;
-  background: var(--color-bg-secondary, #1a1a1a);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-}
-
-/* Header */
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.modal-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
-}
-
 /* Network Banner */
 .network-banner {
   display: flex;
@@ -338,63 +272,5 @@ function handleConfirm() {
 .modal-actions {
   display: flex;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-lg) var(--space-lg);
-}
-
-.action-btn {
-  flex: 1;
-  height: var(--control-h);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn-secondary {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--color-text-primary);
-}
-
-.action-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.action-btn-primary {
-  background: var(--color-accent-primary);
-  border: none;
-  color: #0a0a0a;
-  box-shadow: 0 0 15px rgba(232, 248, 89, 0.2);
-}
-
-.action-btn-primary:hover {
-  box-shadow: 0 0 25px rgba(232, 248, 89, 0.35);
-}
-
-.action-btn-primary:active {
-  transform: scale(0.98);
-}
-
-/* Transitions */
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.modal-enter-active .modal-container,
-.modal-leave-active .modal-container {
-  transition: transform 0.2s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .modal-container,
-.modal-leave-to .modal-container {
-  transform: scale(0.95);
 }
 </style>
