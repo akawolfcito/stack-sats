@@ -58,7 +58,7 @@ function handleToggle(event: Event) {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  min-height: 56px;
+  min-height: var(--row-h);
   transition: border-color 0.15s ease;
 }
 
@@ -78,8 +78,8 @@ function handleToggle(event: Event) {
 }
 
 .token-icon {
-  width: 36px;
-  height: 36px;
+  width: calc(var(--icon-btn-size) - 4px);
+  height: calc(var(--icon-btn-size) - 4px);
   border-radius: 50%;
   display: flex;
   align-items: center;
