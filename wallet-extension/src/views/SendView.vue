@@ -756,12 +756,12 @@ function truncateAddress(address: string): string {
 }
 
 .input-wrapper-small .form-input {
-  height: 48px;
+  height: var(--row-h);
 }
 
 .form-input {
   flex: 1;
-  height: 56px;
+  height: var(--control-h);
   background: transparent;
   border: none;
   padding: 0 var(--space-lg);
@@ -783,9 +783,9 @@ function truncateAddress(address: string): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
+  width: var(--icon-btn-size);
+  min-width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   padding: 0;
   margin-right: var(--space-sm);
   background: transparent;
@@ -935,7 +935,7 @@ function truncateAddress(address: string): string {
 
 .continue-btn {
   width: 100%;
-  height: 56px;
+  height: var(--control-h);
   display: flex;
   align-items: center;
   justify-content: center;

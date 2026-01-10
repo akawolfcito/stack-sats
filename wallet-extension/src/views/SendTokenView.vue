@@ -603,8 +603,8 @@ onBeforeMount(async () => {
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   border: 3px solid var(--color-bg-card);
   border-top-color: var(--color-accent-primary);
   border-radius: 50%;
@@ -686,7 +686,7 @@ onBeforeMount(async () => {
 /* Form Inputs */
 .form-input {
   width: 100%;
-  height: 52px;
+  height: var(--row-h);
   padding: 0 var(--space-lg);
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -968,7 +968,7 @@ onBeforeMount(async () => {
 /* Buttons */
 .primary-btn {
   width: 100%;
-  height: 56px;
+  height: var(--control-h);
   background: var(--color-accent-primary);
   border: none;
   border-radius: var(--radius-pill);
@@ -986,7 +986,7 @@ onBeforeMount(async () => {
 
 .secondary-btn {
   width: 100%;
-  height: 56px;
+  height: var(--control-h);
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-pill);
