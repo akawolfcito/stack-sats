@@ -55,6 +55,11 @@ const router = createRouter({
       component: () => import("../views/AddTokenView.vue"),
     },
     {
+      path: "/send-token/:tokenKey",
+      name: "send-token",
+      component: () => import("../views/SendTokenView.vue"),
+    },
+    {
       path: "/add-network",
       name: "add-network",
       component: () => import("../views/AddNetworkView.vue"),
