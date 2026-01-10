@@ -23,8 +23,26 @@ import {
   generateBackupFilename,
   parseBackupFile,
 } from "@/utils/backup";
+import { DENSITY_KEY, applyDensityMode, type DensityMode } from "@/main";
 
 const router = useRouter();
+
+// Density mode state
+const densityMode = ref<DensityMode>("auto");
+
+// Load density mode on mount
+function loadDensityMode() {
+  const saved = localStorage.getItem(DENSITY_KEY) as DensityMode | null;
+  densityMode.value = saved && ["auto", "compact", "comfortable"].includes(saved)
+    ? saved
+    : "auto";
+}
+
+function setDensityMode(mode: DensityMode) {
+  densityMode.value = mode;
+  localStorage.setItem(DENSITY_KEY, mode);
+  applyDensityMode(mode);
+}
 
 // Wallet list state
 const wallets = ref<WalletEntry[]>([]);
@@ -52,6 +70,7 @@ const showBackupPinInput = ref(false);
 const backupPinError = ref("");
 
 onMounted(async () => {
+  loadDensityMode();
   await loadWallets();
 });
 
@@ -408,6 +427,39 @@ function cancelImport() {
         </ListRow>
       </ListGroup>
 
+      <!-- Appearance Section -->
+      <ListGroup title="Appearance">
+        <div class="density-row">
+          <div class="density-label">
+            <span class="density-title">Density</span>
+            <span class="density-hint">Adjust UI spacing</span>
+          </div>
+          <div class="density-selector">
+            <button
+              class="density-option"
+              :class="{ active: densityMode === 'auto' }"
+              @click="setDensityMode('auto')"
+            >
+              Auto
+            </button>
+            <button
+              class="density-option"
+              :class="{ active: densityMode === 'compact' }"
+              @click="setDensityMode('compact')"
+            >
+              Compact
+            </button>
+            <button
+              class="density-option"
+              :class="{ active: densityMode === 'comfortable' }"
+              @click="setDensityMode('comfortable')"
+            >
+              Comfy
+            </button>
+          </div>
+        </div>
+      </ListGroup>
+
       <!-- Danger Zone -->
       <ListGroup title="Danger Zone" variant="danger">
         <ListRow
@@ -663,6 +715,62 @@ function cancelImport() {
 .backup-message.error {
   background: rgba(239, 68, 68, 0.1);
   color: var(--color-error);
+}
+
+/* Density Selector */
+.density-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--card-pad-y) var(--card-pad-x);
+  min-height: var(--row-h);
+}
+
+.density-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.density-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.density-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.density-selector {
+  display: flex;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.density-option {
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.density-option:hover {
+  color: var(--color-text-secondary);
+}
+
+.density-option.active {
+  background: var(--color-accent-primary);
+  color: #0a0a0a;
 }
 
 /* Version Footer */
