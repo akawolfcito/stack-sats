@@ -499,7 +499,8 @@ function truncateAddress(address: string): string {
 .send-view {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
   background: var(--color-bg-primary);
 }
 
