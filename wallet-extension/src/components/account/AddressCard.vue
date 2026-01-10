@@ -130,7 +130,7 @@ function handleShowQr() {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-md);
+  padding: var(--card-pad);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
