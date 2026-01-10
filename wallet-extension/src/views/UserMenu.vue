@@ -2,6 +2,8 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import {
@@ -241,21 +243,20 @@ function cancelImport() {
 </script>
 
 <template>
-  <section class="settings-page">
+  <ScreenShell :padded="false">
+    <template #header>
+      <AppHeader
+        title="Settings"
+        left="back"
+        @left-click="handleUserHome"
+      />
+    </template>
+
     <!-- Ambient Glow -->
     <div class="ambient-glow"></div>
 
-    <!-- Header -->
-    <header class="page-header">
-      <button class="btn-icon back-btn" @click="handleUserHome">
-        <span class="back-icon">←</span>
-      </button>
-      <h1>Settings</h1>
-      <div class="header-spacer"></div>
-    </header>
-
     <!-- Main Content -->
-    <main v-if="!showDeleteConfirm" class="page-content">
+    <div v-if="!showDeleteConfirm" class="page-content">
       <!-- Your Wallets Section -->
       <section class="section">
         <h3 class="section-title">Your Wallets</h3>
@@ -372,7 +373,7 @@ function cancelImport() {
       <footer class="version-footer">
         DENVAULT V1.0.1
       </footer>
-    </main>
+    </div>
 
     <!-- Delete Confirmation Flow -->
     <div v-else class="delete-flow">
@@ -476,19 +477,10 @@ function cancelImport() {
         </div>
       </Transition>
     </Teleport>
-  </section>
+  </ScreenShell>
 </template>
 
 <style scoped>
-/* Base Layout */
-.settings-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  background: var(--color-bg-primary);
-  position: relative;
-}
-
 /* Ambient Glow */
 .ambient-glow {
   position: absolute;
@@ -502,60 +494,6 @@ function cancelImport() {
   filter: blur(100px);
   border-radius: 50%;
   pointer-events: none;
-}
-
-/* Header */
-.page-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 48px 20px 16px;
-  background: rgba(23, 24, 17, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.page-header h1 {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.back-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #282828;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  background: #333333;
-}
-
-.back-btn:active {
-  transform: scale(0.95);
-}
-
-.back-icon {
-  font-size: 20px;
-  line-height: 1;
-  color: #FFFFFF;
-}
-
-.header-spacer {
-  width: 40px;
 }
 
 /* Main Content */
