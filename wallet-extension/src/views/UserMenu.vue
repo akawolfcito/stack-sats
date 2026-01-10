@@ -515,6 +515,14 @@ function cancelImport() {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Popup mode: compact spacing */
+@media (max-height: 640px) {
+  .page-content {
+    gap: 16px;
+    padding: 4px 12px 24px;
+  }
+}
+
 /* Delete Button (inside ListRow) */
 .delete-btn {
   width: 28px;
