@@ -41,6 +41,7 @@ import ReceiveModal from "../components/ReceiveModal.vue";
 import SegmentedTabs from "../components/SegmentedTabs.vue";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
+import NetworkChip from "../components/network/NetworkChip.vue";
 
 const router = useRouter();
 
@@ -403,22 +404,13 @@ const showReceiveModal = ref(false);
 // Account dropdown state
 const showAccountDropdown = ref(false);
 
-// Network dropdown state
-const showNetworkDropdown = ref(false);
-
 const toggleAccountDropdown = () => {
   showAccountDropdown.value = !showAccountDropdown.value;
-  showNetworkDropdown.value = false; // Close network dropdown
 };
 
-const toggleNetworkDropdown = () => {
-  showNetworkDropdown.value = !showNetworkDropdown.value;
-  showAccountDropdown.value = false; // Close account dropdown
-};
-
-const selectNetwork = (network: NetworkName) => {
+// Handle network selection from NetworkChip
+const handleNetworkSelect = (network: NetworkName) => {
   selectedNetwork.value = network;
-  showNetworkDropdown.value = false;
 };
 
 const selectAccount = (index: number) => {
@@ -487,38 +479,12 @@ const closeReceiveModal = () => {
           </div>
         </div>
 
-        <!-- Network Badge -->
-        <div class="network-badge-wrapper" @click="toggleNetworkDropdown">
-          <div
-            class="network-badge"
-            :class="{
-              'network-testnet': selectedNetwork === 'testnet',
-              'network-mainnet': selectedNetwork === 'mainnet',
-              'network-devnet': selectedNetwork === 'devnet'
-            }"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
-              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
-              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-              <line x1="12" y1="20" x2="12.01" y2="20"/>
-            </svg>
-          </div>
-
-          <!-- Network Dropdown -->
-          <div v-if="showNetworkDropdown" class="network-dropdown">
-            <div
-              v-for="(network, key) in NETWORKS"
-              :key="key"
-              class="network-dropdown-item"
-              :class="{ 'active': key === selectedNetwork }"
-              @click.stop="selectNetwork(key as NetworkName)"
-            >
-              <span>{{ network.name }}</span>
-              <span v-if="key === selectedNetwork" class="checkmark">✓</span>
-            </div>
-          </div>
-        </div>
+        <!-- Network Chip -->
+        <NetworkChip
+          :network="selectedNetwork"
+          :label="NETWORKS[selectedNetwork].name"
+          @select="handleNetworkSelect"
+        />
       </header>
 
       <!-- Compact Balance Section -->
@@ -936,77 +902,7 @@ const closeReceiveModal = () => {
   cursor: not-allowed;
 }
 
-/* Network Badge */
-.network-badge-wrapper {
-  position: relative;
-  cursor: pointer;
-}
-
-.network-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.network-badge.network-mainnet {
-  color: var(--color-accent-primary);
-}
-
-.network-badge.network-testnet {
-  color: var(--color-accent-primary);
-}
-
-.network-badge.network-devnet {
-  color: var(--color-warning);
-}
-
-/* Network Dropdown */
-.network-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 140px;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  z-index: 100;
-  overflow: hidden;
-}
-
-.network-dropdown-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md);
-  cursor: pointer;
-  transition: background 0.15s ease;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  text-transform: capitalize;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.network-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.network-dropdown-item:hover {
-  background: var(--color-bg-card-hover);
-}
-
-.network-dropdown-item.active {
-  background: rgba(232, 248, 89, 0.1);
-}
-
-.checkmark {
-  color: var(--color-accent-primary);
-}
+/* Network Chip styles are in the component */
 
 /* Balance Hero */
 .balance-hero {
