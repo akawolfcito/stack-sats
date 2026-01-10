@@ -37,6 +37,10 @@ const showPinInput = ref(false);
 const deleteError = ref("");
 const walletToDelete = ref<string | null>(null);
 
+// Per-wallet removal confirmation
+const showRemoveWalletConfirm = ref(false);
+const walletToRemove = ref<WalletEntry | null>(null);
+
 const CONFIRM_WORD = "DELETE";
 
 // Backup state
@@ -76,6 +80,42 @@ function handleManageTokens() {
 
 function toggleManageWallets() {
   isManagingWallets.value = !isManagingWallets.value;
+}
+
+// Per-wallet removal (lighter confirmation)
+function initiateRemoveWallet(walletId: string) {
+  const wallet = wallets.value.find(w => w.id === walletId);
+  if (wallet) {
+    walletToRemove.value = wallet;
+    showRemoveWalletConfirm.value = true;
+  }
+}
+
+function cancelRemoveWallet() {
+  showRemoveWalletConfirm.value = false;
+  walletToRemove.value = null;
+}
+
+async function confirmRemoveWallet() {
+  if (!walletToRemove.value) return;
+
+  const isActive = walletToRemove.value.id === activeWalletId.value;
+  await deleteWalletAsync(walletToRemove.value.id);
+
+  await loadWallets();
+  showRemoveWalletConfirm.value = false;
+  walletToRemove.value = null;
+  isManagingWallets.value = false;
+
+  if (wallets.value.length === 0) {
+    sessionManager.lock();
+    router.push({ path: "/" });
+  } else if (isActive) {
+    sessionManager.lock();
+    router.push({ path: "/unlock" });
+  }
+
+  secureLog("Wallet removed from device");
 }
 
 function initiateDelete(walletId?: string) {
@@ -294,7 +334,7 @@ function cancelImport() {
           <template v-if="isManagingWallets" #right>
             <button
               class="delete-btn"
-              @click.stop="initiateDelete(wallet.id)"
+              @click.stop="initiateRemoveWallet(wallet.id)"
               title="Remove wallet"
             >
               <span class="delete-icon">×</span>
@@ -439,6 +479,30 @@ function cancelImport() {
         <p v-if="deleteError" class="error-text">{{ deleteError }}</p>
       </div>
     </div>
+
+    <!-- Remove Wallet Confirmation Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showRemoveWalletConfirm" class="modal-overlay" @click.self="cancelRemoveWallet">
+          <div class="modal-card">
+            <div class="modal-icon modal-icon--danger">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </div>
+            <h3>Remove wallet?</h3>
+            <p>
+              "<strong>{{ walletToRemove?.name }}</strong>" will be removed from this device only.
+              Your funds remain safe if you have your recovery phrase.
+            </p>
+            <div class="button-group">
+              <button class="btn-secondary" @click="cancelRemoveWallet">Cancel</button>
+              <button class="btn-danger" @click="confirmRemoveWallet">Remove</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Backup PIN Modal -->
     <Teleport to="body">
@@ -809,6 +873,11 @@ function cancelImport() {
 .modal-icon--warning {
   background: rgba(251, 191, 36, 0.1);
   color: var(--color-warning);
+}
+
+.modal-icon--danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
 }
 
 .modal-card h3 {
