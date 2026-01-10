@@ -221,10 +221,7 @@ function handleAddToken() {
           </svg>
         </div>
         <h4 class="empty-title">No custom tokens yet</h4>
-        <p class="empty-text">Add tokens from other contracts to track them in your wallet</p>
-        <button class="empty-cta" @click="handleAddToken">
-          Add Token
-        </button>
+        <p class="empty-text">Tap the + button to add tokens from other contracts</p>
       </div>
 
       <!-- No Results -->
@@ -371,28 +368,6 @@ function handleAddToken() {
   margin: 0 0 var(--space-lg);
   max-width: 240px;
   line-height: 1.5;
-}
-
-.empty-cta {
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
-  border: none;
-  border-radius: var(--radius-pill);
-  padding: var(--space-md) var(--space-xl);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  cursor: pointer;
-  transition: all var(--transition-base);
-  box-shadow: 0 4px 12px var(--color-accent-primary-muted);
-}
-
-.empty-cta:hover {
-  transform: scale(1.02);
-  box-shadow: 0 6px 16px var(--color-accent-primary-muted);
-}
-
-.empty-cta:active {
-  transform: scale(0.98);
 }
 
 /* Add Hint */
