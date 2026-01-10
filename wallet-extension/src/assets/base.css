@@ -92,29 +92,7 @@
   --icon-size-lg: 24px;
 }
 
-/* === Compact Density (Auto: triggers on narrow or short viewport) === */
-@media (max-width: 480px), (max-height: 640px) {
-  :root:not([data-density="comfortable"]) {
-    /* Reduced heights */
-    --header-h: 44px;
-    --row-h: 44px;
-    --control-h: 44px;
-    --icon-btn-size: 32px;
-
-    /* Tighter spacing */
-    --section-gap: 16px;
-    --card-pad: var(--space-md);
-    --card-pad-x: var(--space-md);
-    --card-pad-y: var(--space-sm);
-
-    /* Slightly smaller icons */
-    --icon-size-sm: 14px;
-    --icon-size-md: 18px;
-    --icon-size-lg: 20px;
-  }
-}
-
-/* === Explicit Density Mode: Compact === */
+/* === Density Mode: Explicit Compact (user choice, always wins) === */
 :root[data-density="compact"] {
   --header-h: 44px;
   --row-h: 44px;
@@ -131,8 +109,8 @@
   --icon-size-lg: 20px;
 }
 
-/* === Explicit Density Mode: Comfortable (force default even on small viewports) === */
-:root[data-density="comfortable"] {
+/* === Density Mode: Explicit Comfy (user choice, always wins) === */
+:root[data-density="comfy"] {
   --header-h: 56px;
   --row-h: 52px;
   --control-h: 52px;
@@ -146,6 +124,27 @@
   --icon-size-sm: 16px;
   --icon-size-md: 20px;
   --icon-size-lg: 24px;
+}
+
+/* === Density Mode: Auto (small viewport triggers compact) === */
+/* Only applies when NO explicit user choice (no attr or auto) */
+@media (max-width: 480px), (max-height: 640px) {
+  :root:not([data-density]),
+  :root[data-density="auto"] {
+    --header-h: 44px;
+    --row-h: 44px;
+    --control-h: 44px;
+    --icon-btn-size: 32px;
+
+    --section-gap: 16px;
+    --card-pad: var(--space-md);
+    --card-pad-x: var(--space-md);
+    --card-pad-y: var(--space-sm);
+
+    --icon-size-sm: 14px;
+    --icon-size-md: 18px;
+    --icon-size-lg: 20px;
+  }
 }
 
 *,
