@@ -14,6 +14,8 @@ import {
 } from "@/utils/accounts/settings";
 import AddressCard from "@/components/account/AddressCard.vue";
 import AddressQrModal from "@/components/account/AddressQrModal.vue";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -135,15 +137,14 @@ function handleClose() {
 </script>
 
 <template>
-  <div class="account-details-view">
-    <!-- Header -->
-    <header class="header">
-      <button class="back-btn" @click="handleBack">
-        <span class="back-arrow">&larr;</span>
-      </button>
-      <h1 class="title">Account Details</h1>
-      <div class="header-spacer"></div>
-    </header>
+  <ScreenShell :padded="false">
+    <template #header>
+      <AppHeader
+        title="Account Details"
+        left="back"
+        @left-click="handleBack"
+      />
+    </template>
 
     <!-- Loading -->
     <div v-if="isLoading" class="loading-state">
@@ -291,59 +292,10 @@ function handleClose() {
       :assetTag="qrModalAsset"
       @close="handleCloseQr"
     />
-  </div>
+  </ScreenShell>
 </template>
 
 <style scoped>
-.account-details-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--color-bg-primary);
-}
-
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-md);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: var(--color-bg-primary);
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 1.25rem;
-  cursor: pointer;
-  padding: var(--space-sm);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-pill);
-}
-
-.back-btn:hover {
-  background: var(--color-bg-card);
-}
-
-.title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.header-spacer {
-  width: 40px;
-}
-
 /* Loading State */
 .loading-state {
   flex: 1;
