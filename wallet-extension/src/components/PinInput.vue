@@ -246,8 +246,8 @@ const modeLabels = {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  height: 40px;
+  gap: var(--space-lg);
+  height: var(--icon-btn-size);
 }
 
 /* PIN Dots */
@@ -316,20 +316,20 @@ const modeLabels = {
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2px 16px;
+  gap: var(--space-xs) var(--space-lg);
   width: 100%;
   max-width: 280px;
 }
 
 .keypad-btn {
-  width: 72px;
-  height: 56px;
-  border-radius: 28px;
+  width: calc(var(--icon-btn-size) * 1.8);
+  height: var(--control-h);
+  border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;
   justify-self: center;
-  font-size: 28px;
+  font-size: var(--font-size-2xl);
   font-weight: 300;
   color: var(--color-text-primary);
   background: transparent;
