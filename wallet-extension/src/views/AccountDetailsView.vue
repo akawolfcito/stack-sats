@@ -12,6 +12,8 @@ import {
   hideAccount,
   showAccount,
 } from "@/utils/accounts/settings";
+import AddressCard from "@/components/account/AddressCard.vue";
+import AddressQrModal from "@/components/account/AddressQrModal.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -22,8 +24,13 @@ const accountName = ref("");
 const isHidden = ref(false);
 const isLoading = ref(true);
 const isSavingName = ref(false);
-const copiedField = ref<string | null>(null);
 const network = ref<NetworkName>("devnet");
+
+// QR Modal state
+const qrModalOpen = ref(false);
+const qrModalLabel = ref("");
+const qrModalAddress = ref("");
+const qrModalAsset = ref<"STX" | "BTC" | "P2TR">("STX");
 
 // Get account index from route params
 const accountIndex = computed(() => {
@@ -94,16 +101,22 @@ async function toggleHidden() {
   }
 }
 
-async function copyToClipboard(text: string, field: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    copiedField.value = field;
-    setTimeout(() => {
-      copiedField.value = null;
-    }, 2000);
-  } catch (error) {
-    console.error("Failed to copy:", error);
+function handleShowQr(address: string, label: string) {
+  qrModalAddress.value = address;
+  qrModalLabel.value = label;
+  // Determine asset type from label
+  if (label.toLowerCase().includes("stx") || label.toLowerCase().includes("stacks")) {
+    qrModalAsset.value = "STX";
+  } else if (label.toLowerCase().includes("taproot") || label.toLowerCase().includes("p2tr")) {
+    qrModalAsset.value = "P2TR";
+  } else {
+    qrModalAsset.value = "BTC";
   }
+  qrModalOpen.value = true;
+}
+
+function handleCloseQr() {
+  qrModalOpen.value = false;
 }
 
 function handleViewPrivateKey() {
@@ -170,64 +183,38 @@ function handleClose() {
       <!-- Addresses Section -->
       <div class="section">
         <h3 class="section-title">Addresses</h3>
-        <div class="card">
+        <div class="addresses-list">
           <!-- STX Address -->
-          <div class="address-row">
-            <div class="address-info">
-              <div class="address-icon stx">STX</div>
-              <div class="address-content">
-                <p class="address-label">Stacks Address</p>
-                <p class="address-value">{{ truncateAddress(account.stxAddress, 8) }}</p>
-              </div>
-            </div>
-            <button
-              class="copy-btn"
-              :class="{ copied: copiedField === 'stx' }"
-              @click="copyToClipboard(account.stxAddress, 'stx')"
-            >
-              {{ copiedField === 'stx' ? '&#10003;' : '&#x2398;' }}
-            </button>
-          </div>
-
-          <div class="divider"></div>
+          <AddressCard
+            label="Stacks Address"
+            :address="account.stxAddress"
+            subtitle="STX & SIP-10 tokens"
+            assetTag="STX"
+            safetyMessage="Only send STX to this address."
+            @showQr="handleShowQr"
+          />
 
           <!-- BTC P2PKH Address -->
-          <div class="address-row">
-            <div class="address-info">
-              <div class="address-icon btc">BTC</div>
-              <div class="address-content">
-                <p class="address-label">Bitcoin (P2PKH)</p>
-                <p class="address-value">{{ truncateAddress(account.btcP2PKHAddress, 8) }}</p>
-              </div>
-            </div>
-            <button
-              class="copy-btn"
-              :class="{ copied: copiedField === 'btc-p2pkh' }"
-              @click="copyToClipboard(account.btcP2PKHAddress, 'btc-p2pkh')"
-            >
-              {{ copiedField === 'btc-p2pkh' ? '&#10003;' : '&#x2398;' }}
-            </button>
-          </div>
-
-          <div class="divider"></div>
+          <AddressCard
+            v-if="account.btcP2PKHAddress"
+            label="Bitcoin (Legacy)"
+            :address="account.btcP2PKHAddress"
+            subtitle="P2PKH"
+            assetTag="BTC"
+            safetyMessage="Only send BTC to this address."
+            @showQr="handleShowQr"
+          />
 
           <!-- BTC P2TR Address -->
-          <div class="address-row">
-            <div class="address-info">
-              <div class="address-icon btc-tr">P2TR</div>
-              <div class="address-content">
-                <p class="address-label">Bitcoin (Taproot)</p>
-                <p class="address-value">{{ truncateAddress(account.btcP2TRAddress, 8) }}</p>
-              </div>
-            </div>
-            <button
-              class="copy-btn"
-              :class="{ copied: copiedField === 'btc-p2tr' }"
-              @click="copyToClipboard(account.btcP2TRAddress, 'btc-p2tr')"
-            >
-              {{ copiedField === 'btc-p2tr' ? '&#10003;' : '&#x2398;' }}
-            </button>
-          </div>
+          <AddressCard
+            v-if="account.btcP2TRAddress"
+            label="Bitcoin (Taproot)"
+            :address="account.btcP2TRAddress"
+            subtitle="P2TR"
+            assetTag="P2TR"
+            safetyMessage="Only send BTC to this address."
+            @showQr="handleShowQr"
+          />
         </div>
       </div>
 
@@ -295,6 +282,15 @@ function handleClose() {
         Close
       </button>
     </main>
+
+    <!-- QR Modal -->
+    <AddressQrModal
+      :isOpen="qrModalOpen"
+      :label="qrModalLabel"
+      :address="qrModalAddress"
+      :assetTag="qrModalAsset"
+      @close="handleCloseQr"
+    />
   </div>
 </template>
 
@@ -497,88 +493,11 @@ function handleClose() {
   margin: 0 var(--space-lg);
 }
 
-/* Address Row */
-.address-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-}
-
-.address-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.address-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-}
-
-.address-icon.stx {
-  background: linear-gradient(135deg, rgba(85, 70, 255, 0.2), rgba(124, 58, 237, 0.2));
-  color: #7c3aed;
-  border: 1px solid rgba(124, 58, 237, 0.3);
-}
-
-.address-icon.btc {
-  background: linear-gradient(135deg, rgba(247, 147, 26, 0.2), rgba(255, 184, 77, 0.2));
-  color: #f7931a;
-  border: 1px solid rgba(247, 147, 26, 0.3);
-}
-
-.address-icon.btc-tr {
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(244, 114, 182, 0.2));
-  color: #ec4899;
-  border: 1px solid rgba(236, 72, 153, 0.3);
-}
-
-.address-content {
+/* Addresses List */
+.addresses-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.address-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.address-value {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  margin: 0;
-}
-
-.copy-btn {
-  background: none;
-  border: none;
-  padding: var(--space-sm);
-  cursor: pointer;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-lg);
-  border-radius: var(--radius-sm);
-  width: auto;
-  transition: all var(--transition-fast);
-}
-
-.copy-btn:hover {
-  color: var(--color-accent-primary);
-  background: var(--color-bg-elevated);
-}
-
-.copy-btn.copied {
-  color: var(--color-success);
+  gap: var(--space-sm);
 }
 
 /* Action Row */
