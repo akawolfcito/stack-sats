@@ -34,10 +34,10 @@ function normalize(value: unknown): DensityMode {
   }
 
   if (isDev && value !== null && value !== undefined) {
-    console.warn(`[DensityService] Invalid density "${value}", defaulting to "auto"`);
+    console.warn(`[DensityService] Invalid density "${value}", defaulting to "compact"`);
   }
 
-  return 'auto';
+  return 'compact';
 }
 
 /**
