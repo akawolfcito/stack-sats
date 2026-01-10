@@ -294,7 +294,7 @@ function cancelImport() {
 </script>
 
 <template>
-  <ScreenShell :padded="false">
+  <ScreenShell :padded="false" class="settings-view">
     <template #header>
       <AppHeader
         title="Settings"
@@ -560,6 +560,12 @@ function cancelImport() {
 </template>
 
 <style scoped>
+/* Settings-specific density overrides for tighter layout */
+.settings-view {
+  --section-gap: 12px;
+  --card-pad-y: 6px;
+}
+
 /* Ambient Glow */
 .ambient-glow {
   position: absolute;
