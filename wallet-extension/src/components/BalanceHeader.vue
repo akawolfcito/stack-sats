@@ -47,14 +47,14 @@ const emit = defineEmits<{
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 12px 16px;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--card-pad-x);
 }
 
 .balance-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .balance-amount {
@@ -88,8 +88,8 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   padding: 0;
   background: transparent;
   border: none;
@@ -105,16 +105,11 @@ const emit = defineEmits<{
 }
 
 .balance-usd {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-text-muted);
-  padding: 4px 12px;
+  padding: var(--space-xs) var(--space-md);
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-}
-
-.mode-popup .balance-usd {
-  font-size: 12px;
-  padding: 3px 10px;
+  border-radius: var(--radius-lg);
 }
 </style>
