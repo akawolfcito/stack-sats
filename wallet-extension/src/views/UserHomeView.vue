@@ -45,6 +45,7 @@ import {
 } from "../utils/transactions";
 import ReceiveModal from "../components/ReceiveModal.vue";
 import SegmentedTabs from "../components/SegmentedTabs.vue";
+import { Button } from "@/components/ui";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import NetworkChip from "../components/network/NetworkChip.vue";
@@ -603,20 +604,20 @@ const handleManageTokens = () => {
 
       <!-- Action Buttons -->
       <section class="actions">
-        <button class="action-btn action-btn-primary" @click="handleSend">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
+        <Button variant="primary" @click="handleSend">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="19" x2="12" y2="5"/>
             <polyline points="5 12 12 5 19 12"/>
           </svg>
           <span>Send</span>
-        </button>
-        <button class="action-btn action-btn-secondary" @click="openReceiveModal">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
+        </Button>
+        <Button variant="secondary" @click="openReceiveModal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <polyline points="19 12 12 19 5 12"/>
           </svg>
           <span>Receive</span>
-        </button>
+        </Button>
       </section>
 
       <!-- Segmented Tabs (both modes - unified navigation) -->
@@ -932,43 +933,9 @@ const handleManageTokens = () => {
   margin-bottom: var(--space-lg);
 }
 
-.action-btn {
+/* Action buttons use unified Button component */
+.actions :deep(.btn) {
   flex: 1;
-  height: var(--control-h);
-  border-radius: var(--radius-pill);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-}
-
-.action-btn:active {
-  transform: scale(0.95);
-}
-
-.action-btn-primary {
-  background: var(--color-accent-primary);
-  color: #0a0a0a;
-  box-shadow: 0 0 20px -5px rgba(232, 248, 89, 0.3);
-}
-
-.action-btn-primary:hover {
-  filter: brightness(1.1);
-}
-
-.action-btn-secondary {
-  background: #1a1a1a;
-  color: var(--color-text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.action-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Assets Section */
