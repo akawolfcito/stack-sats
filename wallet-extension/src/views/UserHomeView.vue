@@ -521,6 +521,12 @@ const openReceiveModal = () => {
 const closeReceiveModal = () => {
   showReceiveModal.value = false;
 };
+
+// Handle token click - navigate to send token view
+const handleTokenClick = (token: TokenInfo) => {
+  const tokenKey = `${selectedNetwork.value}:${token.contractId}`;
+  router.push({ path: `/send-token/${encodeURIComponent(tokenKey)}` });
+};
 </script>
 
 <template>
@@ -639,8 +645,9 @@ const closeReceiveModal = () => {
             <div
               v-for="token in tokens"
               :key="token.contractId"
-              class="token-item"
+              class="token-item token-item--clickable"
               :title="token.contractId"
+              @click="handleTokenClick(token)"
             >
               <div class="token-icon">
                 <img
@@ -1033,6 +1040,14 @@ const closeReceiveModal = () => {
 .token-item:hover {
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
+}
+
+.token-item--clickable {
+  cursor: pointer;
+}
+
+.token-item--clickable:active {
+  transform: scale(0.98);
 }
 
 .token-icon {
