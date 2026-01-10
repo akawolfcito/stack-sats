@@ -42,6 +42,7 @@ import SegmentedTabs from "../components/SegmentedTabs.vue";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import NetworkChip from "../components/network/NetworkChip.vue";
+import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 
 const router = useRouter();
 
@@ -127,6 +128,26 @@ const totalValueUsd = computed(() => {
 const currentAccountName = computed(() => {
   return accountNames.value[accountIndexToDisplay.value] || `Account ${accountIndexToDisplay.value + 1}`;
 });
+
+// Current account address (short)
+const currentAccountAddressShort = computed(() => {
+  const address = userAccounts.value[accountIndexToDisplay.value]?.stxAddress || '';
+  return truncateAddress(address);
+});
+
+// Account items for AccountSwitcher component
+const accountItems = computed<AccountItem[]>(() => {
+  return userAccounts.value.map((account, index) => ({
+    index,
+    label: accountNames.value[index] || `Account ${index + 1}`,
+    addressShort: truncateAddress(account.stxAddress),
+  }));
+});
+
+// Handle account selection from AccountSwitcher
+const handleAccountSelect = (index: number) => {
+  accountIndexToDisplay.value = index;
+};
 
 // Asset items for AssetList component
 const assetItems = computed<AssetRowModel[]>(() => {
@@ -401,21 +422,9 @@ const truncateAddress = (address: string) => {
 // Receive modal state
 const showReceiveModal = ref(false);
 
-// Account dropdown state
-const showAccountDropdown = ref(false);
-
-const toggleAccountDropdown = () => {
-  showAccountDropdown.value = !showAccountDropdown.value;
-};
-
 // Handle network selection from NetworkChip
 const handleNetworkSelect = (network: NetworkName) => {
   selectedNetwork.value = network;
-};
-
-const selectAccount = (index: number) => {
-  accountIndexToDisplay.value = index;
-  showAccountDropdown.value = false;
 };
 
 const openReceiveModal = () => {
@@ -444,40 +453,15 @@ const closeReceiveModal = () => {
           <span class="menu-icon-text">☰</span>
         </button>
 
-        <!-- Account Selector Pill -->
-        <div class="account-pill" @click="toggleAccountDropdown">
-          <div class="account-pill-dot"></div>
-          <div class="account-pill-info">
-            <span class="account-pill-label">{{ currentAccountName }}</span>
-            <span class="account-pill-address">{{ truncateAddress(userAccounts[accountIndexToDisplay]?.stxAddress || '') }}</span>
-          </div>
-          <svg class="account-pill-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-
-          <!-- Account Dropdown -->
-          <div v-if="showAccountDropdown" class="account-dropdown">
-            <div
-              v-for="(account, index) in userAccounts"
-              :key="index"
-              class="account-dropdown-item"
-              :class="{ 'active': index === accountIndexToDisplay }"
-              @click.stop="selectAccount(index)"
-            >
-              <span class="account-dropdown-name">{{ getDisplayName(index) }}</span>
-              <span class="account-dropdown-address">{{ truncateAddress(account.stxAddress) }}</span>
-            </div>
-            <div class="account-dropdown-footer">
-              <button
-                class="add-account-btn"
-                @click.stop="handleAddAccount"
-                :disabled="accountCount >= 100"
-              >
-                + Add Account
-              </button>
-            </div>
-          </div>
-        </div>
+        <!-- Account Switcher -->
+        <AccountSwitcher
+          :current-label="currentAccountName"
+          :current-address-short="currentAccountAddressShort"
+          :accounts="accountItems"
+          :can-add-account="accountCount < 100"
+          @select="handleAccountSelect"
+          @add-account="handleAddAccount"
+        />
 
         <!-- Network Chip -->
         <NetworkChip
@@ -766,143 +750,7 @@ const closeReceiveModal = () => {
   color: #FFFFFF;
 }
 
-/* Account Pill */
-.account-pill {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  box-shadow: inset 1px 1px 0 0 rgba(255, 255, 255, 0.05);
-}
-
-.account-pill:active {
-  transform: scale(0.95);
-}
-
-.account-pill-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-accent-primary);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.account-pill-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.2;
-}
-
-.account-pill-label {
-  font-size: 10px;
-  color: var(--color-text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.account-pill-address {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  font-family: monospace;
-}
-
-.account-pill-arrow {
-  color: var(--color-text-muted);
-}
-
-/* Account Dropdown */
-.account-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 240px;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  z-index: 100;
-  overflow: hidden;
-}
-
-.account-dropdown-item {
-  padding: var(--space-md);
-  cursor: pointer;
-  transition: background 0.15s ease;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.account-dropdown-item:last-of-type {
-  border-bottom: none;
-}
-
-.account-dropdown-item:hover {
-  background: var(--color-bg-card-hover);
-}
-
-.account-dropdown-item.active {
-  background: rgba(232, 248, 89, 0.1);
-}
-
-.account-dropdown-name {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.account-dropdown-address {
-  display: block;
-  font-size: 12px;
-  font-family: monospace;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
-.account-dropdown-footer {
-  padding: var(--space-sm);
-  background: var(--color-bg-card);
-  border-top: 1px solid var(--color-border);
-}
-
-.add-account-btn {
-  width: 100%;
-  padding: var(--space-sm);
-  background: transparent;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.add-account-btn:hover:not(:disabled) {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
-}
-
-.add-account-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Network Chip styles are in the component */
+/* Account Switcher and Network Chip styles are in their respective components */
 
 /* Balance Hero */
 .balance-hero {
