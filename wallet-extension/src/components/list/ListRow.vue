@@ -78,13 +78,13 @@ function handleClick() {
   align-items: center;
   gap: var(--space-sm);
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  min-height: 52px;
+  padding: var(--card-pad-y) var(--card-pad-x);
+  min-height: var(--row-h);
   background: transparent;
   border: none;
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s ease;
+  transition: background var(--transition-fast);
 }
 
 .list-row:hover:not(.list-row--disabled) {
@@ -185,24 +185,5 @@ function handleClick() {
 .list-row-chevron {
   color: var(--color-text-muted);
   flex-shrink: 0;
-}
-
-/* Popup mode: compact row height */
-@media (max-height: 640px) {
-  .list-row {
-    padding: var(--space-xs) var(--space-sm);
-    min-height: 44px;
-    gap: var(--space-xs);
-  }
-
-  .list-row-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-  }
-
-  .icon-plus {
-    font-size: 16px;
-  }
 }
 </style>

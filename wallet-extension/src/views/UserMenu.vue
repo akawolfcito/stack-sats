@@ -507,18 +507,10 @@ function cancelImport() {
   min-height: 0; /* Enable proper flex scroll */
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 8px 16px 32px; /* Extra bottom padding for popup safe-area */
+  gap: var(--section-gap);
+  padding: var(--space-sm) var(--card-pad-x) var(--section-gap);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-}
-
-/* Popup mode: compact spacing */
-@media (max-height: 640px) {
-  .page-content {
-    gap: 16px;
-    padding: 4px 12px 24px;
-  }
 }
 
 /* Delete Button (inside ListRow) */
