@@ -1,19 +1,62 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onBeforeMount } from "vue";
 import { useRouter } from "vue-router";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import FormField from "@/components/forms/FormField.vue";
 import InlineError from "@/components/forms/InlineError.vue";
 import StickyCTA from "@/components/layout/StickyCTA.vue";
+import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
 
 const router = useRouter();
+
+// Storage key for custom tokens
+const CUSTOM_TOKENS_KEY = "custom_tokens";
+
+// Current network
+const currentNetwork = ref<NetworkName>("devnet");
 
 // Form state
 const contractId = ref("");
 const tokenName = ref("");
 const tokenSymbol = ref("");
 const tokenDecimals = ref<number | null>(6);
+
+// Existing custom tokens (for duplicate check)
+const existingTokenKeys = ref<Set<string>>(new Set());
+
+// Load current network and existing tokens
+onBeforeMount(() => {
+  currentNetwork.value = getSelectedNetwork();
+  loadExistingTokens();
+});
+
+// Load existing token keys for duplicate check
+function loadExistingTokens() {
+  try {
+    const stored = localStorage.getItem(CUSTOM_TOKENS_KEY);
+    if (stored) {
+      const tokens = JSON.parse(stored) as Array<{ chainId: string; contractId: string }>;
+      existingTokenKeys.value = new Set(
+        tokens.map((t) => `${t.chainId}:${t.contractId}`)
+      );
+    }
+  } catch {
+    existingTokenKeys.value = new Set();
+  }
+}
+
+// Generate tokenKey for current network + contractId
+const currentTokenKey = computed(() => {
+  if (!contractId.value.trim()) return "";
+  return `${currentNetwork.value}:${contractId.value.trim()}`;
+});
+
+// Check if token already exists
+const isDuplicate = computed(() => {
+  if (!currentTokenKey.value) return false;
+  return existingTokenKeys.value.has(currentTokenKey.value);
+});
 
 // UI state
 const isLoading = ref(false);
@@ -27,14 +70,31 @@ const touched = ref({
   tokenDecimals: false,
 });
 
+// Get expected address prefix for current network
+const expectedPrefix = computed(() => NETWORKS[currentNetwork.value].addressPrefix);
+
 // Validation
 const contractIdError = computed(() => {
   if (!touched.value.contractId || !contractId.value) return "";
+
+  const value = contractId.value.trim();
+
+  // Check address prefix matches network
+  if (!value.startsWith(expectedPrefix.value)) {
+    return `Address must start with ${expectedPrefix.value} for ${NETWORKS[currentNetwork.value].name}`;
+  }
+
   // Basic format: SP/ST + 38+ chars + dot + contract name
   const pattern = /^(SP|ST)[A-Z0-9]{38,}\.[a-zA-Z0-9_-]+(::[\w-]+)?$/;
-  if (!pattern.test(contractId.value.trim())) {
+  if (!pattern.test(value)) {
     return "Invalid format. Use: SP...contract-name or SP...contract::token";
   }
+
+  // Check for duplicate
+  if (isDuplicate.value) {
+    return "Token already added for this network";
+  }
+
   return "";
 });
 
@@ -77,9 +137,16 @@ const isFormValid = computed(() => {
   if (!tokenSymbol.value.trim()) return false;
   if (tokenDecimals.value === null || tokenDecimals.value === undefined) return false;
 
-  // Check no validation errors
+  // Check contract ID format and network prefix
+  const contractValue = contractId.value.trim();
+  if (!contractValue.startsWith(expectedPrefix.value)) return false;
   const pattern = /^(SP|ST)[A-Z0-9]{38,}\.[a-zA-Z0-9_-]+(::[\w-]+)?$/;
-  if (!pattern.test(contractId.value.trim())) return false;
+  if (!pattern.test(contractValue)) return false;
+
+  // Check for duplicate
+  if (isDuplicate.value) return false;
+
+  // Check other field validations
   if (tokenName.value.trim().length < 2 || tokenName.value.trim().length > 32) return false;
   if (tokenSymbol.value.trim().length < 2 || tokenSymbol.value.trim().length > 10) return false;
   if (!/^[A-Z0-9_]+$/i.test(tokenSymbol.value.trim())) return false;
@@ -150,6 +217,12 @@ function handleBack() {
 
     <!-- Content -->
     <div class="add-token-content">
+      <!-- Network Indicator -->
+      <div class="network-indicator">
+        <span class="network-label">Adding to:</span>
+        <span class="network-badge">{{ NETWORKS[currentNetwork].name }}</span>
+      </div>
+
       <!-- Contract ID Field -->
       <FormField
         label="Contract Address"
@@ -274,6 +347,29 @@ function handleBack() {
   padding: var(--space-md) var(--space-lg);
   padding-bottom: 120px;
   overflow-y: auto;
+}
+
+/* Network Indicator */
+.network-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.network-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.network-badge {
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-accent-primary-muted);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* Form Row (side by side fields) */
