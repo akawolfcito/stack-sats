@@ -4,6 +4,7 @@ import { ref } from "vue";
 const props = defineProps<{
   label: string;
   value: string;
+  copyValue?: string;
   copyable?: boolean;
   truncate?: boolean;
   mono?: boolean;
@@ -14,7 +15,7 @@ const copied = ref(false);
 
 function handleCopy() {
   if (!props.copyable) return;
-  navigator.clipboard.writeText(props.value);
+  navigator.clipboard.writeText(props.copyValue ?? props.value);
   copied.value = true;
   setTimeout(() => {
     copied.value = false;
