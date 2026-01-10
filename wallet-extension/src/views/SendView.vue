@@ -3,6 +3,8 @@ import { ref, computed, onBeforeMount, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
 import ConfirmSendModal from "@/components/send/ConfirmSendModal.vue";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
 import { sessionManager } from "@/utils/security/session";
 import { getPrivateKey } from "@/utils/accounts";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
@@ -89,6 +91,19 @@ const networkLabel = computed(() => {
   return labels[network.value] || network.value;
 });
 const senderAddressShort = computed(() => truncateAddress(senderAddress.value));
+
+// Header
+const headerTitle = computed(() => {
+  switch (currentStep.value) {
+    case "form": return "Send STX";
+    case "confirm": return "Confirm Send";
+    case "sending": return "Sending...";
+    case "success": return "Success!";
+    case "error": return "Error";
+    default: return "Send STX";
+  }
+});
+const showBackButton = computed(() => currentStep.value === "form" || currentStep.value === "confirm");
 
 // Load account info
 onBeforeMount(async () => {
@@ -289,29 +304,17 @@ function truncateAddress(address: string): string {
 </script>
 
 <template>
-  <div class="send-view">
-    <!-- Header -->
-    <header class="header">
-      <button
-        v-if="currentStep === 'form' || currentStep === 'confirm'"
-        class="btn-icon back-btn"
-        @click="handleBack"
-      >
-        <span class="back-icon">←</span>
-      </button>
-      <div v-else class="back-spacer"></div>
-      <h1 class="title">
-        <template v-if="currentStep === 'form'">Send STX</template>
-        <template v-else-if="currentStep === 'confirm'">Confirm Send</template>
-        <template v-else-if="currentStep === 'sending'">Sending...</template>
-        <template v-else-if="currentStep === 'success'">Success!</template>
-        <template v-else-if="currentStep === 'error'">Error</template>
-      </h1>
-      <div class="back-spacer"></div>
-    </header>
+  <ScreenShell :padded="false">
+    <template #header>
+      <AppHeader
+        :title="headerTitle"
+        :left="showBackButton ? 'back' : 'none'"
+        @left-click="handleBack"
+      />
+    </template>
 
     <!-- Step: Form -->
-    <main v-if="currentStep === 'form'" class="content">
+    <div v-if="currentStep === 'form'" class="content">
       <!-- From Account Card -->
       <div class="from-card">
         <div class="from-card-glow"></div>
@@ -393,7 +396,7 @@ function truncateAddress(address: string): string {
         </div>
       </div>
 
-    </main>
+    </div>
 
     <!-- Sticky Footer (form step only) -->
     <div v-if="currentStep === 'form'" class="sticky-footer">
@@ -432,7 +435,7 @@ function truncateAddress(address: string): string {
     </div>
 
     <!-- Step: Confirm -->
-    <main v-else-if="currentStep === 'confirm'" class="content content-center">
+    <div v-else-if="currentStep === 'confirm'" class="content content-center">
       <p class="confirm-label">You are sending:</p>
       <p class="confirm-amount">{{ formattedAmount }} <span>STX</span></p>
 
@@ -464,16 +467,16 @@ function truncateAddress(address: string): string {
           @complete="handlePinComplete"
         />
       </div>
-    </main>
+    </div>
 
     <!-- Step: Sending -->
-    <main v-else-if="currentStep === 'sending'" class="content content-center">
+    <div v-else-if="currentStep === 'sending'" class="content content-center">
       <div class="spinner"></div>
       <p class="status-text">Broadcasting transaction...</p>
-    </main>
+    </div>
 
     <!-- Step: Success -->
-    <main v-else-if="currentStep === 'success'" class="content content-center">
+    <div v-else-if="currentStep === 'success'" class="content content-center">
       <div class="result-icon result-icon-success">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3">
           <polyline points="20 6 9 17 4 12"/>
@@ -505,10 +508,10 @@ function truncateAddress(address: string): string {
       </button>
 
       <button class="primary-btn" @click="handleDone">Done</button>
-    </main>
+    </div>
 
     <!-- Step: Error -->
-    <main v-else-if="currentStep === 'error'" class="content content-center">
+    <div v-else-if="currentStep === 'error'" class="content content-center">
       <div class="result-icon result-icon-error">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3">
           <line x1="18" y1="6" x2="6" y2="18"/>
@@ -520,7 +523,7 @@ function truncateAddress(address: string): string {
 
       <button class="primary-btn" @click="handleTryAgain">Try Again</button>
       <button class="secondary-btn" @click="handleDone">Cancel</button>
-    </main>
+    </div>
 
     <!-- Confirm Modal -->
     <ConfirmSendModal
@@ -537,74 +540,10 @@ function truncateAddress(address: string): string {
       @close="handleModalClose"
       @confirm="handleModalConfirm"
     />
-  </div>
+  </ScreenShell>
 </template>
 
 <style scoped>
-.send-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: var(--color-bg-primary);
-}
-
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-xl) var(--space-lg) var(--space-md);
-  background: rgba(10, 10, 10, 0.95);
-  backdrop-filter: blur(8px);
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-accent-primary);
-}
-
-.back-btn:active {
-  transform: scale(0.95);
-}
-
-.back-icon {
-  font-size: 20px;
-  line-height: 1;
-  color: #FFFFFF;
-}
-
-
-.back-spacer {
-  width: 40px;
-}
-
-.title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
 /* Content */
 .content {
   flex: 1 1 auto;
