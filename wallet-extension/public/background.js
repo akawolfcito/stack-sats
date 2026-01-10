@@ -19,6 +19,102 @@ const ALLOWED_ORIGIN_PATTERNS = [
 // Methods that can be auto-approved after first confirmation
 const AUTO_APPROVE_METHODS = ["getAddresses", "stx_getAddresses"];
 
+// ============================================================
+// Request Queue System (v1)
+// Ensures only one request is processed at a time
+// ============================================================
+
+/** @type {Array<RequestContext>} */
+const requestQueue = [];
+
+/** @type {RequestContext|null} */
+let activeRequest = null;
+
+/** @type {number|null} - Window ID of the popup */
+let popupWindowId = null;
+
+/** @type {number|null} - Timeout timer for active request */
+let activeTimeoutId = null;
+
+/** Request timeout in ms (must be < injection.js timeout of 60s) */
+const REQUEST_TIMEOUT_MS = 55000;
+
+/**
+ * @typedef {Object} RequestContext
+ * @property {string} id - JSON-RPC request ID
+ * @property {string} method - RPC method name
+ * @property {object} params - Method parameters
+ * @property {string} origin - Request origin URL
+ * @property {number} tabId - Tab ID to respond to
+ * @property {number} timestamp - When request was received
+ * @property {Function} respond - Callback to send response
+ */
+
+/**
+ * Enqueue a request for processing
+ * @param {RequestContext} ctx
+ */
+function enqueueRequest(ctx) {
+  requestQueue.push(ctx);
+  dispatchNext();
+}
+
+/**
+ * Dispatch the next request in queue if none active
+ */
+function dispatchNext() {
+  if (activeRequest !== null) {
+    return; // Already processing a request
+  }
+
+  if (requestQueue.length === 0) {
+    return; // Nothing to process
+  }
+
+  activeRequest = requestQueue.shift();
+  // TODO: ensurePopupOpenOrFocus()
+  // TODO: sendToUI({ type: 'DAPP_REQUEST', payload: activeRequest })
+  // TODO: Start timeout timer
+}
+
+/**
+ * Clear the active request and advance the queue
+ */
+function clearActive() {
+  if (activeTimeoutId !== null) {
+    clearTimeout(activeTimeoutId);
+    activeTimeoutId = null;
+  }
+  activeRequest = null;
+  dispatchNext();
+}
+
+/**
+ * Ensure popup is open, or focus if already open
+ * @returns {Promise<number>} Window ID
+ */
+async function ensurePopupOpenOrFocus() {
+  // TODO: Implement single-popup policy
+  // - Check if popupWindowId exists and window is still open
+  // - If open, focus it
+  // - If not, create new popup and track ID
+  return popupWindowId;
+}
+
+/**
+ * Send message to the UI (popup)
+ * @param {object} message
+ */
+function sendToUI(message) {
+  // TODO: Implement UI communication
+  // - Use chrome.runtime.sendMessage or tabs.sendMessage
+  // - Handle case where UI is not ready (wait for UI_READY)
+}
+
+// ============================================================
+// End Request Queue System
+// ============================================================
+
 // Rate limiting
 const rateLimiter = {
   requests: new Map(),
