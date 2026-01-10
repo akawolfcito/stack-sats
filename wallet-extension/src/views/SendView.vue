@@ -366,11 +366,15 @@ function truncateAddress(address: string): string {
         </div>
       </div>
 
+    </main>
+
+    <!-- Sticky Footer (form step only) -->
+    <div v-if="currentStep === 'form'" class="sticky-footer">
       <!-- Fee Card -->
       <div class="fee-card">
         <div class="fee-left">
           <div class="fee-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 22V8a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14"/>
               <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
               <path d="M15 6h4a2 2 0 0 1 2 2v6a3 3 0 0 1-3 3h-1"/>
@@ -387,20 +391,18 @@ function truncateAddress(address: string): string {
         </div>
       </div>
 
-      <!-- Submit Button (sticky) -->
-      <div class="sticky-footer">
-        <button
-          class="continue-btn"
-          :disabled="!canSubmit"
-          @click="handleContinue"
-        >
-          <span>Continue</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </button>
-      </div>
-    </main>
+      <!-- Continue Button -->
+      <button
+        class="continue-btn"
+        :disabled="!canSubmit"
+        @click="handleContinue"
+      >
+        <span>Continue</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
 
     <!-- Step: Confirm -->
     <main v-else-if="currentStep === 'confirm'" class="content content-center">
@@ -500,7 +502,8 @@ function truncateAddress(address: string): string {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--color-bg-primary);
 }
 
@@ -561,10 +564,10 @@ function truncateAddress(address: string): string {
 
 /* Content */
 .content {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 0 var(--space-lg);
-  padding-bottom: 140px;
-  overflow-y: auto;
+  padding-bottom: var(--space-md);
+  min-height: 0;
 }
 
 .content-center {
@@ -831,11 +834,11 @@ function truncateAddress(address: string): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  margin-top: var(--space-md);
+  border-radius: 12px;
+  margin-bottom: var(--space-sm);
   cursor: help;
   transition: background 0.15s ease;
 }
@@ -854,10 +857,10 @@ function truncateAddress(address: string): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  border-radius: 6px;
   color: rgba(255, 255, 255, 0.6);
   transition: color 0.15s ease;
 }
@@ -893,14 +896,21 @@ function truncateAddress(address: string): string {
 
 /* Sticky Footer */
 .sticky-footer {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
-  padding: var(--space-lg);
-  padding-top: 40px;
-  background: linear-gradient(to top, var(--color-bg-primary) 60%, transparent);
+  margin-top: auto;
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  background: linear-gradient(
+    to top,
+    var(--color-bg-primary) 70%,
+    rgba(10, 10, 10, 0.95) 85%,
+    transparent
+  );
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 10;
+  /* Safe area for mobile */
+  padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
 }
 
 .continue-btn {
