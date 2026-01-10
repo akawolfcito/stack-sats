@@ -400,6 +400,12 @@ onBeforeMount(async () => {
         </div>
       </div>
 
+      <!-- Zero balance warning -->
+      <div v-if="tokenBalance === '0'" class="zero-balance-notice">
+        <span class="notice-icon">!</span>
+        <span class="notice-text">You don't have any {{ token?.symbol }} tokens to send.</span>
+      </div>
+
       <!-- Recipient -->
       <FormField
         label="Recipient"
@@ -732,6 +738,36 @@ onBeforeMount(async () => {
 .max-btn:hover {
   background: var(--color-accent-primary);
   color: var(--color-bg-primary);
+}
+
+/* Zero Balance Notice */
+.zero-balance-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: var(--radius-lg);
+}
+
+.notice-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(234, 179, 8, 0.3);
+  border-radius: 50%;
+  color: #fbbf24;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+.notice-text {
+  font-size: var(--font-size-sm);
+  color: rgba(253, 224, 71, 0.9);
 }
 
 /* Fee Notice */
