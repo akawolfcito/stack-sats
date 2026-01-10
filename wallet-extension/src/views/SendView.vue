@@ -2,6 +2,7 @@
 import { ref, computed, onBeforeMount, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
+import ConfirmSendModal from "@/components/send/ConfirmSendModal.vue";
 import { sessionManager } from "@/utils/security/session";
 import { getPrivateKey } from "@/utils/accounts";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
@@ -47,6 +48,9 @@ const amountError = ref("");
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
 const pinError = ref("");
 
+// Confirm Modal
+const showConfirmModal = ref(false);
+
 // Computed
 const formattedBalance = computed(() => formatStxDisplay(microStxToStx(balanceMicroStx.value)));
 const formattedFee = computed(() => formatStxDisplay(microStxToStx(TRANSFER_FEE_MICRO_STX)));
@@ -74,6 +78,17 @@ const truncatedRecipient = computed(() => {
 const canSubmit = computed(() => {
   return recipient.value.trim() && amount.value.trim() && !recipientError.value && !amountError.value;
 });
+
+// Modal props
+const networkLabel = computed(() => {
+  const labels: Record<NetworkName, string> = {
+    mainnet: "Mainnet",
+    testnet: "Testnet",
+    devnet: "Devnet",
+  };
+  return labels[network.value] || network.value;
+});
+const senderAddressShort = computed(() => truncateAddress(senderAddress.value));
 
 // Load account info
 onBeforeMount(async () => {
@@ -193,6 +208,15 @@ function handleContinue() {
     return;
   }
 
+  showConfirmModal.value = true;
+}
+
+function handleModalClose() {
+  showConfirmModal.value = false;
+}
+
+function handleModalConfirm() {
+  showConfirmModal.value = false;
   currentStep.value = "confirm";
   nextTick(() => {
     pinInputRef.value?.focus();
@@ -497,6 +521,22 @@ function truncateAddress(address: string): string {
       <button class="primary-btn" @click="handleTryAgain">Try Again</button>
       <button class="secondary-btn" @click="handleDone">Cancel</button>
     </main>
+
+    <!-- Confirm Modal -->
+    <ConfirmSendModal
+      :is-open="showConfirmModal"
+      :network-label="networkLabel"
+      :from-label="accountName"
+      :from-address-short="senderAddressShort"
+      :to-address="recipient.trim()"
+      :to-address-short="truncatedRecipient"
+      :amount-text="`${formattedAmount} STX`"
+      :fee-text="`${formattedFee} STX`"
+      :total-text="`${formattedTotal} STX`"
+      :memo="memo.trim() || undefined"
+      @close="handleModalClose"
+      @confirm="handleModalConfirm"
+    />
   </div>
 </template>
 
