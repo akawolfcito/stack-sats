@@ -212,15 +212,30 @@ function handleAddToken() {
         />
       </div>
 
+      <!-- Empty State: No custom tokens yet -->
+      <div v-else-if="customTokens.length === 0 && !searchQuery" class="empty-state">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v12M6 12h12"/>
+          </svg>
+        </div>
+        <h4 class="empty-title">No custom tokens yet</h4>
+        <p class="empty-text">Add tokens from other contracts to track them in your wallet</p>
+        <button class="empty-cta" @click="handleAddToken">
+          Add Token
+        </button>
+      </div>
+
       <!-- No Results -->
       <TokenList
-        v-if="filteredTokens.length === 0"
+        v-if="filteredTokens.length === 0 && searchQuery"
         :items="[]"
         emptyText="No tokens found. Try a different search."
       />
 
-      <!-- Add Token Hint -->
-      <div class="add-hint">
+      <!-- Add Token Hint (show only when there are custom tokens) -->
+      <div v-if="customTokens.length > 0" class="add-hint">
         <button class="add-link" @click="handleAddToken">
           + Add custom token
         </button>
@@ -318,6 +333,66 @@ function handleAddToken() {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0 0 var(--space-sm) var(--space-xs);
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a855f7;
+  margin-bottom: var(--space-lg);
+}
+
+.empty-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-sm);
+}
+
+.empty-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-lg);
+  max-width: 240px;
+  line-height: 1.5;
+}
+
+.empty-cta {
+  background: var(--color-accent-primary);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: var(--space-md) var(--space-xl);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 4px 12px var(--color-accent-primary-muted);
+}
+
+.empty-cta:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px var(--color-accent-primary-muted);
+}
+
+.empty-cta:active {
+  transform: scale(0.98);
 }
 
 /* Add Hint */
