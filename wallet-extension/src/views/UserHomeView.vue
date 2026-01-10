@@ -622,6 +622,20 @@ const closeReceiveModal = () => {
 
       <!-- Activity (show when activity tab is active) -->
       <section v-if="activeTab === 'activity'" class="activity-section">
+        <div class="section-header">
+          <h2 class="section-title">Recent Activity</h2>
+          <button
+            class="refresh-btn"
+            @click="loadTransactions"
+            :disabled="isLoadingTx"
+            title="Refresh"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" :class="{ 'animate-spin': isLoadingTx }">
+              <path d="M23 4v6h-6M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+        </div>
         <ActivityList
           :items="activityItems"
           :loading="isLoadingTx"
