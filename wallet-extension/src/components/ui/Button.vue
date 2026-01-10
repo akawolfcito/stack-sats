@@ -134,27 +134,30 @@ const classes = computed(() => [
 .btn--primary {
   background: var(--color-accent-primary);
   color: #0a0a0a;
-  box-shadow: 0 0 20px rgba(215, 248, 46, 0.25);
+  /* Subtle glow - not a halo */
+  box-shadow: 0 2px 8px rgba(215, 248, 46, 0.15);
 }
 
 .btn--primary:hover:not(:disabled) {
-  box-shadow: 0 0 35px rgba(215, 248, 46, 0.4);
+  box-shadow: 0 4px 12px rgba(215, 248, 46, 0.25);
 }
 
 .btn--primary:active:not(:disabled) {
   transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(215, 248, 46, 0.1);
 }
 
 /* === Variant: Secondary === */
 .btn--secondary {
-  background: transparent;
+  /* Dark fill + border for weight and contrast */
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
 }
 
 .btn--secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-bg-card-hover);
   border-color: var(--color-border-hover);
 }
 
@@ -182,15 +185,17 @@ const classes = computed(() => [
 .btn--danger {
   background: var(--color-error);
   color: #ffffff;
-  box-shadow: 0 0 20px rgba(255, 107, 107, 0.25);
+  /* Subtle glow - not a halo */
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.15);
 }
 
 .btn--danger:hover:not(:disabled) {
-  box-shadow: 0 0 35px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25);
 }
 
 .btn--danger:active:not(:disabled) {
   transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(255, 107, 107, 0.1);
 }
 
 /* === Variant: Icon === */

@@ -50,18 +50,20 @@ function selectTab(key: string) {
   display: flex;
   position: relative;
   background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
-  padding: 3px;
+  border-radius: var(--radius-pill);
+  padding: 4px;
   gap: 2px;
 }
 
 .tab-indicator {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  bottom: 3px;
-  background: var(--color-accent-primary);
-  border-radius: calc(var(--radius-md) - 2px);
+  top: 4px;
+  left: 4px;
+  bottom: 4px;
+  /* Subtle accent-tinted background instead of solid neon */
+  background: var(--color-accent-primary-muted);
+  border: 1px solid rgba(215, 248, 46, 0.25);
+  border-radius: calc(var(--radius-pill) - 4px);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
@@ -70,11 +72,11 @@ function selectTab(key: string) {
   flex: 1;
   position: relative;
   z-index: 1;
-  height: 36px;
+  height: calc(var(--row-h) - 8px);
   padding: 0 var(--space-lg);
   background: transparent;
   border: none;
-  border-radius: calc(var(--radius-md) - 2px);
+  border-radius: calc(var(--radius-pill) - 4px);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
@@ -90,7 +92,12 @@ function selectTab(key: string) {
   color: var(--color-text-secondary);
 }
 
+.tab-item:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
 .tab-item--active {
-  color: #0a0a0a;
+  color: var(--color-text-primary);
 }
 </style>
