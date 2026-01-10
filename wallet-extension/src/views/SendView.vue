@@ -5,6 +5,7 @@ import PinInput from "@/components/PinInput.vue";
 import ConfirmSendModal from "@/components/send/ConfirmSendModal.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import { Button, TextField } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { getPrivateKey } from "@/utils/accounts";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
@@ -352,38 +353,40 @@ function truncateAddress(address: string): string {
       <!-- Recipient Input -->
       <div class="form-group">
         <label class="form-label">To</label>
-        <div class="input-wrapper" :class="{ 'has-error': recipientError }">
-          <input
-            v-model="recipient"
-            type="text"
-            class="form-input input-mono"
-            :class="{ 'input-truncated': recipient.length > 20 }"
-            placeholder="Address or BNS Name"
-            @blur="validateRecipient"
-          />
-          <button class="input-action-btn" title="Paste address" @click="handlePaste">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-          </button>
-        </div>
+        <TextField
+          v-model="recipient"
+          variant="neumorphic"
+          mono
+          placeholder="Address or BNS Name"
+          :error="recipientError"
+          @blur="validateRecipient"
+        >
+          <template #suffix>
+            <button class="input-action-btn" title="Paste address" @click="handlePaste">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
+          </template>
+        </TextField>
         <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
       </div>
 
       <!-- Amount Input -->
       <div class="form-group">
         <label class="form-label">Amount</label>
-        <div class="input-wrapper" :class="{ 'has-error': amountError }">
-          <input
-            v-model="amount"
-            type="text"
-            class="form-input"
-            placeholder="0.00"
-            @blur="validateAmount"
-          />
-          <button class="max-btn" @click="handleMaxAmount">MAX</button>
-        </div>
+        <TextField
+          v-model="amount"
+          variant="neumorphic"
+          placeholder="0.00"
+          :error="amountError"
+          @blur="validateAmount"
+        >
+          <template #suffix>
+            <button class="max-btn" @click="handleMaxAmount">MAX</button>
+          </template>
+        </TextField>
         <div class="input-hint-row">
           <p v-if="amountError" class="form-error">{{ amountError }}</p>
           <span v-else class="input-hint">Available: {{ formattedBalance }} STX</span>
@@ -396,15 +399,12 @@ function truncateAddress(address: string): string {
           <label class="form-label">Memo</label>
           <span class="optional-label">Optional</span>
         </div>
-        <div class="input-wrapper input-wrapper-small">
-          <input
-            v-model="memo"
-            type="text"
-            class="form-input"
-            placeholder="Enter a message to the recipient"
-            maxlength="34"
-          />
-        </div>
+        <TextField
+          v-model="memo"
+          variant="neumorphic"
+          placeholder="Enter a message to the recipient"
+          :maxlength="34"
+        />
       </div>
 
     </div>
@@ -433,16 +433,17 @@ function truncateAddress(address: string): string {
       </div>
 
       <!-- Continue Button -->
-      <button
-        class="continue-btn"
+      <Button
+        variant="primary"
+        full-width
         :disabled="!canSubmit"
         @click="handleContinue"
       >
         <span>Continue</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
-      </button>
+      </Button>
     </div>
 
     <!-- Step: Confirm -->
@@ -514,11 +515,11 @@ function truncateAddress(address: string): string {
         </div>
       </div>
 
-      <button v-if="explorerUrl" class="secondary-btn" @click="openExplorer">
+      <Button v-if="explorerUrl" variant="secondary" full-width @click="openExplorer">
         View in Explorer
-      </button>
+      </Button>
 
-      <button class="primary-btn" @click="handleDone">Done</button>
+      <Button variant="primary" full-width @click="handleDone">Done</Button>
     </div>
 
     <!-- Step: Error -->
@@ -532,8 +533,8 @@ function truncateAddress(address: string): string {
       <p class="result-title">Transaction Failed</p>
       <p class="error-message">{{ errorMessage }}</p>
 
-      <button class="primary-btn" @click="handleTryAgain">Try Again</button>
-      <button class="secondary-btn" @click="handleDone">Cancel</button>
+      <Button variant="primary" full-width @click="handleTryAgain">Try Again</Button>
+      <Button variant="secondary" full-width @click="handleDone">Cancel</Button>
     </div>
 
     <!-- Confirm Modal -->
@@ -727,58 +728,7 @@ function truncateAddress(address: string): string {
   color: rgba(255, 255, 255, 0.2);
 }
 
-/* Input Wrapper - Neumorphic */
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: #16180c;
-  border-radius: 16px;
-  border: none;
-  box-shadow:
-    inset 2px 2px 5px rgba(0, 0, 0, 0.4),
-    inset -1px -1px 1px rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease;
-}
-
-.input-wrapper:focus-within {
-  box-shadow:
-    inset 2px 2px 5px rgba(0, 0, 0, 0.4),
-    inset -1px -1px 1px rgba(255, 255, 255, 0.05),
-    0 0 0 1px rgba(232, 248, 89, 0.5);
-}
-
-.input-wrapper.has-error {
-  box-shadow:
-    inset 2px 2px 5px rgba(0, 0, 0, 0.4),
-    inset -1px -1px 1px rgba(255, 255, 255, 0.05),
-    0 0 0 1px rgba(239, 68, 68, 0.5);
-}
-
-.input-wrapper-small .form-input {
-  height: var(--row-h);
-}
-
-.form-input {
-  flex: 1;
-  height: var(--control-h);
-  background: transparent;
-  border: none;
-  padding: 0 var(--space-lg);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-base);
-  outline: none;
-}
-
-.form-input::placeholder {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.input-mono {
-  font-family: monospace;
-  font-size: var(--font-size-sm);
-}
-
+/* Input action buttons (used inside TextField suffix slot) */
 .input-action-btn {
   display: flex;
   align-items: center;
@@ -933,44 +883,7 @@ function truncateAddress(address: string): string {
   padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
 }
 
-.continue-btn {
-  width: 100%;
-  height: var(--control-h);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: 9999px;
-  color: #0a0a0a;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 0 20px rgba(232, 248, 89, 0.25);
-  transition: all 0.2s ease;
-}
-
-.continue-btn:hover:not(:disabled) {
-  box-shadow: 0 0 35px rgba(232, 248, 89, 0.4);
-}
-
-.continue-btn:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.continue-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.continue-btn svg {
-  transition: transform 0.2s ease;
-}
-
-.continue-btn:hover:not(:disabled) svg {
-  transform: translateX(4px);
-}
+/* Continue button now uses Button component */
 
 /* Confirm */
 .confirm-label {
@@ -1151,41 +1064,8 @@ function truncateAddress(address: string): string {
   word-break: break-word;
 }
 
-/* Buttons */
-.primary-btn {
-  width: 100%;
-  height: 56px;
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: 9999px;
-  color: #0a0a0a;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Result step buttons use unified Button component with margin */
+.content-center :deep(.btn) {
   margin-bottom: var(--space-sm);
-}
-
-.primary-btn:hover {
-  filter: brightness(1.1);
-}
-
-.secondary-btn {
-  width: 100%;
-  height: 56px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
-  color: var(--color-text-primary);
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  margin-bottom: var(--space-sm);
-}
-
-.secondary-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
 }
 </style>
