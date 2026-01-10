@@ -23,7 +23,7 @@ import {
   generateBackupFilename,
   parseBackupFile,
 } from "@/utils/backup";
-import { DENSITY_KEY, applyDensityMode, type DensityMode } from "@/main";
+import { DensityService, type DensityMode } from "@/services/density";
 
 const router = useRouter();
 
@@ -31,23 +31,13 @@ const router = useRouter();
 const densityMode = ref<DensityMode>("auto");
 
 // Load density mode on mount
-function loadDensityMode() {
-  const saved = localStorage.getItem(DENSITY_KEY);
-  // Migrate old 'comfortable' to 'comfy'
-  if (saved === "comfortable") {
-    densityMode.value = "comfy";
-    localStorage.setItem(DENSITY_KEY, "comfy");
-  } else if (saved && ["auto", "compact", "comfy"].includes(saved)) {
-    densityMode.value = saved as DensityMode;
-  } else {
-    densityMode.value = "auto";
-  }
+async function loadDensityMode() {
+  densityMode.value = await DensityService.get();
 }
 
 function setDensityMode(mode: DensityMode) {
   densityMode.value = mode;
-  localStorage.setItem(DENSITY_KEY, mode);
-  applyDensityMode(mode);
+  DensityService.set(mode);
 }
 
 // Wallet list state
