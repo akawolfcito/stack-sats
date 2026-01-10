@@ -24,6 +24,8 @@ const props = defineProps<{
   payload: JsonRpcRequest;
   tabId: string;
   origin?: string;
+  isQueueMode?: boolean;
+  requestId?: string;
 }>();
 
 // Extract origin for display
@@ -90,7 +92,24 @@ const formattedParams = computed(() => {
   return Object.keys(formatted).length > 0 ? formatted : null;
 });
 
-secureLog("Incoming request", { method: props.payload.method, tabId: props.tabId });
+secureLog("Incoming request", { method: props.payload.method, tabId: props.tabId, queueMode: props.isQueueMode });
+
+// Queue mode: send response via background message
+function sendQueueApprove(result: object) {
+  chrome.runtime.sendMessage({
+    type: "DAPP_APPROVE",
+    id: props.requestId,
+    result: result,
+  });
+}
+
+function sendQueueReject(error?: { code: number; message: string }) {
+  chrome.runtime.sendMessage({
+    type: "DAPP_REJECT",
+    id: props.requestId,
+    error: error,
+  });
+}
 
 // Close window/tab based on context (popup vs full-page)
 function closeWindow() {
@@ -182,8 +201,13 @@ async function handleConfirm() {
     }
 
     if (result.status === "COMPLETE") {
-      await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
-      secureLog("Response sent successfully", { method: props.payload.method });
+      // Send response based on mode
+      if (props.isQueueMode) {
+        sendQueueApprove(result.data);
+      } else {
+        await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
+      }
+      secureLog("Response sent successfully", { method: props.payload.method, queueMode: props.isQueueMode });
 
       // Cache getAddresses response for auto-approval
       if (props.payload.method === "getAddresses" || props.payload.method === "stx_getAddresses") {
@@ -196,26 +220,35 @@ async function handleConfirm() {
         }
       }
     } else {
-      await chrome.tabs.sendMessage(parseInt(props.tabId), {
+      const errorResponse = {
         jsonrpc: "2.0",
         error: {
           code: -32603,
           message: "Internal Error",
         },
         id: props.payload.id,
-      });
+      };
+      if (props.isQueueMode) {
+        sendQueueReject({ code: -32603, message: "Internal Error" });
+      } else {
+        await chrome.tabs.sendMessage(parseInt(props.tabId), errorResponse);
+      }
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     secureWarn("Error processing request", { error: errorMsg });
-    await chrome.tabs.sendMessage(parseInt(props.tabId), {
-      jsonrpc: "2.0",
-      error: {
-        code: -32603,
-        message: errorMsg,
-      },
-      id: props.payload.id,
-    });
+    if (props.isQueueMode) {
+      sendQueueReject({ code: -32603, message: errorMsg });
+    } else {
+      await chrome.tabs.sendMessage(parseInt(props.tabId), {
+        jsonrpc: "2.0",
+        error: {
+          code: -32603,
+          message: errorMsg,
+        },
+        id: props.payload.id,
+      });
+    }
   }
 
   // Delay to ensure message is sent before closing
@@ -223,19 +256,20 @@ async function handleConfirm() {
 }
 
 function handleReject(reason?: string) {
-  if (!props.tabId) {
-    closeWindow();
-    return;
-  }
+  const error = {
+    code: 4001,
+    message: reason || "User rejected the request",
+  };
 
-  chrome.tabs.sendMessage(parseInt(props.tabId), {
-    jsonrpc: "2.0",
-    error: {
-      code: 4001,
-      message: reason || "User rejected the request",
-    },
-    id: props.payload.id,
-  });
+  if (props.isQueueMode) {
+    sendQueueReject(error);
+  } else if (props.tabId) {
+    chrome.tabs.sendMessage(parseInt(props.tabId), {
+      jsonrpc: "2.0",
+      error: error,
+      id: props.payload.id,
+    });
+  }
 
   closeWindow();
 }
