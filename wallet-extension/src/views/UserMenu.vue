@@ -528,20 +528,20 @@ function cancelImport() {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  background: transparent;
+  background: rgba(239, 68, 68, 0.15);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-muted);
+  color: #f87171;
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .delete-btn:hover {
-  color: var(--color-error);
-  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.25);
 }
 
 /* Backup Message */
