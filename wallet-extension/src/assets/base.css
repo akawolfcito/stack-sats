@@ -35,6 +35,13 @@
   --surface-0: var(--color-bg-primary);
   --surface-1: var(--color-bg-elevated);
   --surface-2: var(--color-bg-card);
+  --surface-hover: rgba(255, 255, 255, 0.04);
+  --surface-pressed: rgba(255, 255, 255, 0.08);
+
+  /* Interaction States */
+  --focus-ring: 2px solid var(--color-accent-primary);
+  --focus-ring-offset: 2px;
+  --state-disabled-opacity: 0.4;
 
   /* Spacing Scale */
   --space-xs: 4px;
@@ -71,17 +78,21 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* Shadows - Pro depth, no glow */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  /* Control shadows - subtle depth */
-  --shadow-control: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-control-hover: 0 2px 6px rgba(0, 0, 0, 0.25);
-  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.15);
-  /* Accent shadows - minimal, depth only (no neon glow) */
-  --shadow-accent: 0 1px 2px rgba(0, 0, 0, 0.15);
-  --shadow-accent-hover: 0 2px 4px rgba(0, 0, 0, 0.2);
+  /* Elevation Scale (unified shadows) */
+  --shadow-elev-0: none;
+  --shadow-elev-1: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-elev-3: 0 8px 24px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.12);
+
+  /* Legacy shadow aliases (for compatibility) */
+  --shadow-sm: var(--shadow-elev-1);
+  --shadow-md: var(--shadow-elev-2);
+  --shadow-lg: var(--shadow-elev-3);
+  --shadow-control: var(--shadow-elev-1);
+  --shadow-control-hover: var(--shadow-elev-2);
+  --shadow-card: var(--shadow-elev-1);
+  --shadow-accent: var(--shadow-elev-0);
+  --shadow-accent-hover: var(--shadow-elev-1);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -100,6 +111,11 @@
   --card-pad: var(--space-md);
   --card-pad-x: var(--space-md);
   --card-pad-y: var(--space-sm);
+
+  /* Global Layout Rhythm */
+  --page-pad-x: var(--space-lg);
+  --page-pad-y: var(--space-md);
+  --stack-gap: var(--space-md);
 
   /* Padding - Density-aware */
   --control-pad-x: 12px;
