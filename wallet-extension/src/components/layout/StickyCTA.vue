@@ -65,14 +65,14 @@ const emit = defineEmits<{
 
 .cta-btn {
   width: 100%;
-  height: 56px;
+  height: var(--control-h);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
   border: none;
-  border-radius: 9999px;
-  font-size: 16px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-base);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
