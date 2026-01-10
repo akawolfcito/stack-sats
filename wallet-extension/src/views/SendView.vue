@@ -81,6 +81,11 @@ const canSubmit = computed(() => {
   return recipient.value.trim() && amount.value.trim() && !recipientError.value && !amountError.value;
 });
 
+const hasZeroBalance = computed(() => {
+  const balance = BigInt(balanceMicroStx.value);
+  return balance <= TRANSFER_FEE_MICRO_STX;
+});
+
 // Modal props
 const networkLabel = computed(() => {
   const labels: Record<NetworkName, string> = {
@@ -338,6 +343,12 @@ function truncateAddress(address: string): string {
         </div>
       </div>
 
+      <!-- Zero balance warning -->
+      <div v-if="hasZeroBalance" class="zero-balance-notice">
+        <span class="notice-icon">!</span>
+        <span class="notice-text">Your balance is too low to send STX (fee required).</span>
+      </div>
+
       <!-- Recipient Input -->
       <div class="form-group">
         <label class="form-label">To</label>
@@ -560,6 +571,37 @@ function truncateAddress(address: string): string {
   justify-content: center;
   text-align: center;
   padding-bottom: var(--space-xl);
+}
+
+/* Zero Balance Notice */
+.zero-balance-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: 12px;
+  margin-bottom: var(--space-md);
+}
+
+.notice-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(234, 179, 8, 0.3);
+  border-radius: 50%;
+  color: #fbbf24;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+.notice-text {
+  font-size: var(--font-size-sm);
+  color: rgba(253, 224, 71, 0.9);
 }
 
 /* From Card */
