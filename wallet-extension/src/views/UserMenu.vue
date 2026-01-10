@@ -510,7 +510,7 @@ function cancelImport() {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 8px 16px 24px;
+  padding: 8px 16px 32px; /* Extra bottom padding for popup safe-area */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }

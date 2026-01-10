@@ -65,6 +65,7 @@ defineProps<{
 .screen-content--scroll {
   overflow-y: auto;
   overflow-x: hidden;
+  padding-bottom: var(--space-lg); /* Safe-area for popup bottom */
 }
 
 .screen-content--padded {
