@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
+import StickyCTA from "@/components/layout/StickyCTA.vue";
 
 const router = useRouter();
 
@@ -162,15 +165,14 @@ function handleBack() {
 </script>
 
 <template>
-  <div class="add-network-view">
-    <!-- Header -->
-    <header class="header">
-      <button class="back-btn" @click="handleBack">
-        <span class="back-arrow">&larr;</span>
-      </button>
-      <h1 class="title">Custom Network</h1>
-      <div class="header-spacer"></div>
-    </header>
+  <ScreenShell :padded="false">
+    <template #header>
+      <AppHeader
+        title="Custom Network"
+        left="back"
+        @left-click="handleBack"
+      />
+    </template>
 
     <!-- Content -->
     <main class="content">
@@ -256,81 +258,25 @@ function handleBack() {
     </main>
 
     <!-- Save Button -->
-    <div class="footer">
-      <button
-        class="save-btn"
-        :class="{ disabled: !isFormValid || isLoading }"
-        :disabled="!isFormValid || isLoading"
-        @click="handleSaveNetwork"
-      >
-        <span v-if="isLoading" class="spinner-small"></span>
-        {{ isLoading ? 'Saving...' : 'Save Network' }}
-      </button>
-    </div>
-  </div>
+    <template #footer>
+      <StickyCTA
+        :primary-text="isLoading ? 'Saving...' : 'Save Network'"
+        :primary-disabled="!isFormValid || isLoading"
+        @primary="handleSaveNetwork"
+      />
+    </template>
+  </ScreenShell>
 </template>
 
 <style scoped>
-.add-network-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--color-bg-primary);
-  position: relative;
-}
-
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-lg);
-  padding-top: var(--space-xl);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: var(--color-bg-primary);
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 1.25rem;
-  cursor: pointer;
-  padding: var(--space-sm);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-pill);
-}
-
-.back-btn:hover {
-  background: var(--color-bg-card);
-}
-
-.title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.header-spacer {
-  width: 40px;
-}
-
 /* Content */
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-xl) var(--space-lg);
-  padding-bottom: 120px;
+  padding: var(--space-md) var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--section-gap);
 }
 
 /* Input Groups */
@@ -492,61 +438,4 @@ function handleBack() {
   margin: 0;
 }
 
-/* Footer */
-.footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: var(--space-lg);
-  padding-bottom: var(--space-xl);
-  background: linear-gradient(to top, var(--color-bg-primary) 60%, transparent);
-  z-index: 40;
-}
-
-.save-btn {
-  width: 100%;
-  height: 56px;
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: var(--radius-xl);
-  color: var(--color-bg-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  transition: all var(--transition-base);
-  box-shadow: 0 4px 12px var(--color-accent-primary-muted);
-}
-
-.save-btn:hover:not(.disabled) {
-  background: var(--color-accent-primary-hover);
-  transform: translateY(-1px);
-}
-
-.save-btn:active:not(.disabled) {
-  transform: scale(0.98);
-}
-
-.save-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.spinner-small {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-bg-primary);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 </style>
