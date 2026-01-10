@@ -213,8 +213,8 @@ const modeLabels = {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 0 16px;
+  gap: var(--space-md);
+  padding: 0 var(--card-pad-x);
 }
 
 /* Bottom Section - Fixed at bottom */
@@ -223,8 +223,8 @@ const modeLabels = {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 16px 24px;
-  gap: 16px;
+  padding: 0 var(--card-pad-x) var(--section-gap);
+  gap: var(--space-md);
 }
 
 /* Label */
@@ -233,7 +233,7 @@ const modeLabels = {
 }
 
 .pin-label p {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
@@ -295,7 +295,7 @@ const modeLabels = {
 /* Error Message */
 .error-message {
   color: var(--color-error);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   margin: 0;
   min-height: 20px;
