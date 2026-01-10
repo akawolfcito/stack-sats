@@ -43,16 +43,16 @@ const emit = defineEmits<{
 .asset-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .asset-list-empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 16px;
+  padding: var(--space-2xl) var(--space-lg);
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .asset-list-empty p {

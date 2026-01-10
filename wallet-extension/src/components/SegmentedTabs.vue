@@ -70,6 +70,7 @@ function selectTab(key: string) {
   flex: 1;
   position: relative;
   z-index: 1;
+  min-height: var(--row-h);
   padding: var(--space-sm) var(--space-lg);
   background: transparent;
   border: none;
@@ -79,6 +80,9 @@ function selectTab(key: string) {
   color: var(--color-text-muted);
   cursor: pointer;
   transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab-item:hover {
