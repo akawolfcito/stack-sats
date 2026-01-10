@@ -46,12 +46,12 @@ const emit = defineEmits<{
 .asset-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-md);
   width: 100%;
-  padding: 12px 16px;
+  padding: var(--card-pad-y) var(--card-pad-x);
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: background 0.15s ease;
   text-align: left;
@@ -66,9 +66,9 @@ const emit = defineEmits<{
 }
 
 .asset-icon {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
+  min-width: var(--icon-btn-size);
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(215, 248, 46, 0.2), rgba(153, 225, 142, 0.1));
   display: flex;
