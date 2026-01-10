@@ -87,7 +87,21 @@ async function dispatchNext() {
     },
   });
 
-  // TODO: Start timeout timer
+  // Start timeout timer (55s < injection's 60s)
+  activeTimeoutId = setTimeout(() => {
+    if (activeRequest !== null) {
+      console.warn("[StacksWallet] Request timed out:", activeRequest.id);
+      activeRequest.respond({
+        jsonrpc: "2.0",
+        id: activeRequest.id,
+        error: {
+          code: -32002,
+          message: "Request timed out",
+        },
+      });
+      clearActive();
+    }
+  }, REQUEST_TIMEOUT_MS);
 }
 
 /**
