@@ -186,4 +186,23 @@ function handleClick() {
   color: var(--color-text-muted);
   flex-shrink: 0;
 }
+
+/* Popup mode: compact row height */
+@media (max-height: 640px) {
+  .list-row {
+    padding: var(--space-xs) var(--space-sm);
+    min-height: 44px;
+    gap: var(--space-xs);
+  }
+
+  .list-row-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .icon-plus {
+    font-size: 16px;
+  }
+}
 </style>
