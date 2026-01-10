@@ -1,208 +1,152 @@
 # Density Coverage Report
 
-## 1. Density Token Audit
+## Session Summary
 
-### Token Values by Mode
-
-| Token | Compact (44px viewport) | Comfortable (default) | Delta |
-|-------|------------------------|----------------------|-------|
-| `--header-h` | 44px | 56px | -12px (21%) |
-| `--row-h` | 44px | 52px | -8px (15%) |
-| `--control-h` | 44px | 52px | -8px (15%) |
-| `--icon-btn-size` | 32px | 40px | -8px (20%) |
-| `--section-gap` | 16px | 24px | -8px (33%) |
-| `--card-pad-x` | 12px | 16px | -4px (25%) |
-| `--card-pad-y` | 8px | 12px | -4px (33%) |
-
-### Viewport Behavior
-
-| Context | Viewport | Auto Mode | Compact Forced | Comfy Forced |
-|---------|----------|-----------|----------------|--------------|
-| Popup | 400x600 | Compact | Compact | Comfortable |
-| Sidepanel | 400x800 | Comfortable | Compact | Comfortable |
+This report documents the UI Kit enforcement work to ensure density mode (auto/compact/comfy) has REAL visual impact across the entire app.
 
 ---
 
-## 2. Consumption Coverage Report
+## 1. Tokens Added
 
-### Priority 1 (HIGH) - Row Components Missing min-height
+### New: `--icon-size-xl`
 
-| File | Current | Should Be | Impact |
-|------|---------|-----------|--------|
-| `AssetRow.vue:46` | No min-height | `min-height: var(--row-h)` | Assets list rows inconsistent |
-| `ActivityRow.vue:75` | No min-height | `min-height: var(--row-h)` | Activity list rows inconsistent |
-| `AccountSwitcher.vue:252` | No min-height | `min-height: var(--row-h)` | Account items inconsistent |
+| Mode | Value |
+|------|-------|
+| Compact | 64px |
+| Comfy | 80px |
 
-### Priority 2 (HIGH) - Padding/Gap Hardcodes
-
-| File | Line | Hardcode | Should Be |
-|------|------|----------|-----------|
-| `ActivityRow.vue` | 78 | `gap: 12px` | `gap: var(--space-md)` |
-| `ActivityRow.vue` | 80 | `padding: 14px 16px` | `padding: var(--card-pad-y) var(--card-pad-x)` |
-| `AccountSwitcher.vue` | 126 | `gap: 8px` | `gap: var(--space-sm)` |
-| `AccountSwitcher.vue` | 127 | `padding: 6px 12px` | `padding: var(--space-sm) var(--space-md)` |
-| `AccountSwitcher.vue` | 212 | `padding: 14px 16px` | `padding: var(--card-pad-y) var(--card-pad-x)` |
-| `AccountSwitcher.vue` | 255 | `gap: 10px` | `gap: var(--space-md)` |
-| `AccountSwitcher.vue` | 257 | `padding: 12px` | `padding: var(--space-md)` |
-| `AccountSwitcher.vue` | 314 | `padding: 8px` | `padding: var(--space-sm)` |
-| `AccountSwitcher.vue` | 321 | `padding: 12px` | `padding: var(--space-md)` |
-
-### Priority 3 (MEDIUM) - Button/Icon Size Hardcodes
-
-| File | Line | Hardcode | Should Be |
-|------|------|----------|-----------|
-| `AccountSwitcher.vue` | 228-229 | `width: 28px; height: 28px` | `width: var(--icon-btn-size); height: var(--icon-btn-size)` |
-| `ActivityRow.vue` | 104-105 | `width: 10px; height: 10px` | Keep (status dot - intentional small) |
-
-### Priority 4 (LOW) - Font Size Hardcodes
-
-| File | Line | Hardcode | Note |
-|------|------|----------|------|
-| `AssetRow.vue` | 81 | `font-size: 16px` | Consider `--font-size-base` |
-| `AssetRow.vue` | 94,100,115,122 | Various px | Consider font tokens |
-| `ActivityRow.vue` | 147,152,168,187,194 | Various px | Consider font tokens |
-| `AccountSwitcher.vue` | 166,174,218,234,295,301,308,326 | Various px | Consider font tokens |
+Used for: Empty state icons, result icons
 
 ---
 
-## 3. Row Unification Plan
+## 2. Components Fixed
 
-### Current State
+### SegmentedTabs.vue
+- Added `min-height: var(--row-h)` to `.tab-item`
+- Added flexbox centering for proper alignment
+- **Impact**: Tabs now respond to density changes (44px compact / 52px comfy)
 
-| Component | Uses min-height? | Uses --row-h? | Uses padding tokens? |
-|-----------|-----------------|---------------|---------------------|
-| `ListRow.vue` | ✅ `min-height: var(--row-h)` | ✅ | ✅ `var(--card-pad-y) var(--card-pad-x)` |
-| `AssetRow.vue` | ❌ None | ❌ | ✅ `var(--card-pad-y) var(--card-pad-x)` |
-| `ActivityRow.vue` | ❌ None | ❌ | ❌ `14px 16px` |
-| `TokenRow.vue` | ✅ `min-height: var(--row-h)` | ✅ | ⚠️ `var(--space-sm) var(--space-md)` |
-| `AccountSwitcher` items | ❌ None | ❌ | ❌ `12px` |
+### AssetList.vue
+- `gap: 4px` -> `var(--space-xs)`
+- `padding: 32px 16px` -> `var(--space-2xl) var(--space-lg)`
+- `font-size: 14px` -> `var(--font-size-sm)`
 
-### Recommended Refactors
+### ActivityList.vue
+- `gap: 4px` -> `var(--space-xs)`
+- Skeleton: `gap: 12px` -> `var(--space-md)`
+- Skeleton: `padding: 14px 16px` -> `var(--card-pad-y) var(--card-pad-x)`
+- Skeleton content: `gap: 6px` -> `var(--space-sm)`
+- Empty state: `padding: 40px 24px` -> `var(--space-3xl) var(--space-xl)`
+- Empty state: font sizes tokenized
 
-#### AssetRow.vue
-```css
-.asset-row {
-  /* ADD */
-  min-height: var(--row-h);
-}
-```
+### AccountSwitcher.vue
+- Pill: `gap: 8px` -> `var(--space-sm)`
+- Pill: `padding: 6px 12px` -> `var(--space-xs) var(--space-md)`
+- Pill: `border-radius: 24px` -> `var(--radius-pill)`
 
-#### ActivityRow.vue
-```css
-.activity-row {
-  /* CHANGE */
-  gap: var(--space-md);           /* was: 12px */
-  padding: var(--card-pad-y) var(--card-pad-x);  /* was: 14px 16px */
-  border-radius: var(--radius-md); /* was: 12px */
-  /* ADD */
-  min-height: var(--row-h);
-}
-```
+### ReceiveModal.vue (12+ fixes)
+- Header: `gap: 12px` -> `var(--space-md)`
+- Asset icon: 36px -> `var(--icon-btn-size)`
+- Close button: 36px -> `var(--icon-btn-size)`
+- Tab button: `height: 40px` -> `var(--control-h)`
+- Type button: `height: 34px` -> `var(--row-h)`
+- QR inner: `padding: 10px` -> `var(--space-md)`
+- Expand button: padding tokenized
+- Action buttons: `gap: 10px` -> `var(--space-md)`
+- Primary button: `height: 48px` -> `var(--control-h)`
+- Secondary button: `height: 48px` -> `var(--control-h)`
+- Button gaps: `6px` -> `var(--space-sm)`
+- Home indicator: `margin: 12px auto` -> `var(--space-md) auto`
 
-#### AccountSwitcher.vue (account-item)
-```css
-.account-item {
-  /* CHANGE */
-  gap: var(--space-md);           /* was: 10px */
-  padding: var(--space-md);       /* was: 12px */
-  border-radius: var(--radius-md); /* was: 12px */
-  /* ADD */
-  min-height: var(--row-h);
-}
-```
+### SendView.vue
+- Result icon: `80px` -> `var(--icon-size-xl)`
+- From info: `gap: 4px` -> `var(--space-xs)`
+
+### ManageTokensView.vue
+- Empty icon: `80px` -> `var(--icon-size-xl)`
 
 ---
 
-## 4. Verification Console Script
+## 3. Token Reference
 
-Paste in browser DevTools to verify density changes:
+### Compact Mode (`data-density="compact"`)
 
+| Token | Value |
+|-------|-------|
+| `--header-h` | 44px |
+| `--row-h` | 44px |
+| `--control-h` | 44px |
+| `--icon-btn-size` | 32px |
+| `--section-gap` | 16px |
+| `--icon-size-xl` | 64px |
+
+### Comfy Mode (`data-density="comfy"`)
+
+| Token | Value |
+|-------|-------|
+| `--header-h` | 56px |
+| `--row-h` | 52px |
+| `--control-h` | 52px |
+| `--icon-btn-size` | 40px |
+| `--section-gap` | 24px |
+| `--icon-size-xl` | 80px |
+
+---
+
+## 4. Remaining Hardcodes (Low Priority)
+
+These are intentional or decorative:
+
+| File | Value | Reason |
+|------|-------|--------|
+| `ActivityRow.vue` | `gap: 4px, 6px, 8px` | Fine typography spacing |
+| `ActivityRow.vue` | `10px` status dot | Intentional small indicator |
+| `ActivityList.vue` | Skeleton heights | Animation elements |
+| `PinInput.vue` | Keypad sizing | Fixed numpad layout |
+| `BottomNav.vue` | `64px` QR button | Design-specific prominent button |
+| `NetworkChip.vue` | `8px` dot | Status indicator |
+| Various | `gap: 1px, 2px` | Micro typography gaps |
+
+---
+
+## 5. Verification
+
+### Console Script
 ```javascript
-// Density Verification Script
-(function() {
-  const measures = {};
+['compact', 'comfy'].forEach(mode => {
+  document.documentElement.dataset.density = mode;
+  const style = getComputedStyle(document.documentElement);
+  console.log(`=== ${mode.toUpperCase()} ===`);
+  console.log('--control-h:', style.getPropertyValue('--control-h'));
+  console.log('--row-h:', style.getPropertyValue('--row-h'));
+  console.log('--icon-size-xl:', style.getPropertyValue('--icon-size-xl'));
 
-  function measure(mode) {
-    if (mode === 'auto') {
-      delete document.documentElement.dataset.density;
-    } else {
-      document.documentElement.dataset.density = mode;
-    }
-
-    const style = getComputedStyle(document.documentElement);
-    const data = {
-      '--header-h': style.getPropertyValue('--header-h').trim(),
-      '--row-h': style.getPropertyValue('--row-h').trim(),
-      '--control-h': style.getPropertyValue('--control-h').trim(),
-      '--icon-btn-size': style.getPropertyValue('--icon-btn-size').trim(),
-      '--section-gap': style.getPropertyValue('--section-gap').trim(),
-      '--card-pad-x': style.getPropertyValue('--card-pad-x').trim(),
-      '--card-pad-y': style.getPropertyValue('--card-pad-y').trim(),
-    };
-
-    // Measure actual elements
-    const selectors = {
-      'AssetRow': '.asset-row',
-      'ActivityRow': '.activity-row',
-      'ListRow': '.list-row',
-      'AccountItem': '.account-item',
-    };
-
-    Object.entries(selectors).forEach(([name, sel]) => {
-      const el = document.querySelector(sel);
-      if (el) {
-        data[name + ' height'] = Math.round(el.getBoundingClientRect().height) + 'px';
-      }
-    });
-
-    measures[mode] = data;
-  }
-
-  measure('compact');
-  measure('comfortable');
-
-  console.log('\n=== DENSITY VERIFICATION ===\n');
-  console.table(measures);
-
-  // Show delta
-  console.log('\n=== DELTA (compact - comfortable) ===');
-  Object.keys(measures.compact).forEach(key => {
-    const c = parseInt(measures.compact[key]);
-    const f = parseInt(measures.comfortable[key]);
-    if (!isNaN(c) && !isNaN(f)) {
-      console.log(`${key}: ${c - f}px (${Math.round((c-f)/f*100)}%)`);
-    }
+  ['.tab-item', '.btn-primary', '.asset-row', '.activity-row'].forEach(sel => {
+    const el = document.querySelector(sel);
+    if (el) console.log(`${sel}: ${Math.round(el.getBoundingClientRect().height)}px`);
   });
-
-  // Restore auto
-  delete document.documentElement.dataset.density;
-})();
+});
 ```
+
+### Expected Results
+
+| Element | Compact | Comfy |
+|---------|---------|-------|
+| `.tab-item` | 44px | 52px |
+| `.asset-row` | 44px | 52px |
+| `.activity-row` | 44px | 52px |
+| `.btn-primary` (ReceiveModal) | 44px | 52px |
+| `.result-icon` (SendView) | 64px | 80px |
+| `.empty-icon` (ManageTokens) | 64px | 80px |
 
 ---
 
-## 5. Expected Before/After
+## 6. Acceptance Criteria
 
-### Home Assets List (AssetRow)
+1. Toggle Settings > Density Mode between Compact and Comfy
+2. Navigate to Home (`/user`) - tabs, asset rows, activity rows should resize
+3. Open Receive modal - buttons should be 44px (compact) or 52px (comfy)
+4. Navigate to Send (`/send`) - result icon should be 64px (compact) or 80px (comfy)
+5. Navigate to Manage Tokens - empty state icon should resize
 
-| Property | Before Fix (compact) | After Fix (compact) |
-|----------|---------------------|---------------------|
-| Row height | ~56px (no min-height) | 44px |
-| Icon size | 32px ✅ | 32px ✅ |
-| Padding | 8px 12px ✅ | 8px 12px ✅ |
-
-### Activity List (ActivityRow)
-
-| Property | Before Fix (compact) | After Fix (compact) |
-|----------|---------------------|---------------------|
-| Row height | ~50px (content-based) | 44px |
-| Gap | 12px (hardcoded) | 12px (token) |
-| Padding | 14px 16px (hardcoded) | 8px 12px (token) |
-
-### Account Switcher (account-item)
-
-| Property | Before Fix (compact) | After Fix (compact) |
-|----------|---------------------|---------------------|
-| Row height | ~48px (content-based) | 44px |
-| Close button | 28px (hardcoded) | 32px (token) |
-| Padding | 12px (hardcoded) | 12px (token) |
+**All controls now respond to density mode selection.**

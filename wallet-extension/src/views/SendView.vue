@@ -766,7 +766,7 @@ function truncateAddress(address: string): string {
   border: none;
   padding: 0 var(--space-lg);
   color: var(--color-text-primary);
-  font-size: 16px;
+  font-size: var(--font-size-base);
   outline: none;
 }
 
@@ -776,7 +776,7 @@ function truncateAddress(address: string): string {
 
 .input-mono {
   font-family: monospace;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .input-action-btn {

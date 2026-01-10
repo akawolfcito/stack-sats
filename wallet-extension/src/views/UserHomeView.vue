@@ -914,7 +914,7 @@ const handleManageTokens = () => {
   display: inline-block;
   padding: var(--space-xs) var(--space-md);
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -935,7 +935,7 @@ const handleManageTokens = () => {
 .action-btn {
   flex: 1;
   height: var(--control-h);
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;
