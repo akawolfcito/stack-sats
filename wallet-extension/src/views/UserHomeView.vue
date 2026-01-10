@@ -39,8 +39,21 @@ import {
 } from "../utils/transactions";
 import ReceiveModal from "../components/ReceiveModal.vue";
 import BottomNav from "../components/BottomNav.vue";
+import SegmentedTabs from "../components/SegmentedTabs.vue";
+import { useUiMode } from "../composables/useUiMode";
 
 const router = useRouter();
+
+// UI Mode (popup vs panel)
+const { isPopup } = useUiMode();
+
+// Tab state for popup mode
+const activeTab = ref<'assets' | 'activity'>('assets');
+const tabItems = [
+  { key: 'assets', label: 'Assets' },
+  { key: 'activity', label: 'Activity' },
+];
+
 const userAccounts = ref<Account[]>([]);
 const isLoading = ref(true);
 const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
@@ -369,8 +382,10 @@ const closeReceiveModal = () => {
     <div v-if="isLoading" class="loading-state">Loading accounts...</div>
 
     <template v-else>
-      <!-- Header -->
-      <header class="header">
+      <!-- Fixed Header Section (no scroll) -->
+      <div class="home-header">
+        <!-- Header -->
+        <header class="header">
         <!-- Menu Button -->
         <button class="btn-icon header-btn menu-btn" @click="handleOpenUserMenu" title="Menu">
           <span class="menu-icon-text">☰</span>
@@ -489,8 +504,19 @@ const closeReceiveModal = () => {
         </button>
       </section>
 
-      <!-- Assets Section -->
-      <section class="assets-section">
+      <!-- Segmented Tabs (popup mode only) -->
+      <div v-if="isPopup" class="tabs-container">
+        <SegmentedTabs
+          v-model="activeTab"
+          :items="tabItems"
+        />
+      </div>
+      </div>
+
+      <!-- Scrollable Body Section -->
+      <div class="home-body" :class="{ 'home-body--popup': isPopup }">
+        <!-- Assets Section (show in panel mode OR when assets tab is active in popup) -->
+      <section v-if="!isPopup || activeTab === 'assets'" class="assets-section">
         <div class="section-header">
           <h2 class="section-title">Assets</h2>
           <button
@@ -577,8 +603,8 @@ const closeReceiveModal = () => {
         </div>
       </section>
 
-      <!-- SIP-010 Tokens Section -->
-      <section v-if="tokens.length > 0 || isLoadingTokens" class="tokens-section">
+      <!-- SIP-010 Tokens Section (show in panel mode OR when assets tab is active in popup) -->
+      <section v-if="(!isPopup || activeTab === 'assets') && (tokens.length > 0 || isLoadingTokens)" class="tokens-section">
         <div class="section-header">
           <h2 class="section-title">Tokens <span class="token-count">({{ tokens.length }})</span></h2>
           <button class="toggle-btn" @click="showTokens = !showTokens">
@@ -617,8 +643,8 @@ const closeReceiveModal = () => {
         </div>
       </section>
 
-      <!-- Transaction History -->
-      <section class="history-section">
+      <!-- Transaction History (show in panel mode OR when activity tab is active in popup) -->
+      <section v-if="!isPopup || activeTab === 'activity'" class="history-section">
         <div class="section-header">
           <h2 class="section-title">History</h2>
           <button v-if="transactions.length > 5" class="see-all-btn" @click="showAllTx = !showAllTx">
@@ -678,6 +704,7 @@ const closeReceiveModal = () => {
           </div>
         </div>
       </section>
+      </div>
     </template>
 
     <!-- Receive Modal -->
@@ -689,8 +716,8 @@ const closeReceiveModal = () => {
       @close="closeReceiveModal"
     />
 
-    <!-- Bottom Navigation -->
-    <BottomNav @open-receive="openReceiveModal" />
+    <!-- Bottom Navigation (panel mode only) -->
+    <BottomNav v-if="!isPopup" @open-receive="openReceiveModal" />
   </section>
 </template>
 
@@ -699,11 +726,36 @@ const closeReceiveModal = () => {
 .user-home-view {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%;
   background: #0a0a0a;
   position: relative;
+  overflow: hidden;
+}
+
+/* Fixed Header - No scroll */
+.home-header {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* Scrollable Body */
+.home-body {
+  flex: 1;
+  overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 100px;
+  padding-bottom: 100px; /* Space for BottomNav */
+}
+
+/* Reduce padding in popup mode (no BottomNav) */
+.home-body--popup {
+  padding-bottom: 24px;
+}
+
+/* Tabs Container */
+.tabs-container {
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 /* Ambient Glow */

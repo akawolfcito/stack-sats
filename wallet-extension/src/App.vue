@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { RouterView, useRouter } from "vue-router";
-import { onBeforeMount, ref, watch } from "vue";
+import { onBeforeMount, ref, watch, computed } from "vue";
 import Confirmation from "./components/Confirmation.vue";
 import type { JsonRpcRequest } from "@/utils/types";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
+import { useUiMode } from "@/composables/useUiMode";
+
+// UI Mode detection (popup vs panel)
+const { mode } = useUiMode();
+const appRootClass = computed(() => `app-root mode-${mode.value}`);
 
 const router = useRouter();
 
@@ -89,34 +94,53 @@ const canShowConfirmation = () => {
 </script>
 
 <template>
-  <!-- Show loading while initializing -->
-  <div v-if="isInitializing" class="initializing">
-    <div class="loader"></div>
-    <p>Initializing...</p>
-  </div>
+  <div :class="appRootClass">
+    <!-- Show loading while initializing -->
+    <div v-if="isInitializing" class="initializing">
+      <div class="loader"></div>
+      <p>Initializing...</p>
+    </div>
 
-  <!-- If payload is present and wallet is available, show Confirmation -->
-  <div v-else-if="payload && canShowConfirmation()">
-    <Confirmation :payload="payload" :tabId="tabId" :origin="origin" />
-  </div>
+    <!-- If payload is present and wallet is available, show Confirmation -->
+    <div v-else-if="payload && canShowConfirmation()" class="app-content">
+      <Confirmation :payload="payload" :tabId="tabId" :origin="origin" />
+    </div>
 
-  <!-- If payload but wallet is locked, show unlock prompt message -->
-  <div v-else-if="payload && hasWallet && isLocked" class="unlock-prompt">
-    <img src="/denvault-i.png" width="80px" alt="DenVault" />
-    <h2>Wallet Locked</h2>
-    <p>Please unlock your wallet to continue</p>
-    <button @click="router.push('/unlock')" class="btn-primary">
-      Unlock Wallet
-    </button>
-  </div>
+    <!-- If payload but wallet is locked, show unlock prompt message -->
+    <div v-else-if="payload && hasWallet && isLocked" class="unlock-prompt">
+      <img src="/denvault-i.png" width="80px" alt="DenVault" />
+      <h2>Wallet Locked</h2>
+      <p>Please unlock your wallet to continue</p>
+      <button @click="router.push('/unlock')" class="btn-primary">
+        Unlock Wallet
+      </button>
+    </div>
 
-  <!-- Normal router view -->
-  <div style="height: 100%" v-else>
-    <RouterView />
+    <!-- Normal router view -->
+    <div class="app-content" v-else>
+      <RouterView />
+    </div>
   </div>
 </template>
 
 <style scoped>
+/* App Root - Full viewport flex container */
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .unlock-prompt {
   display: flex;
   flex-direction: column;
