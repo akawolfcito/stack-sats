@@ -209,7 +209,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: var(--card-pad-y) var(--card-pad-x);
   border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
   flex-shrink: 0;
 }
@@ -225,13 +225,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   background: rgba(255, 255, 255, 0.05);
   border: none;
   border-radius: 50%;
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -244,7 +244,7 @@ onUnmounted(() => {
 .account-overlay__list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: var(--space-sm);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -252,12 +252,13 @@ onUnmounted(() => {
 .account-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-md);
   width: 100%;
-  padding: 12px;
+  min-height: var(--row-h);
+  padding: var(--space-md);
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.1s ease;
   text-align: left;
@@ -311,19 +312,20 @@ onUnmounted(() => {
 
 /* Footer */
 .account-overlay__footer {
-  padding: 8px;
+  padding: var(--space-sm);
   border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
   flex-shrink: 0;
 }
 
 .account-add-btn {
   width: 100%;
-  padding: 12px;
+  min-height: var(--row-h);
+  padding: var(--space-md);
   background: transparent;
   border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;

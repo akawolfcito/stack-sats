@@ -48,6 +48,7 @@ const emit = defineEmits<{
   align-items: center;
   gap: var(--space-md);
   width: 100%;
+  min-height: var(--row-h);
   padding: var(--card-pad-y) var(--card-pad-x);
   background: transparent;
   border: none;
