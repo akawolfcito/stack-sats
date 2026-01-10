@@ -4,6 +4,8 @@ import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import ListGroup from "@/components/list/ListGroup.vue";
+import ListRow from "@/components/list/ListRow.vue";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import {
@@ -262,138 +264,117 @@ function cancelImport() {
     <!-- Main Content -->
     <div v-if="!showDeleteConfirm" class="page-content">
       <!-- Your Wallets Section -->
-      <section class="section">
-        <h3 class="section-title">Your Wallets</h3>
-        <div class="wallet-list">
-          <div
-            v-for="wallet in wallets"
-            :key="wallet.id"
-            class="wallet-item"
-            :class="{ 'wallet-item--active': wallet.id === activeWalletId }"
-            @click="switchWallet(wallet.id)"
-          >
-            <div class="wallet-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
-                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
-                <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
-              </svg>
-            </div>
-            <div class="wallet-info">
-              <span class="wallet-name">{{ wallet.name }}</span>
-              <span v-if="wallet.id === activeWalletId" class="active-badge">Active</span>
-            </div>
+      <ListGroup title="Your Wallets">
+        <ListRow
+          v-for="wallet in wallets"
+          :key="wallet.id"
+          :label="wallet.name"
+          :badge="wallet.id === activeWalletId ? 'Active' : undefined"
+          icon-color="rgba(232, 248, 89, 0.15)"
+          chevron
+          @click="switchWallet(wallet.id)"
+        >
+          <template #icon>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+              <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
+            </svg>
+          </template>
+          <template #right>
             <button
-              class="wallet-delete"
+              class="delete-btn"
               @click.stop="initiateDelete(wallet.id)"
               title="Delete wallet"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
               </svg>
             </button>
-            <svg class="wallet-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          </div>
-
-          <!-- Add Wallet Button -->
-          <button class="add-wallet-btn" @click="handleAddWallet">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="16"/>
-              <line x1="8" y1="12" x2="16" y2="12"/>
-            </svg>
-            Add Wallet
-          </button>
-        </div>
-      </section>
+          </template>
+        </ListRow>
+        <ListRow
+          label="Add Wallet"
+          variant="add"
+          @click="handleAddWallet"
+        />
+      </ListGroup>
 
       <!-- Security & Backup Section -->
-      <section class="section">
-        <h3 class="section-title">Security & Backup</h3>
-        <div class="security-options">
-          <button class="option-card" @click="handleExportBackup">
-            <div class="option-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-              </svg>
-            </div>
-            <div class="option-content">
-              <span class="option-title">Export Secret Key</span>
-              <span class="option-subtitle">Download encrypted backup</span>
-            </div>
-            <svg class="option-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <path d="M7 17L17 7M17 7H7M17 7V17"/>
+      <ListGroup title="Security & Backup">
+        <ListRow
+          label="Export Secret Key"
+          subtitle="Download encrypted backup"
+          chevron
+          @click="handleExportBackup"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
             </svg>
-          </button>
-
-          <button class="option-card" @click="triggerFileInput">
-            <div class="option-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </div>
-            <div class="option-content">
-              <span class="option-title">Import Wallet</span>
-              <span class="option-subtitle">Restore from backup file</span>
-            </div>
-            <svg class="option-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+          </template>
+        </ListRow>
+        <ListRow
+          label="Import Wallet"
+          subtitle="Restore from backup file"
+          chevron
+          @click="triggerFileInput"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-          </button>
-        </div>
+          </template>
+        </ListRow>
+      </ListGroup>
 
-        <input
-          ref="fileInputRef"
-          type="file"
-          accept=".json"
-          style="display: none"
-          @change="handleFileSelected"
-        />
+      <input
+        ref="fileInputRef"
+        type="file"
+        accept=".json"
+        style="display: none"
+        @change="handleFileSelected"
+      />
 
-        <p v-if="backupMessage" class="backup-message" :class="backupMessage.type">
-          {{ backupMessage.text }}
-        </p>
-      </section>
+      <p v-if="backupMessage" class="backup-message" :class="backupMessage.type">
+        {{ backupMessage.text }}
+      </p>
 
       <!-- Token Settings Section -->
-      <section class="section">
-        <h3 class="section-title">Token Settings</h3>
-        <div class="security-options">
-          <button class="option-card" @click="handleManageTokens">
-            <div class="option-icon option-icon--token">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v12M6 12h12"/>
-              </svg>
-            </div>
-            <div class="option-content">
-              <span class="option-title">Manage Tokens</span>
-              <span class="option-subtitle">Add or remove custom tokens</span>
-            </div>
-            <svg class="option-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+      <ListGroup title="Tokens">
+        <ListRow
+          label="Manage Tokens"
+          subtitle="Add or remove custom tokens"
+          icon-color="rgba(168, 85, 247, 0.15)"
+          chevron
+          @click="handleManageTokens"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v12M6 12h12"/>
             </svg>
-          </button>
-        </div>
-      </section>
+          </template>
+        </ListRow>
+      </ListGroup>
 
       <!-- Danger Zone -->
-      <section class="danger-section">
-        <div class="danger-card">
-          <h3 class="danger-title">Danger Zone</h3>
-          <p class="danger-text">
-            Deleting your wallets will remove them from this device permanently.
-            Make sure you have your secret keys backed up safely.
-          </p>
-          <button class="danger-btn" @click="initiateDelete()">
-            Delete All Wallets
-          </button>
-        </div>
-      </section>
+      <ListGroup title="Danger Zone" variant="danger">
+        <ListRow
+          label="Delete All Wallets"
+          subtitle="Removes wallets from this device only"
+          variant="danger"
+          @click="initiateDelete()"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </template>
+        </ListRow>
+      </ListGroup>
 
       <!-- Version Footer -->
       <footer class="version-footer">
@@ -534,210 +515,25 @@ function cancelImport() {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Section Styles */
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.section-title {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #9ca3af;
-  margin: 0;
-  padding-left: 8px;
-}
-
-/* Wallet List */
-.wallet-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.wallet-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: #282828;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.wallet-item:hover {
-  background: #333333;
-}
-
-.wallet-item:active {
-  transform: scale(0.99);
-}
-
-.wallet-item--active {
-  border-color: var(--color-accent-primary);
-  background: rgba(232, 248, 89, 0.05);
-}
-
-.wallet-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(232, 248, 89, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-accent-primary);
-  flex-shrink: 0;
-}
-
-.wallet-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.wallet-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.active-badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  color: #0a0a0a;
-  background: var(--color-accent-primary);
-  padding: 2px 8px;
-  border-radius: 4px;
-  width: fit-content;
-}
-
-.wallet-delete {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+/* Delete Button (inside ListRow) */
+.delete-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: transparent;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
-.wallet-delete:hover {
+.delete-btn:hover {
   color: var(--color-error);
   background: rgba(239, 68, 68, 0.1);
-}
-
-.wallet-arrow {
-  color: #6b7280;
-  flex-shrink: 0;
-}
-
-/* Add Wallet Button */
-.add-wallet-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 16px;
-  border-radius: 9999px;
-  border: 2px dashed #4b5563;
-  background: transparent;
-  color: #9ca3af;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 8px;
-}
-
-.add-wallet-btn:hover {
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
-}
-
-.add-wallet-btn:active {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Security Options */
-.security-options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.option-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  padding: 16px;
-  background: #282828;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-}
-
-.option-card:hover {
-  background: #333333;
-}
-
-.option-card:active {
-  background: #3a3a3a;
-}
-
-.option-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-primary);
-  flex-shrink: 0;
-}
-
-.option-icon--token {
-  background: rgba(168, 85, 247, 0.15);
-  color: #a855f7;
-}
-
-.option-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.option-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.option-subtitle {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.option-arrow {
-  color: #6b7280;
-  flex-shrink: 0;
 }
 
 /* Backup Message */
@@ -757,55 +553,6 @@ function cancelImport() {
 .backup-message.error {
   background: rgba(239, 68, 68, 0.1);
   color: var(--color-error);
-}
-
-/* Danger Section */
-.danger-section {
-  margin-top: auto;
-  padding-top: 16px;
-}
-
-.danger-card {
-  padding: 20px;
-  border-radius: 16px;
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.danger-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-error);
-  margin: 0 0 8px;
-}
-
-.danger-text {
-  font-size: 12px;
-  color: rgba(239, 68, 68, 0.7);
-  line-height: 1.5;
-  margin: 0 0 16px;
-}
-
-.danger-btn {
-  width: 100%;
-  height: 48px;
-  border-radius: 9999px;
-  background: var(--color-error);
-  border: none;
-  color: white;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
-  transition: all 0.2s ease;
-}
-
-.danger-btn:hover {
-  background: #dc2626;
-}
-
-.danger-btn:active {
-  transform: scale(0.98);
 }
 
 /* Version Footer */
