@@ -525,11 +525,13 @@ function cancelImport() {
 /* Main Content */
 .page-content {
   flex: 1;
+  min-height: 0; /* Enable proper flex scroll */
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
   padding: 8px 16px 24px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Section Styles */
