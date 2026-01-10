@@ -93,13 +93,15 @@ function handleLeftClick() {
   background: transparent;
 }
 
-/* Left Button */
+/* Left Button - Reset global button styles */
 .header-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
+  min-width: 36px;
   height: 36px;
+  padding: 0;
   border-radius: 50%;
   background: transparent;
   border: none;
