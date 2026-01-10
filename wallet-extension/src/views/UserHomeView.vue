@@ -38,16 +38,11 @@ import {
   type TransactionStatus,
 } from "../utils/transactions";
 import ReceiveModal from "../components/ReceiveModal.vue";
-import BottomNav from "../components/BottomNav.vue";
 import SegmentedTabs from "../components/SegmentedTabs.vue";
-import { useUiMode } from "../composables/useUiMode";
 
 const router = useRouter();
 
-// UI Mode (popup vs panel)
-const { isPopup } = useUiMode();
-
-// Tab state for popup mode
+// Tab state for navigation (unified for popup and panel)
 const activeTab = ref<'assets' | 'activity'>('assets');
 const tabItems = [
   { key: 'assets', label: 'Assets' },
@@ -504,8 +499,8 @@ const closeReceiveModal = () => {
         </button>
       </section>
 
-      <!-- Segmented Tabs (popup mode only) -->
-      <div v-if="isPopup" class="tabs-container">
+      <!-- Segmented Tabs (both modes - unified navigation) -->
+      <div class="tabs-container">
         <SegmentedTabs
           v-model="activeTab"
           :items="tabItems"
@@ -514,9 +509,9 @@ const closeReceiveModal = () => {
       </div>
 
       <!-- Scrollable Body Section -->
-      <div class="home-body" :class="{ 'home-body--popup': isPopup }">
-        <!-- Assets Section (show in panel mode OR when assets tab is active in popup) -->
-      <section v-if="!isPopup || activeTab === 'assets'" class="assets-section">
+      <div class="home-body">
+        <!-- Assets Section (show when assets tab is active) -->
+      <section v-if="activeTab === 'assets'" class="assets-section">
         <div class="section-header">
           <h2 class="section-title">Assets</h2>
           <button
@@ -603,8 +598,8 @@ const closeReceiveModal = () => {
         </div>
       </section>
 
-      <!-- SIP-010 Tokens Section (show in panel mode OR when assets tab is active in popup) -->
-      <section v-if="(!isPopup || activeTab === 'assets') && (tokens.length > 0 || isLoadingTokens)" class="tokens-section">
+      <!-- SIP-010 Tokens Section (show when assets tab is active) -->
+      <section v-if="activeTab === 'assets' && (tokens.length > 0 || isLoadingTokens)" class="tokens-section">
         <div class="section-header">
           <h2 class="section-title">Tokens <span class="token-count">({{ tokens.length }})</span></h2>
           <button class="toggle-btn" @click="showTokens = !showTokens">
@@ -643,8 +638,8 @@ const closeReceiveModal = () => {
         </div>
       </section>
 
-      <!-- Transaction History (show in panel mode OR when activity tab is active in popup) -->
-      <section v-if="!isPopup || activeTab === 'activity'" class="history-section">
+      <!-- Transaction History (show when activity tab is active) -->
+      <section v-if="activeTab === 'activity'" class="history-section">
         <div class="section-header">
           <h2 class="section-title">History</h2>
           <button v-if="transactions.length > 5" class="see-all-btn" @click="showAllTx = !showAllTx">
@@ -716,8 +711,8 @@ const closeReceiveModal = () => {
       @close="closeReceiveModal"
     />
 
-    <!-- Bottom Navigation (panel mode only) -->
-    <BottomNav v-if="!isPopup" @open-receive="openReceiveModal" />
+    <!-- Bottom Navigation disabled - using SegmentedTabs in both modes -->
+    <!-- <BottomNav @open-receive="openReceiveModal" /> -->
   </section>
 </template>
 
@@ -744,12 +739,7 @@ const closeReceiveModal = () => {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 100px; /* Space for BottomNav */
-}
-
-/* Reduce padding in popup mode (no BottomNav) */
-.home-body--popup {
-  padding-bottom: 24px;
+  padding-bottom: 24px; /* No BottomNav - using tabs */
 }
 
 /* Tabs Container */
