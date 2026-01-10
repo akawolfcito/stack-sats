@@ -548,8 +548,9 @@ function truncateAddress(address: string): string {
 .content {
   flex: 1 1 auto;
   padding: 0 var(--space-lg);
-  padding-bottom: var(--space-md);
+  padding-bottom: 180px; /* Space for sticky footer */
   min-height: 0;
+  overflow-y: auto;
 }
 
 .content-center {
