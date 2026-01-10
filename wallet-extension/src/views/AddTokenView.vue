@@ -6,6 +6,7 @@ import AppHeader from "@/components/layout/AppHeader.vue";
 import FormField from "@/components/forms/FormField.vue";
 import InlineError from "@/components/forms/InlineError.vue";
 import StickyCTA from "@/components/layout/StickyCTA.vue";
+import { TextField } from "@/components/ui";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
 import {
   getCustomTokens,
@@ -234,18 +235,18 @@ function handleBack() {
         :error="contractIdError"
         required
       >
-        <div class="input-with-action">
-          <input
-            v-model="contractId"
-            type="text"
-            class="form-input form-input--with-action"
-            placeholder="SP32A..."
-            @blur="handleBlur('contractId')"
-          />
-          <button class="paste-btn" type="button" @click="handlePaste">
-            PASTE
-          </button>
-        </div>
+        <TextField
+          v-model="contractId"
+          placeholder="SP32A..."
+          :error="contractIdError"
+          @blur="handleBlur('contractId')"
+        >
+          <template #suffix>
+            <button class="paste-btn" type="button" @click="handlePaste">
+              PASTE
+            </button>
+          </template>
+        </TextField>
       </FormField>
 
       <!-- Token Name Field -->
@@ -254,12 +255,11 @@ function handleBack() {
         :error="tokenNameError"
         required
       >
-        <input
+        <TextField
           v-model="tokenName"
-          type="text"
-          class="form-input"
           placeholder="e.g., MiamiCoin"
-          maxlength="32"
+          :maxlength="32"
+          :error="tokenNameError"
           @blur="handleBlur('tokenName')"
         />
       </FormField>
@@ -271,12 +271,12 @@ function handleBack() {
           :error="tokenSymbolError"
           required
         >
-          <input
+          <TextField
             v-model="tokenSymbol"
-            type="text"
-            class="form-input form-input--uppercase"
+            uppercase
             placeholder="MIA"
-            maxlength="10"
+            :maxlength="10"
+            :error="tokenSymbolError"
             @blur="handleBlur('tokenSymbol')"
           />
         </FormField>
@@ -286,13 +286,14 @@ function handleBack() {
           :error="tokenDecimalsError"
           required
         >
-          <input
-            v-model.number="tokenDecimals"
+          <TextField
+            :model-value="tokenDecimals ?? ''"
             type="number"
-            class="form-input"
             placeholder="6"
-            min="0"
-            max="18"
+            :min="0"
+            :max="18"
+            :error="tokenDecimalsError"
+            @update:model-value="tokenDecimals = $event ? Number($event) : null"
             @blur="handleBlur('tokenDecimals')"
           />
         </FormField>
@@ -386,48 +387,10 @@ function handleBack() {
   flex: 1;
 }
 
-/* Form Inputs */
-.form-input {
-  width: 100%;
-  height: var(--row-h);
-  padding: 0 var(--space-lg);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-base);
-  font-family: var(--font-family);
-  transition: all var(--transition-fast);
-}
+/* Form inputs now use TextField component */
 
-.form-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--color-accent-primary);
-  box-shadow: 0 0 0 2px var(--color-accent-primary-muted);
-}
-
-.form-input--uppercase {
-  text-transform: uppercase;
-}
-
-.form-input--with-action {
-  padding-right: 90px;
-}
-
-/* Input with action button */
-.input-with-action {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
+/* Paste button inside TextField suffix */
 .paste-btn {
-  position: absolute;
-  right: var(--space-md);
   padding: var(--space-sm) var(--space-md);
   background: var(--color-accent-primary-muted);
   border: none;
