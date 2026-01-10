@@ -9,7 +9,10 @@ defineProps<{
 
 <template>
   <section class="list-group" :class="{ 'list-group--danger': variant === 'danger' }">
-    <h3 v-if="title" class="list-group-title">{{ title }}</h3>
+    <div v-if="title || $slots.headerAction" class="list-group-header">
+      <h3 v-if="title" class="list-group-title">{{ title }}</h3>
+      <slot name="headerAction" />
+    </div>
     <div class="list-group-items">
       <slot />
     </div>
@@ -23,6 +26,13 @@ defineProps<{
   gap: var(--space-xs);
 }
 
+.list-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-xs);
+}
+
 .list-group-title {
   font-size: 11px;
   font-weight: 600;
@@ -30,7 +40,6 @@ defineProps<{
   letter-spacing: 0.08em;
   color: var(--color-text-muted);
   margin: 0;
-  padding-left: var(--space-xs);
 }
 
 .list-group--danger .list-group-title {

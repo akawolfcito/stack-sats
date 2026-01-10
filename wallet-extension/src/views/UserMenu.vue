@@ -29,6 +29,7 @@ const router = useRouter();
 // Wallet list state
 const wallets = ref<WalletEntry[]>([]);
 const activeWalletId = ref<string | null>(null);
+const isManagingWallets = ref(false);
 
 const showDeleteConfirm = ref(false);
 const confirmText = ref("");
@@ -71,6 +72,10 @@ function handleAddWallet() {
 
 function handleManageTokens() {
   router.push({ path: "/manage-tokens" });
+}
+
+function toggleManageWallets() {
+  isManagingWallets.value = !isManagingWallets.value;
 }
 
 function initiateDelete(walletId?: string) {
@@ -265,13 +270,18 @@ function cancelImport() {
     <div v-if="!showDeleteConfirm" class="page-content">
       <!-- Your Wallets Section -->
       <ListGroup title="Your Wallets">
+        <template #headerAction>
+          <button class="manage-btn" @click="toggleManageWallets">
+            {{ isManagingWallets ? 'Done' : 'Manage' }}
+          </button>
+        </template>
         <ListRow
           v-for="wallet in wallets"
           :key="wallet.id"
           :label="wallet.name"
           :badge="wallet.id === activeWalletId ? 'Active' : undefined"
           icon-color="rgba(232, 248, 89, 0.15)"
-          chevron
+          :chevron="!isManagingWallets"
           @click="switchWallet(wallet.id)"
         >
           <template #icon>
@@ -281,11 +291,11 @@ function cancelImport() {
               <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
             </svg>
           </template>
-          <template #right>
+          <template v-if="isManagingWallets" #right>
             <button
               class="delete-btn"
               @click.stop="initiateDelete(wallet.id)"
-              title="Delete wallet"
+              title="Remove wallet"
             >
               <span class="delete-icon">×</span>
             </button>
@@ -511,6 +521,23 @@ function cancelImport() {
   padding: var(--space-sm) var(--card-pad-x) var(--section-gap);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Manage Button */
+.manage-btn {
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.manage-btn:hover {
+  background: rgba(232, 248, 89, 0.1);
 }
 
 /* Delete Button (inside ListRow) */
