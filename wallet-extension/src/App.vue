@@ -20,6 +20,10 @@ const hasWallet = ref(false);
 const isLocked = ref(true);
 const isInitializing = ref(true);
 
+// Queue mode state
+const isQueueMode = ref(false);
+const currentRequestId = ref<string>("");
+
 // Check wallet state
 const checkWalletState = () => {
   hasWallet.value = sessionManager.hasWallet;
@@ -49,6 +53,28 @@ watch(
   }
 );
 
+// Handle DAPP_REQUEST messages from background (queue mode)
+function handleDappRequest(request: { id: string; method: string; params: unknown; origin: string }) {
+  secureLog("Received DAPP_REQUEST", { method: request.method });
+  payload.value = {
+    jsonrpc: "2.0",
+    id: request.id,
+    method: request.method,
+    params: request.params,
+  };
+  currentRequestId.value = request.id;
+  origin.value = request.origin;
+  tabId.value = "queue"; // Special marker for queue mode
+}
+
+// Listen for messages from background
+chrome.runtime.onMessage.addListener((message): undefined => {
+  if (message.type === "DAPP_REQUEST" && isQueueMode.value) {
+    handleDappRequest(message.payload);
+  }
+  return undefined;
+});
+
 // Checking if popup was opened from a webpage with a payload, or via the extension icon.
 // The `tabId` and `payload` are passed as query params from the openPopupConfirmation function of background.js.
 onBeforeMount(async () => {
@@ -65,6 +91,16 @@ onBeforeMount(async () => {
 
   const capturedSearchParams = new URLSearchParams(document.location.search);
 
+  // Check if this is queue mode
+  if (capturedSearchParams.get("mode") === "queue") {
+    isQueueMode.value = true;
+    secureLog("Queue mode enabled, sending UI_READY");
+    // Signal to background that UI is ready
+    chrome.runtime.sendMessage({ type: "UI_READY" });
+    return;
+  }
+
+  // Legacy mode: payload in URL params
   if (capturedSearchParams.size > 0) {
     const tabIdString = capturedSearchParams.get("tabId") || "0";
     const payloadString = capturedSearchParams.get("payload") || "";
@@ -76,7 +112,7 @@ onBeforeMount(async () => {
         payload.value = payloadObject;
         tabId.value = tabIdString;
         origin.value = originString;
-        secureLog("Received RPC request", { method: payloadObject.method });
+        secureLog("Received RPC request (legacy)", { method: payloadObject.method });
       } catch (error) {
         secureLog("Failed to parse payload", error);
       }
@@ -103,7 +139,13 @@ const canShowConfirmation = () => {
 
     <!-- If payload is present and wallet is available, show Confirmation -->
     <div v-else-if="payload && canShowConfirmation()" class="app-content">
-      <Confirmation :payload="payload" :tabId="tabId" :origin="origin" />
+      <Confirmation
+        :payload="payload"
+        :tabId="tabId"
+        :origin="origin"
+        :isQueueMode="isQueueMode"
+        :requestId="currentRequestId"
+      />
     </div>
 
     <!-- If payload but wallet is locked, show unlock prompt message -->
