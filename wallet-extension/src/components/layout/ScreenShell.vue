@@ -65,7 +65,14 @@ defineProps<{
 .screen-content--scroll {
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: var(--space-lg); /* Safe-area for popup bottom */
+  padding-bottom: var(--space-lg);
+}
+
+/* Popup mode: extra bottom padding for safe-area */
+@media (max-height: 640px) {
+  .screen-content--scroll {
+    padding-bottom: var(--space-xl);
+  }
 }
 
 .screen-content--padded {
