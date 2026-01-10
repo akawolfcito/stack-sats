@@ -24,6 +24,34 @@ const AUTO_APPROVE_METHODS = ["getAddresses", "stx_getAddresses"];
 // Ensures only one request is processed at a time
 // ============================================================
 
+/** Debug logging (disable in production) */
+const DEBUG_QUEUE = false;
+
+function logQueue(...args) {
+  if (DEBUG_QUEUE) {
+    console.log("[Queue]", ...args);
+  }
+}
+
+/**
+ * Get queue status (for debugging)
+ * Call from console: chrome.runtime.sendMessage({ type: 'GET_QUEUE_STATUS' })
+ */
+function getQueueStatus() {
+  return {
+    queueLength: requestQueue.length,
+    activeRequest: activeRequest
+      ? {
+          id: activeRequest.id,
+          method: activeRequest.method,
+          origin: activeRequest.origin,
+        }
+      : null,
+    popupWindowId,
+    uiReady,
+  };
+}
+
 /** @type {Array<RequestContext>} */
 const requestQueue = [];
 
@@ -56,6 +84,7 @@ const REQUEST_TIMEOUT_MS = 55000;
  */
 function enqueueRequest(ctx) {
   requestQueue.push(ctx);
+  logQueue("Enqueued:", ctx.id, ctx.method, "| Queue size:", requestQueue.length);
   dispatchNext();
 }
 
@@ -64,14 +93,17 @@ function enqueueRequest(ctx) {
  */
 async function dispatchNext() {
   if (activeRequest !== null) {
+    logQueue("dispatchNext: already active, skipping");
     return; // Already processing a request
   }
 
   if (requestQueue.length === 0) {
+    logQueue("dispatchNext: queue empty");
     return; // Nothing to process
   }
 
   activeRequest = requestQueue.shift();
+  logQueue("Dispatching:", activeRequest.id, activeRequest.method);
 
   // Ensure single popup is open
   await ensurePopupOpenOrFocus();
@@ -226,7 +258,7 @@ function handleUIReady() {
  * Listen for messages from UI (popup)
  * Handles: UI_READY, DAPP_APPROVE, DAPP_REJECT
  */
-chrome.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Only handle messages from extension pages (popup)
   if (sender.tab) {
     return; // This is from a content script, not popup
@@ -234,16 +266,23 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 
   switch (message.type) {
     case "UI_READY":
+      logQueue("UI_READY received");
       handleUIReady();
       return;
 
     case "DAPP_APPROVE":
+      logQueue("DAPP_APPROVE:", message.id);
       handleDappApprove(message.id, message.result);
       return;
 
     case "DAPP_REJECT":
+      logQueue("DAPP_REJECT:", message.id);
       handleDappReject(message.id, message.error);
       return;
+
+    case "GET_QUEUE_STATUS":
+      sendResponse(getQueueStatus());
+      return true; // Keep channel open for sendResponse
   }
 });
 
