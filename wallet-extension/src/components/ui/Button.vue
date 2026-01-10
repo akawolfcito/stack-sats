@@ -148,16 +148,16 @@ const classes = computed(() => [
 
 /* === Variant: Secondary === */
 .btn--secondary {
-  /* Dark fill + border for weight and contrast */
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  /* Pro surface + subtle border, no glow */
+  background: var(--surface-2);
+  border: var(--border-subtle);
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
 }
 
 .btn--secondary:hover:not(:disabled) {
   background: var(--color-bg-card-hover);
-  border-color: var(--color-border-hover);
+  border-color: var(--color-border);
 }
 
 .btn--secondary:active:not(:disabled) {
@@ -168,16 +168,17 @@ const classes = computed(() => [
 .btn--ghost {
   background: transparent;
   border: none;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-1);
+  color: var(--color-text-primary);
 }
 
 .btn--ghost:active:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
 }
 
 /* === Variant: Danger === */

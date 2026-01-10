@@ -49,6 +49,7 @@ function selectTab(key: string) {
 .segmented-tabs {
   display: flex;
   position: relative;
+  height: var(--row-h);
   background: var(--surface-1);
   border: var(--border-subtle);
   border-radius: var(--radius-control);
@@ -73,13 +74,13 @@ function selectTab(key: string) {
   flex: 1;
   position: relative;
   z-index: 1;
-  height: calc(var(--row-h) - 8px);
-  padding: 0 var(--space-lg);
+  height: calc(100% - 0px);
+  padding: 0 var(--space-md);
   background: transparent;
   border: none;
   border-radius: calc(var(--radius-control) - 4px);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
   cursor: pointer;
   transition: color 0.15s ease;
