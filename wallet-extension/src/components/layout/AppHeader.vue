@@ -156,4 +156,33 @@ function handleLeftClick() {
   height: 36px;
   flex-shrink: 0;
 }
+
+/* Popup mode: compact header */
+@media (max-height: 640px) {
+  .app-header {
+    padding: var(--space-sm) var(--space-sm);
+    min-height: 44px;
+    gap: var(--space-xs);
+  }
+
+  .header-btn {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+  }
+
+  .header-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .header-title {
+    font-size: var(--font-size-sm);
+  }
+
+  .header-spacer {
+    width: 32px;
+    height: 32px;
+  }
+}
 </style>
