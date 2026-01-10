@@ -92,9 +92,9 @@
   --icon-size-lg: 24px;
 }
 
-/* === Compact Density (Popup/Sidepanel: narrow or short viewport) === */
+/* === Compact Density (Auto: triggers on narrow or short viewport) === */
 @media (max-width: 480px), (max-height: 640px) {
-  :root {
+  :root:not([data-density="comfortable"]) {
     /* Reduced heights */
     --header-h: 44px;
     --row-h: 44px;
@@ -112,6 +112,40 @@
     --icon-size-md: 18px;
     --icon-size-lg: 20px;
   }
+}
+
+/* === Explicit Density Mode: Compact === */
+:root[data-density="compact"] {
+  --header-h: 44px;
+  --row-h: 44px;
+  --control-h: 44px;
+  --icon-btn-size: 32px;
+
+  --section-gap: 16px;
+  --card-pad: var(--space-md);
+  --card-pad-x: var(--space-md);
+  --card-pad-y: var(--space-sm);
+
+  --icon-size-sm: 14px;
+  --icon-size-md: 18px;
+  --icon-size-lg: 20px;
+}
+
+/* === Explicit Density Mode: Comfortable (force default even on small viewports) === */
+:root[data-density="comfortable"] {
+  --header-h: 56px;
+  --row-h: 52px;
+  --control-h: 52px;
+  --icon-btn-size: 40px;
+
+  --section-gap: 24px;
+  --card-pad: var(--space-lg);
+  --card-pad-x: var(--space-lg);
+  --card-pad-y: var(--space-md);
+
+  --icon-size-sm: 16px;
+  --icon-size-md: 20px;
+  --icon-size-lg: 24px;
 }
 
 *,
