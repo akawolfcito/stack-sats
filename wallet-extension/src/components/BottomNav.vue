@@ -121,12 +121,12 @@ function isActive(path: string): boolean {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 32px 32px 0 0;
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 16px 24px 0;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding: var(--space-md) var(--section-gap) 0;
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
   z-index: 1000;
 }
 
@@ -135,8 +135,8 @@ function isActive(path: string): boolean {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  width: 48px;
+  gap: var(--space-xs);
+  width: var(--icon-btn-size);
   padding: 0;
   background: transparent;
   border: none;
