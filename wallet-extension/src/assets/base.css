@@ -72,6 +72,46 @@
   --transition-fast: 150ms ease;
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
+
+  /* === Density Tokens (Layout) === */
+  /* Heights */
+  --header-h: 56px;
+  --row-h: 52px;
+  --control-h: 52px;
+  --icon-btn-size: 40px;
+
+  /* Spacing - Layout specific */
+  --section-gap: 24px;
+  --card-pad: var(--space-lg);
+  --card-pad-x: var(--space-lg);
+  --card-pad-y: var(--space-md);
+
+  /* Icon sizes */
+  --icon-size-sm: 16px;
+  --icon-size-md: 20px;
+  --icon-size-lg: 24px;
+}
+
+/* === Compact Density (Popup Mode: height < 640px) === */
+@media (max-height: 640px) {
+  :root {
+    /* Reduced heights */
+    --header-h: 44px;
+    --row-h: 44px;
+    --control-h: 44px;
+    --icon-btn-size: 32px;
+
+    /* Tighter spacing */
+    --section-gap: 16px;
+    --card-pad: var(--space-md);
+    --card-pad-x: var(--space-md);
+    --card-pad-y: var(--space-sm);
+
+    /* Slightly smaller icons */
+    --icon-size-sm: 14px;
+    --icon-size-md: 18px;
+    --icon-size-lg: 20px;
+  }
 }
 
 *,

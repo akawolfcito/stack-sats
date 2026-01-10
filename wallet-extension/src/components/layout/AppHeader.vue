@@ -84,8 +84,8 @@ function handleLeftClick() {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  padding: var(--space-md) var(--space-md);
-  min-height: 56px;
+  padding: var(--space-sm) var(--card-pad-x);
+  min-height: var(--header-h);
   background: var(--color-bg-primary);
 }
 
@@ -98,17 +98,22 @@ function handleLeftClick() {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
+  width: var(--icon-btn-size);
+  min-width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   padding: 0;
   border-radius: 50%;
   background: transparent;
   border: none;
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
   flex-shrink: 0;
+}
+
+.header-btn svg {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
 }
 
 .header-btn:hover {
@@ -152,37 +157,8 @@ function handleLeftClick() {
 
 /* Spacer for alignment */
 .header-spacer {
-  width: 36px;
-  height: 36px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   flex-shrink: 0;
-}
-
-/* Popup mode: compact header */
-@media (max-height: 640px) {
-  .app-header {
-    padding: var(--space-sm) var(--space-sm);
-    min-height: 44px;
-    gap: var(--space-xs);
-  }
-
-  .header-btn {
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-  }
-
-  .header-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .header-title {
-    font-size: var(--font-size-sm);
-  }
-
-  .header-spacer {
-    width: 32px;
-    height: 32px;
-  }
 }
 </style>
