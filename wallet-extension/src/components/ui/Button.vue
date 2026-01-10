@@ -17,7 +17,7 @@ const props = withDefaults(
     variant: 'primary',
     size: 'md',
     fullWidth: false,
-    pill: true,
+    pill: false,
     disabled: false,
     loading: false,
   }
@@ -122,7 +122,7 @@ const classes = computed(() => [
 }
 
 .btn:not(.btn--pill) {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-control);
 }
 
 /* Full width */
@@ -134,17 +134,16 @@ const classes = computed(() => [
 .btn--primary {
   background: var(--color-accent-primary);
   color: #0a0a0a;
-  /* Subtle glow - not a halo */
-  box-shadow: 0 2px 8px rgba(215, 248, 46, 0.15);
+  box-shadow: var(--shadow-accent);
 }
 
 .btn--primary:hover:not(:disabled) {
-  box-shadow: 0 4px 12px rgba(215, 248, 46, 0.25);
+  box-shadow: var(--shadow-accent-hover);
 }
 
 .btn--primary:active:not(:disabled) {
   transform: scale(0.98);
-  box-shadow: 0 1px 4px rgba(215, 248, 46, 0.1);
+  box-shadow: var(--shadow-control);
 }
 
 /* === Variant: Secondary === */
@@ -185,7 +184,6 @@ const classes = computed(() => [
 .btn--danger {
   background: var(--color-error);
   color: #ffffff;
-  /* Subtle glow - not a halo */
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.15);
 }
 
@@ -195,7 +193,7 @@ const classes = computed(() => [
 
 .btn--danger:active:not(:disabled) {
   transform: scale(0.98);
-  box-shadow: 0 1px 4px rgba(255, 107, 107, 0.1);
+  box-shadow: var(--shadow-control);
 }
 
 /* === Variant: Icon === */
