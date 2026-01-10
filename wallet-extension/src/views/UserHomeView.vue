@@ -40,6 +40,7 @@ import {
 import ReceiveModal from "../components/ReceiveModal.vue";
 import SegmentedTabs from "../components/SegmentedTabs.vue";
 import BalanceHeader from "../components/BalanceHeader.vue";
+import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 
 const router = useRouter();
 
@@ -125,6 +126,70 @@ const totalValueUsd = computed(() => {
 const currentAccountName = computed(() => {
   return accountNames.value[accountIndexToDisplay.value] || `Account ${accountIndexToDisplay.value + 1}`;
 });
+
+// Asset items for AssetList component
+const assetItems = computed<AssetRowModel[]>(() => {
+  const currentAccount = userAccounts.value[accountIndexToDisplay.value];
+  if (!currentAccount) return [];
+
+  return [
+    {
+      id: 'stx',
+      symbol: 'STX',
+      name: 'Stacks',
+      balanceText: shortBalance.value,
+      fiatText: totalValueUsd.value || undefined,
+      iconColor: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1))',
+    },
+    {
+      id: 'btc',
+      symbol: 'BTC',
+      name: 'Bitcoin',
+      balanceText: '0.00',
+      fiatText: undefined,
+      iconColor: 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1))',
+    },
+    {
+      id: 'runes',
+      symbol: 'R',
+      name: 'Runes',
+      balanceText: '0',
+      fiatText: undefined,
+      iconColor: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.1))',
+    },
+    {
+      id: 'ordinals',
+      symbol: 'O',
+      name: 'Inscriptions',
+      balanceText: '0',
+      fiatText: undefined,
+      iconColor: 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(234, 179, 8, 0.1))',
+    },
+  ];
+});
+
+// Handle asset item click (copy address to clipboard)
+const handleAssetClick = (item: AssetRowModel) => {
+  const currentAccount = userAccounts.value[accountIndexToDisplay.value];
+  if (!currentAccount) return;
+
+  let address = '';
+  switch (item.id) {
+    case 'stx':
+      address = currentAccount.stxAddress || '';
+      break;
+    case 'btc':
+      address = currentAccount.btcP2PKHAddress || '';
+      break;
+    case 'runes':
+    case 'ordinals':
+      address = currentAccount.btcP2TRAddress || '';
+      break;
+  }
+  if (address) {
+    copyToClipboard(address);
+  }
+};
 
 // Get display name for account in dropdown
 function getDisplayName(index: number): string {
@@ -512,75 +577,11 @@ const closeReceiveModal = () => {
           </button>
         </div>
 
-        <div class="assets-grid">
-          <!-- STX Card -->
-          <div
-            class="asset-card asset-card-stx"
-            @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.stxAddress || '')"
-          >
-            <div class="asset-card-glow asset-glow-purple"></div>
-            <div class="asset-card-content">
-              <div class="asset-card-header">
-                <div class="asset-icon asset-icon-purple">S</div>
-              </div>
-              <div class="asset-card-body">
-                <span class="asset-balance">{{ shortBalance }}</span>
-                <span class="asset-name">Stacks</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- BTC Card -->
-          <div
-            class="asset-card asset-card-btc"
-            @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || '')"
-          >
-            <div class="asset-card-glow asset-glow-orange"></div>
-            <div class="asset-card-content">
-              <div class="asset-card-header">
-                <div class="asset-icon asset-icon-orange">B</div>
-              </div>
-              <div class="asset-card-body">
-                <span class="asset-balance">0.00</span>
-                <span class="asset-name">Bitcoin</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Runes Card -->
-          <div
-            class="asset-card asset-card-runes"
-            @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')"
-          >
-            <div class="asset-card-glow asset-glow-pink"></div>
-            <div class="asset-card-content">
-              <div class="asset-card-header">
-                <div class="asset-icon asset-icon-pink">R</div>
-              </div>
-              <div class="asset-card-body">
-                <span class="asset-balance">0</span>
-                <span class="asset-name">Runes</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Ordinals Card -->
-          <div
-            class="asset-card asset-card-ordinals"
-            @click="copyToClipboard(userAccounts[accountIndexToDisplay]?.btcP2TRAddress || '')"
-          >
-            <div class="asset-card-glow asset-glow-yellow"></div>
-            <div class="asset-card-content">
-              <div class="asset-card-header">
-                <div class="asset-icon asset-icon-yellow">O</div>
-              </div>
-              <div class="asset-card-body">
-                <span class="asset-balance">0</span>
-                <span class="asset-name">Inscriptions</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Asset List (rows) -->
+        <AssetList
+          :items="assetItems"
+          @item-click="handleAssetClick"
+        />
       </section>
 
       <!-- SIP-010 Tokens Section (show when assets tab is active) -->
@@ -1179,157 +1180,7 @@ const closeReceiveModal = () => {
   cursor: not-allowed;
 }
 
-/* Assets Grid */
-.assets-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-md);
-}
-
-.asset-card {
-  position: relative;
-  overflow: hidden;
-  background: #1a1a1a;
-  padding: var(--space-md);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: inset 1px 1px 0 0 rgba(255, 255, 255, 0.05);
-}
-
-.asset-card:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.asset-card:active {
-  transform: scale(0.98);
-}
-
-.asset-card-glow {
-  position: absolute;
-  right: -16px;
-  top: -16px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  filter: blur(24px);
-  transition: all 0.3s ease;
-}
-
-.asset-card:hover .asset-card-glow {
-  opacity: 1.5;
-}
-
-.asset-glow-purple {
-  background: rgba(168, 85, 247, 0.15);
-}
-
-.asset-card-stx:hover {
-  border-color: rgba(168, 85, 247, 0.3);
-}
-
-.asset-card-stx:hover .asset-glow-purple {
-  background: rgba(168, 85, 247, 0.25);
-}
-
-.asset-glow-orange {
-  background: rgba(249, 115, 22, 0.15);
-}
-
-.asset-card-btc:hover {
-  border-color: rgba(249, 115, 22, 0.3);
-}
-
-.asset-card-btc:hover .asset-glow-orange {
-  background: rgba(249, 115, 22, 0.25);
-}
-
-.asset-glow-pink {
-  background: rgba(236, 72, 153, 0.15);
-}
-
-.asset-card-runes:hover {
-  border-color: rgba(236, 72, 153, 0.3);
-}
-
-.asset-card-runes:hover .asset-glow-pink {
-  background: rgba(236, 72, 153, 0.25);
-}
-
-.asset-glow-yellow {
-  background: rgba(234, 179, 8, 0.15);
-}
-
-.asset-card-ordinals:hover {
-  border-color: rgba(234, 179, 8, 0.3);
-}
-
-.asset-card-ordinals:hover .asset-glow-yellow {
-  background: rgba(234, 179, 8, 0.25);
-}
-
-.asset-card-content {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  justify-content: space-between;
-  gap: var(--space-md);
-}
-
-.asset-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.asset-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #0a0a0a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.asset-icon-purple {
-  color: #a855f7;
-}
-
-.asset-icon-orange {
-  color: #f97316;
-}
-
-.asset-icon-pink {
-  color: #ec4899;
-}
-
-.asset-icon-yellow {
-  color: #eab308;
-}
-
-.asset-card-body {
-  display: flex;
-  flex-direction: column;
-}
-
-.asset-balance {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
-}
-
-.asset-name {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
+/* Assets Section uses AssetList component */
 
 /* Tokens Section */
 .tokens-section {
