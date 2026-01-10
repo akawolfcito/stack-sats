@@ -287,9 +287,7 @@ function cancelImport() {
               @click.stop="initiateDelete(wallet.id)"
               title="Delete wallet"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
+              <span class="delete-icon">×</span>
             </button>
           </template>
         </ListRow>
@@ -533,15 +531,24 @@ function cancelImport() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f87171;
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .delete-btn:hover {
-  color: #ef4444;
   background: rgba(239, 68, 68, 0.25);
+}
+
+.delete-icon {
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+  color: #f87171;
+}
+
+.delete-btn:hover .delete-icon {
+  color: #ef4444;
 }
 
 /* Backup Message */
