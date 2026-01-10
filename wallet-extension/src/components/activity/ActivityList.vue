@@ -138,8 +138,9 @@ const skeletonCount = 4
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: 40px 24px;
   text-align: center;
+  min-height: 200px;
 }
 
 .activity-empty__icon {
