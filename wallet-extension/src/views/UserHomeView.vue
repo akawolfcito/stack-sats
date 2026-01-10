@@ -20,7 +20,13 @@ import {
 import {
   fetchAllTokenInfo,
   type TokenInfo,
+  formatTokenBalance,
 } from "../utils/tokens";
+import {
+  getCustomTokensForNetwork,
+  getEnabledTokens,
+  type CustomToken,
+} from "../utils/tokens/custom";
 import {
   getAccountCount,
   addAccount,
@@ -337,14 +343,49 @@ async function loadTokens() {
 
   isLoadingTokens.value = true;
   try {
+    // Fetch on-chain token balances
     const fungibleTokens = await fetchFungibleTokens(currentAccount.stxAddress, selectedNetwork.value);
+
+    // Get custom tokens for current network that are enabled
+    const customTokens = getCustomTokensForNetwork(selectedNetwork.value);
+    const enabledTokens = getEnabledTokens();
+
+    // Build token info from fetched balances
+    let tokenInfos: TokenInfo[] = [];
     if (fungibleTokens && Object.keys(fungibleTokens).length > 0) {
-      const tokenInfos = await fetchAllTokenInfo(fungibleTokens, selectedNetwork.value);
-      // Filter out tokens with 0 balance
-      tokens.value = tokenInfos.filter(t => t.balance !== "0");
-    } else {
-      tokens.value = [];
+      tokenInfos = await fetchAllTokenInfo(fungibleTokens, selectedNetwork.value);
     }
+
+    // Create a map of contractId -> TokenInfo for easy lookup
+    const tokenMap = new Map<string, TokenInfo>();
+    for (const t of tokenInfos) {
+      tokenMap.set(t.contractId, t);
+    }
+
+    // Add custom tokens that are enabled but not in the balance response
+    for (const custom of customTokens) {
+      if (!enabledTokens.has(custom.contractId)) continue;
+
+      // Skip if already in the balance response
+      if (tokenMap.has(custom.contractId)) continue;
+
+      // Add custom token with 0 balance
+      const customTokenInfo: TokenInfo = {
+        contractId: custom.contractId,
+        name: custom.name,
+        symbol: custom.symbol,
+        decimals: custom.decimals,
+        balance: "0",
+        formattedBalance: "0",
+        imageUri: custom.image,
+      };
+      tokenMap.set(custom.contractId, customTokenInfo);
+    }
+
+    // Convert map to array and filter enabled tokens
+    tokens.value = Array.from(tokenMap.values())
+      .filter(t => enabledTokens.has(t.contractId) || enabledTokens.has("STX"))
+      .filter(t => t.balance !== "0" || customTokens.some(c => c.contractId === t.contractId));
   } catch (error) {
     secureLog("Failed to load tokens", error);
     tokens.value = [];
