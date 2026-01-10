@@ -83,7 +83,17 @@
 
 /* Document-level styles - Prevent document scroll */
 html,
-body,
+body {
+  height: 100%;
+  width: 100%;
+  min-width: 360px;
+  min-height: 600px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+}
+
 #app {
   height: 100%;
   width: 100%;
