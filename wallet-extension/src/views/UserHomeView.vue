@@ -550,6 +550,10 @@ const handleTokenClick = (token: TokenInfo) => {
   const tokenKey = `${selectedNetwork.value}:${token.contractId}`;
   router.push({ path: `/send-token/${encodeURIComponent(tokenKey)}` });
 };
+
+const handleManageTokens = () => {
+  router.push({ path: "/manage-tokens" });
+};
 </script>
 
 <template>
@@ -630,17 +634,22 @@ const handleTokenClick = (token: TokenInfo) => {
       <section v-if="activeTab === 'assets'" class="assets-section">
         <div class="section-header">
           <h2 class="section-title">Assets</h2>
-          <button
-            class="refresh-btn"
-            @click="refreshBalance"
-            :disabled="isLoadingBalance"
-            title="Refresh"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
-              <path d="M23 4v6h-6M1 20v-6h6"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-          </button>
+          <div class="section-actions">
+            <button class="manage-btn" @click="handleManageTokens">
+              Manage
+            </button>
+            <button
+              class="refresh-btn"
+              @click="refreshBalance"
+              :disabled="isLoadingBalance"
+              title="Refresh"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Asset List (rows) -->
@@ -981,6 +990,28 @@ const handleTokenClick = (token: TokenInfo) => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-md);
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.manage-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-accent-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm, 6px);
+  transition: all 0.15s ease;
+}
+
+.manage-btn:hover {
+  background: rgba(232, 248, 89, 0.1);
 }
 
 .section-title {

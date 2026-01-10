@@ -67,6 +67,10 @@ function handleAddWallet() {
   router.push({ path: "/add-wallet" });
 }
 
+function handleManageTokens() {
+  router.push({ path: "/manage-tokens" });
+}
+
 function initiateDelete(walletId?: string) {
   walletToDelete.value = walletId || activeWalletId.value;
   showDeleteConfirm.value = true;
@@ -353,6 +357,28 @@ function cancelImport() {
         <p v-if="backupMessage" class="backup-message" :class="backupMessage.type">
           {{ backupMessage.text }}
         </p>
+      </section>
+
+      <!-- Token Settings Section -->
+      <section class="section">
+        <h3 class="section-title">Token Settings</h3>
+        <div class="security-options">
+          <button class="option-card" @click="handleManageTokens">
+            <div class="option-icon option-icon--token">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v12M6 12h12"/>
+              </svg>
+            </div>
+            <div class="option-content">
+              <span class="option-title">Manage Tokens</span>
+              <span class="option-subtitle">Add or remove custom tokens</span>
+            </div>
+            <svg class="option-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        </div>
       </section>
 
       <!-- Danger Zone -->
@@ -682,6 +708,11 @@ function cancelImport() {
   justify-content: center;
   color: var(--color-text-primary);
   flex-shrink: 0;
+}
+
+.option-icon--token {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
 }
 
 .option-content {
