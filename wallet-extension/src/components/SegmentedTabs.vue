@@ -50,18 +50,18 @@ function selectTab(key: string) {
   display: flex;
   position: relative;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 4px;
-  gap: 4px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-xs);
+  gap: var(--space-xs);
 }
 
 .tab-indicator {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  bottom: 4px;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  bottom: var(--space-xs);
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: transform 0.2s ease;
   pointer-events: none;
 }
@@ -70,11 +70,11 @@ function selectTab(key: string) {
   flex: 1;
   position: relative;
   z-index: 1;
-  padding: 8px 16px;
+  padding: var(--space-sm) var(--space-lg);
   background: transparent;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-muted);
   cursor: pointer;
