@@ -726,6 +726,8 @@ const closeReceiveModal = () => {
   overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: 24px; /* No BottomNav - using tabs */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scroll-behavior: smooth;
 }
 
 /* Tabs Container */
@@ -1094,18 +1096,18 @@ const closeReceiveModal = () => {
   display: flex;
   gap: var(--space-md);
   padding: 0 var(--space-lg);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .action-btn {
   flex: 1;
-  height: 56px;
+  height: 48px;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1139,7 +1141,7 @@ const closeReceiveModal = () => {
 /* Assets Section */
 .assets-section {
   padding: 0 var(--space-lg);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .section-header {
@@ -1185,7 +1187,7 @@ const closeReceiveModal = () => {
 /* Tokens Section */
 .tokens-section {
   padding: 0 var(--space-lg);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .token-count {
@@ -1289,7 +1291,7 @@ const closeReceiveModal = () => {
 /* History Section */
 .history-section {
   padding: 0 var(--space-lg);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .empty-state {
