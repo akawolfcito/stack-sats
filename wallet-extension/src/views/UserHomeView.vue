@@ -43,6 +43,7 @@ import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
+import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
 import { useUiMode } from "../composables/useUiMode";
 
 const router = useRouter();
@@ -215,6 +216,47 @@ const handleAssetClick = (item: AssetRowModel) => {
   if (address) {
     copyToClipboard(address);
   }
+};
+
+// Activity items for ActivityList component
+const activityItems = computed<ActivityItem[]>(() => {
+  const currentAccount = userAccounts.value[accountIndexToDisplay.value];
+  if (!currentAccount) return [];
+
+  return transactions.value.map((tx) => {
+    const isOutgoing = tx.sender === currentAccount.stxAddress;
+
+    // Determine subtitle (counterparty address)
+    let subtitle = '';
+    if (tx.type === 'token_transfer' && tx.recipient) {
+      subtitle = isOutgoing
+        ? `To ${truncateTxAddress(tx.recipient, 4)}`
+        : `From ${truncateTxAddress(tx.sender, 4)}`;
+    } else if (tx.contractId) {
+      const [contractAddr, contractName] = tx.contractId.split('.');
+      subtitle = `${truncateTxAddress(contractAddr, 4)}.${contractName}`;
+    }
+
+    // Map status to simplified type
+    let status: 'pending' | 'success' | 'failed' = 'pending';
+    if (tx.status === 'success') status = 'success';
+    else if (tx.status === 'failed' || tx.status === 'abort_by_response' || tx.status === 'abort_by_post_condition') status = 'failed';
+
+    return {
+      txId: tx.txId,
+      status,
+      title: getTransactionTypeLabel(tx.type) + (tx.functionName ? `.${tx.functionName}` : ''),
+      subtitle,
+      amountText: tx.amount ? `${formatAmount(tx.amount)} STX` : undefined,
+      timeText: formatRelativeTime(tx.timestamp),
+      isOutgoing,
+    };
+  });
+});
+
+// Handle activity item click (navigate to transaction details)
+const handleActivityClick = (txId: string) => {
+  router.push({ path: `/transaction/${txId}` });
 };
 
 // Get display name for account in dropdown
@@ -578,66 +620,13 @@ const closeReceiveModal = () => {
         </div>
       </section>
 
-      <!-- Transaction History (show when activity tab is active) -->
-      <section v-if="activeTab === 'activity'" class="history-section">
-        <div class="section-header">
-          <h2 class="section-title">History</h2>
-          <button v-if="transactions.length > 5" class="see-all-btn" @click="showAllTx = !showAllTx">
-            {{ showAllTx ? 'Show Less' : 'See All' }}
-          </button>
-        </div>
-
-        <div v-if="isLoadingTx" class="empty-state">Loading transactions...</div>
-
-        <div v-else-if="transactions.length === 0" class="empty-state">No transactions yet</div>
-
-        <div v-else class="tx-list">
-          <div
-            v-for="tx in (showAllTx ? transactions : transactions.slice(0, 5))"
-            :key="tx.txId"
-            class="tx-item"
-            @click="openExplorer(tx.txId)"
-            :title="'View on Explorer: ' + tx.txId"
-          >
-            <div class="tx-icon" :class="getStatusClass(tx.status)">
-              <svg v-if="tx.type === 'token_transfer'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <path v-if="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress" d="M7 17L17 7M17 7H7M17 7V17"/>
-                <path v-else d="M17 7L7 17M7 17H17M7 17V7"/>
-              </svg>
-              <svg v-else-if="tx.type === 'contract_call'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
-              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-            </div>
-
-            <div class="tx-details">
-              <span class="tx-type">
-                {{ getTransactionTypeLabel(tx.type) }}
-                <span v-if="tx.functionName" class="tx-function">.{{ tx.functionName }}</span>
-              </span>
-              <span class="tx-meta">
-                <template v-if="tx.type === 'token_transfer' && tx.recipient">
-                  {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress
-                    ? 'To: ' + truncateTxAddress(tx.recipient, 4)
-                    : 'From: ' + truncateTxAddress(tx.sender, 4) }}
-                </template>
-                <template v-else-if="tx.contractId">
-                  {{ truncateTxAddress(tx.contractId.split('.')[0], 4) }}.{{ tx.contractId.split('.')[1] }}
-                </template>
-                <span class="tx-time">{{ formatRelativeTime(tx.timestamp) }}</span>
-              </span>
-            </div>
-
-            <div v-if="tx.amount" class="tx-amount">
-              <span :class="tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? 'amount-out' : 'amount-in'">
-                {{ tx.sender === userAccounts[accountIndexToDisplay]?.stxAddress ? '-' : '+' }}{{ formatAmount(tx.amount) }} STX
-              </span>
-            </div>
-          </div>
-        </div>
+      <!-- Activity (show when activity tab is active) -->
+      <section v-if="activeTab === 'activity'" class="activity-section">
+        <ActivityList
+          :items="activityItems"
+          :loading="isLoadingTx"
+          @item-click="handleActivityClick"
+        />
       </section>
       </div>
     </template>
@@ -1046,8 +1035,8 @@ const closeReceiveModal = () => {
   flex-shrink: 0;
 }
 
-/* History Section */
-.history-section {
+/* Activity Section */
+.activity-section {
   padding: 0 var(--space-lg);
   margin-bottom: var(--space-lg);
 }
@@ -1057,106 +1046,6 @@ const closeReceiveModal = () => {
   color: var(--color-text-muted);
   padding: var(--space-xl);
   font-size: 14px;
-}
-
-.tx-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.tx-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md);
-  background: #1a1a1a;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.tx-item:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.tx-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #2a2a2a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.tx-icon.bg-success-muted {
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--color-accent-primary);
-}
-
-.tx-icon.bg-warning-muted {
-  background: rgba(234, 179, 8, 0.15);
-  color: var(--color-warning);
-}
-
-.tx-icon.bg-error-muted {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--color-error);
-}
-
-.tx-details {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-left: var(--space-md);
-}
-
-.tx-type {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.tx-function {
-  font-weight: 400;
-  color: var(--color-accent-primary);
-  font-size: 12px;
-}
-
-.tx-meta {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.tx-time {
-  margin-left: var(--space-sm);
-}
-
-.tx-amount {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.tx-amount span {
-  font-size: 14px;
-  font-weight: 700;
-  font-family: monospace;
-}
-
-.amount-in {
-  color: var(--color-accent-primary);
-}
-
-.amount-out {
-  color: var(--color-text-primary);
 }
 
 /* Spin animation */
