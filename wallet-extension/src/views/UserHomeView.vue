@@ -1017,8 +1017,8 @@ const handleManageTokens = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   background: transparent;
   border: none;
   color: var(--color-text-muted);
@@ -1097,8 +1097,8 @@ const handleManageTokens = () => {
 }
 
 .token-icon {
-  width: 40px;
-  height: 40px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   border-radius: 50%;
   background: #2a2a2a;
   display: flex;

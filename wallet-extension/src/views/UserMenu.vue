@@ -844,7 +844,7 @@ function cancelImport() {
 
 .confirm-input {
   width: 100%;
-  height: 56px;
+  height: var(--control-h);
   padding: 0 20px;
   background: #16180c;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -883,7 +883,7 @@ function cancelImport() {
 
 .btn-secondary {
   flex: 1;
-  height: 56px;
+  height: var(--control-h);
   border-radius: 9999px;
   background: #282828;
   border: none;
@@ -900,7 +900,7 @@ function cancelImport() {
 
 .btn-danger {
   flex: 1;
-  height: 56px;
+  height: var(--control-h);
   border-radius: 9999px;
   background: var(--color-error);
   border: none;
@@ -917,7 +917,7 @@ function cancelImport() {
 
 .btn-warning {
   flex: 1;
-  height: 56px;
+  height: var(--control-h);
   border-radius: 9999px;
   background: var(--color-warning);
   border: none;

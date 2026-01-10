@@ -389,7 +389,7 @@ function handleBack() {
 /* Form Inputs */
 .form-input {
   width: 100%;
-  height: 52px;
+  height: var(--row-h);
   padding: 0 var(--space-lg);
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -478,8 +478,8 @@ function handleBack() {
 }
 
 .preview-icon {
-  width: 44px;
-  height: 44px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   border-radius: 50%;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);

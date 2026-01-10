@@ -299,8 +299,8 @@ function handleAddToken() {
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   border: 3px solid var(--color-bg-card);
   border-top-color: var(--color-accent-primary);
   border-radius: 50%;
