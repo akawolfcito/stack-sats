@@ -90,6 +90,7 @@
   --icon-size-sm: 16px;
   --icon-size-md: 20px;
   --icon-size-lg: 24px;
+  --icon-size-xl: 80px;
 }
 
 /* === Density Mode: Explicit Compact (user choice, always wins) === */
@@ -107,6 +108,7 @@
   --icon-size-sm: 14px;
   --icon-size-md: 18px;
   --icon-size-lg: 20px;
+  --icon-size-xl: 64px;
 }
 
 /* === Density Mode: Explicit Comfy (user choice, always wins) === */
@@ -124,6 +126,7 @@
   --icon-size-sm: 16px;
   --icon-size-md: 20px;
   --icon-size-lg: 24px;
+  --icon-size-xl: 80px;
 }
 
 /* === Density Mode: Auto (small viewport triggers compact) === */
@@ -144,6 +147,7 @@
     --icon-size-sm: 14px;
     --icon-size-md: 18px;
     --icon-size-lg: 20px;
+    --icon-size-xl: 64px;
   }
 }
 

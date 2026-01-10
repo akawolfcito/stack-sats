@@ -379,12 +379,12 @@ function toggleFullAddress() {
 .header-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-md);
 }
 
 .asset-icon {
-  width: 36px;
-  height: 36px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   border-radius: 50%;
   background: rgba(232, 248, 89, 0.1);
   border: 1px solid rgba(232, 248, 89, 0.2);
@@ -411,8 +411,8 @@ function toggleFullAddress() {
 }
 
 .close-btn {
-  width: 36px;
-  height: 36px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -451,12 +451,12 @@ function toggleFullAddress() {
 
 .tab-btn {
   flex: 1;
-  height: 40px;
-  border-radius: 10px;
+  height: var(--control-h);
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.05);
   color: #6b7280;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -491,12 +491,12 @@ function toggleFullAddress() {
 
 .type-btn {
   flex: 1;
-  height: 34px;
-  border-radius: 8px;
+  height: var(--row-h);
+  border-radius: var(--radius-sm);
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #6b7280;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -566,8 +566,8 @@ function toggleFullAddress() {
 .qr-inner {
   position: relative;
   background: white;
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -617,11 +617,11 @@ function toggleFullAddress() {
   background: none;
   border: none;
   color: var(--color-accent-primary);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
   transition: all 0.15s ease;
 }
 
@@ -650,24 +650,24 @@ function toggleFullAddress() {
 .action-buttons {
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  gap: var(--space-md);
   width: 100%;
 }
 
 .btn-primary {
   flex: 1;
-  height: 48px;
-  border-radius: 12px;
+  height: var(--control-h);
+  border-radius: var(--radius-md);
   background: var(--color-accent-primary);
   border: none;
   color: #0a0a0a;
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-sm);
   box-shadow: 0 0 16px rgba(232, 248, 89, 0.25);
   transition: all 0.2s ease;
 }
@@ -692,18 +692,18 @@ function toggleFullAddress() {
 
 .btn-secondary {
   flex: 1;
-  height: 48px;
-  border-radius: 12px;
+  height: var(--control-h);
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--color-text-primary);
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-sm);
   transition: all 0.2s ease;
 }
 
@@ -721,8 +721,8 @@ function toggleFullAddress() {
   width: 100px;
   height: 4px;
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
-  margin: 12px auto;
+  border-radius: var(--radius-pill);
+  margin: var(--space-md) auto;
 }
 
 /* Modal Transitions */

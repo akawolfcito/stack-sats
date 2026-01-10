@@ -344,8 +344,8 @@ function handleAddToken() {
 }
 
 .empty-icon {
-  width: 80px;
-  height: 80px;
+  width: var(--icon-size-xl);
+  height: var(--icon-size-xl);
   border-radius: 50%;
   background: rgba(168, 85, 247, 0.1);
   display: flex;

@@ -663,7 +663,7 @@ function truncateAddress(address: string): string {
 .from-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .from-name {
@@ -1053,8 +1053,8 @@ function truncateAddress(address: string): string {
 
 /* Result */
 .result-icon {
-  width: 80px;
-  height: 80px;
+  width: var(--icon-size-xl);
+  height: var(--icon-size-xl);
   border-radius: 50%;
   display: flex;
   align-items: center;

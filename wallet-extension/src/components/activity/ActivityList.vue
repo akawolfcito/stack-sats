@@ -74,15 +74,15 @@ const skeletonCount = 4
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 /* Skeleton loading */
 .activity-skeleton {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--space-md);
+  padding: var(--card-pad-y) var(--card-pad-x);
 }
 
 .activity-skeleton__dot {
@@ -97,7 +97,7 @@ const skeletonCount = 4
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .activity-skeleton__title {
@@ -138,7 +138,7 @@ const skeletonCount = 4
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px;
+  padding: var(--space-3xl) var(--space-xl);
   text-align: center;
   min-height: 200px;
 }
@@ -146,18 +146,18 @@ const skeletonCount = 4
 .activity-empty__icon {
   color: var(--color-text-muted);
   opacity: 0.4;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-lg);
 }
 
 .activity-empty__title {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 var(--space-sm) 0;
 }
 
 .activity-empty__hint {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   margin: 0;
   max-width: 200px;
