@@ -43,7 +43,7 @@ const emit = defineEmits<{
 .asset-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  /* No gap - dividers handled by parent ListGroup */
 }
 
 .asset-list-empty {

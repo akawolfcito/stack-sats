@@ -49,20 +49,20 @@ function selectTab(key: string) {
 .segmented-tabs {
   display: flex;
   position: relative;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xs);
-  gap: var(--space-xs);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
 }
 
 .tab-indicator {
   position: absolute;
-  top: var(--space-xs);
-  left: var(--space-xs);
-  bottom: var(--space-xs);
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-md);
-  transition: transform 0.2s ease;
+  top: 3px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--color-accent-primary);
+  border-radius: calc(var(--radius-md) - 2px);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 
@@ -70,26 +70,27 @@ function selectTab(key: string) {
   flex: 1;
   position: relative;
   z-index: 1;
-  min-height: var(--row-h);
-  padding: var(--space-sm) var(--space-lg);
+  height: 36px;
+  padding: 0 var(--space-lg);
   background: transparent;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: calc(var(--radius-md) - 2px);
   font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
 }
 
-.tab-item:hover {
+.tab-item:hover:not(.tab-item--active) {
   color: var(--color-text-secondary);
 }
 
 .tab-item--active {
-  color: var(--color-text-primary);
+  color: #0a0a0a;
 }
 </style>
