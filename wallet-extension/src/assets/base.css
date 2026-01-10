@@ -92,8 +92,8 @@
   --icon-size-lg: 24px;
 }
 
-/* === Compact Density (Popup Mode: height < 640px) === */
-@media (max-height: 640px) {
+/* === Compact Density (Popup/Sidepanel: narrow or short viewport) === */
+@media (max-width: 480px), (max-height: 640px) {
   :root {
     /* Reduced heights */
     --header-h: 44px;
