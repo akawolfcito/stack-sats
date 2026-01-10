@@ -151,7 +151,7 @@ function handleConfirm() {
   max-width: 360px;
   background: var(--color-bg-secondary, #1a1a1a);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
 }
 
@@ -343,9 +343,9 @@ function handleConfirm() {
 
 .action-btn {
   flex: 1;
-  height: 48px;
-  border-radius: 12px;
-  font-size: 14px;
+  height: var(--control-h);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
