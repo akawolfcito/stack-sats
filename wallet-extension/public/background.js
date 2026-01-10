@@ -72,7 +72,16 @@ function dispatchNext() {
   }
 
   activeRequest = requestQueue.shift();
-  // TODO: ensurePopupOpenOrFocus()
+
+  // For now, use legacy popup opening (will be replaced with single-popup)
+  // This preserves existing behavior while we transition
+  openPopupConfirmation({
+    message: activeRequest._message,
+    sender: activeRequest._sender,
+    originUrl: activeRequest.origin,
+  });
+
+  // TODO: ensurePopupOpenOrFocus() - single popup policy
   // TODO: sendToUI({ type: 'DAPP_REQUEST', payload: activeRequest })
   // TODO: Start timeout timer
 }
@@ -190,8 +199,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep channel open for async response
   }
 
-  // Open popup for confirmation
-  openPopupConfirmation({ message, sender, originUrl });
+  // Create request context and enqueue
+  const ctx = {
+    id: message.id,
+    method: message.method,
+    params: message.params,
+    origin: originUrl,
+    tabId: sender.tab.id,
+    timestamp: Date.now(),
+    // Full message for legacy openPopupConfirmation
+    _message: message,
+    _sender: sender,
+    /**
+     * Send JSON-RPC response back to content script
+     * @param {object} response - JSON-RPC response object
+     */
+    respond: (response) => {
+      chrome.tabs.sendMessage(sender.tab.id, response).catch((err) => {
+        console.warn("[StacksWallet] Failed to send response:", err);
+      });
+    },
+  };
+
+  enqueueRequest(ctx);
+  return true; // Keep channel open for async response
 });
 
 /**
@@ -207,6 +238,7 @@ async function handleAutoApprove(message, sender, originUrl) {
     if (cached[cacheKey]) {
       console.log("[StacksWallet] Auto-approving with cached response");
       // Return cached response with the current request ID
+      // This bypasses the queue entirely (instant response)
       const response = {
         ...cached[cacheKey],
         id: message.id,
@@ -218,8 +250,24 @@ async function handleAutoApprove(message, sender, originUrl) {
     console.warn("[StacksWallet] Cache check failed:", error);
   }
 
-  // No cache, open popup for first-time confirmation
-  openPopupConfirmation({ message, sender, originUrl });
+  // No cache - enqueue for first-time confirmation
+  const ctx = {
+    id: message.id,
+    method: message.method,
+    params: message.params,
+    origin: originUrl,
+    tabId: sender.tab.id,
+    timestamp: Date.now(),
+    _message: message,
+    _sender: sender,
+    respond: (response) => {
+      chrome.tabs.sendMessage(sender.tab.id, response).catch((err) => {
+        console.warn("[StacksWallet] Failed to send response:", err);
+      });
+    },
+  };
+
+  enqueueRequest(ctx);
 }
 
 /**
