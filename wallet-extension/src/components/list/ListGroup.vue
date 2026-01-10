@@ -59,4 +59,16 @@ defineProps<{
 .list-group--danger .list-group-items > :deep(*:not(:last-child)) {
   border-bottom-color: rgba(239, 68, 68, 0.2);
 }
+
+/* Popup mode: compact spacing */
+@media (max-height: 640px) {
+  .list-group {
+    gap: var(--space-xs);
+  }
+
+  .list-group-title {
+    font-size: 10px;
+    padding-left: 2px;
+  }
+}
 </style>
