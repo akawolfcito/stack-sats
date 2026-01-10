@@ -43,8 +43,12 @@ import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
+import { useUiMode } from "../composables/useUiMode";
 
 const router = useRouter();
+
+// UI Mode detection
+const { isPopup } = useUiMode();
 
 // Tab state for navigation (unified for popup and panel)
 const activeTab = ref<'assets' | 'activity'>('assets');
@@ -437,7 +441,7 @@ const closeReceiveModal = () => {
 </script>
 
 <template>
-  <section class="user-home-view">
+  <section class="user-home-view" :class="{ 'user-home-view--popup': isPopup }">
     <!-- Ambient Glow -->
     <div class="ambient-glow"></div>
 
@@ -716,17 +720,27 @@ const closeReceiveModal = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-lg);
-  padding-top: var(--space-xl);
-  padding-bottom: var(--space-sm);
+  gap: 8px;
+  padding: 16px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+}
+
+/* Popup mode: tighter header */
+.user-home-view--popup .header {
+  padding: 12px;
+  padding-top: 16px;
+  padding-bottom: 6px;
+  gap: 6px;
 }
 
 .header-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.05);
   border: none;
@@ -745,7 +759,7 @@ const closeReceiveModal = () => {
 
 /* Menu Icon */
 .menu-icon-text {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   color: #FFFFFF;
 }
