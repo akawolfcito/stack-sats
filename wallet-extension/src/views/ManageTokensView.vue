@@ -4,6 +4,13 @@ import { useRouter } from "vue-router";
 import TokenList, { type TokenItem } from "@/components/tokens/TokenList.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import { getSelectedNetwork, type NetworkName } from "@/utils/network";
+import {
+  getCustomTokensForNetwork,
+  getEnabledTokens,
+  saveEnabledTokens,
+  type CustomToken,
+} from "@/utils/tokens/custom";
 
 const router = useRouter();
 
@@ -13,10 +20,11 @@ interface Token {
   symbol: string;
   name: string;
   color: string;
+  isCustom?: boolean;
 }
 
-// Known tokens list (can be expanded)
-const KNOWN_TOKENS: Token[] = [
+// Known tokens list for mainnet (can be expanded)
+const KNOWN_TOKENS_MAINNET: Token[] = [
   { contractId: "STX", symbol: "STX", name: "Stacks", color: "#7c3aed" },
   { contractId: "SP3K8BC0PPEVCV7NZ6QSRWPQ2JE9E5B6N3PA0KBR9.token-alex::alex", symbol: "ALEX", name: "Alex Lab", color: "#f97316" },
   { contractId: "SP3NE50GEXFG9SZGTT51P40X2CKYSZ5CC4ZTZ7A2G.welshcorgicoin-token::welshcorgicoin", symbol: "WELSH", name: "Welshcorgicoin", color: "#eab308" },
@@ -27,44 +35,60 @@ const KNOWN_TOKENS: Token[] = [
   { contractId: "SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin::wrapped-bitcoin", symbol: "xBTC", name: "Wrapped Bitcoin", color: "#f7931a" },
 ];
 
-// Storage key
-const ENABLED_TOKENS_KEY = "enabled_tokens";
-
 // State
 const searchQuery = ref("");
 const enabledTokens = ref<Set<string>>(new Set());
+const customTokens = ref<CustomToken[]>([]);
+const currentNetwork = ref<NetworkName>("devnet");
 const isLoading = ref(true);
 
-// Load enabled tokens from localStorage
-onBeforeMount(() => {
-  const stored = localStorage.getItem(ENABLED_TOKENS_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored) as string[];
-      enabledTokens.value = new Set(parsed);
-    } catch {
-      // Default: enable STX only
-      enabledTokens.value = new Set(["STX"]);
-    }
-  } else {
-    // Default: enable STX only
-    enabledTokens.value = new Set(["STX"]);
+// Get known tokens based on network (mainnet only for now)
+const knownTokens = computed<Token[]>(() => {
+  // STX is always available
+  const stx: Token = { contractId: "STX", symbol: "STX", name: "Stacks", color: "#7c3aed" };
+
+  if (currentNetwork.value === "mainnet") {
+    return KNOWN_TOKENS_MAINNET;
   }
+
+  // For testnet/devnet, only show STX from known tokens
+  return [stx];
+});
+
+// Combine known tokens with custom tokens for current network
+const allTokens = computed<Token[]>(() => {
+  const known = knownTokens.value;
+  const custom = customTokens.value.map((t) => ({
+    contractId: t.contractId,
+    symbol: t.symbol,
+    name: t.name,
+    color: t.color,
+    isCustom: true,
+  }));
+
+  // Combine: known first, then custom
+  return [...known, ...custom];
+});
+
+// Load enabled tokens and custom tokens
+onBeforeMount(() => {
+  currentNetwork.value = getSelectedNetwork();
+  enabledTokens.value = getEnabledTokens();
+  customTokens.value = getCustomTokensForNetwork(currentNetwork.value);
   isLoading.value = false;
 });
 
-// Save enabled tokens to localStorage
-function saveEnabledTokens() {
-  const arr = Array.from(enabledTokens.value);
-  localStorage.setItem(ENABLED_TOKENS_KEY, JSON.stringify(arr));
+// Handle saving enabled tokens
+function handleSaveEnabledTokens() {
+  saveEnabledTokens(enabledTokens.value);
 }
 
 // Filter tokens by search query
 const filteredTokens = computed(() => {
   const query = searchQuery.value.toLowerCase().trim();
-  if (!query) return KNOWN_TOKENS;
+  if (!query) return allTokens.value;
 
-  return KNOWN_TOKENS.filter(
+  return allTokens.value.filter(
     (t) =>
       t.symbol.toLowerCase().includes(query) ||
       t.name.toLowerCase().includes(query) ||
@@ -80,6 +104,7 @@ const activeTokenItems = computed<TokenItem[]>(() => {
       ...t,
       enabled: true,
       isLocked: t.contractId === "STX",
+      isCustom: t.isCustom,
     }));
 });
 
@@ -89,6 +114,18 @@ const availableTokenItems = computed<TokenItem[]>(() => {
     .map((t) => ({
       ...t,
       enabled: false,
+      isCustom: t.isCustom,
+    }));
+});
+
+// Custom tokens section
+const customTokenItems = computed<TokenItem[]>(() => {
+  return filteredTokens.value
+    .filter((t) => t.isCustom)
+    .map((t) => ({
+      ...t,
+      enabled: enabledTokens.value.has(t.contractId),
+      isCustom: true,
     }));
 });
 
@@ -104,7 +141,7 @@ function handleToggle(contractId: string, enabled: boolean) {
   }
   // Trigger reactivity
   enabledTokens.value = new Set(enabledTokens.value);
-  saveEnabledTokens();
+  handleSaveEnabledTokens();
 }
 
 // Navigation
@@ -157,11 +194,20 @@ function handleAddToken() {
         />
       </div>
 
-      <!-- Available Tokens Section -->
-      <div v-if="availableTokenItems.length > 0" class="section">
+      <!-- Available Tokens Section (non-custom) -->
+      <div v-if="availableTokenItems.filter(t => !t.isCustom).length > 0" class="section">
         <h3 class="section-title">Available Tokens</h3>
         <TokenList
-          :items="availableTokenItems"
+          :items="availableTokenItems.filter(t => !t.isCustom)"
+          @toggle="handleToggle"
+        />
+      </div>
+
+      <!-- Custom Tokens Section -->
+      <div v-if="customTokenItems.length > 0" class="section">
+        <h3 class="section-title">Custom Tokens</h3>
+        <TokenList
+          :items="customTokenItems"
           @toggle="handleToggle"
         />
       </div>

@@ -7,11 +7,13 @@ import FormField from "@/components/forms/FormField.vue";
 import InlineError from "@/components/forms/InlineError.vue";
 import StickyCTA from "@/components/layout/StickyCTA.vue";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
+import {
+  getCustomTokens,
+  addCustomToken,
+  getTokenKey,
+} from "@/utils/tokens/custom";
 
 const router = useRouter();
-
-// Storage key for custom tokens
-const CUSTOM_TOKENS_KEY = "custom_tokens";
 
 // Current network
 const currentNetwork = ref<NetworkName>("devnet");
@@ -33,17 +35,10 @@ onBeforeMount(() => {
 
 // Load existing token keys for duplicate check
 function loadExistingTokens() {
-  try {
-    const stored = localStorage.getItem(CUSTOM_TOKENS_KEY);
-    if (stored) {
-      const tokens = JSON.parse(stored) as Array<{ chainId: string; contractId: string }>;
-      existingTokenKeys.value = new Set(
-        tokens.map((t) => `${t.chainId}:${t.contractId}`)
-      );
-    }
-  } catch {
-    existingTokenKeys.value = new Set();
-  }
+  const tokens = getCustomTokens();
+  existingTokenKeys.value = new Set(
+    tokens.map((t) => getTokenKey(t.chainId, t.contractId))
+  );
 }
 
 // Generate tokenKey for current network + contractId
@@ -171,7 +166,7 @@ async function handlePaste() {
   }
 }
 
-// Add token (placeholder - actual persistence in Commit 3)
+// Add token and persist to storage
 async function handleAddToken() {
   if (!isFormValid.value) return;
 
@@ -186,12 +181,21 @@ async function handleAddToken() {
   isLoading.value = true;
 
   try {
-    // TODO: Commit 3 will implement actual persistence
-    // For now, just simulate success
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const added = addCustomToken({
+      chainId: currentNetwork.value,
+      contractId: contractId.value.trim(),
+      name: tokenName.value.trim(),
+      symbol: tokenSymbol.value.trim().toUpperCase(),
+      decimals: tokenDecimals.value || 6,
+    });
 
-    // Navigate back
-    router.back();
+    if (!added) {
+      submitError.value = "Token already exists for this network";
+      return;
+    }
+
+    // Navigate back to manage tokens
+    router.push({ path: "/manage-tokens" });
   } catch (err) {
     submitError.value = "Failed to add token. Please try again.";
   } finally {
