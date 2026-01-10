@@ -75,12 +75,13 @@ const getStatusLabel = (status: ActivityStatus) => {
 .activity-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-md);
   width: 100%;
-  padding: 14px 16px;
+  min-height: var(--row-h);
+  padding: var(--card-pad-y) var(--card-pad-x);
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.15s ease;
   text-align: left;
