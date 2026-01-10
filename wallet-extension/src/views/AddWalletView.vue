@@ -1,14 +1,31 @@
 <script setup lang="ts">
-import { ref, nextTick } from "vue";
+import { ref, nextTick, computed } from "vue";
 import { randomSeedPhrase } from "@stacks/wallet-sdk";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
 import { encryptWithPIN, isValidPIN } from "@/utils/security";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import { getWalletCount } from "@/utils/wallets";
 
 const router = useRouter();
+
+// Dynamic header title based on step
+const headerTitle = computed(() => {
+  switch (currentStep.value) {
+    case "start": return "Add Wallet";
+    case "mnemonic": return "Recovery Phrase";
+    case "name": return "Name Wallet";
+    case "pin-create": return "Create PIN";
+    case "pin-confirm": return "Confirm PIN";
+    default: return "Add Wallet";
+  }
+});
+
+// Show back button only on steps after start
+const showStepBack = computed(() => currentStep.value !== "start");
 
 type Step = "start" | "mnemonic" | "name" | "pin-create" | "pin-confirm";
 const currentStep = ref<Step>("start");
@@ -151,13 +168,14 @@ function handleStepBack() {
 </script>
 
 <template>
-  <section class="add-wallet-page">
-    <div class="page-header">
-      <button class="back-btn" @click="handleBack">
-        &larr; Cancel
-      </button>
-      <h2>Add Wallet</h2>
-    </div>
+  <ScreenShell :padded="false">
+    <template #header>
+      <AppHeader
+        :title="headerTitle"
+        left="back"
+        @left-click="showStepBack ? handleStepBack() : handleBack()"
+      />
+    </template>
 
     <div class="page-content">
       <!-- Step 1: Choose action -->
@@ -256,47 +274,14 @@ function handleStepBack() {
         <p v-if="isLoading" class="loading-text">Creating wallet...</p>
       </div>
     </div>
-  </section>
+  </ScreenShell>
 </template>
 
 <style scoped>
-.add-wallet-page {
-  padding: var(--space-lg);
-  max-width: 360px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-xl);
-}
-
-.page-header h2 {
-  margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  flex: 1;
-  text-align: center;
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  font-size: var(--font-size-base);
-  padding: var(--space-sm);
-  width: auto;
-}
-
-.back-btn:hover {
-  opacity: 0.7;
-}
-
 .page-content {
   flex: 1;
+  padding: var(--space-md) var(--space-lg);
+  overflow-y: auto;
 }
 
 .step-container {
