@@ -13,6 +13,8 @@ import { getSelectedNetwork, type NetworkName } from "@/utils/network";
 import { microStxToStx, formatStxDisplay } from "@/utils/transfer";
 import TxStatusBadge from "@/components/transaction/TxStatusBadge.vue";
 import TxDetailRow from "@/components/transaction/TxDetailRow.vue";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -94,15 +96,14 @@ function openExplorer() {
 </script>
 
 <template>
-  <div class="tx-details-view">
-    <!-- Header -->
-    <header class="tx-header">
-      <button class="back-btn" @click="handleBack">
-        <span class="back-arrow">&larr;</span>
-      </button>
-      <h1 class="tx-title">Transaction Details</h1>
-      <div class="header-spacer"></div>
-    </header>
+  <ScreenShell :padded="false">
+    <template #header>
+      <AppHeader
+        title="Transaction Details"
+        left="back"
+        @left-click="handleBack"
+      />
+    </template>
 
     <!-- Loading -->
     <div v-if="isLoading" class="loading-state">
@@ -204,56 +205,10 @@ function openExplorer() {
         </svg>
       </button>
     </main>
-  </div>
+  </ScreenShell>
 </template>
 
 <style scoped>
-.tx-details-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--color-bg-primary);
-}
-
-/* Header */
-.tx-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-lg);
-  padding-top: var(--space-xl);
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 1.25rem;
-  cursor: pointer;
-  padding: var(--space-sm);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-pill);
-}
-
-.back-btn:hover {
-  background: var(--color-bg-card);
-}
-
-.tx-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.header-spacer {
-  width: 40px;
-}
-
 /* Loading & Error States */
 .loading-state,
 .error-state {

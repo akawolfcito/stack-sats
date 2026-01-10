@@ -2,6 +2,8 @@
 import { ref, computed, onBeforeMount } from "vue";
 import { useRouter } from "vue-router";
 import TokenList, { type TokenItem } from "@/components/tokens/TokenList.vue";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
 
 const router = useRouter();
 
@@ -116,15 +118,14 @@ function handleAddToken() {
 </script>
 
 <template>
-  <div class="manage-tokens-view">
-    <!-- Header -->
-    <header class="header">
-      <button class="back-btn" @click="handleBack">
-        <span class="back-arrow">&larr;</span>
-      </button>
-      <h1 class="title">Manage Tokens</h1>
-      <div class="header-spacer"></div>
-    </header>
+  <ScreenShell :padded="false">
+    <template #header>
+      <AppHeader
+        title="Manage Tokens"
+        left="back"
+        @left-click="handleBack"
+      />
+    </template>
 
     <!-- Search Bar -->
     <div class="search-container">
@@ -184,60 +185,10 @@ function handleAddToken() {
     <button class="fab" @click="handleAddToken">
       <span class="fab-icon">+</span>
     </button>
-  </div>
+  </ScreenShell>
 </template>
 
 <style scoped>
-.manage-tokens-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--color-bg-primary);
-  position: relative;
-}
-
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-md) var(--space-xs);
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: var(--color-bg-primary);
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 1.125rem;
-  cursor: pointer;
-  padding: var(--space-xs);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-pill);
-}
-
-.back-btn:hover {
-  background: var(--color-bg-card);
-}
-
-.title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.header-spacer {
-  width: 32px;
-}
-
 /* Search */
 .search-container {
   padding: var(--space-xs) var(--space-md) var(--space-md);
