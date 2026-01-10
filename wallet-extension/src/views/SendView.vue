@@ -324,7 +324,10 @@ function truncateAddress(address: string): string {
             @blur="validateRecipient"
           />
           <button class="input-action-btn" title="Paste address" @click="handlePaste">
-            <span class="paste-icon">📋</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
           </button>
         </div>
         <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
@@ -583,12 +586,12 @@ function truncateAddress(address: string): string {
 .from-card {
   position: relative;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.05);
   padding: var(--space-sm) var(--space-md) var(--space-sm) var(--space-sm);
-  margin-top: var(--space-sm);
-  margin-bottom: var(--space-xl);
+  margin-top: var(--space-xs);
+  margin-bottom: var(--space-lg);
 }
 
 .from-card-glow {
@@ -679,8 +682,8 @@ function truncateAddress(address: string): string {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
 }
 
 .form-label {
@@ -731,12 +734,12 @@ function truncateAddress(address: string): string {
 }
 
 .input-wrapper-small .form-input {
-  height: 56px;
+  height: 48px;
 }
 
 .form-input {
   flex: 1;
-  height: 64px;
+  height: 56px;
   background: transparent;
   border: none;
   padding: 0 var(--space-lg);
@@ -746,7 +749,7 @@ function truncateAddress(address: string): string {
 }
 
 .form-input::placeholder {
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .input-mono {
@@ -774,11 +777,6 @@ function truncateAddress(address: string): string {
 .input-action-btn:hover {
   color: var(--color-accent-primary);
   background: rgba(255, 255, 255, 0.05);
-}
-
-.paste-icon {
-  font-size: 18px;
-  line-height: 1;
 }
 
 .input-truncated {
@@ -915,7 +913,7 @@ function truncateAddress(address: string): string {
 
 .continue-btn {
   width: 100%;
-  height: 64px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -924,7 +922,7 @@ function truncateAddress(address: string): string {
   border: none;
   border-radius: 9999px;
   color: #0a0a0a;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 0 20px rgba(232, 248, 89, 0.25);
