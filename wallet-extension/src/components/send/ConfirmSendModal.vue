@@ -109,6 +109,15 @@ function handleConfirm() {
             </div>
           </div>
 
+          <!-- Warning -->
+          <div class="warning-banner">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 9v4M12 17h.01" />
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            </svg>
+            <span>Double-check the address and network. Transactions are irreversible.</span>
+          </div>
+
           <!-- Actions -->
           <div class="modal-actions">
             <button class="action-btn action-btn-secondary" @click="handleClose">
@@ -216,10 +225,10 @@ function handleConfirm() {
 
 /* Summary */
 .summary {
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-sm) var(--space-lg) var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 
 .summary-row {
@@ -305,12 +314,31 @@ function handleConfirm() {
   color: var(--color-accent-primary);
 }
 
+/* Warning Banner */
+.warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin: 0 var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 10px;
+  color: rgba(251, 191, 36, 0.9);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.warning-banner svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
 /* Actions */
 .modal-actions {
   display: flex;
   gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg) var(--space-lg);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-sm) var(--space-lg) var(--space-lg);
 }
 
 .action-btn {
