@@ -803,27 +803,19 @@ const handleManageTokens = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 16px;
-  padding-top: 20px;
-  padding-bottom: 8px;
-}
-
-/* Popup mode: tighter header */
-.user-home-view--popup .header {
-  padding: 12px;
-  padding-top: 16px;
-  padding-bottom: 6px;
-  gap: 6px;
+  gap: var(--space-sm);
+  padding: var(--card-pad-x);
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-sm);
 }
 
 .header-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
+  min-width: var(--icon-btn-size);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.05);
   border: none;
@@ -942,13 +934,13 @@ const handleManageTokens = () => {
 
 .action-btn {
   flex: 1;
-  height: 48px;
+  height: var(--control-h);
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;

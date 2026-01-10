@@ -271,7 +271,7 @@ function handleAddToken() {
 
 .search-input {
   width: 100%;
-  height: 40px;
+  height: var(--row-h);
   padding: 0 var(--space-md) 0 40px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -420,10 +420,10 @@ function handleAddToken() {
 /* FAB */
 .fab {
   position: fixed;
-  bottom: var(--space-md);
-  right: var(--space-md);
-  width: 48px;
-  height: 48px;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  width: var(--control-h);
+  height: var(--control-h);
   border-radius: 50%;
   background: var(--color-accent-primary);
   border: none;
