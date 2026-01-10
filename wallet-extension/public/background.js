@@ -62,7 +62,7 @@ function enqueueRequest(ctx) {
 /**
  * Dispatch the next request in queue if none active
  */
-function dispatchNext() {
+async function dispatchNext() {
   if (activeRequest !== null) {
     return; // Already processing a request
   }
@@ -73,16 +73,20 @@ function dispatchNext() {
 
   activeRequest = requestQueue.shift();
 
-  // For now, use legacy popup opening (will be replaced with single-popup)
-  // This preserves existing behavior while we transition
-  openPopupConfirmation({
-    message: activeRequest._message,
-    sender: activeRequest._sender,
-    originUrl: activeRequest.origin,
+  // Ensure single popup is open
+  await ensurePopupOpenOrFocus();
+
+  // Send request to UI
+  sendToUI({
+    type: "DAPP_REQUEST",
+    payload: {
+      id: activeRequest.id,
+      method: activeRequest.method,
+      params: activeRequest.params,
+      origin: activeRequest.origin,
+    },
   });
 
-  // TODO: ensurePopupOpenOrFocus() - single popup policy
-  // TODO: sendToUI({ type: 'DAPP_REQUEST', payload: activeRequest })
   // TODO: Start timeout timer
 }
 
@@ -103,21 +107,173 @@ function clearActive() {
  * @returns {Promise<number>} Window ID
  */
 async function ensurePopupOpenOrFocus() {
-  // TODO: Implement single-popup policy
-  // - Check if popupWindowId exists and window is still open
-  // - If open, focus it
-  // - If not, create new popup and track ID
+  // Check if popup window exists and is still open
+  if (popupWindowId !== null) {
+    try {
+      const window = await chrome.windows.get(popupWindowId);
+      if (window) {
+        // Window exists, focus it
+        await chrome.windows.update(popupWindowId, { focused: true });
+        return popupWindowId;
+      }
+    } catch {
+      // Window no longer exists, clear the ID
+      popupWindowId = null;
+    }
+  }
+
+  // Create new popup window
+  const popup = await chrome.windows.create({
+    url: chrome.runtime.getURL("index.html") + "?mode=queue",
+    type: "popup",
+    width: 390,
+    height: 600,
+    focused: true,
+  });
+
+  popupWindowId = popup.id;
   return popupWindowId;
 }
+
+/**
+ * Listen for popup window being closed
+ */
+chrome.windows.onRemoved.addListener((windowId) => {
+  if (windowId === popupWindowId) {
+    popupWindowId = null;
+    uiReady = false;
+    pendingUIMessage = null;
+
+    // If there was an active request, reject it (user closed popup)
+    if (activeRequest !== null) {
+      activeRequest.respond({
+        jsonrpc: "2.0",
+        id: activeRequest.id,
+        error: {
+          code: 4001,
+          message: "User closed the popup",
+        },
+      });
+      clearActive();
+    }
+  }
+});
+
+/** @type {boolean} - Whether UI has signaled ready */
+let uiReady = false;
+
+/** @type {object|null} - Pending message to send when UI is ready */
+let pendingUIMessage = null;
 
 /**
  * Send message to the UI (popup)
  * @param {object} message
  */
 function sendToUI(message) {
-  // TODO: Implement UI communication
-  // - Use chrome.runtime.sendMessage or tabs.sendMessage
-  // - Handle case where UI is not ready (wait for UI_READY)
+  if (!uiReady) {
+    // Store message to send when UI signals ready
+    pendingUIMessage = message;
+    return;
+  }
+
+  // Send via runtime messaging (popup listens on chrome.runtime.onMessage)
+  chrome.runtime.sendMessage(message).catch(() => {
+    // UI might not be ready yet, store for retry
+    pendingUIMessage = message;
+    uiReady = false;
+  });
+}
+
+/**
+ * Handle UI_READY signal from popup
+ */
+function handleUIReady() {
+  uiReady = true;
+
+  // Send any pending message
+  if (pendingUIMessage !== null) {
+    chrome.runtime.sendMessage(pendingUIMessage).catch(() => {});
+    pendingUIMessage = null;
+  } else if (activeRequest !== null) {
+    // Re-send active request if UI reconnected
+    sendToUI({
+      type: "DAPP_REQUEST",
+      payload: {
+        id: activeRequest.id,
+        method: activeRequest.method,
+        params: activeRequest.params,
+        origin: activeRequest.origin,
+      },
+    });
+  }
+}
+
+/**
+ * Listen for messages from UI (popup)
+ * Handles: UI_READY, DAPP_APPROVE, DAPP_REJECT
+ */
+chrome.runtime.onMessage.addListener((message, sender) => {
+  // Only handle messages from extension pages (popup)
+  if (sender.tab) {
+    return; // This is from a content script, not popup
+  }
+
+  switch (message.type) {
+    case "UI_READY":
+      handleUIReady();
+      return;
+
+    case "DAPP_APPROVE":
+      handleDappApprove(message.id, message.result);
+      return;
+
+    case "DAPP_REJECT":
+      handleDappReject(message.id, message.error);
+      return;
+  }
+});
+
+/**
+ * Handle approval from UI
+ * @param {string} id - Request ID
+ * @param {object} result - Result to return
+ */
+function handleDappApprove(id, result) {
+  if (!activeRequest || activeRequest.id !== id) {
+    console.warn("[StacksWallet] Approve for unknown request:", id);
+    return;
+  }
+
+  activeRequest.respond({
+    jsonrpc: "2.0",
+    id: id,
+    result: result,
+  });
+
+  clearActive();
+}
+
+/**
+ * Handle rejection from UI
+ * @param {string} id - Request ID
+ * @param {object} [error] - Optional error details
+ */
+function handleDappReject(id, error) {
+  if (!activeRequest || activeRequest.id !== id) {
+    console.warn("[StacksWallet] Reject for unknown request:", id);
+    return;
+  }
+
+  activeRequest.respond({
+    jsonrpc: "2.0",
+    id: id,
+    error: error || {
+      code: 4001,
+      message: "User rejected the request",
+    },
+  });
+
+  clearActive();
 }
 
 // ============================================================
