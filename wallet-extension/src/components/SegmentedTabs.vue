@@ -95,8 +95,8 @@ function selectTab(key: string) {
 }
 
 .tab-item:focus-visible {
-  outline: 2px solid var(--color-accent-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .tab-item--active {

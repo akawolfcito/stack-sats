@@ -86,8 +86,14 @@ const classes = computed(() => [
 }
 
 .btn:disabled {
-  opacity: 0.4;
+  opacity: var(--state-disabled-opacity);
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .btn__content {
@@ -134,25 +140,27 @@ const classes = computed(() => [
 .btn--primary {
   background: var(--color-accent-primary);
   color: #0a0a0a;
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--shadow-elev-0);
 }
 
 .btn--primary:hover:not(:disabled) {
-  box-shadow: var(--shadow-accent-hover);
+  background: var(--color-accent-primary-hover);
+  box-shadow: var(--shadow-elev-1);
 }
 
 .btn--primary:active:not(:disabled) {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-control);
+  transform: translateY(1px);
+  box-shadow: var(--shadow-elev-0);
 }
 
 /* === Variant: Secondary === */
 .btn--secondary {
-  /* Pro surface + subtle border, no glow */
+  /* Pro surface + subtle border, no shadow */
   background: var(--surface-2);
   border: var(--border-subtle);
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-elev-0);
 }
 
 .btn--secondary:hover:not(:disabled) {
@@ -161,7 +169,8 @@ const classes = computed(() => [
 }
 
 .btn--secondary:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: translateY(1px);
+  background: var(--surface-pressed);
 }
 
 /* === Variant: Ghost === */
@@ -173,28 +182,29 @@ const classes = computed(() => [
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--surface-1);
+  background: var(--surface-hover);
   color: var(--color-text-primary);
 }
 
 .btn--ghost:active:not(:disabled) {
-  background: var(--surface-2);
+  background: var(--surface-pressed);
+  transform: translateY(1px);
 }
 
 /* === Variant: Danger === */
 .btn--danger {
   background: var(--color-error);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.15);
+  box-shadow: var(--shadow-elev-0);
 }
 
 .btn--danger:hover:not(:disabled) {
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25);
+  box-shadow: var(--shadow-elev-1);
 }
 
 .btn--danger:active:not(:disabled) {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-control);
+  transform: translateY(1px);
+  box-shadow: var(--shadow-elev-0);
 }
 
 /* === Variant: Icon === */
@@ -202,14 +212,14 @@ const classes = computed(() => [
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
   padding: 0;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-control);
   color: var(--color-text-primary);
 }
 
 .btn--icon:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-pressed);
 }
 
 .btn--icon:active:not(:disabled) {
