@@ -3,17 +3,16 @@ import { ref, computed, onBeforeMount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   fetchTransaction,
-  formatAmount,
   formatFullDateTime,
   truncateAddress,
   getTransactionTypeLabel,
-  getStatusLabel,
   getExplorerUrl,
   type Transaction,
-  type TransactionStatus,
 } from "@/utils/transactions";
 import { getSelectedNetwork, type NetworkName } from "@/utils/network";
 import { microStxToStx, formatStxDisplay } from "@/utils/transfer";
+import TxStatusBadge from "@/components/transaction/TxStatusBadge.vue";
+import TxDetailRow from "@/components/transaction/TxDetailRow.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -48,12 +47,9 @@ const displayFee = computed(() => {
   return `${formatStxDisplay(stx)} STX`;
 });
 
-const statusClass = computed(() => {
-  if (!transaction.value) return "";
-  const status = transaction.value.status;
-  if (status === "success") return "status-success";
-  if (status === "pending") return "status-pending";
-  return "status-failed";
+const txStatus = computed(() => {
+  if (!transaction.value) return "pending";
+  return transaction.value.status as "pending" | "success" | "failed";
 });
 
 const explorerUrl = computed(() => {
@@ -88,10 +84,6 @@ onBeforeMount(async () => {
 // Actions
 function handleBack() {
   router.back();
-}
-
-function copyToClipboard(text: string) {
-  navigator.clipboard.writeText(text);
 }
 
 function openExplorer() {
@@ -153,92 +145,63 @@ function openExplorer() {
           {{ formatFullDateTime(transaction.timestamp) }}
         </p>
 
-        <!-- Status Chip -->
-        <div class="status-chip" :class="statusClass">
-          <span class="status-icon">
-            <template v-if="transaction.status === 'success'">&check;</template>
-            <template v-else-if="transaction.status === 'pending'">&hellip;</template>
-            <template v-else>&times;</template>
-          </span>
-          <span class="status-text">{{ getStatusLabel(transaction.status) }}</span>
-        </div>
+        <!-- Status Badge -->
+        <TxStatusBadge :status="txStatus" />
       </div>
 
       <!-- Details Card -->
       <div class="details-card">
-        <!-- Type -->
-        <div class="detail-row">
-          <span class="detail-label">Type</span>
-          <span class="detail-value">{{ getTransactionTypeLabel(transaction.type) }}</span>
-        </div>
-
-        <!-- Status -->
-        <div class="detail-row">
-          <span class="detail-label">Status</span>
-          <span class="detail-value">{{ getStatusLabel(transaction.status) }}</span>
-        </div>
-
-        <!-- From -->
-        <div class="detail-row">
-          <span class="detail-label">From</span>
-          <div class="detail-value-with-action">
-            <span class="address">{{ truncateAddress(transaction.sender, 4) }}</span>
-            <button class="copy-btn" @click="copyToClipboard(transaction.sender)">
-              <span class="copy-icon">&#x2398;</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- To (if transfer) -->
-        <div v-if="transaction.recipient" class="detail-row">
-          <span class="detail-label">To</span>
-          <div class="detail-value-with-action">
-            <span class="address">{{ truncateAddress(transaction.recipient, 4) }}</span>
-            <button class="copy-btn" @click="copyToClipboard(transaction.recipient)">
-              <span class="copy-icon">&#x2398;</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Contract (if contract call) -->
-        <div v-if="transaction.contractId" class="detail-row">
-          <span class="detail-label">Contract</span>
-          <div class="detail-value-with-action">
-            <span class="address">{{ truncateAddress(transaction.contractId, 6) }}</span>
-            <button class="copy-btn" @click="copyToClipboard(transaction.contractId)">
-              <span class="copy-icon">&#x2398;</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Function (if contract call) -->
-        <div v-if="transaction.functionName" class="detail-row">
-          <span class="detail-label">Function</span>
-          <span class="detail-value function-name">{{ transaction.functionName }}</span>
-        </div>
-
-        <!-- Transaction ID -->
-        <div class="detail-row">
-          <span class="detail-label">Transaction ID</span>
-          <div class="detail-value-with-action">
-            <span class="address">{{ truncateAddress(transaction.txId, 6) }}</span>
-            <button class="copy-btn" @click="copyToClipboard(transaction.txId)">
-              <span class="copy-icon">&#x2398;</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Fee -->
-        <div class="detail-row">
-          <span class="detail-label">Network Fee</span>
-          <span class="detail-value">{{ displayFee }}</span>
-        </div>
-
-        <!-- Memo (if present) -->
-        <div v-if="transaction.memo" class="detail-row">
-          <span class="detail-label">Memo</span>
-          <span class="detail-value memo">{{ transaction.memo }}</span>
-        </div>
+        <TxDetailRow
+          label="Type"
+          :value="getTransactionTypeLabel(transaction.type)"
+        />
+        <TxDetailRow
+          label="From"
+          :value="truncateAddress(transaction.sender, 4)"
+          :copyValue="transaction.sender"
+          copyable
+          mono
+        />
+        <TxDetailRow
+          v-if="transaction.recipient"
+          label="To"
+          :value="truncateAddress(transaction.recipient, 4)"
+          :copyValue="transaction.recipient"
+          copyable
+          mono
+        />
+        <TxDetailRow
+          v-if="transaction.contractId"
+          label="Contract"
+          :value="truncateAddress(transaction.contractId, 6)"
+          :copyValue="transaction.contractId"
+          copyable
+          mono
+        />
+        <TxDetailRow
+          v-if="transaction.functionName"
+          label="Function"
+          :value="transaction.functionName"
+          mono
+          accent
+        />
+        <TxDetailRow
+          label="Tx ID"
+          :value="truncateAddress(transaction.txId, 6)"
+          :copyValue="transaction.txId"
+          copyable
+          mono
+        />
+        <TxDetailRow
+          label="Fee"
+          :value="displayFee"
+        />
+        <TxDetailRow
+          v-if="transaction.memo"
+          label="Memo"
+          :value="transaction.memo"
+          truncate
+        />
       </div>
 
       <!-- Explorer Button -->
@@ -430,116 +393,13 @@ function openExplorer() {
   margin: 0 0 var(--space-lg);
 }
 
-/* Status Chip */
-.status-chip {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.status-chip.status-success {
-  background: var(--color-accent-primary-muted);
-  color: var(--color-accent-primary);
-  border: 1px solid var(--color-accent-primary);
-}
-
-.status-chip.status-pending {
-  background: var(--color-warning);
-  background-opacity: 0.1;
-  color: var(--color-warning);
-  border: 1px solid var(--color-warning);
-}
-
-.status-chip.status-failed {
-  background: rgba(255, 76, 76, 0.1);
-  color: var(--color-error);
-  border: 1px solid var(--color-error);
-}
-
-.status-icon {
-  font-size: 14px;
-}
-
 /* Details Card */
 .details-card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
-  margin-bottom: var(--space-xl);
-}
-
-.detail-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-label {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.detail-value {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.detail-value-with-action {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.address {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-}
-
-.function-name {
-  font-family: var(--font-mono);
-  color: var(--color-accent-primary);
-}
-
-.memo {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.copy-btn {
-  background: none;
-  border: none;
-  padding: var(--space-xs);
-  cursor: pointer;
-  color: var(--color-text-muted);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-}
-
-.copy-btn:hover {
-  color: var(--color-accent-primary);
-  background: var(--color-bg-elevated);
-}
-
-.copy-icon {
-  font-size: 14px;
+  margin-bottom: var(--space-lg);
 }
 
 /* Explorer Button */
