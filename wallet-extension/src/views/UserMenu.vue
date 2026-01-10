@@ -32,10 +32,16 @@ const densityMode = ref<DensityMode>("auto");
 
 // Load density mode on mount
 function loadDensityMode() {
-  const saved = localStorage.getItem(DENSITY_KEY) as DensityMode | null;
-  densityMode.value = saved && ["auto", "compact", "comfortable"].includes(saved)
-    ? saved
-    : "auto";
+  const saved = localStorage.getItem(DENSITY_KEY);
+  // Migrate old 'comfortable' to 'comfy'
+  if (saved === "comfortable") {
+    densityMode.value = "comfy";
+    localStorage.setItem(DENSITY_KEY, "comfy");
+  } else if (saved && ["auto", "compact", "comfy"].includes(saved)) {
+    densityMode.value = saved as DensityMode;
+  } else {
+    densityMode.value = "auto";
+  }
 }
 
 function setDensityMode(mode: DensityMode) {
@@ -451,8 +457,8 @@ function cancelImport() {
             </button>
             <button
               class="density-option"
-              :class="{ active: densityMode === 'comfortable' }"
-              @click="setDensityMode('comfortable')"
+              :class="{ active: densityMode === 'comfy' }"
+              @click="setDensityMode('comfy')"
             >
               Comfy
             </button>
