@@ -119,34 +119,24 @@ function openExplorer() {
 
     <!-- Transaction Details -->
     <main v-else-if="transaction" class="tx-content">
-      <!-- Hero Section -->
+      <!-- Hero Section (compact) -->
       <div class="tx-hero">
-        <!-- Token Icon -->
-        <div class="token-icon-wrapper">
+        <!-- Amount + Status row -->
+        <div class="hero-main">
           <div class="token-icon">
-            <span class="token-symbol">STX</span>
+            <span>STX</span>
           </div>
-          <div class="direction-badge" :class="{ outgoing: isOutgoing }">
-            <span v-if="isOutgoing">&nearr;</span>
-            <span v-else>&swarr;</span>
+          <div class="hero-info">
+            <h2 v-if="displayAmount" class="tx-amount" :class="{ outgoing: isOutgoing }">
+              {{ displayAmount }}
+            </h2>
+            <h2 v-else class="tx-amount type-label">
+              {{ getTransactionTypeLabel(transaction.type) }}
+            </h2>
+            <p class="tx-meta">{{ formatFullDateTime(transaction.timestamp) }}</p>
           </div>
+          <TxStatusBadge :status="txStatus" compact />
         </div>
-
-        <!-- Amount -->
-        <h2 v-if="displayAmount" class="tx-amount" :class="{ outgoing: isOutgoing }">
-          {{ displayAmount }}
-        </h2>
-        <h2 v-else class="tx-amount type-label">
-          {{ getTransactionTypeLabel(transaction.type) }}
-        </h2>
-
-        <!-- Meta Info -->
-        <p class="tx-meta">
-          {{ formatFullDateTime(transaction.timestamp) }}
-        </p>
-
-        <!-- Status Badge -->
-        <TxStatusBadge :status="txStatus" />
       </div>
 
       <!-- Details Card -->
@@ -206,8 +196,12 @@ function openExplorer() {
 
       <!-- Explorer Button -->
       <button class="explorer-btn" @click="openExplorer">
-        View in Explorer
-        <span class="external-icon">&nearr;</span>
+        <span>View in Explorer</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
+        </svg>
       </button>
     </main>
   </div>
@@ -316,66 +310,51 @@ function openExplorer() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 var(--space-lg) var(--space-xl);
+  padding: 0 var(--space-md) var(--space-lg);
   overflow-y: auto;
+  gap: var(--space-md);
 }
 
-/* Hero Section */
+/* Hero Section (Compact) */
 .tx-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: var(--space-xl) 0;
+  padding: var(--space-sm) 0;
 }
 
-.token-icon-wrapper {
-  position: relative;
-  margin-bottom: var(--space-lg);
+.hero-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
 }
 
 .token-icon {
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   background: linear-gradient(135deg, var(--color-bg-elevated), var(--color-bg-card));
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 20px var(--color-accent-primary-muted);
+  flex-shrink: 0;
 }
 
-.token-symbol {
+.token-icon span {
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-sm);
   color: var(--color-text-primary);
 }
 
-.direction-badge {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  width: 24px;
-  height: 24px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: var(--color-success);
-}
-
-.direction-badge.outgoing {
-  color: var(--color-text-primary);
+.hero-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .tx-amount {
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-success);
-  margin: 0 0 var(--space-sm);
+  margin: 0;
+  line-height: 1.2;
 }
 
 .tx-amount.outgoing {
@@ -383,14 +362,14 @@ function openExplorer() {
 }
 
 .tx-amount.type-label {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-lg);
   color: var(--color-text-primary);
 }
 
 .tx-meta {
   color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  margin: 0 0 var(--space-lg);
+  font-size: var(--font-size-xs);
+  margin: 2px 0 0;
 }
 
 /* Details Card */
@@ -405,28 +384,29 @@ function openExplorer() {
 /* Explorer Button */
 .explorer-btn {
   width: 100%;
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: var(--radius-pill);
-  padding: var(--space-lg);
-  color: var(--color-bg-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
   margin-top: auto;
-  transition: all var(--transition-base);
+  transition: all 0.15s ease;
 }
 
 .explorer-btn:hover {
-  background: var(--color-accent-primary-hover);
-  transform: translateY(-1px);
+  background: var(--color-bg-elevated);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
 }
 
-.external-icon {
-  font-size: 1.1em;
+.explorer-btn svg {
+  flex-shrink: 0;
 }
 </style>
