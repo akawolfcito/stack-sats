@@ -608,30 +608,36 @@ function cancelImport() {
 .delete-btn {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  min-width: 28px;
+  border-radius: var(--radius-sm);
   background: rgba(239, 68, 68, 0.15);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
   flex-shrink: 0;
+  margin-left: var(--space-xs);
 }
 
 .delete-btn:hover {
   background: rgba(239, 68, 68, 0.25);
 }
 
+.delete-btn:active {
+  transform: scale(0.95);
+}
+
 .delete-icon {
-  font-size: 20px;
+  font-size: var(--icon-size-md);
   font-weight: 300;
   line-height: 1;
   color: #f87171;
 }
 
 .delete-btn:hover .delete-icon {
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 /* Backup Message */
