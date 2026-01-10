@@ -230,17 +230,40 @@ const activityItems = computed<ActivityItem[]>(() => {
   if (!currentAccount) return [];
 
   return transactions.value.map((tx) => {
-    const isOutgoing = tx.sender === currentAccount.stxAddress;
+    // For FT transfers, check if user is sender or recipient
+    const ftSender = tx.ftTransfer?.sender;
+    const ftRecipient = tx.ftTransfer?.recipient;
+    const isOutgoing = tx.ftTransfer
+      ? ftSender === currentAccount.stxAddress
+      : tx.sender === currentAccount.stxAddress;
 
-    // Determine subtitle (counterparty address)
+    // Determine title and subtitle
+    let title = '';
     let subtitle = '';
-    if (tx.type === 'token_transfer' && tx.recipient) {
+    let amountText: string | undefined;
+
+    // Check if this is a SIP-010 token transfer
+    if (tx.ftTransfer) {
+      const tokenName = tx.ftTransfer.tokenName || 'Token';
+      title = `${tokenName} Transfer`;
+      subtitle = isOutgoing
+        ? `To ${truncateTxAddress(ftRecipient || '', 4)}`
+        : `From ${truncateTxAddress(ftSender || '', 4)}`;
+      // Format FT amount (assume decimals are in the amount already)
+      const ftAmount = Number(tx.ftTransfer.amount) / 1_000_000; // Assume 6 decimals
+      amountText = ftAmount > 0 ? `${ftAmount.toFixed(ftAmount < 1 ? 6 : 2)} ${tokenName}` : undefined;
+    } else if (tx.type === 'token_transfer' && tx.recipient) {
+      title = 'Transfer';
       subtitle = isOutgoing
         ? `To ${truncateTxAddress(tx.recipient, 4)}`
         : `From ${truncateTxAddress(tx.sender, 4)}`;
+      amountText = tx.amount ? `${formatAmount(tx.amount)} STX` : undefined;
     } else if (tx.contractId) {
+      title = getTransactionTypeLabel(tx.type) + (tx.functionName ? `.${tx.functionName}` : '');
       const [contractAddr, contractName] = tx.contractId.split('.');
       subtitle = `${truncateTxAddress(contractAddr, 4)}.${contractName}`;
+    } else {
+      title = getTransactionTypeLabel(tx.type);
     }
 
     // Map status to simplified type
@@ -251,9 +274,9 @@ const activityItems = computed<ActivityItem[]>(() => {
     return {
       txId: tx.txId,
       status,
-      title: getTransactionTypeLabel(tx.type) + (tx.functionName ? `.${tx.functionName}` : ''),
+      title,
       subtitle,
-      amountText: tx.amount ? `${formatAmount(tx.amount)} STX` : undefined,
+      amountText,
       timeText: formatRelativeTime(tx.timestamp),
       isOutgoing,
     };

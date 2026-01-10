@@ -48,6 +48,17 @@ export type TransactionType =
 export type TransactionStatus = "success" | "pending" | "failed" | "abort_by_response" | "abort_by_post_condition";
 
 /**
+ * SIP-010 fungible token transfer info (parsed from contract_call)
+ */
+export interface FtTransferInfo {
+  tokenContract: string;
+  tokenName?: string;
+  amount: string;
+  sender: string;
+  recipient: string;
+}
+
+/**
  * Simplified transaction for display
  */
 export interface Transaction {
@@ -62,6 +73,21 @@ export interface Transaction {
   functionName?: string;
   contractId?: string;
   memo?: string;
+  ftTransfer?: FtTransferInfo; // SIP-010 transfer details
+}
+
+/**
+ * FT transfer event from API
+ */
+interface ApiFtTransferEvent {
+  event_type: "fungible_token_asset";
+  asset: {
+    asset_event_type: "transfer";
+    asset_id: string;
+    sender: string;
+    recipient: string;
+    amount: string;
+  };
 }
 
 /**
@@ -88,6 +114,16 @@ interface ApiTransaction {
   smart_contract?: {
     contract_id: string;
   };
+  events?: Array<{
+    event_type: string;
+    asset?: {
+      asset_event_type?: string;
+      asset_id?: string;
+      sender?: string;
+      recipient?: string;
+      amount?: string;
+    };
+  }>;
 }
 
 /**
@@ -121,6 +157,14 @@ export interface FetchTransactionsOptions {
 }
 
 /**
+ * Extract token name from asset_id (format: contract::token-name)
+ */
+function extractTokenName(assetId: string): string | undefined {
+  const parts = assetId.split("::");
+  return parts.length > 1 ? parts[1] : undefined;
+}
+
+/**
  * Transform API transaction to our simplified format
  * @param tx - Raw API transaction
  * @returns Simplified transaction for display
@@ -149,6 +193,29 @@ function transformTransaction(tx: ApiTransaction): Transaction {
 
   if (tx.smart_contract) {
     base.contractId = tx.smart_contract.contract_id;
+  }
+
+  // Extract FT transfer info from events (SIP-010 token transfers)
+  if (tx.events && tx.events.length > 0) {
+    const ftEvent = tx.events.find(
+      (e) =>
+        e.event_type === "fungible_token_asset" &&
+        e.asset?.asset_event_type === "transfer"
+    );
+
+    if (ftEvent && ftEvent.asset) {
+      base.ftTransfer = {
+        tokenContract: ftEvent.asset.asset_id || "",
+        tokenName: extractTokenName(ftEvent.asset.asset_id || ""),
+        amount: ftEvent.asset.amount || "0",
+        sender: ftEvent.asset.sender || tx.sender_address,
+        recipient: ftEvent.asset.recipient || "",
+      };
+      // Set recipient from FT transfer if not already set
+      if (!base.recipient && ftEvent.asset.recipient) {
+        base.recipient = ftEvent.asset.recipient;
+      }
+    }
   }
 
   return base;
