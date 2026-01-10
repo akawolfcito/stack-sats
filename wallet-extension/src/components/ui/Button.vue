@@ -97,22 +97,22 @@ const classes = computed(() => [
   gap: var(--space-sm);
 }
 
-/* Size variants */
+/* Size variants - using density-aware padding tokens */
 .btn--sm {
   height: var(--row-h);
-  padding: 0 var(--space-md);
+  padding: var(--control-pad-y) var(--row-pad-x);
   font-size: var(--font-size-sm);
 }
 
 .btn--md {
   height: var(--control-h);
-  padding: 0 var(--space-lg);
+  padding: var(--control-pad-y) var(--control-pad-x);
   font-size: var(--font-size-base);
 }
 
 .btn--lg {
-  height: 56px;
-  padding: 0 var(--space-xl);
+  height: var(--control-h);
+  padding: var(--control-pad-y) calc(var(--control-pad-x) * 1.5);
   font-size: var(--font-size-lg);
 }
 
