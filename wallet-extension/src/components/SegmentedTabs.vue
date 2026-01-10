@@ -49,8 +49,9 @@ function selectTab(key: string) {
 .segmented-tabs {
   display: flex;
   position: relative;
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-pill);
+  background: var(--surface-1);
+  border: var(--border-subtle);
+  border-radius: var(--radius-control);
   padding: 4px;
   gap: 2px;
 }
@@ -60,10 +61,10 @@ function selectTab(key: string) {
   top: 4px;
   left: 4px;
   bottom: 4px;
-  /* Subtle accent-tinted background instead of solid neon */
-  background: var(--color-accent-primary-muted);
-  border: 1px solid rgba(215, 248, 46, 0.25);
-  border-radius: calc(var(--radius-pill) - 4px);
+  /* Pro surface with subtle border */
+  background: var(--surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-control) - 4px);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
@@ -76,7 +77,7 @@ function selectTab(key: string) {
   padding: 0 var(--space-lg);
   background: transparent;
   border: none;
-  border-radius: calc(var(--radius-pill) - 4px);
+  border-radius: calc(var(--radius-control) - 4px);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);

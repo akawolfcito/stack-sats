@@ -29,6 +29,12 @@
   --color-border: rgba(255, 255, 255, 0.12);
   --color-border-hover: rgba(255, 255, 255, 0.24);
   --color-border-accent: var(--color-accent-primary);
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* Surface Colors (layered backgrounds) */
+  --surface-0: var(--color-bg-primary);
+  --surface-1: var(--color-bg-elevated);
+  --surface-2: var(--color-bg-card);
 
   /* Spacing Scale */
   --space-xs: 4px;
@@ -65,16 +71,17 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* Shadows */
+  /* Shadows - Pro depth, no glow */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  /* Pro shadows - visible delta for dark backgrounds */
-  --shadow-control: 0 2px 10px rgba(0, 0, 0, 0.35);
-  --shadow-control-hover: 0 4px 16px rgba(0, 0, 0, 0.45);
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
-  --shadow-accent: 0 4px 16px rgba(215, 248, 46, 0.3);
-  --shadow-accent-hover: 0 6px 24px rgba(215, 248, 46, 0.45);
+  /* Control shadows - subtle depth */
+  --shadow-control: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-control-hover: 0 2px 6px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.15);
+  /* Accent shadows - minimal, depth only (no neon glow) */
+  --shadow-accent: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-accent-hover: 0 2px 4px rgba(0, 0, 0, 0.2);
 
   /* Transitions */
   --transition-fast: 150ms ease;
