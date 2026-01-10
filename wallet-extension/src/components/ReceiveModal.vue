@@ -325,71 +325,25 @@ function toggleFullAddress() {
   background: #1a1510;
 }
 
-/* Popup mode: compact layout */
+/* Popup mode: compact layout - non-token overrides */
 .modal-sheet--popup {
   max-height: 100%;
   border-radius: 0;
 }
 
-.modal-sheet--popup .modal-header {
-  padding: 16px 16px 12px;
-}
-
-.modal-sheet--popup .asset-tabs {
-  padding: 0 16px;
-  margin-bottom: 12px;
-}
-
 .modal-sheet--popup .tab-btn {
   height: 36px;
-  font-size: 13px;
-}
-
-.modal-sheet--popup .btc-type-selector {
-  padding: 0 16px;
-  margin-bottom: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .modal-sheet--popup .type-btn {
   height: 32px;
 }
 
-.modal-sheet--popup .modal-content {
-  padding: 4px 16px 16px;
-}
-
-.modal-sheet--popup .qr-wrapper {
-  margin-bottom: 12px;
-}
-
-.modal-sheet--popup .qr-container {
-  padding: 12px;
-  border-radius: 16px;
-}
-
-.modal-sheet--popup .qr-inner {
-  padding: 8px;
-  border-radius: 8px;
-}
-
-.modal-sheet--popup .address-card {
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  border-radius: 12px;
-}
-
-.modal-sheet--popup .warning-text {
-  margin-bottom: 12px;
-}
-
-.modal-sheet--popup .action-buttons {
-  margin-bottom: 0;
-}
-
 .modal-sheet--popup .btn-primary,
 .modal-sheet--popup .btn-secondary {
-  height: 44px;
-  font-size: 14px;
+  height: var(--control-h);
+  font-size: var(--font-size-sm);
 }
 
 /* Ambient Glow */
@@ -419,7 +373,7 @@ function toggleFullAddress() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 20px 16px;
+  padding: var(--card-pad) var(--card-pad-x) var(--space-md);
 }
 
 .header-title {
@@ -490,9 +444,9 @@ function toggleFullAddress() {
   position: relative;
   z-index: 10;
   display: flex;
-  gap: 8px;
-  padding: 0 20px;
-  margin-bottom: 16px;
+  gap: var(--space-sm);
+  padding: 0 var(--card-pad-x);
+  margin-bottom: var(--space-md);
 }
 
 .tab-btn {
@@ -530,9 +484,9 @@ function toggleFullAddress() {
   position: relative;
   z-index: 10;
   display: flex;
-  gap: 8px;
-  padding: 0 20px;
-  margin-bottom: 16px;
+  gap: var(--space-sm);
+  padding: 0 var(--card-pad-x);
+  margin-bottom: var(--space-md);
 }
 
 .type-btn {
@@ -567,20 +521,20 @@ function toggleFullAddress() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4px 20px 20px;
+  padding: var(--space-xs) var(--card-pad-x) var(--card-pad-x);
 }
 
 /* QR Code */
 .qr-wrapper {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-md);
 }
 
 .qr-container {
   position: relative;
-  padding: 16px;
-  border-radius: 20px;
+  padding: var(--space-md);
+  border-radius: var(--radius-xl);
   background: #26281b;
   box-shadow:
     4px 4px 8px #1a1c13,
@@ -628,9 +582,9 @@ function toggleFullAddress() {
 .address-card {
   width: 100%;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
+  border-radius: var(--radius-lg);
+  padding: var(--card-pad-y) var(--card-pad-x);
+  margin-bottom: var(--space-sm);
   border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -686,10 +640,10 @@ function toggleFullAddress() {
 
 /* Warning Text */
 .warning-text {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: #666;
   text-align: center;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-md);
 }
 
 /* Action Buttons - Horizontal layout */
