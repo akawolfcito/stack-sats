@@ -73,29 +73,29 @@
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
 
-  /* === Density Tokens (Layout) === */
+  /* === Density Tokens (Layout) - Compact by default === */
   /* Heights */
-  --header-h: 56px;
-  --row-h: 52px;
-  --control-h: 52px;
-  --icon-btn-size: 40px;
+  --header-h: 44px;
+  --row-h: 44px;
+  --control-h: 44px;
+  --icon-btn-size: 32px;
 
   /* Spacing - Layout specific */
-  --section-gap: 24px;
-  --card-pad: var(--space-lg);
-  --card-pad-x: var(--space-lg);
-  --card-pad-y: var(--space-md);
+  --section-gap: 16px;
+  --card-pad: var(--space-md);
+  --card-pad-x: var(--space-md);
+  --card-pad-y: var(--space-sm);
 
   /* Padding - Density-aware */
-  --control-pad-x: 16px;
+  --control-pad-x: 12px;
   --control-pad-y: 0;
-  --row-pad-x: 14px;
+  --row-pad-x: 10px;
 
   /* Icon sizes */
-  --icon-size-sm: 16px;
-  --icon-size-md: 20px;
-  --icon-size-lg: 24px;
-  --icon-size-xl: 80px;
+  --icon-size-sm: 14px;
+  --icon-size-md: 18px;
+  --icon-size-lg: 20px;
+  --icon-size-xl: 64px;
 }
 
 /* === Density Mode: Explicit Compact (user choice, always wins) === */
