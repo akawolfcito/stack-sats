@@ -1,0 +1,250 @@
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+import type { NetworkName } from '@/utils/network'
+
+defineProps<{
+  network: NetworkName
+  label?: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'select', network: NetworkName): void
+}>()
+
+const isOpen = ref(false)
+const wrapperRef = ref<HTMLElement | null>(null)
+
+const networks: { key: NetworkName; label: string }[] = [
+  { key: 'mainnet', label: 'Mainnet' },
+  { key: 'testnet', label: 'Testnet' },
+  { key: 'devnet', label: 'Devnet' },
+]
+
+const toggle = () => {
+  isOpen.value = !isOpen.value
+}
+
+const selectNetwork = (key: NetworkName) => {
+  emit('select', key)
+  isOpen.value = false
+}
+
+// Handle click outside to close menu
+const handleClickOutside = (event: MouseEvent) => {
+  if (wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
+    isOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+</script>
+
+<template>
+  <div ref="wrapperRef" class="network-chip-wrapper">
+    <button
+      class="network-chip"
+      :class="{
+        'network-chip--mainnet': network === 'mainnet',
+        'network-chip--testnet': network === 'testnet',
+        'network-chip--devnet': network === 'devnet',
+      }"
+      @click="toggle"
+    >
+      <span class="network-chip__dot"></span>
+      <span class="network-chip__label">{{ label || network }}</span>
+      <svg class="network-chip__arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+
+    <!-- Network Menu -->
+    <Transition name="menu-fade">
+      <div v-if="isOpen" class="network-menu">
+        <button
+          v-for="net in networks"
+          :key="net.key"
+          class="network-menu__item"
+          :class="{ 'network-menu__item--active': net.key === network }"
+          @click="selectNetwork(net.key)"
+        >
+          <span
+            class="network-menu__dot"
+            :class="{
+              'network-menu__dot--mainnet': net.key === 'mainnet',
+              'network-menu__dot--testnet': net.key === 'testnet',
+              'network-menu__dot--devnet': net.key === 'devnet',
+            }"
+          ></span>
+          <span class="network-menu__label">{{ net.label }}</span>
+          <span v-if="net.key === network" class="network-menu__check">&#10003;</span>
+        </button>
+      </div>
+    </Transition>
+  </div>
+</template>
+
+<style scoped>
+.network-chip-wrapper {
+  position: relative;
+}
+
+.network-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.network-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.network-chip:active {
+  transform: scale(0.97);
+}
+
+/* Dot indicator */
+.network-chip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.network-chip--mainnet .network-chip__dot {
+  background: var(--color-accent-primary);
+  box-shadow: 0 0 6px rgba(232, 248, 89, 0.5);
+}
+
+.network-chip--testnet .network-chip__dot {
+  background: #60a5fa;
+  box-shadow: 0 0 6px rgba(96, 165, 250, 0.5);
+}
+
+.network-chip--devnet .network-chip__dot {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+/* Testnet/Devnet visual highlight */
+.network-chip--testnet {
+  border-color: rgba(96, 165, 250, 0.3);
+  background: rgba(96, 165, 250, 0.08);
+}
+
+.network-chip--devnet {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.network-chip__label {
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.network-chip__arrow {
+  opacity: 0.6;
+  transition: transform 0.15s ease;
+}
+
+.network-chip:hover .network-chip__arrow {
+  opacity: 1;
+}
+
+/* Network Menu */
+.network-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 140px;
+  background: var(--color-bg-elevated, #1a1a1a);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.network-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  transition: background 0.1s ease;
+  text-align: left;
+}
+
+.network-menu__item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.network-menu__item--active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.network-menu__item:not(:last-child) {
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.05));
+}
+
+.network-menu__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.network-menu__dot--mainnet {
+  background: var(--color-accent-primary);
+}
+
+.network-menu__dot--testnet {
+  background: #60a5fa;
+}
+
+.network-menu__dot--devnet {
+  background: #f59e0b;
+}
+
+.network-menu__label {
+  flex: 1;
+}
+
+.network-menu__check {
+  color: var(--color-accent-primary);
+  font-size: 12px;
+}
+
+/* Menu transition */
+.menu-fade-enter-active,
+.menu-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.menu-fade-enter-from,
+.menu-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+</style>
