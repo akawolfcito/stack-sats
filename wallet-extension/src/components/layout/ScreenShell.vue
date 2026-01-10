@@ -44,7 +44,7 @@ defineProps<{
   height: 100%;
   background: var(--color-bg-primary);
   position: relative;
-  overflow: hidden;
+  /* Note: overflow NOT hidden here to allow proper scroll in child */
 }
 
 /* Header */
