@@ -201,9 +201,7 @@ function handleAddToken() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-lg);
-  padding-top: var(--space-xl);
-  padding-bottom: var(--space-sm);
+  padding: var(--space-md) var(--space-md) var(--space-xs);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -214,11 +212,11 @@ function handleAddToken() {
   background: none;
   border: none;
   color: var(--color-text-primary);
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   cursor: pointer;
-  padding: var(--space-sm);
-  width: 40px;
-  height: 40px;
+  padding: var(--space-xs);
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,19 +228,19 @@ function handleAddToken() {
 }
 
 .title {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0;
 }
 
 .header-spacer {
-  width: 40px;
+  width: 32px;
 }
 
 /* Search */
 .search-container {
-  padding: var(--space-sm) var(--space-lg) var(--space-lg);
+  padding: var(--space-xs) var(--space-md) var(--space-md);
 }
 
 .search-wrapper {
@@ -253,16 +251,16 @@ function handleAddToken() {
 
 .search-icon {
   position: absolute;
-  left: var(--space-lg);
+  left: var(--space-md);
   color: var(--color-text-muted);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  height: 48px;
-  padding: 0 var(--space-lg) 0 48px;
+  height: 40px;
+  padding: 0 var(--space-md) 0 40px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
@@ -308,12 +306,12 @@ function handleAddToken() {
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: 0 var(--space-lg) 100px;
+  padding: 0 var(--space-md) 72px;
 }
 
 /* Section */
 .section {
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .section-title {
@@ -322,26 +320,13 @@ function handleAddToken() {
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 var(--space-md) var(--space-sm);
+  margin: 0 0 var(--space-sm) var(--space-xs);
 }
 
 /* Add Hint */
 .add-hint {
   text-align: center;
-  padding: var(--space-xl) var(--space-lg);
-  margin-top: var(--space-lg);
-}
-
-.hint-text {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  margin: 0 0 var(--space-xs);
-}
-
-.hint-subtext {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  margin: 0;
+  padding: var(--space-md);
 }
 
 .add-link {
@@ -351,7 +336,7 @@ function handleAddToken() {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-md);
   transition: all 0.15s ease;
 }
@@ -363,10 +348,10 @@ function handleAddToken() {
 /* FAB */
 .fab {
   position: fixed;
-  bottom: var(--space-xl);
-  right: var(--space-xl);
-  width: 56px;
-  height: 56px;
+  bottom: var(--space-md);
+  right: var(--space-md);
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--color-accent-primary);
   border: none;
@@ -389,7 +374,7 @@ function handleAddToken() {
 }
 
 .fab-icon {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: var(--font-weight-bold);
   color: var(--color-bg-primary);
   line-height: 1;
