@@ -1,157 +1,132 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
+import FormField from "@/components/forms/FormField.vue";
+import InlineError from "@/components/forms/InlineError.vue";
+import StickyCTA from "@/components/layout/StickyCTA.vue";
 
 const router = useRouter();
 
-// Storage keys
-const CUSTOM_TOKENS_KEY = "custom_tokens";
-const ENABLED_TOKENS_KEY = "enabled_tokens";
-
 // Form state
-const contractAddress = ref("");
+const contractId = ref("");
 const tokenName = ref("");
 const tokenSymbol = ref("");
 const tokenDecimals = ref<number | null>(6);
 
 // UI state
 const isLoading = ref(false);
-const error = ref("");
-const success = ref(false);
+const submitError = ref("");
 
-// Custom token interface
-interface CustomToken {
-  contractId: string;
-  name: string;
-  symbol: string;
-  decimals: number;
-  color: string;
-}
+// Field touched state (for showing errors only after interaction)
+const touched = ref({
+  contractId: false,
+  tokenName: false,
+  tokenSymbol: false,
+  tokenDecimals: false,
+});
 
-// Validate contract address format
-const isValidContractFormat = computed(() => {
-  const addr = contractAddress.value.trim();
-  if (!addr) return false;
+// Validation
+const contractIdError = computed(() => {
+  if (!touched.value.contractId || !contractId.value) return "";
+  // Basic format: SP/ST + 38+ chars + dot + contract name
+  const pattern = /^(SP|ST)[A-Z0-9]{38,}\.[a-zA-Z0-9_-]+(::[\w-]+)?$/;
+  if (!pattern.test(contractId.value.trim())) {
+    return "Invalid format. Use: SP...contract-name or SP...contract::token";
+  }
+  return "";
+});
 
-  // Format: SP... or ST... followed by contract name
-  // Examples:
-  // SP3K8BC0PPEVCV7NZ6QSRWPQ2JE9E5B6N3PA0KBR9.token-alex
-  // SP3K8BC0PPEVCV7NZ6QSRWPQ2JE9E5B6N3PA0KBR9.token-alex::alex
-  const contractPattern = /^(SP|ST)[A-Z0-9]{38,}\.[a-zA-Z0-9_-]+(::[\w-]+)?$/;
-  return contractPattern.test(addr);
+const tokenNameError = computed(() => {
+  if (!touched.value.tokenName) return "";
+  const name = tokenName.value.trim();
+  if (!name) return "Token name is required";
+  if (name.length < 2 || name.length > 32) return "Name must be 2-32 characters";
+  return "";
+});
+
+const tokenSymbolError = computed(() => {
+  if (!touched.value.tokenSymbol) return "";
+  const symbol = tokenSymbol.value.trim();
+  if (!symbol) return "Symbol is required";
+  if (symbol.length < 2 || symbol.length > 10) return "Symbol must be 2-10 characters";
+  if (!/^[A-Z0-9_]+$/i.test(symbol)) return "Only letters, numbers, and underscore";
+  return "";
+});
+
+const tokenDecimalsError = computed(() => {
+  if (!touched.value.tokenDecimals) return "";
+  if (tokenDecimals.value === null || tokenDecimals.value === undefined) {
+    return "Decimals is required";
+  }
+  if (tokenDecimals.value < 0 || tokenDecimals.value > 18) {
+    return "Decimals must be 0-18";
+  }
+  if (!Number.isInteger(tokenDecimals.value)) {
+    return "Decimals must be a whole number";
+  }
+  return "";
 });
 
 // Check if form is valid
 const isFormValid = computed(() => {
-  return (
-    isValidContractFormat.value &&
-    tokenName.value.trim().length > 0 &&
-    tokenSymbol.value.trim().length > 0 &&
-    tokenDecimals.value !== null &&
-    tokenDecimals.value >= 0 &&
-    tokenDecimals.value <= 18
-  );
+  // Check all fields have values
+  if (!contractId.value.trim()) return false;
+  if (!tokenName.value.trim()) return false;
+  if (!tokenSymbol.value.trim()) return false;
+  if (tokenDecimals.value === null || tokenDecimals.value === undefined) return false;
+
+  // Check no validation errors
+  const pattern = /^(SP|ST)[A-Z0-9]{38,}\.[a-zA-Z0-9_-]+(::[\w-]+)?$/;
+  if (!pattern.test(contractId.value.trim())) return false;
+  if (tokenName.value.trim().length < 2 || tokenName.value.trim().length > 32) return false;
+  if (tokenSymbol.value.trim().length < 2 || tokenSymbol.value.trim().length > 10) return false;
+  if (!/^[A-Z0-9_]+$/i.test(tokenSymbol.value.trim())) return false;
+  if (tokenDecimals.value < 0 || tokenDecimals.value > 18) return false;
+
+  return true;
 });
 
-// Generate a random color for the token
-function generateTokenColor(): string {
-  const colors = [
-    "#7c3aed", "#f97316", "#eab308", "#3b82f6",
-    "#22c55e", "#ec4899", "#06b6d4", "#f7931a",
-    "#8b5cf6", "#10b981", "#f59e0b", "#ef4444",
-  ];
-  return colors[Math.floor(Math.random() * colors.length)];
-}
-
-// Load custom tokens from localStorage
-function getCustomTokens(): CustomToken[] {
-  const stored = localStorage.getItem(CUSTOM_TOKENS_KEY);
-  if (!stored) return [];
-
-  try {
-    return JSON.parse(stored) as CustomToken[];
-  } catch {
-    return [];
-  }
-}
-
-// Save custom tokens to localStorage
-function saveCustomTokens(tokens: CustomToken[]): void {
-  localStorage.setItem(CUSTOM_TOKENS_KEY, JSON.stringify(tokens));
-}
-
-// Load enabled tokens
-function getEnabledTokens(): Set<string> {
-  const stored = localStorage.getItem(ENABLED_TOKENS_KEY);
-  if (!stored) return new Set(["STX"]);
-
-  try {
-    return new Set(JSON.parse(stored) as string[]);
-  } catch {
-    return new Set(["STX"]);
-  }
-}
-
-// Save enabled tokens
-function saveEnabledTokens(tokens: Set<string>): void {
-  localStorage.setItem(ENABLED_TOKENS_KEY, JSON.stringify(Array.from(tokens)));
+// Mark field as touched on blur
+function handleBlur(field: keyof typeof touched.value) {
+  touched.value[field] = true;
 }
 
 // Paste from clipboard
 async function handlePaste() {
   try {
     const text = await navigator.clipboard.readText();
-    contractAddress.value = text.trim();
+    contractId.value = text.trim();
+    touched.value.contractId = true;
   } catch (err) {
     console.error("Failed to paste:", err);
   }
 }
 
-// Add token
+// Add token (placeholder - actual persistence in Commit 3)
 async function handleAddToken() {
   if (!isFormValid.value) return;
 
-  error.value = "";
+  // Mark all fields as touched to show any remaining errors
+  Object.keys(touched.value).forEach((key) => {
+    touched.value[key as keyof typeof touched.value] = true;
+  });
+
+  if (!isFormValid.value) return;
+
+  submitError.value = "";
   isLoading.value = true;
 
   try {
-    const contractId = contractAddress.value.trim();
+    // TODO: Commit 3 will implement actual persistence
+    // For now, just simulate success
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Check if token already exists
-    const customTokens = getCustomTokens();
-    const exists = customTokens.some((t) => t.contractId === contractId);
-
-    if (exists) {
-      error.value = "This token has already been added";
-      isLoading.value = false;
-      return;
-    }
-
-    // Create new token
-    const newToken: CustomToken = {
-      contractId,
-      name: tokenName.value.trim(),
-      symbol: tokenSymbol.value.trim().toUpperCase(),
-      decimals: tokenDecimals.value || 6,
-      color: generateTokenColor(),
-    };
-
-    // Save to custom tokens
-    customTokens.push(newToken);
-    saveCustomTokens(customTokens);
-
-    // Enable the token automatically
-    const enabledTokens = getEnabledTokens();
-    enabledTokens.add(contractId);
-    saveEnabledTokens(enabledTokens);
-
-    // Show success and navigate back
-    success.value = true;
-    setTimeout(() => {
-      router.back();
-    }, 1000);
+    // Navigate back
+    router.back();
   } catch (err) {
-    error.value = "Failed to add token. Please try again.";
+    submitError.value = "Failed to add token. Please try again.";
   } finally {
     isLoading.value = false;
   }
@@ -164,267 +139,195 @@ function handleBack() {
 </script>
 
 <template>
-  <div class="add-token-view">
-    <!-- Header -->
-    <header class="header">
-      <button class="back-btn" @click="handleBack">
-        <span class="back-arrow">&larr;</span>
-      </button>
-      <h1 class="title">Custom Token</h1>
-      <div class="header-spacer"></div>
-    </header>
+  <ScreenShell :padded="false">
+    <template #header>
+      <AppHeader
+        title="Add Token"
+        left="back"
+        @left-click="handleBack"
+      />
+    </template>
 
     <!-- Content -->
-    <main class="content">
-      <!-- Contract Address Input -->
-      <div class="input-group">
-        <label class="input-label" for="contract-address">Contract Address</label>
-        <div class="input-wrapper">
+    <div class="add-token-content">
+      <!-- Contract ID Field -->
+      <FormField
+        label="Contract Address"
+        hint="SIP-010 contract address (e.g., SP...contract-name)"
+        :error="contractIdError"
+        required
+      >
+        <div class="input-with-action">
           <input
-            id="contract-address"
-            v-model="contractAddress"
+            v-model="contractId"
             type="text"
-            class="input contract-input"
+            class="form-input form-input--with-action"
             placeholder="SP32A..."
-            :class="{ invalid: contractAddress && !isValidContractFormat }"
+            @blur="handleBlur('contractId')"
           />
-          <button class="paste-btn" @click="handlePaste">
-            <span class="paste-icon">&#128203;</span>
+          <button class="paste-btn" type="button" @click="handlePaste">
             PASTE
           </button>
         </div>
-        <p class="input-hint">SIP-010 contract address required</p>
-        <p v-if="contractAddress && !isValidContractFormat" class="input-error">
-          Invalid format. Use: SP...contract-name or SP...contract::token
-        </p>
-      </div>
+      </FormField>
 
-      <!-- Token Name -->
-      <div class="input-group">
-        <label class="input-label" for="token-name">Token Name</label>
+      <!-- Token Name Field -->
+      <FormField
+        label="Token Name"
+        :error="tokenNameError"
+        required
+      >
         <input
-          id="token-name"
           v-model="tokenName"
           type="text"
-          class="input"
-          placeholder="e.g. MiamiCoin"
+          class="form-input"
+          placeholder="e.g., MiamiCoin"
+          maxlength="32"
+          @blur="handleBlur('tokenName')"
         />
-      </div>
+      </FormField>
 
       <!-- Symbol & Decimals Row -->
-      <div class="row-inputs">
-        <div class="input-group half">
-          <label class="input-label" for="token-symbol">Symbol</label>
+      <div class="form-row">
+        <FormField
+          label="Symbol"
+          :error="tokenSymbolError"
+          required
+        >
           <input
-            id="token-symbol"
             v-model="tokenSymbol"
             type="text"
-            class="input uppercase"
+            class="form-input form-input--uppercase"
             placeholder="MIA"
             maxlength="10"
+            @blur="handleBlur('tokenSymbol')"
           />
-        </div>
-        <div class="input-group half">
-          <label class="input-label" for="token-decimals">Decimals</label>
+        </FormField>
+
+        <FormField
+          label="Decimals"
+          :error="tokenDecimalsError"
+          required
+        >
           <input
-            id="token-decimals"
             v-model.number="tokenDecimals"
             type="number"
-            class="input"
+            class="form-input"
             placeholder="6"
             min="0"
             max="18"
+            @blur="handleBlur('tokenDecimals')"
           />
-        </div>
+        </FormField>
       </div>
 
-      <!-- Preview Section -->
+      <!-- Preview Card -->
       <div class="preview-section">
         <h3 class="preview-title">Preview</h3>
-
-        <!-- Preview Card -->
         <div class="preview-card">
-          <div class="preview-glow"></div>
-          <div class="preview-content">
-            <div class="preview-left">
-              <div class="preview-icon">
-                <span class="preview-icon-text">{{ tokenSymbol?.charAt(0) || '?' }}</span>
-              </div>
-              <div class="preview-info">
-                <span class="preview-name">{{ tokenName || 'Token Name' }}</span>
-                <span class="preview-symbol">{{ tokenSymbol?.toUpperCase() || 'SYM' }}</span>
-              </div>
+          <div class="preview-left">
+            <div class="preview-icon">
+              <span>{{ tokenSymbol?.charAt(0)?.toUpperCase() || '?' }}</span>
             </div>
-            <div class="preview-right">
-              <span class="preview-balance">0.00</span>
-              <span class="preview-balance-label">Balance</span>
+            <div class="preview-info">
+              <span class="preview-name">{{ tokenName || 'Token Name' }}</span>
+              <span class="preview-symbol">{{ tokenSymbol?.toUpperCase() || 'SYM' }}</span>
             </div>
           </div>
-        </div>
-
-        <!-- Info Message -->
-        <div class="info-message">
-          <span class="info-icon">&#9432;</span>
-          <p class="info-text">
-            Adding a custom token does not verify its authenticity. Please ensure the contract address is correct.
-          </p>
+          <div class="preview-right">
+            <span class="preview-balance">0.00</span>
+            <span class="preview-label">Balance</span>
+          </div>
         </div>
       </div>
 
-      <!-- Error Message -->
-      <p v-if="error" class="error-message">{{ error }}</p>
+      <!-- Info Notice -->
+      <div class="info-notice">
+        <span class="info-icon">ℹ</span>
+        <p class="info-text">
+          Adding a custom token does not verify its authenticity.
+          Please ensure the contract address is correct.
+        </p>
+      </div>
 
-      <!-- Success Message -->
-      <p v-if="success" class="success-message">Token added successfully!</p>
-    </main>
-
-    <!-- Add Button -->
-    <div class="footer">
-      <button
-        class="add-btn"
-        :class="{ disabled: !isFormValid || isLoading }"
-        :disabled="!isFormValid || isLoading"
-        @click="handleAddToken"
-      >
-        <span v-if="isLoading" class="spinner-small"></span>
-        <span v-else class="add-icon">&#10133;</span>
-        {{ isLoading ? 'Adding...' : 'Add Token' }}
-      </button>
+      <!-- Submit Error -->
+      <InlineError v-if="submitError" :message="submitError" />
     </div>
-  </div>
+
+    <!-- Sticky CTA -->
+    <template #footer>
+      <StickyCTA
+        :primary-text="isLoading ? 'Adding...' : 'Add Token'"
+        :primary-disabled="!isFormValid || isLoading"
+        @primary="handleAddToken"
+      />
+    </template>
+  </ScreenShell>
 </template>
 
 <style scoped>
-.add-token-view {
+.add-token-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background: var(--color-bg-primary);
-  position: relative;
-}
-
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-lg);
-  padding-top: var(--space-xl);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: var(--color-bg-primary);
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 1.25rem;
-  cursor: pointer;
-  padding: var(--space-sm);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-pill);
-}
-
-.back-btn:hover {
-  background: var(--color-bg-card);
-}
-
-.title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.header-spacer {
-  width: 40px;
-}
-
-/* Content */
-.content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-lg);
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
   padding-bottom: 120px;
+  overflow-y: auto;
+}
+
+/* Form Row (side by side fields) */
+.form-row {
   display: flex;
-  flex-direction: column;
   gap: var(--space-lg);
 }
 
-/* Input Groups */
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.input-group.half {
+.form-row > * {
   flex: 1;
 }
 
-.row-inputs {
-  display: flex;
-  gap: var(--space-lg);
-}
-
-.input-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
-  margin-left: var(--space-xs);
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input {
+/* Form Inputs */
+.form-input {
   width: 100%;
+  height: 52px;
+  padding: 0 var(--space-lg);
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  padding: var(--space-lg);
-  font-size: var(--font-size-base);
   color: var(--color-text-primary);
-  outline: none;
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
   transition: all var(--transition-fast);
 }
 
-.input::placeholder {
+.form-input::placeholder {
   color: var(--color-text-muted);
 }
 
-.input:focus {
+.form-input:focus {
+  outline: none;
   border-color: var(--color-accent-primary);
   box-shadow: 0 0 0 2px var(--color-accent-primary-muted);
 }
 
-.input.invalid {
-  border-color: var(--color-error);
-}
-
-.input.uppercase {
+.form-input--uppercase {
   text-transform: uppercase;
 }
 
-.contract-input {
-  padding-right: 100px;
+.form-input--with-action {
+  padding-right: 90px;
+}
+
+/* Input with action button */
+.input-with-action {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .paste-btn {
   position: absolute;
   right: var(--space-md);
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
   padding: var(--space-sm) var(--space-md);
   background: var(--color-accent-primary-muted);
   border: none;
@@ -435,6 +338,8 @@ function handleBack() {
   cursor: pointer;
   transition: all var(--transition-fast);
   width: auto;
+  height: auto;
+  min-width: auto;
 }
 
 .paste-btn:hover {
@@ -442,82 +347,45 @@ function handleBack() {
   color: var(--color-bg-primary);
 }
 
-.paste-icon {
-  font-size: var(--font-size-sm);
-}
-
-.input-hint {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  margin-left: var(--space-xs);
-}
-
-.input-error {
-  font-size: var(--font-size-xs);
-  color: var(--color-error);
-  margin-left: var(--space-xs);
-}
-
 /* Preview Section */
 .preview-section {
-  margin-top: var(--space-md);
+  margin-top: var(--space-sm);
 }
 
 .preview-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--space-lg) var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-sm) var(--space-xs);
 }
 
 .preview-card {
-  position: relative;
-  overflow: hidden;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
-}
-
-.preview-glow {
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 128px;
-  height: 128px;
-  background: var(--color-accent-primary);
-  opacity: 0.05;
-  border-radius: 50%;
-  filter: blur(40px);
-  pointer-events: none;
-}
-
-.preview-content {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: var(--space-lg);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
 }
 
 .preview-left {
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-md);
 }
 
 .preview-icon {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.preview-icon-text {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-muted);
@@ -530,14 +398,13 @@ function handleBack() {
 }
 
 .preview-name {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
 .preview-symbol {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
 }
 
@@ -549,23 +416,22 @@ function handleBack() {
 }
 
 .preview-balance {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   font-family: var(--font-mono);
 }
 
-.preview-balance-label {
+.preview-label {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
 }
 
-/* Info Message */
-.info-message {
+/* Info Notice */
+.info-notice {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   padding: var(--space-md);
-  margin-top: var(--space-lg);
   background: rgba(59, 130, 246, 0.1);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: var(--radius-lg);
@@ -573,90 +439,14 @@ function handleBack() {
 
 .info-icon {
   color: #60a5fa;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   flex-shrink: 0;
 }
 
 .info-text {
   font-size: var(--font-size-xs);
-  color: rgba(147, 197, 253, 0.8);
+  color: rgba(147, 197, 253, 0.9);
   line-height: 1.5;
   margin: 0;
-}
-
-/* Messages */
-.error-message {
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-  text-align: center;
-  margin: 0;
-}
-
-.success-message {
-  color: var(--color-success);
-  font-size: var(--font-size-sm);
-  text-align: center;
-  margin: 0;
-}
-
-/* Footer */
-.footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: var(--space-lg);
-  background: linear-gradient(to top, var(--color-bg-primary) 60%, transparent);
-  z-index: 40;
-}
-
-.add-btn {
-  width: 100%;
-  height: 56px;
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: var(--radius-xl);
-  color: var(--color-bg-primary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  transition: all var(--transition-base);
-  box-shadow: 0 0 15px var(--color-accent-primary-muted);
-}
-
-.add-btn:hover:not(.disabled) {
-  background: var(--color-accent-primary-hover);
-  transform: translateY(-1px);
-}
-
-.add-btn:active:not(.disabled) {
-  transform: scale(0.98);
-}
-
-.add-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.add-icon {
-  font-size: 1.25rem;
-}
-
-.spinner-small {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-bg-primary);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>
