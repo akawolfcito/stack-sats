@@ -199,18 +199,21 @@ const getStatusLabel = (status: ActivityStatus) => {
   color: var(--color-text-muted);
 }
 
-/* Amount */
+/* Amount - V30: Premium tabular display */
 .activity-row__amount {
   flex-shrink: 0;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em; /* V30: Tighter for numbers */
   color: var(--color-success);
+  min-width: 48px; /* V30: Stable layout */
+  text-align: right;
 }
 
 .activity-row__amount--outgoing {
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary); /* V30: Muted for outgoing */
 }
 
 /* Chevron */
