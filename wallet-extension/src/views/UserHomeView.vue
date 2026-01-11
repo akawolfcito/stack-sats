@@ -45,7 +45,8 @@ import {
 } from "../utils/transactions";
 import ReceiveModal from "../components/ReceiveModal.vue";
 import SegmentedTabs from "../components/SegmentedTabs.vue";
-import { Button } from "@/components/ui";
+import { Button, ActionBar, SectionHeader } from "@/components/ui";
+import type { ActionItem } from "@/components/ui";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import NetworkChip from "../components/network/NetworkChip.vue";
@@ -506,6 +507,18 @@ const handleSend = () => {
   router.push({ path: "/send" });
 };
 
+// ActionBar items for Send/Receive
+const actionItems = computed<ActionItem[]>(() => [
+  { key: 'send', label: 'Send', variant: 'primary' },
+  { key: 'receive', label: 'Receive', variant: 'secondary' },
+]);
+
+// Handle action bar clicks
+const handleActionClick = (key: string) => {
+  if (key === 'send') handleSend();
+  else if (key === 'receive') openReceiveModal();
+};
+
 // Open wallet in full-page tab
 const openFullPage = () => {
   const url = chrome.runtime.getURL("index.html");
@@ -607,22 +620,22 @@ const handleManageTokens = () => {
         @refresh="refreshBalance"
       />
 
-      <!-- Action Buttons -->
+      <!-- Action Bar (Send/Receive) -->
       <section class="actions">
-        <Button variant="primary" @click="handleSend">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="19" x2="12" y2="5"/>
-            <polyline points="5 12 12 5 19 12"/>
-          </svg>
-          <span>Send</span>
-        </Button>
-        <Button variant="secondary" @click="openReceiveModal">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <polyline points="19 12 12 19 5 12"/>
-          </svg>
-          <span>Receive</span>
-        </Button>
+        <ActionBar :items="actionItems" @action="handleActionClick">
+          <template #icon-send>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="19" x2="12" y2="5"/>
+              <polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </template>
+          <template #icon-receive>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <polyline points="19 12 12 19 5 12"/>
+            </svg>
+          </template>
+        </ActionBar>
       </section>
 
       <!-- Segmented Tabs (both modes - unified navigation) -->
@@ -638,25 +651,25 @@ const handleManageTokens = () => {
       <div class="home-body">
         <!-- Assets Section (show when assets tab is active) -->
       <section v-if="activeTab === 'assets'" class="assets-section">
-        <ListGroup title="Assets">
-          <template #headerAction>
-            <div class="section-actions">
-              <Button variant="ghost" size="sm" class="text-accent" @click="handleManageTokens">
-                Manage
-              </Button>
-              <Button
-                variant="icon"
-                :disabled="isLoadingBalance"
-                title="Refresh"
-                @click="refreshBalance"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
-                  <path d="M23 4v6h-6M1 20v-6h6"/>
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                </svg>
-              </Button>
-            </div>
+        <SectionHeader title="Assets">
+          <template #actions>
+            <Button variant="ghost" size="sm" class="text-accent" @click="handleManageTokens">
+              Manage
+            </Button>
+            <Button
+              variant="icon"
+              :disabled="isLoadingBalance"
+              title="Refresh"
+              @click="refreshBalance"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </Button>
           </template>
+        </SectionHeader>
+        <ListGroup>
           <!-- Asset rows rendered inside card -->
           <AssetList
             :items="assetItems"
@@ -667,17 +680,16 @@ const handleManageTokens = () => {
 
       <!-- SIP-010 Tokens Section (show when assets tab is active) -->
       <section v-if="activeTab === 'assets' && (tokens.length > 0 || isLoadingTokens)" class="tokens-section">
-        <ListGroup>
-          <template #headerAction>
-            <div class="tokens-header-row">
-              <span class="tokens-title">Tokens <span class="token-count">({{ tokens.length }})</span></span>
-              <Button variant="ghost" size="sm" class="text-accent" @click="showTokens = !showTokens">
-                {{ showTokens ? 'Hide' : 'Show' }}
-              </Button>
-            </div>
+        <SectionHeader title="Tokens" :subtitle="`(${tokens.length})`">
+          <template #actions>
+            <Button variant="ghost" size="sm" class="text-accent" @click="showTokens = !showTokens">
+              {{ showTokens ? 'Hide' : 'Show' }}
+            </Button>
           </template>
+        </SectionHeader>
 
-          <template v-if="showTokens">
+        <ListGroup v-if="showTokens">
+          <template v-if="true">
             <div v-if="isLoadingTokens" class="empty-state">Loading tokens...</div>
 
             <template v-else-if="tokens.length === 0">
@@ -717,8 +729,8 @@ const handleManageTokens = () => {
 
       <!-- Activity (show when activity tab is active) -->
       <section v-if="activeTab === 'activity'" class="activity-section">
-        <ListGroup title="Recent Activity">
-          <template #headerAction>
+        <SectionHeader title="Recent Activity">
+          <template #actions>
             <Button
               variant="icon"
               :disabled="isLoadingTx"
@@ -731,6 +743,8 @@ const handleManageTokens = () => {
               </svg>
             </Button>
           </template>
+        </SectionHeader>
+        <ListGroup>
           <ActivityList
             :items="activityItems"
             :loading="isLoadingTx"
@@ -917,17 +931,10 @@ const handleManageTokens = () => {
   color: var(--color-text-secondary);
 }
 
-/* Action Buttons */
+/* Action Bar */
 .actions {
-  display: flex;
-  gap: var(--space-md);
   padding: 0 var(--space-lg);
   margin-bottom: var(--space-lg);
-}
-
-/* Action buttons use unified Button component */
-.actions :deep(.btn) {
-  flex: 1;
 }
 
 /* Assets Section */
@@ -936,43 +943,11 @@ const handleManageTokens = () => {
   margin-bottom: var(--space-md);
 }
 
-/* Section actions for header slots */
-.section-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-/* Manage and refresh buttons now use Button component */
-
 /* Tokens Section */
 .tokens-section {
   padding: 0 var(--space-lg);
   margin-bottom: var(--space-md);
 }
-
-.tokens-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: var(--space-md);
-}
-
-.tokens-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-}
-
-.token-count {
-  font-weight: 400;
-  color: var(--color-text-muted);
-}
-
-/* Toggle button now uses Button variant="ghost" with text-accent class */
 
 /* Token rows inside ListGroup */
 .token-row {

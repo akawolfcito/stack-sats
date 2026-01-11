@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * ActivityRow - Unified activity row component
+ *
+ * Uses consistent styling with ListRow:
+ * - Same height (--row-h)
+ * - Same padding (--card-pad-y, --card-pad-x)
+ * - Same hover/pressed states
+ */
 export type ActivityStatus = 'pending' | 'success' | 'failed'
 
 export interface ActivityRowProps {
@@ -87,11 +95,16 @@ const getStatusLabel = (status: ActivityStatus) => {
 }
 
 .activity-row:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-hover);
 }
 
 .activity-row:active {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-pressed);
+}
+
+.activity-row:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* Status dot */
@@ -108,19 +121,16 @@ const getStatusLabel = (status: ActivityStatus) => {
 }
 
 .activity-row__dot--success {
-  background: var(--color-success, #22c55e);
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+  background: var(--color-success);
 }
 
 .activity-row__dot--pending {
-  background: var(--color-warning, #f59e0b);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+  background: var(--color-warning);
   animation: pulse-pending 1.5s infinite;
 }
 
 .activity-row__dot--failed {
-  background: var(--color-error, #ef4444);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  background: var(--color-error);
 }
 
 @keyframes pulse-pending {
@@ -134,25 +144,25 @@ const getStatusLabel = (status: ActivityStatus) => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .activity-row__main {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 
 .activity-row__title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
 }
 
 .activity-row__subtitle {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-muted);
-  font-family: monospace;
+  font-family: var(--font-mono);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -161,40 +171,41 @@ const getStatusLabel = (status: ActivityStatus) => {
 .activity-row__meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .activity-row__status-label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .activity-row__status-label--success {
-  color: var(--color-success, #22c55e);
+  color: var(--color-success);
 }
 
 .activity-row__status-label--pending {
-  color: var(--color-warning, #f59e0b);
+  color: var(--color-warning);
 }
 
 .activity-row__status-label--failed {
-  color: var(--color-error, #ef4444);
+  color: var(--color-error);
 }
 
 .activity-row__time {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-muted);
 }
 
 /* Amount */
 .activity-row__amount {
   flex-shrink: 0;
-  font-size: 14px;
-  font-weight: 700;
-  font-family: monospace;
-  color: var(--color-success, #22c55e);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-success);
 }
 
 .activity-row__amount--outgoing {

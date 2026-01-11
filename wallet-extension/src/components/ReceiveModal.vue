@@ -184,9 +184,12 @@ function toggleFullAddress() {
             </div>
             <h2>Receive</h2>
           </div>
-          <button class="btn-icon close-btn" @click="handleClose">
-            <span class="close-icon">×</span>
-          </button>
+          <Button variant="icon" @click="handleClose">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </Button>
         </div>
 
         <!-- Asset Tabs -->
@@ -252,9 +255,9 @@ function toggleFullAddress() {
       >
         <div class="address-header">
           <span class="address-label">{{ addressLabel }}</span>
-          <button class="expand-btn" @click.stop="toggleFullAddress">
+          <Button variant="ghost" size="sm" class="expand-btn" @click.stop="toggleFullAddress">
             {{ showFullAddress ? 'Hide' : 'Show full' }}
-          </button>
+          </Button>
         </div>
         <p class="address-text">{{ showFullAddress ? currentAddress : truncatedAddress }}</p>
       </div>
@@ -388,34 +391,7 @@ function toggleFullAddress() {
   letter-spacing: -0.02em;
 }
 
-.close-btn {
-  width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.close-btn:active {
-  transform: scale(0.95);
-}
-
-.close-icon {
-  font-size: 20px;
-  line-height: 1;
-  color: #FFFFFF;
-}
+/* Close button now uses Button variant="icon" */
 
 /* Asset Tabs */
 .asset-tabs {
@@ -430,7 +406,7 @@ function toggleFullAddress() {
 .tab-btn {
   flex: 1;
   height: var(--control-h);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.05);
   color: #6b7280;
@@ -501,7 +477,7 @@ function toggleFullAddress() {
 .qr-container {
   position: relative;
   padding: var(--space-md);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-card);
   background: #26281b;
   box-shadow:
     4px 4px 8px #1a1c13,
@@ -549,7 +525,7 @@ function toggleFullAddress() {
 .address-card {
   width: 100%;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-control);
   padding: var(--card-pad-y) var(--card-pad-x);
   margin-bottom: var(--space-sm);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -580,19 +556,16 @@ function toggleFullAddress() {
   letter-spacing: 0.08em;
 }
 
-.expand-btn {
-  background: none;
-  border: none;
+.expand-btn :deep(.btn) {
   color: var(--color-accent-primary);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  cursor: pointer;
   padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  transition: all 0.15s ease;
+  height: auto;
+  min-height: 0;
 }
 
-.expand-btn:hover {
+.expand-btn :deep(.btn:hover) {
   background: rgba(232, 248, 89, 0.1);
 }
 

@@ -4,6 +4,10 @@ defineProps<{
   label: string;
   /** Secondary/subtitle text */
   subtitle?: string;
+  /** Primary value text (right side, e.g., balance) */
+  value?: string;
+  /** Secondary value text (right side, e.g., fiat value) */
+  valueSubtitle?: string;
   /** Icon color (CSS color or gradient) */
   iconColor?: string;
   /** Show chevron arrow on right */
@@ -50,6 +54,12 @@ function handleClick() {
       <span v-if="subtitle" class="list-row-subtitle">{{ subtitle }}</span>
     </div>
 
+    <!-- Value (balance, amount) -->
+    <div v-if="value || valueSubtitle" class="list-row-value">
+      <span v-if="value" class="list-row-value-primary">{{ value }}</span>
+      <span v-if="valueSubtitle" class="list-row-value-secondary">{{ valueSubtitle }}</span>
+    </div>
+
     <!-- Badge -->
     <span v-if="badge" class="list-row-badge">{{ badge }}</span>
 
@@ -88,11 +98,16 @@ function handleClick() {
 }
 
 .list-row:hover:not(.list-row--disabled) {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-hover);
 }
 
 .list-row:active:not(.list-row--disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-pressed);
+}
+
+.list-row:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .list-row--disabled {
@@ -104,7 +119,7 @@ function handleClick() {
 .list-row-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-chip);
   background: rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
@@ -170,6 +185,27 @@ function handleClick() {
   text-overflow: ellipsis;
 }
 
+/* Value (balance, amount) */
+.list-row-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.list-row-value-primary {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.list-row-value-secondary {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
 /* Badge */
 .list-row-badge {
   font-size: 10px;
@@ -177,7 +213,7 @@ function handleClick() {
   color: var(--color-bg-primary);
   background: var(--color-accent-primary);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-chip);
   flex-shrink: 0;
 }
 

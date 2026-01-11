@@ -8,6 +8,7 @@ import {
 } from "../utils/stxmethods";
 import type { JsonRpcRequest, Result } from "@/utils/types";
 import PinInput from "@/components/PinInput.vue";
+import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog, secureWarn } from "@/utils/security/logger";
 
@@ -279,12 +280,12 @@ function handleReject(reason?: string) {
   <section class="confirmation-page">
     <!-- Header -->
     <div class="confirmation-header">
-      <button class="close-btn" @click="handleReject()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+      <Button variant="icon" @click="handleReject()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
-      </button>
+      </Button>
       <h2>CONFIRM ACTION</h2>
       <div class="header-spacer"></div>
     </div>
@@ -344,16 +345,18 @@ function handleReject(reason?: string) {
 
     <!-- Action buttons -->
     <div class="action-buttons">
-      <button class="reject-btn" @click="handleReject()" :disabled="isProcessing">
+      <Button variant="secondary" size="lg" @click="handleReject()" :disabled="isProcessing">
         Reject
-      </button>
-      <button
-        class="confirm-btn"
+      </Button>
+      <Button
+        variant="primary"
+        size="lg"
         @click="handleConfirm"
         :disabled="!isUnlocked || isProcessing"
+        :loading="isProcessing"
       >
         {{ isProcessing ? "Processing..." : "Confirm" }}
-      </button>
+      </Button>
     </div>
   </section>
 </template>
@@ -376,25 +379,8 @@ function handleReject(reason?: string) {
   justify-content: space-between;
 }
 
-.close-btn {
-  width: 40px;
-  height: 40px;
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.close-btn:hover {
-  opacity: 0.7;
-}
-
 .header-spacer {
-  width: 40px;
+  width: var(--icon-btn-size);
 }
 
 .confirmation-header h2 {
@@ -466,7 +452,7 @@ function handleReject(reason?: string) {
 .params-section {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-card);
   padding: var(--space-lg);
 }
 
@@ -503,7 +489,7 @@ function handleReject(reason?: string) {
 .raw-details {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-card);
   overflow: hidden;
 }
 
@@ -560,46 +546,8 @@ function handleReject(reason?: string) {
   padding-top: var(--space-lg);
 }
 
-.reject-btn {
+/* Ensure buttons stretch equally */
+.action-buttons :deep(.btn) {
   flex: 1;
-  padding: var(--space-lg);
-  background: var(--color-bg-card);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-
-.reject-btn:hover:not(:disabled) {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card-hover);
-}
-
-.reject-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.confirm-btn {
-  flex: 1;
-  padding: var(--space-lg);
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
-  border: none;
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-
-.confirm-btn:hover:not(:disabled) {
-  background: var(--color-accent-primary-hover);
-}
-
-.confirm-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 </style>
