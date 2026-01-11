@@ -105,7 +105,7 @@ defineEmits<{
 
 .inline-action--ghost:hover:not(:disabled) {
   background: var(--surface-hover);
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v18: neutral */
 }
 
 /* States */

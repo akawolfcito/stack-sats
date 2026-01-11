@@ -228,8 +228,8 @@ const hasFooter = computed(() => !!slots.footer);
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
   border-radius: 50%;
-  background: var(--color-accent-primary-muted);
-  color: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.08); /* v18: neutral */
+  color: var(--color-text-secondary); /* v18: neutral */
 }
 
 .sheet-header__title {

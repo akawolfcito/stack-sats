@@ -367,13 +367,13 @@ function toggleFullAddress() {
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
   border-radius: 50%;
-  background: rgba(232, 248, 89, 0.1);
-  border: 1px solid rgba(232, 248, 89, 0.2);
+  background: rgba(124, 58, 237, 0.15); /* v18: branded purple for STX */
+  border: 1px solid rgba(124, 58, 237, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-accent-primary);
-  box-shadow: 0 0 12px rgba(232, 248, 89, 0.15);
+  color: #7c3aed; /* v18: branded purple for STX */
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.15);
 }
 
 .asset-icon--btc {
@@ -557,7 +557,7 @@ function toggleFullAddress() {
 }
 
 .expand-btn :deep(.btn) {
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v18: neutral */
   font-size: var(--font-size-xs);
   font-weight: 600;
   padding: var(--space-xs) var(--space-sm);
@@ -566,7 +566,8 @@ function toggleFullAddress() {
 }
 
 .expand-btn :deep(.btn:hover) {
-  background: rgba(232, 248, 89, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
 }
 
 .address-text {
