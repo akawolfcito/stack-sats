@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
 import QRCode from "qrcode";
-import { Button } from "@/components/ui";
+import { Sheet, Button } from "@/components/ui";
 
 const props = defineProps<{
   isOpen: boolean;
@@ -84,136 +84,70 @@ onMounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="isOpen" class="modal-overlay" @click.self="handleClose">
-        <div class="modal-container" :class="{ 'modal-btc': assetTag !== 'STX' }">
-          <!-- Header -->
-          <header class="modal-header">
-            <h2 class="modal-title">{{ label }}</h2>
-            <Button variant="icon" @click="handleClose">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </Button>
-          </header>
-
-          <!-- QR Code -->
-          <div class="qr-wrapper">
-            <div class="qr-container" :class="{ 'qr-btc': assetTag !== 'STX' }">
-              <canvas ref="qrCanvas"></canvas>
-            </div>
-          </div>
-
-          <!-- Address -->
-          <div class="address-block">
-            <span class="address-text">{{ truncateAddress(address) }}</span>
-            <button
-              class="copy-btn"
-              :class="{ copied }"
-              @click="handleCopy"
-            >
-              <svg
-                v-if="!copied"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-              <svg
-                v-else
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              {{ copied ? "Copied!" : "Copy" }}
-            </button>
-          </div>
-
-          <!-- Safety Message -->
-          <p class="safety-text">
-            Only send {{ assetTag === "STX" ? "STX" : "BTC" }} to this address.
-          </p>
+  <Sheet
+    :is-open="isOpen"
+    variant="center"
+    :title="label"
+    @close="handleClose"
+  >
+    <div class="qr-content">
+      <!-- QR Code -->
+      <div class="qr-wrapper">
+        <div class="qr-container" :class="{ 'qr-btc': assetTag !== 'STX' }">
+          <canvas ref="qrCanvas"></canvas>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+
+      <!-- Address -->
+      <div class="address-block">
+        <span class="address-text">{{ truncateAddress(address) }}</span>
+        <button
+          class="copy-btn"
+          :class="{ copied }"
+          @click="handleCopy"
+        >
+          <svg
+            v-if="!copied"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          <svg
+            v-else
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          {{ copied ? "Copied!" : "Copy" }}
+        </button>
+      </div>
+
+      <!-- Safety Message -->
+      <p class="safety-text">
+        Only send {{ assetTag === "STX" ? "STX" : "BTC" }} to this address.
+      </p>
+    </div>
+  </Sheet>
 </template>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: var(--space-md);
-}
-
-.modal-container {
-  width: 100%;
-  max-width: 320px;
-  background: var(--color-bg-card); /* v19: token */
-  border: 1px solid var(--color-border); /* v19: neutral */
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
+/* Content wrapper */
+.qr-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-md);
-}
-
-.modal-container.modal-btc {
-  background: var(--color-bg-card); /* v19: same neutral */
-  border-color: var(--color-border);
-}
-
-/* Header */
-.modal-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  border-radius: 8px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
 }
 
 /* QR Code */
@@ -225,11 +159,7 @@ onMounted(() => {
   background: white;
   border-radius: var(--radius-lg);
   padding: var(--space-sm);
-  box-shadow: var(--shadow-elev-2); /* v19: neutral elevation */
-}
-
-.qr-container.qr-btc {
-  box-shadow: var(--shadow-elev-2); /* v19: same neutral elevation */
+  box-shadow: var(--shadow-elev-2);
 }
 
 .qr-container canvas {
@@ -273,11 +203,11 @@ onMounted(() => {
 
 .copy-btn:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: var(--color-text-primary); /* v18: neutral */
+  color: var(--color-text-primary);
 }
 
 .copy-btn.copied {
-  color: #22c55e;
+  color: var(--color-success);
 }
 
 /* Safety */
@@ -286,26 +216,5 @@ onMounted(() => {
   color: var(--color-text-muted);
   text-align: center;
   margin: 0;
-}
-
-/* Transitions */
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.modal-enter-active .modal-container,
-.modal-leave-active .modal-container {
-  transition: transform 0.2s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .modal-container,
-.modal-leave-to .modal-container {
-  transform: scale(0.95);
 }
 </style>
