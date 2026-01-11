@@ -25,14 +25,7 @@ function selectTab(key: string) {
 </script>
 
 <template>
-  <div class="segmented-tabs">
-    <div
-      class="tab-indicator"
-      :style="{
-        transform: `translateX(${activeIndex * 100}%)`,
-        width: `${100 / items.length}%`
-      }"
-    ></div>
+  <div class="minimal-tabs">
     <button
       v-for="item in items"
       :key="item.key"
@@ -42,31 +35,37 @@ function selectTab(key: string) {
     >
       {{ item.label }}
     </button>
+    <!-- Underline indicator -->
+    <div
+      class="tab-underline"
+      :style="{
+        transform: `translateX(${activeIndex * 100}%)`,
+        width: `${100 / items.length}%`
+      }"
+    ></div>
   </div>
 </template>
 
 <style scoped>
-.segmented-tabs {
+/* Minimal Tabs - Pro underline style (v15) */
+.minimal-tabs {
   display: flex;
   position: relative;
-  height: 36px; /* REDUCED from control-h for lighter weight (v14) */
-  background: var(--surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  padding: 3px; /* Tighter padding (v14) */
-  gap: 2px;
+  height: 36px;
+  background: transparent; /* No background - cleaner */
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  gap: 0;
 }
 
-.tab-indicator {
+/* Underline indicator */
+.tab-underline {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  bottom: 3px;
-  /* Pro surface with visible border, no glow */
-  background: var(--surface-2);
-  border: 1px solid var(--color-border-hover);
-  border-radius: calc(var(--radius-control) - 3px);
-  box-shadow: none; /* No elevation shadow - clean */
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--color-accent-primary);
+  border-radius: 1px 1px 0 0;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
@@ -76,10 +75,10 @@ function selectTab(key: string) {
   position: relative;
   z-index: 1;
   height: 100%;
-  padding: 0 var(--space-sm); /* Tighter padding (v14) */
+  padding: 0 var(--space-md);
   background: transparent;
   border: none;
-  border-radius: calc(var(--radius-control) - 3px);
+  border-radius: 0;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
@@ -93,12 +92,11 @@ function selectTab(key: string) {
 
 .tab-item:hover:not(.tab-item--active) {
   color: var(--color-text-secondary);
-  background: var(--surface-hover);
 }
 
 .tab-item:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
+  outline-offset: -2px;
 }
 
 .tab-item--active {
