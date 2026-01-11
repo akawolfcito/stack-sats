@@ -263,7 +263,7 @@ onUnmounted(() => {
 }
 
 .account-item--active .account-item__dot {
-  background: var(--color-accent-primary);
+  background: var(--color-success); /* v16.1: success for active, not lime */
 }
 
 .account-item__info {
@@ -287,7 +287,7 @@ onUnmounted(() => {
 }
 
 .account-item__check {
-  color: var(--color-accent-primary);
+  color: var(--color-success); /* v16.1: success for checkmark, not lime */
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -309,9 +309,9 @@ onUnmounted(() => {
 }
 
 .account-add-btn :deep(.btn:hover) {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-text-secondary);
+  color: var(--color-text-primary); /* v16.1: neutral hover, lime reserved for CTAs */
 }
 
 /* Transition */

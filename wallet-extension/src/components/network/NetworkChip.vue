@@ -212,7 +212,7 @@ onUnmounted(() => {
 }
 
 .network-menu__dot--mainnet {
-  background: var(--color-accent-primary);
+  background: var(--color-success); /* v16.1: green for mainnet (live), not lime */
 }
 
 .network-menu__dot--testnet {
@@ -228,7 +228,7 @@ onUnmounted(() => {
 }
 
 .network-menu__check {
-  color: var(--color-accent-primary);
+  color: var(--color-success); /* v16.1: green for checkmark, not lime */
   font-size: 12px;
 }
 

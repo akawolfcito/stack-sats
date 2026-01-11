@@ -135,8 +135,8 @@ function handleClick() {
 }
 
 .list-row--add:hover .list-row-icon {
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
+  border-color: var(--color-text-secondary);
+  color: var(--color-text-primary); /* v16.1: neutral hover, lime reserved for CTAs */
 }
 
 .list-row--danger .list-row-icon {
@@ -170,7 +170,7 @@ function handleClick() {
 }
 
 .list-row--add:hover .list-row-label {
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v16.1: neutral hover */
 }
 
 .list-row--danger .list-row-label {
@@ -206,15 +206,17 @@ function handleClick() {
   color: var(--color-text-muted);
 }
 
-/* Badge */
+/* Badge - Neutral style (v16.1, lime reserved for CTAs) */
 .list-row-badge {
   font-size: 10px;
   font-weight: 700;
-  color: var(--color-bg-primary);
-  background: var(--color-accent-primary);
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.12);
   padding: 2px 6px;
   border-radius: var(--radius-chip);
   flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 /* Chevron */
