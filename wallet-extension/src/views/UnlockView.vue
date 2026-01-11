@@ -109,13 +109,14 @@ onMounted(() => {
         >
           <!-- Slot: Forgot PIN link above keypad -->
           <template #above-keypad>
-            <button
-              class="forgot-btn"
+            <Button
+              variant="ghost"
+              size="sm"
               :disabled="isLoading"
               @click="handleForgotPin"
             >
               Forgot PIN?
-            </button>
+            </Button>
           </template>
         </PinInput>
 
@@ -128,9 +129,11 @@ onMounted(() => {
       <div class="reset-content">
         <!-- Header -->
         <header class="reset-header">
-          <button class="btn-icon back-btn" @click="handleCancelDelete">
-            <span class="back-icon">←</span>
-          </button>
+          <Button variant="icon" @click="handleCancelDelete">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </Button>
           <h1>Reset Wallet</h1>
           <div class="header-spacer"></div>
         </header>
@@ -302,9 +305,7 @@ onMounted(() => {
   border-radius: 20px;
   background: linear-gradient(135deg, #2a2d15, #1a1c0d);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow:
-    4px 4px 8px rgba(18, 20, 9, 0.8),
-    -4px -4px 8px rgba(46, 48, 23, 0.3);
+  box-shadow: var(--shadow-elev-1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -324,27 +325,6 @@ onMounted(() => {
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
   margin: 0;
-}
-
-/* Forgot Button - Green accent color */
-.forgot-btn {
-  background: transparent;
-  border: none;
-  color: var(--color-accent-primary);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 8px 16px;
-  transition: opacity 0.2s ease;
-}
-
-.forgot-btn:hover:not(:disabled) {
-  opacity: 0.8;
-}
-
-.forgot-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .loading-text {
@@ -380,14 +360,8 @@ onMounted(() => {
   letter-spacing: -0.02em;
 }
 
-.back-icon {
-  font-size: 20px;
-  line-height: 1;
-  color: #FFFFFF;
-}
-
 .header-spacer {
-  width: 40px;
+  width: var(--icon-btn-size);
 }
 
 /* Reset Main */
@@ -408,7 +382,7 @@ onMounted(() => {
   border: 1px solid rgba(239, 68, 68, 0.3);
   background: #282828;
   overflow: hidden;
-  box-shadow: 0 0 25px -5px rgba(239, 68, 68, 0.3);
+  box-shadow: var(--shadow-error-lg);
 }
 
 .danger-card-glow {
@@ -508,8 +482,9 @@ onMounted(() => {
 }
 
 .delete-input:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5);
+  border-color: var(--color-error);
+  outline: 2px solid var(--color-error);
+  outline-offset: -1px;
 }
 
 .delete-input::placeholder {

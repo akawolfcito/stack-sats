@@ -6,6 +6,7 @@ import AppHeader from "@/components/layout/AppHeader.vue";
 import StickyCTA from "@/components/layout/StickyCTA.vue";
 import FormField from "@/components/forms/FormField.vue";
 import PinInput from "@/components/PinInput.vue";
+import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { getPrivateKey } from "@/utils/accounts";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
@@ -384,7 +385,7 @@ onBeforeMount(async () => {
     <div v-else-if="errorMessage && !token" class="error-state">
       <div class="error-icon">!</div>
       <p class="error-text">{{ errorMessage }}</p>
-      <button class="back-btn-large" @click="handleBack">Go Back</button>
+      <Button variant="secondary" full-width @click="handleBack">Go Back</Button>
     </div>
 
     <!-- Form Step -->
@@ -524,11 +525,11 @@ onBeforeMount(async () => {
         </div>
       </div>
 
-      <button v-if="explorerUrl" class="secondary-btn" @click="openExplorer">
+      <Button v-if="explorerUrl" variant="secondary" full-width @click="openExplorer">
         View in Explorer
-      </button>
+      </Button>
 
-      <button class="primary-btn" @click="handleDone">Done</button>
+      <Button variant="primary" full-width @click="handleDone">Done</Button>
     </div>
 
     <!-- Error Step -->
@@ -542,8 +543,8 @@ onBeforeMount(async () => {
       <p class="result-title">Transaction Failed</p>
       <p class="error-message">{{ errorMessage }}</p>
 
-      <button class="primary-btn" @click="handleTryAgain">Try Again</button>
-      <button class="secondary-btn" @click="handleDone">Cancel</button>
+      <Button variant="primary" full-width @click="handleTryAgain">Try Again</Button>
+      <Button variant="secondary" full-width @click="handleDone">Cancel</Button>
     </div>
 
     <!-- Footer CTA -->
@@ -702,9 +703,9 @@ onBeforeMount(async () => {
 }
 
 .form-input:focus {
-  outline: none;
+  outline: var(--focus-ring);
+  outline-offset: -1px;
   border-color: var(--color-accent-primary);
-  box-shadow: 0 0 0 2px var(--color-accent-primary-muted);
 }
 
 .form-input--with-action {
@@ -877,12 +878,12 @@ onBeforeMount(async () => {
 
 .result-icon-success {
   background: var(--color-success);
-  box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+  box-shadow: var(--shadow-success-lg);
 }
 
 .result-icon-error {
   background: var(--color-error);
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+  box-shadow: var(--shadow-error-lg);
 }
 
 .result-title {

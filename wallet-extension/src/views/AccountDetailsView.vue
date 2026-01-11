@@ -349,7 +349,7 @@ function handleClose() {
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-bg-elevated), var(--color-bg-card));
   border: 2px solid var(--color-accent-primary);
-  box-shadow: 0 0 12px var(--color-accent-primary-muted);
+  box-shadow: var(--shadow-accent);
   display: flex;
   align-items: center;
   justify-content: center;
