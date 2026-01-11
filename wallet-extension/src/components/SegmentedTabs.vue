@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, watch, nextTick } from 'vue'
 
 interface TabItem {
   key: string
@@ -15,6 +15,9 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
 
+const tabsRef = ref<HTMLElement | null>(null)
+const indicatorStyle = ref({ left: '0px', width: '0px' })
+
 const activeIndex = computed(() =>
   props.items.findIndex(item => item.key === props.modelValue)
 )
@@ -22,10 +25,33 @@ const activeIndex = computed(() =>
 function selectTab(key: string) {
   emit('update:modelValue', key)
 }
+
+// V29: Calculate indicator position based on actual tab element
+function updateIndicator() {
+  if (!tabsRef.value) return
+  const tabs = tabsRef.value.querySelectorAll('.tab-item')
+  const activeTab = tabs[activeIndex.value] as HTMLElement
+  if (activeTab) {
+    const containerRect = tabsRef.value.getBoundingClientRect()
+    const tabRect = activeTab.getBoundingClientRect()
+    indicatorStyle.value = {
+      left: `${tabRect.left - containerRect.left}px`,
+      width: `${tabRect.width}px`
+    }
+  }
+}
+
+onMounted(() => {
+  nextTick(updateIndicator)
+})
+
+watch(activeIndex, () => {
+  nextTick(updateIndicator)
+})
 </script>
 
 <template>
-  <div class="minimal-tabs">
+  <div ref="tabsRef" class="minimal-tabs">
     <button
       v-for="item in items"
       :key="item.key"
@@ -35,53 +61,49 @@ function selectTab(key: string) {
     >
       {{ item.label }}
     </button>
-    <!-- Underline indicator -->
+    <!-- V29: Short indicator under active tab only -->
     <div
       class="tab-underline"
-      :style="{
-        transform: `translateX(${activeIndex * 100}%)`,
-        width: `${100 / items.length}%`
-      }"
+      :style="indicatorStyle"
     ></div>
   </div>
 </template>
 
 <style scoped>
-/* Premium Minimal Tabs (V27) */
+/* V29 Gold: Text tabs with short indicator */
 .minimal-tabs {
   display: flex;
   position: relative;
-  height: var(--control-h); /* Density-aware hit area */
+  height: var(--control-h);
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--color-border);
-  gap: 0;
+  /* V29: Subtle baseline instead of full border */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: var(--space-lg); /* V29: Gap between tabs, not flex-1 */
+  padding: 0 var(--space-xs);
 }
 
-/* Underline indicator - clean, no glow (V27) */
+/* V29: Short indicator under label only */
 .tab-underline {
   position: absolute;
   bottom: -1px;
-  left: 0;
   height: 2px;
-  background: var(--color-text-primary); /* Neutral underline, not lime */
-  border-radius: 0; /* Sharp edges for premium look */
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--color-text-primary);
+  border-radius: 1px; /* V29: Slightly rounded ends */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  /* No shadow, no glow */
 }
 
 .tab-item {
-  flex: 1;
   position: relative;
   z-index: 1;
   height: 100%;
-  padding: 0 var(--space-lg);
+  padding: 0 var(--space-sm); /* V29: Tighter padding */
   background: transparent;
   border: none;
   border-radius: 0;
   font-size: var(--font-size-sm);
-  font-weight: 500; /* Inactive: 500 */
+  font-weight: var(--font-weight-medium); /* V29: 500 inactive */
   color: var(--color-text-muted);
   cursor: pointer;
   transition: color var(--transition-fast);
@@ -89,6 +111,7 @@ function selectTab(key: string) {
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+  /* V29: No flex-1, natural width */
 }
 
 .tab-item:hover:not(.tab-item--active) {
@@ -102,6 +125,6 @@ function selectTab(key: string) {
 
 .tab-item--active {
   color: var(--color-text-primary);
-  font-weight: 600; /* Active: 600 */
+  font-weight: var(--font-weight-semibold); /* V29: 600 active */
 }
 </style>

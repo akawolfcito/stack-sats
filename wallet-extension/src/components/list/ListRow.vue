@@ -115,19 +115,17 @@ function handleClick() {
   cursor: not-allowed;
 }
 
-/* Icon - V30: iOS-grade chip styling */
+/* Icon - V29 Gold: Clean chip styling */
 .list-row-icon {
   width: var(--icon-btn-size); /* 28px compact, 40px comfy */
   height: var(--icon-btn-size);
   border-radius: var(--radius-chip);
-  background: rgba(255, 255, 255, 0.06); /* V30: Subtler bg */
+  background: rgba(255, 255, 255, 0.08); /* V29: Visible but subtle */
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: var(--color-text-primary);
-  /* V30: Subtle inner border for depth */
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .list-row--add .list-row-icon {
@@ -187,31 +185,29 @@ function handleClick() {
   text-overflow: ellipsis;
 }
 
-/* Value (balance, amount) - V30: iOS-grade tabular display */
+/* Value (balance, amount) - V29 Gold: Clear hierarchy */
 .list-row-value {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 1px; /* V30: Tighter gap */
+  gap: 2px;
   flex-shrink: 0;
-  min-width: 64px; /* V30: Slightly wider for stability */
+  min-width: 60px; /* Stable layout */
 }
 
 .list-row-value-primary {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold); /* V30: Bold for balance prominence */
+  font-weight: var(--font-weight-semibold); /* V29: 600 - value dominates */
   color: var(--color-text-primary);
-  font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono); /* V30: Mono for consistent number width */
-  letter-spacing: -0.02em; /* V30: Tighter for numbers */
+  font-variant-numeric: tabular-nums; /* V29: Universal tabular */
 }
 
 .list-row-value-secondary {
-  font-size: var(--font-size-2xs); /* V30: Smaller for hierarchy */
-  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted); /* V29: Clearly subordinate */
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono); /* V30: Consistent mono */
-  letter-spacing: 0;
+  opacity: 0.8; /* V29: Extra muting for hierarchy */
 }
 
 /* Badge - Neutral style (v16.1, lime reserved for CTAs) */
@@ -227,9 +223,12 @@ function handleClick() {
   letter-spacing: 0.02em;
 }
 
-/* Chevron */
+/* Chevron - V29: Unified size and opacity */
 .list-row-chevron {
   color: var(--color-text-muted);
   flex-shrink: 0;
+  opacity: 0.5; /* V29: Subtle, consistent across app */
+  width: 16px;
+  height: 16px;
 }
 </style>
