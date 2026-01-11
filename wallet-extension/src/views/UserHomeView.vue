@@ -799,8 +799,8 @@ const handleManageTokens = () => {
 
 /* Tabs Container */
 .tabs-container {
-  padding: 0 var(--space-lg);
-  margin-bottom: var(--space-md);
+  padding: 0 var(--page-pad-x);
+  margin-bottom: var(--stack-gap);
 }
 
 /* Ambient Glow */
@@ -933,20 +933,20 @@ const handleManageTokens = () => {
 
 /* Action Bar */
 .actions {
-  padding: 0 var(--space-lg);
-  margin-bottom: var(--space-lg);
+  padding: 0 var(--page-pad-x);
+  margin-bottom: var(--stack-gap);
 }
 
 /* Assets Section */
 .assets-section {
-  padding: 0 var(--space-lg);
-  margin-bottom: var(--space-md);
+  padding: 0 var(--page-pad-x);
+  margin-bottom: var(--stack-gap);
 }
 
 /* Tokens Section */
 .tokens-section {
-  padding: 0 var(--space-lg);
-  margin-bottom: var(--space-md);
+  padding: 0 var(--page-pad-x);
+  margin-bottom: var(--stack-gap);
 }
 
 /* Token rows inside ListGroup */
@@ -1035,8 +1035,8 @@ const handleManageTokens = () => {
 
 /* Activity Section */
 .activity-section {
-  padding: 0 var(--space-lg);
-  margin-bottom: var(--space-md);
+  padding: 0 var(--page-pad-x);
+  margin-bottom: var(--stack-gap);
 }
 
 .empty-state {

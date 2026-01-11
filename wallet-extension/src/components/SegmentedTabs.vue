@@ -51,7 +51,7 @@ function selectTab(key: string) {
   position: relative;
   height: var(--row-h);
   background: var(--surface-1);
-  border: var(--border-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
   padding: 4px;
   gap: 2px;
@@ -62,10 +62,11 @@ function selectTab(key: string) {
   top: 4px;
   left: 4px;
   bottom: 4px;
-  /* Pro surface with subtle border */
+  /* Pro surface with visible border, no glow */
   background: var(--surface-2);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-hover);
   border-radius: calc(var(--radius-control) - 4px);
+  box-shadow: none; /* No elevation shadow - clean */
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
@@ -74,7 +75,7 @@ function selectTab(key: string) {
   flex: 1;
   position: relative;
   z-index: 1;
-  height: calc(100% - 0px);
+  height: 100%;
   padding: 0 var(--space-md);
   background: transparent;
   border: none;
@@ -83,7 +84,7 @@ function selectTab(key: string) {
   font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: color var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,6 +93,7 @@ function selectTab(key: string) {
 
 .tab-item:hover:not(.tab-item--active) {
   color: var(--color-text-secondary);
+  background: var(--surface-hover);
 }
 
 .tab-item:focus-visible {
@@ -101,5 +103,6 @@ function selectTab(key: string) {
 
 .tab-item--active {
   color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 </style>

@@ -45,8 +45,8 @@ defineProps<{
 }
 
 .section-header__title {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium); /* 500 for section labels */
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-text-muted);
@@ -54,8 +54,8 @@ defineProps<{
 }
 
 .section-header__subtitle {
-  font-size: 11px;
-  font-weight: 400;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal); /* 400 for body text */
   color: var(--color-text-muted);
 }
 
