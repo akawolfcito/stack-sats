@@ -19,7 +19,8 @@
     "test:e2e:headed": "playwright test --headed",
     "ui:snapshots": "VITE_UI_SNAPSHOT=1 playwright test golden-screenshots --project=chromium",
     "ui:verify": "bash scripts/ui-verify-snapshots.sh",
-    "ui:baseline": "cp -r docs/ui/golden/CURRENT/* docs/ui/golden/BASELINE/ 2>/dev/null || echo 'No CURRENT screenshots to copy'"
+    "ui:baseline": "cp -r docs/ui/golden/CURRENT/* docs/ui/golden/BASELINE/ 2>/dev/null || echo 'No CURRENT screenshots to copy'",
+    "audit:accent": "bash scripts/audit-accent.sh"
   },
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.2.0",
