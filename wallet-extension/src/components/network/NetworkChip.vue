@@ -94,32 +94,38 @@ onUnmounted(() => {
   position: relative;
 }
 
+/* V28: Premium network chip - minimal border, surface states */
 .network-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 32px; /* Unified header control height (v15) */
+  gap: var(--space-xs);
+  height: var(--control-h);
   padding: 0 var(--space-sm);
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: none; /* V28: Remove border for cleaner look */
   border-radius: var(--radius-control);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-primary);
+  transition: background var(--transition-fast);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
 }
 
 .network-chip:hover {
   background: var(--surface-hover);
-  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
 }
 
 .network-chip:active {
   background: var(--surface-pressed);
 }
 
-/* Dot indicator - no glow (v15) */
+.network-chip:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Dot indicator - V28: slightly larger */
 .network-chip__dot {
   width: 6px;
   height: 6px;
@@ -139,13 +145,10 @@ onUnmounted(() => {
   background: #f59e0b;
 }
 
-/* Testnet/Devnet subtle highlight - no glow (v15) */
-.network-chip--testnet {
-  border-color: rgba(96, 165, 250, 0.4);
-}
-
+/* V28: Testnet/Devnet - use dot color only, no border highlight */
+.network-chip--testnet,
 .network-chip--devnet {
-  border-color: rgba(245, 158, 11, 0.4);
+  /* No special border - keep it clean */
 }
 
 .network-chip__label {
@@ -154,8 +157,8 @@ onUnmounted(() => {
 }
 
 .network-chip__arrow {
-  opacity: 0.6;
-  transition: transform 0.15s ease;
+  opacity: 0.5;
+  transition: all 0.15s ease;
 }
 
 .network-chip:hover .network-chip__arrow {

@@ -582,7 +582,7 @@ const handleManageTokens = () => {
     <template v-else>
       <!-- Fixed Header Section (no scroll) -->
       <div class="home-header">
-        <!-- Header -->
+        <!-- Header - V28: Premium controls -->
         <header class="header">
         <!-- Menu Button -->
         <Button variant="icon" @click="handleOpenUserMenu" title="Menu">
@@ -603,12 +603,25 @@ const handleManageTokens = () => {
           @add-account="handleAddAccount"
         />
 
-        <!-- Network Chip -->
-        <NetworkChip
-          :network="selectedNetwork"
-          :label="NETWORKS[selectedNetwork].name"
-          @select="handleNetworkSelect"
-        />
+        <!-- Header Right Actions -->
+        <div class="header-actions">
+          <!-- Network Chip -->
+          <NetworkChip
+            :network="selectedNetwork"
+            :label="NETWORKS[selectedNetwork].name"
+            @select="handleNetworkSelect"
+          />
+
+          <!-- Fullpage Button (V28) -->
+          <Button variant="icon" @click="openFullPage" title="Open in full page">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 3 21 3 21 9"/>
+              <polyline points="9 21 3 21 3 15"/>
+              <line x1="21" y1="3" x2="14" y2="10"/>
+              <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+          </Button>
+        </div>
       </header>
 
       <!-- Compact Balance Section -->
@@ -824,22 +837,25 @@ const handleManageTokens = () => {
   color: var(--color-text-muted);
 }
 
-/* Header */
+/* Header - V28: Premium layout */
 .header {
   position: relative;
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-sm);
   padding: var(--card-pad-x);
   padding-top: var(--space-lg);
   padding-bottom: var(--space-sm);
 }
 
-/* Menu button now uses Button variant="icon" */
-
-/* Account Switcher and Network Chip styles are in their respective components */
+/* Header right actions group (V28) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-left: auto;
+}
 
 /* Balance Hero */
 .balance-hero {
