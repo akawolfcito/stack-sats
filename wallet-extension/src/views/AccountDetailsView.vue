@@ -509,7 +509,7 @@ function handleClose() {
 
 .chevron {
   color: var(--color-text-muted);
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   flex-shrink: 0;
 }
 
