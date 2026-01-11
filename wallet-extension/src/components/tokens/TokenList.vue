@@ -77,7 +77,7 @@ function handleToggle(contractId: string, enabled: boolean) {
   width: 32px;
   height: 32px;
   border: 3px solid var(--color-bg-card);
-  border-top-color: var(--color-accent-primary);
+  border-top-color: var(--color-text-muted); /* v18: neutral */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

@@ -109,7 +109,7 @@ function handleCopy() {
 }
 
 .row-value.accent {
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v18: neutral */
 }
 
 .row-value.truncate {
@@ -136,7 +136,7 @@ function handleCopy() {
 
 .copy-btn:hover {
   background: var(--color-bg-elevated);
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v18: neutral */
 }
 
 .copy-btn.copied {

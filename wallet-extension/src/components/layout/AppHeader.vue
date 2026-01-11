@@ -118,7 +118,7 @@ function handleLeftClick() {
 
 .header-btn:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v18: neutral */
 }
 
 .header-btn:active {

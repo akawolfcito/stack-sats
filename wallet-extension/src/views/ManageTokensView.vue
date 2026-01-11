@@ -281,7 +281,7 @@ function handleAddToken() {
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
   border: 3px solid var(--color-bg-card);
-  border-top-color: var(--color-accent-primary);
+  border-top-color: var(--color-text-muted); /* v18: neutral */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -358,7 +358,7 @@ function handleAddToken() {
 .add-link {
   background: none;
   border: none;
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v18: neutral text link */
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
@@ -368,7 +368,8 @@ function handleAddToken() {
 }
 
 .add-link:hover {
-  background: rgba(232, 248, 89, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
 }
 
 /* FAB - uses Button component with custom positioning */

@@ -44,6 +44,6 @@ const emit = defineEmits<{
 .asset-icon-text {
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v18: neutral */
 }
 </style>

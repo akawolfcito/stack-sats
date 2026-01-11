@@ -214,7 +214,7 @@ function handleConfirm() {
 
 .value-amount {
   font-weight: 600;
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v18: neutral */
 }
 
 .value-total {
@@ -245,7 +245,7 @@ function handleConfirm() {
 
 .copy-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v18: neutral */
 }
 
 /* Warning Banner */
