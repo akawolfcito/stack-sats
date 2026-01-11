@@ -53,6 +53,7 @@ import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
 import ListGroup from "../components/list/ListGroup.vue";
+import ListRow from "../components/list/ListRow.vue";
 import { useUiMode } from "../composables/useUiMode";
 
 const router = useRouter();
@@ -697,31 +698,28 @@ const handleManageTokens = () => {
             </template>
 
             <template v-else>
-              <button
+              <!-- v18: Token rows now use ListRow for Settings-grade consistency -->
+              <ListRow
                 v-for="token in tokens"
                 :key="token.contractId"
-                class="token-row"
+                :label="token.symbol"
+                :subtitle="token.name"
+                :value="token.formattedBalance"
+                chevron
                 :title="token.contractId"
                 @click="handleTokenClick(token)"
               >
-                <div class="token-icon">
+                <template #icon>
                   <img
                     v-if="token.imageUri"
                     :src="token.imageUri"
                     :alt="token.symbol"
+                    class="token-img"
                     @error="($event.target as HTMLImageElement).style.display = 'none'"
                   />
-                  <span v-else>{{ token.symbol.charAt(0) }}</span>
-                </div>
-                <div class="token-info">
-                  <span class="token-symbol">{{ token.symbol }}</span>
-                  <span class="token-name">{{ token.name }}</span>
-                </div>
-                <span class="token-balance">{{ token.formattedBalance }}</span>
-                <svg class="token-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
-              </button>
+                  <span v-else class="token-initial">{{ token.symbol.charAt(0) }}</span>
+                </template>
+              </ListRow>
             </template>
           </template>
         </ListGroup>
@@ -841,11 +839,6 @@ const handleManageTokens = () => {
 
 /* Menu button now uses Button variant="icon" */
 
-/* DEPRECATED: v17 neutral - ghost buttons use secondary text */
-.text-accent :deep(.btn__content) {
-  color: var(--color-text-secondary);
-}
-
 /* Account Switcher and Network Chip styles are in their respective components */
 
 /* Balance Hero */
@@ -949,88 +942,19 @@ const handleManageTokens = () => {
   margin-bottom: var(--stack-gap);
 }
 
-/* Token rows inside ListGroup */
-.token-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  width: 100%;
-  padding: var(--card-pad-y) var(--card-pad-x);
-  min-height: var(--row-h);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: background var(--transition-fast);
-}
-
-.token-row:hover {
-  background: var(--surface-hover);
-}
-
-.token-row:active {
-  background: var(--surface-pressed);
-}
-
-.token-icon {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.token-icon img {
+/* Token icon styles for ListRow slot (v18: using ListRow component) */
+.token-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: var(--radius-chip);
 }
 
-.token-icon span {
+.token-initial {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-text-secondary); /* v17: neutral token icon */
+  color: var(--color-text-secondary);
   text-transform: uppercase;
-}
-
-.token-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.token-symbol {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
-
-.token-name {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.token-balance {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
-.token-chevron {
-  color: var(--color-text-muted);
-  flex-shrink: 0;
 }
 
 /* Activity Section */
