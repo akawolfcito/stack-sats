@@ -115,12 +115,12 @@ function handleClick() {
   cursor: not-allowed;
 }
 
-/* Icon */
+/* Icon - V27: consistent sizing */
 .list-row-icon {
-  width: 32px;
-  height: 32px;
+  width: var(--icon-btn-size); /* 28px compact, 40px comfy */
+  height: var(--icon-btn-size);
   border-radius: var(--radius-chip);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -185,25 +185,29 @@ function handleClick() {
   text-overflow: ellipsis;
 }
 
-/* Value (balance, amount) */
+/* Value (balance, amount) - V27: premium tabular display */
 .list-row-value {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 1px;
+  gap: 2px;
   flex-shrink: 0;
+  min-width: 60px; /* Stable layout for numbers */
 }
 
 .list-row-value-primary {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold); /* Bumped for balance prominence */
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-family); /* Ensure consistent rendering */
+  letter-spacing: -0.01em; /* Tighter for numbers */
 }
 
 .list-row-value-secondary {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums; /* Consistent number alignment */
 }
 
 /* Badge - Neutral style (v16.1, lime reserved for CTAs) */

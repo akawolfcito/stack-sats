@@ -80,6 +80,7 @@ const getStatusLabel = (status: ActivityStatus) => {
 </template>
 
 <style scoped>
+/* V27: Activity row - matches ListRow styling */
 .activity-row {
   display: flex;
   align-items: center;
@@ -114,8 +115,8 @@ const getStatusLabel = (status: ActivityStatus) => {
 
 .activity-row__dot {
   display: block;
-  width: 10px;
-  height: 10px;
+  width: 8px; /* V27: smaller, more subtle */
+  height: 8px;
   border-radius: 50%;
   background: var(--color-text-muted);
 }
@@ -175,7 +176,7 @@ const getStatusLabel = (status: ActivityStatus) => {
 }
 
 .activity-row__status-label {
-  font-size: 10px;
+  font-size: var(--font-size-2xs); /* V27: tokenized 10px */
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.03em;
