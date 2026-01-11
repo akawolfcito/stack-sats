@@ -50,7 +50,7 @@ defineProps<{
   display: flex;
   flex-direction: column;
   background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-card);
   border: 1px solid var(--color-border);
   overflow: hidden;
 }

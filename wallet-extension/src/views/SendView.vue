@@ -5,7 +5,7 @@ import PinInput from "@/components/PinInput.vue";
 import ConfirmSendModal from "@/components/send/ConfirmSendModal.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
-import { Button, TextField } from "@/components/ui";
+import { Button, TextField, InlineAction } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { getPrivateKey } from "@/utils/accounts";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
@@ -362,12 +362,7 @@ function truncateAddress(address: string): string {
           @blur="validateRecipient"
         >
           <template #suffix>
-            <button class="input-action-btn" title="Paste address" @click="handlePaste">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-            </button>
+            <InlineAction label="Paste" variant="ghost" @click="handlePaste" />
           </template>
         </TextField>
         <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
@@ -384,7 +379,7 @@ function truncateAddress(address: string): string {
           @blur="validateAmount"
         >
           <template #suffix>
-            <button class="max-btn" @click="handleMaxAmount">MAX</button>
+            <InlineAction label="Max" variant="accent" @click="handleMaxAmount" />
           </template>
         </TextField>
         <div class="input-hint-row">
@@ -727,57 +722,7 @@ function truncateAddress(address: string): string {
   color: rgba(255, 255, 255, 0.2);
 }
 
-/* Input action buttons (used inside TextField suffix slot) */
-.input-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--icon-btn-size);
-  min-width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
-  padding: 0;
-  margin-right: var(--space-sm);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-md);
-  color: rgba(255, 255, 255, 0.4);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.input-action-btn:hover {
-  color: var(--color-accent-primary);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.input-truncated {
-  text-overflow: ellipsis;
-}
-
-.max-btn {
-  width: auto;
-  min-width: auto;
-  height: auto;
-  margin-right: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: var(--radius-md);
-  color: #0a0a0a;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: var(--shadow-accent);
-}
-
-.max-btn:hover {
-  filter: brightness(1.1);
-}
-
-.max-btn:active {
-  transform: scale(0.95);
-}
+/* InlineAction styles are handled by the component */
 
 .input-hint-row {
   display: flex;
