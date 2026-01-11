@@ -228,7 +228,7 @@ function handleShowQr() {
 
 .action-btn:hover {
   background: var(--color-bg-card);
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v18: neutral */
 }
 
 .action-btn.copied {

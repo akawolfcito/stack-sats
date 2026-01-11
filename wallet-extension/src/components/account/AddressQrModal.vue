@@ -273,7 +273,7 @@ onMounted(() => {
 
 .copy-btn:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v18: neutral */
 }
 
 .copy-btn.copied {

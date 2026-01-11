@@ -156,7 +156,7 @@ function handleToggle(event: Event) {
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: var(--color-accent-primary);
+  background-color: var(--color-success); /* v18: success for toggles */
 }
 
 .toggle input:checked + .toggle-slider::before {
