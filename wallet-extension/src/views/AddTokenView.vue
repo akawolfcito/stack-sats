@@ -368,11 +368,11 @@ function handleBack() {
 
 .network-badge {
   padding: var(--space-xs) var(--space-sm);
-  background: var(--color-accent-primary-muted);
+  background: rgba(255, 255, 255, 0.08); /* v17: neutral badge */
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -389,13 +389,13 @@ function handleBack() {
 
 /* Form inputs now use TextField component */
 
-/* Paste button inside TextField suffix */
+/* Paste button inside TextField suffix - v17: neutral secondary action */
 .paste-btn {
   padding: var(--space-sm) var(--space-md);
-  background: var(--color-accent-primary-muted);
+  background: rgba(255, 255, 255, 0.08);
   border: none;
   border-radius: var(--radius-lg);
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
@@ -406,8 +406,8 @@ function handleBack() {
 }
 
 .paste-btn:hover {
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-text-primary);
 }
 
 /* Preview Section */

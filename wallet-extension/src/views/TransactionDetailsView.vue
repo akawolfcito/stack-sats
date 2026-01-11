@@ -225,7 +225,7 @@ function openExplorer() {
   width: 40px;
   height: 40px;
   border: 3px solid var(--color-bg-card);
-  border-top-color: var(--color-accent-primary);
+  border-top-color: var(--color-text-muted); /* v17: neutral spinner */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -357,8 +357,8 @@ function openExplorer() {
 
 .explorer-btn:hover {
   background: var(--color-bg-elevated);
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
+  border-color: var(--color-border-hover); /* v17: neutral hover */
+  color: var(--color-text-primary);
 }
 
 .explorer-btn svg {

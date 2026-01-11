@@ -803,14 +803,14 @@ const handleManageTokens = () => {
   margin-bottom: var(--stack-gap);
 }
 
-/* Ambient Glow */
+/* Ambient Glow - v17: neutral */
 .ambient-glow {
   position: absolute;
   top: -10%;
   left: -20%;
   width: 80%;
   height: 40%;
-  background: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.5);
   opacity: 0.05;
   filter: blur(100px);
   border-radius: 50%;
@@ -841,9 +841,9 @@ const handleManageTokens = () => {
 
 /* Menu button now uses Button variant="icon" */
 
-/* Utility: accent text color for ghost buttons */
+/* DEPRECATED: v17 neutral - ghost buttons use secondary text */
 .text-accent :deep(.btn__content) {
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary);
 }
 
 /* Account Switcher and Network Chip styles are in their respective components */
@@ -905,7 +905,7 @@ const handleManageTokens = () => {
 .balance-value {
   font-size: 48px;
   font-weight: 900;
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v17: neutral balance */
   letter-spacing: -0.02em;
   line-height: 1;
 }
@@ -994,7 +994,7 @@ const handleManageTokens = () => {
 .token-icon span {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v17: neutral token icon */
   text-transform: uppercase;
 }
 

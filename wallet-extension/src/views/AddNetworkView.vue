@@ -295,7 +295,7 @@ function handleBack() {
 }
 
 .input-group:focus-within .input-label {
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v17: neutral focus */
 }
 
 .input {
@@ -316,7 +316,7 @@ function handleBack() {
 }
 
 .input:focus {
-  border-color: var(--color-accent-primary);
+  border-color: var(--color-border-hover); /* v17: neutral focus */
 }
 
 .input.invalid {
@@ -350,8 +350,8 @@ function handleBack() {
 }
 
 .test-btn:hover:not(:disabled) {
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
+  border-color: var(--color-border-hover); /* v17: neutral hover */
+  color: var(--color-text-primary);
 }
 
 .test-btn:disabled {
@@ -398,7 +398,7 @@ function handleBack() {
 }
 
 .info-icon {
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v17: neutral info icon */
   font-size: var(--font-size-xl);
   flex-shrink: 0;
 }
