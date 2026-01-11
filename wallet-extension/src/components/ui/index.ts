@@ -10,6 +10,9 @@ export type { TextFieldVariant } from './TextField.vue';
 export { default as Sheet } from './Sheet.vue';
 export type { SheetVariant } from './Sheet.vue';
 
+export { default as ModalScaffold } from './ModalScaffold.vue';
+export type { ModalVariant } from './ModalScaffold.vue';
+
 export { default as ActionBar } from './ActionBar.vue';
 export type { ActionItem } from './ActionBar.vue';
 
