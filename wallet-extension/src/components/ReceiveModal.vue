@@ -327,7 +327,7 @@ function toggleFullAddress() {
   align-items: center;
 }
 
-/* Ambient Glow */
+/* Ambient Glow - v19: neutral */
 .ambient-glow {
   position: absolute;
   top: 0;
@@ -336,7 +336,7 @@ function toggleFullAddress() {
   width: 100%;
   max-width: 320px;
   height: 150px;
-  background: rgba(232, 248, 89, 0.06);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 50%;
   filter: blur(80px);
   pointer-events: none;
@@ -344,7 +344,7 @@ function toggleFullAddress() {
 }
 
 .ambient-glow--btc {
-  background: rgba(247, 147, 26, 0.06);
+  background: rgba(255, 255, 255, 0.04); /* v19: same neutral for both */
 }
 
 /* Header */
@@ -425,12 +425,12 @@ function toggleFullAddress() {
   background: var(--color-accent-primary);
   color: #0a0a0a;
   border-color: transparent;
-  box-shadow: 0 0 12px rgba(232, 248, 89, 0.25);
+  box-shadow: none; /* v19: no glow */
 }
 
 .tab-btn--btc.tab-btn--active {
   background: #F7931A;
-  box-shadow: 0 0 12px rgba(247, 147, 26, 0.25);
+  box-shadow: none; /* v19: no glow */
 }
 
 /* BTC Address Type Selector */
@@ -496,14 +496,14 @@ function toggleFullAddress() {
   position: absolute;
   inset: 0;
   border-radius: 20px;
-  border: 1px solid rgba(232, 248, 89, 0.15);
-  box-shadow: 0 0 20px rgba(232, 248, 89, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1); /* v19: neutral */
+  box-shadow: none; /* v19: no glow */
   pointer-events: none;
 }
 
 .qr-container--btc::before {
-  border-color: rgba(247, 147, 26, 0.2);
-  box-shadow: 0 0 20px rgba(247, 147, 26, 0.1);
+  border-color: rgba(255, 255, 255, 0.1); /* v19: neutral */
+  box-shadow: none; /* v19: no glow */
 }
 
 .qr-inner {

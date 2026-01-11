@@ -251,7 +251,7 @@ onUnmounted(() => {
 }
 
 .account-item--active {
-  background: rgba(232, 248, 89, 0.08);
+  background: rgba(255, 255, 255, 0.08); /* v19: neutral */
 }
 
 .account-item__dot {
