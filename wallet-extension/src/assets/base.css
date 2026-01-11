@@ -130,9 +130,13 @@
   --stack-gap: var(--space-md);
 
   /* Padding - Density-aware */
-  --control-pad-x: 12px;
+  --control-pad-x: 14px;  /* Tightened from 12px for less "pill" feel */
   --control-pad-y: 0;
   --row-pad-x: 10px;
+
+  /* Control composition tokens */
+  --control-icon-gap: 6px;   /* Gap between icon and text in buttons */
+  --control-icon-size: 18px; /* Standard icon size in buttons */
 
   /* Icon sizes */
   --icon-size-sm: 14px;
@@ -154,8 +158,12 @@
   --card-pad-y: var(--space-sm);
 
   /* Padding - compact */
-  --control-pad-x: 12px;
+  --control-pad-x: 14px;
   --row-pad-x: 10px;
+
+  /* Control composition - compact */
+  --control-icon-gap: 6px;
+  --control-icon-size: 18px;
 
   --icon-size-sm: 14px;
   --icon-size-md: 18px;
@@ -176,8 +184,12 @@
   --card-pad-y: var(--space-md);
 
   /* Padding - comfy */
-  --control-pad-x: 16px;
+  --control-pad-x: 18px;
   --row-pad-x: 14px;
+
+  /* Control composition - comfy */
+  --control-icon-gap: 8px;
+  --control-icon-size: 20px;
 
   --icon-size-sm: 16px;
   --icon-size-md: 20px;
@@ -201,8 +213,12 @@
     --card-pad-y: var(--space-sm);
 
     /* Padding - compact (auto) */
-    --control-pad-x: 12px;
+    --control-pad-x: 14px;
     --row-pad-x: 10px;
+
+    /* Control composition - compact (auto) */
+    --control-icon-gap: 6px;
+    --control-icon-size: 18px;
 
     --icon-size-sm: 14px;
     --icon-size-md: 18px;

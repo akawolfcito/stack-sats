@@ -49,7 +49,7 @@ function selectTab(key: string) {
 .segmented-tabs {
   display: flex;
   position: relative;
-  height: var(--row-h);
+  height: var(--control-h); /* Same as ActionBar for visual parity */
   background: var(--surface-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);

@@ -74,7 +74,7 @@ const classes = computed(() => [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: var(--control-icon-gap); /* Tighter icon/text spacing */
   border: none;
   font-family: var(--font-family);
   font-weight: var(--font-weight-bold);
@@ -100,7 +100,14 @@ const classes = computed(() => [
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: var(--control-icon-gap); /* Tighter icon/text spacing */
+}
+
+/* Standardize icon sizing within buttons */
+.btn__content :deep(svg) {
+  width: var(--control-icon-size);
+  height: var(--control-icon-size);
+  flex-shrink: 0;
 }
 
 /* Size variants - using density-aware padding tokens */
