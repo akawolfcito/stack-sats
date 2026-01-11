@@ -6,7 +6,7 @@ import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import ListGroup from "@/components/list/ListGroup.vue";
 import ListRow from "@/components/list/ListRow.vue";
-import { Button } from "@/components/ui";
+import { Button, ModalScaffold } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import {
@@ -534,81 +534,74 @@ function cancelImport() {
     </div>
 
     <!-- Remove Wallet Confirmation Modal -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showRemoveWalletConfirm" class="modal-overlay" @click.self="cancelRemoveWallet">
-          <div class="modal-card">
-            <div class="modal-icon modal-icon--danger">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-            </div>
-            <h3>Remove wallet?</h3>
-            <p>
-              "<strong>{{ walletToRemove?.name }}</strong>" will be removed from this device only.
-              Your funds remain safe if you have your recovery phrase.
-            </p>
-            <div class="button-group">
-              <Button variant="secondary" @click="cancelRemoveWallet">Cancel</Button>
-              <Button variant="danger" @click="confirmRemoveWallet">Remove</Button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <ModalScaffold
+      :is-open="showRemoveWalletConfirm"
+      variant="danger"
+      title="Remove wallet?"
+      @close="cancelRemoveWallet"
+    >
+      <template #icon>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </template>
+      <p>
+        "<strong>{{ walletToRemove?.name }}</strong>" will be removed from this device only.
+        Your funds remain safe if you have your recovery phrase.
+      </p>
+      <template #actions>
+        <Button variant="secondary" @click="cancelRemoveWallet">Cancel</Button>
+        <Button variant="danger" @click="confirmRemoveWallet">Remove</Button>
+      </template>
+    </ModalScaffold>
 
     <!-- Backup PIN Modal -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showBackupPinInput" class="modal-overlay" @click.self="cancelBackupPin">
-          <div class="modal-card">
-            <div class="modal-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </div>
-            <h3>Verify PIN</h3>
-            <p>Enter your PIN to export backup</p>
-            <PinInput
-              mode="unlock"
-              @complete="handleBackupPinComplete"
-              @cancel="cancelBackupPin"
-            />
-            <p v-if="backupPinError" class="error-text">{{ backupPinError }}</p>
-            <Button variant="secondary" full-width @click="cancelBackupPin">Cancel</Button>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <ModalScaffold
+      :is-open="showBackupPinInput"
+      title="Verify PIN"
+      @close="cancelBackupPin"
+    >
+      <template #icon>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </template>
+      <p>Enter your PIN to export backup</p>
+      <PinInput
+        mode="unlock"
+        @complete="handleBackupPinComplete"
+        @cancel="cancelBackupPin"
+      />
+      <p v-if="backupPinError" class="error-text">{{ backupPinError }}</p>
+      <template #actions>
+        <Button variant="secondary" full-width @click="cancelBackupPin">Cancel</Button>
+      </template>
+    </ModalScaffold>
 
     <!-- Import Confirmation Modal -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div v-if="showImportConfirm" class="modal-overlay" @click.self="cancelImport">
-          <div class="modal-card">
-            <div class="modal-icon modal-icon--warning">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-            </div>
-            <h3>Wallet Already Exists</h3>
-            <p>
-              The wallet "<strong>{{ pendingImportWallet?.name }}</strong>" already exists in your extension.
-            </p>
-            <p class="modal-question">Do you want to replace it with the backup?</p>
-            <div class="button-group">
-              <Button variant="secondary" @click="cancelImport">Cancel</Button>
-              <Button variant="danger" @click="completeImport(pendingImportWallet!, true)">
-                Replace
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <ModalScaffold
+      :is-open="showImportConfirm"
+      variant="warning"
+      title="Wallet Already Exists"
+      @close="cancelImport"
+    >
+      <template #icon>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </template>
+      <p>
+        The wallet "<strong>{{ pendingImportWallet?.name }}</strong>" already exists in your extension.
+      </p>
+      <p class="modal-question">Do you want to replace it with the backup?</p>
+      <template #actions>
+        <Button variant="secondary" @click="cancelImport">Cancel</Button>
+        <Button variant="danger" @click="completeImport(pendingImportWallet!, true)">Replace</Button>
+      </template>
+    </ModalScaffold>
   </ScreenShell>
 </template>
 
@@ -864,101 +857,9 @@ function cancelImport() {
   margin: 0;
 }
 
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 24px;
-}
-
-.modal-card {
-  width: 100%;
-  max-width: 340px;
-  background: #1a1c0d;
-  border-radius: 24px;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.modal-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08); /* v17: neutral icon bg */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary); /* v17: neutral icon */
-  margin-bottom: 8px;
-}
-
-.modal-icon--warning {
-  background: rgba(251, 191, 36, 0.1);
-  color: var(--color-warning);
-}
-
-.modal-icon--danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--color-error);
-}
-
-.modal-card h3 {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.modal-card p {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
+/* Modal content styles (used within ModalScaffold) */
 .modal-question {
   color: var(--color-text-primary) !important;
-  font-weight: 500;
-}
-
-.full-width {
-  width: 100%;
-  margin-top: 8px;
-}
-
-/* Modal Transitions */
-.modal-enter-active,
-.modal-leave-active {
-  transition: all 0.3s ease;
-}
-
-.modal-enter-active .modal-card,
-.modal-leave-active .modal-card {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .modal-card,
-.modal-leave-to .modal-card {
-  transform: scale(0.95);
+  font-weight: var(--font-weight-medium);
 }
 </style>
