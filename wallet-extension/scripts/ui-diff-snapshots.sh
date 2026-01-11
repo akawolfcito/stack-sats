@@ -15,9 +15,16 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 GOLDEN_DIR="$ROOT_DIR/docs/ui/golden"
-BASELINE_DIR="$GOLDEN_DIR/BASELINE"
-CURRENT_DIR="$GOLDEN_DIR/CURRENT"
-DIFF_DIR="$GOLDEN_DIR/DIFF"
+# Support both old (BASELINE/CURRENT) and new (baseline/latest) structures
+if [ -d "$GOLDEN_DIR/baseline" ]; then
+  BASELINE_DIR="$GOLDEN_DIR/baseline"
+  CURRENT_DIR="$GOLDEN_DIR/latest"
+  DIFF_DIR="$GOLDEN_DIR/diff"
+else
+  BASELINE_DIR="$GOLDEN_DIR/BASELINE"
+  CURRENT_DIR="$GOLDEN_DIR/CURRENT"
+  DIFF_DIR="$GOLDEN_DIR/DIFF"
+fi
 
 # Default threshold (percentage difference to fail)
 THRESHOLD=5

@@ -18,9 +18,11 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "ui:snapshots": "VITE_UI_SNAPSHOT=1 playwright test golden-screenshots --project=chromium",
+    "ui:shots": "VITE_UI_SNAPSHOT=1 playwright test golden-matrix --project=chromium",
     "ui:verify": "bash scripts/ui-verify-snapshots.sh",
-    "ui:baseline": "cp -r docs/ui/golden/CURRENT/* docs/ui/golden/BASELINE/ 2>/dev/null || echo 'No CURRENT screenshots to copy'",
+    "ui:baseline": "cp -r docs/ui/golden/latest/* docs/ui/golden/baseline/ 2>/dev/null || echo 'No latest screenshots to copy'",
     "ui:diff": "bash scripts/ui-diff-snapshots.sh",
+    "ui:guard": "bash scripts/ui-commit-guard.sh",
     "audit:accent": "bash scripts/audit-accent.sh",
     "audit:ui": "bash scripts/audit-ui.sh"
   },
