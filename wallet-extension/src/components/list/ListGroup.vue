@@ -61,7 +61,7 @@ defineProps<{
   padding: var(--space-xs);
 }
 
-/* Inset dividers - iOS/macOS Settings style (v15) */
+/* Inset dividers - iOS/macOS Settings style (V27) */
 .list-group-items > :deep(*:not(:last-child)) {
   position: relative;
 }
@@ -70,10 +70,12 @@ defineProps<{
   content: '';
   position: absolute;
   bottom: 0;
-  left: 44px; /* Inset to align after icon */
-  right: 0;
+  /* Inset = padding-x + icon-size + gap */
+  left: calc(var(--card-pad-x) + var(--icon-btn-size) + var(--space-sm));
+  right: var(--card-pad-x);
   height: 1px;
   background: var(--color-border);
+  opacity: 0.6; /* Subtle dividers */
 }
 
 .list-group--danger .list-group-items > :deep(*:not(:last-child))::after {

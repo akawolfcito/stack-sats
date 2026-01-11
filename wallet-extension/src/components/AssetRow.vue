@@ -41,9 +41,12 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
+/* V27: Asset icon text styling */
 .asset-icon-text {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-primary); /* v18: neutral */
+  font-size: var(--font-size-xs); /* Token-based */
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 </style>
