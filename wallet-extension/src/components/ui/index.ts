@@ -16,3 +16,6 @@ export type { ActionItem } from './ActionBar.vue';
 export { default as SectionHeader } from './SectionHeader.vue';
 
 export { default as InlineAction } from './InlineAction.vue';
+
+export { default as Badge } from './Badge.vue';
+export type { BadgeVariant } from './Badge.vue';

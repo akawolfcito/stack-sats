@@ -2,23 +2,26 @@
 
 # UI Audit Script - Finds violations of UI_CONTRACT.md
 # Run from wallet-extension directory: bash scripts/audit-ui.sh
-# v16: Added accent discipline and control family rules
+# v16.1: Comprehensive accent leakage detection + warnings baseline
 
 echo "═══════════════════════════════════════════════════════════════════════"
-echo "   UI AUDIT - Design System Enforcement (v16)"
+echo "   UI AUDIT - Design System Enforcement (v16.1)"
 echo "═══════════════════════════════════════════════════════════════════════"
 echo ""
 
 SRC_DIR="src"
 VIEWS_DIR="src/views"
+COMPONENTS_DIR="src/components"
 ISSUES_FOUND=0
 ERRORS=0
+BASELINE_FILE="scripts/.audit-baseline"
+WARNINGS_BASELINE=112  # Established baseline from v16
 
 # ============================================================================
-# RULE 0: Accent Discipline (BLOCKING)
+# RULE 0a: Text-accent class discipline (BLOCKING)
 # ============================================================================
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "0. ACCENT DISCIPLINE (v16) - text-accent class is FORBIDDEN in views"
+echo "0a. TEXT-ACCENT CLASS - Forbidden in views"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 TEXT_ACCENT=$(grep -rn 'class="[^"]*text-accent' "$VIEWS_DIR" --include="*.vue" 2>/dev/null || true)
@@ -28,6 +31,53 @@ if [ -n "$TEXT_ACCENT" ]; then
     ((ERRORS++))
 else
     echo "✅ PASS: No 'text-accent' class in views"
+fi
+echo ""
+
+# ============================================================================
+# RULE 0b: Accent Token Leakage (BLOCKING)
+# Lime accent only allowed in: Button (primary), SegmentedTabs (underline),
+# base.css (definitions), TextField (focus), InlineAction (primary),
+# Confirmation (primary CTA), BottomNav (active), PinInput (filled dots)
+# ============================================================================
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "0b. ACCENT LEAKAGE - Token only allowed in whitelisted files"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Allowlist: files where accent is permitted
+# Core: Button (primary CTA), SegmentedTabs (tab indicator), base.css (tokens)
+# Extended: focus rings, inline actions, modals with primary CTAs, celebration states
+ACCENT_ALLOWLIST="Button\.vue\|SegmentedTabs\.vue\|base\.css\|TextField\.vue\|InlineAction\.vue\|Confirmation\.vue\|BottomNav\.vue\|PinInput\.vue\|Sheet\.vue\|Badge\.vue\|BackupSuccessModal\.vue\|ReceiveModal\.vue"
+
+# Search for accent token/hex in src, excluding allowlist
+ACCENT_LEAKS=$(grep -rn "color-accent-primary\|#[Dd]7[Ff]82[Ee]\|rgb(215,\s*248,\s*46)\|rgba(215,\s*248,\s*46" "$SRC_DIR" --include="*.vue" --include="*.css" 2>/dev/null | grep -v "$ACCENT_ALLOWLIST" || true)
+
+# Baseline for existing leaks (to be reduced over time)
+ACCENT_LEAK_BASELINE=77
+
+if [ -n "$ACCENT_LEAKS" ]; then
+    LEAK_COUNT=$(echo "$ACCENT_LEAKS" | wc -l | tr -d ' ')
+
+    if [ "$LEAK_COUNT" -gt "$ACCENT_LEAK_BASELINE" ]; then
+        # New leaks introduced - BLOCKING
+        echo "❌ FAIL: Accent leaks increased! ($LEAK_COUNT > baseline $ACCENT_LEAK_BASELINE)"
+        echo "$ACCENT_LEAKS" | head -25
+        if [ "$LEAK_COUNT" -gt 25 ]; then
+            echo "   ... and $((LEAK_COUNT - 25)) more"
+        fi
+        echo ""
+        echo "   Allowed files: Button, SegmentedTabs, base.css, TextField,"
+        echo "   InlineAction, Confirmation, BottomNav, PinInput, Sheet, Badge,"
+        echo "   BackupSuccessModal, ReceiveModal"
+        ((ERRORS++))
+    else
+        # Within baseline - WARNING only (not added to ISSUES_FOUND to avoid double-counting)
+        echo "⚠️  WARNING: $LEAK_COUNT accent leaks found (baseline: $ACCENT_LEAK_BASELINE)"
+        echo "   Run 'bash scripts/audit-ui.sh | grep color-accent' for details"
+        echo "   These should be fixed incrementally."
+    fi
+else
+    echo "✅ PASS: No accent leakage outside allowlist"
 fi
 echo ""
 
@@ -243,16 +293,28 @@ echo ""
 # Summary
 # ============================================================================
 echo "═══════════════════════════════════════════════════════════════════════"
-echo "   AUDIT SUMMARY (v16)"
+echo "   AUDIT SUMMARY (v16.1)"
 echo "═══════════════════════════════════════════════════════════════════════"
 echo ""
 echo "   Blocking Errors: $ERRORS"
-echo "   Warnings:        $ISSUES_FOUND"
+echo "   Warnings:        $ISSUES_FOUND (baseline: $WARNINGS_BASELINE)"
 echo ""
+
+# Check if warnings exceeded baseline (no-growth rule)
+WARNINGS_GROWTH=0
+if [ $ISSUES_FOUND -gt $WARNINGS_BASELINE ]; then
+    WARNINGS_GROWTH=$((ISSUES_FOUND - WARNINGS_BASELINE))
+    echo "⚠️  Warning count increased by $WARNINGS_GROWTH from baseline"
+    echo ""
+fi
 
 if [ $ERRORS -gt 0 ]; then
     echo "❌ AUDIT FAILED - Fix blocking errors before committing"
     echo "   See UI_CONTRACT.md for allowed patterns"
+    exit 1
+elif [ $WARNINGS_GROWTH -gt 0 ]; then
+    echo "⚠️  AUDIT FAILED - Warnings exceeded baseline ($WARNINGS_BASELINE)"
+    echo "   Fix new issues or update baseline if intentional"
     exit 1
 elif [ $ISSUES_FOUND -gt 50 ]; then
     echo "⚠️  AUDIT PASSED WITH WARNINGS - Review recommended"
