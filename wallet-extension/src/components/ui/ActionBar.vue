@@ -54,7 +54,7 @@ function handleAction(key: string) {
 </template>
 
 <style scoped>
-/* ActionBar - V29: Premium control group with clear hierarchy */
+/* ActionBar - V28 Gold: Symmetrical controls, fintech-grade */
 .action-bar {
   display: flex;
   gap: var(--space-sm);
@@ -67,52 +67,50 @@ function handleAction(key: string) {
   min-width: 0;
 }
 
-/* Ensure all buttons in action bar use consistent sizing */
+/* Both buttons share same baseline: height, radius, alignment */
 .action-bar :deep(.btn) {
   height: var(--control-h);
   border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
 }
 
-/* === V29: Primary button - Premium lime with inner glow === */
+/* === V28: Primary (Send) - Lime fill, clean and confident === */
 .action-bar :deep(.btn--primary) {
   background: var(--color-accent-primary);
   color: #0a0a0a;
-  font-weight: var(--font-weight-bold);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15); /* V29: Inner highlight */
+  border: none;
+  box-shadow: none; /* Clean at rest */
 }
 
 .action-bar :deep(.btn--primary:hover:not(:disabled)) {
   background: var(--color-accent-primary-hover);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 2px 8px rgba(232, 248, 89, 0.2); /* V29: Subtle outer glow */
+  box-shadow: 0 2px 8px rgba(232, 248, 89, 0.25); /* Subtle lift */
 }
 
 .action-bar :deep(.btn--primary:active:not(:disabled)) {
   transform: translateY(1px);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* V29: Pressed inset */
+  box-shadow: none;
 }
 
-/* === V29: Secondary button - True ghost, never competes === */
+/* === V28: Secondary (Receive) - Real button with visible border === */
 .action-bar :deep(.btn--secondary) {
-  background: transparent;
-  border: none; /* V29: No border - true ghost */
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
+  background: var(--surface-2); /* Visible surface, not transparent */
+  border: 1px solid var(--color-border); /* Visible border = real control */
+  color: var(--color-text-primary);
 }
 
 .action-bar :deep(.btn--secondary:hover:not(:disabled)) {
-  background: var(--surface-hover);
-  color: var(--color-text-primary);
-  border: none;
+  background: var(--surface-3);
+  border-color: var(--color-border-hover);
 }
 
 .action-bar :deep(.btn--secondary:active:not(:disabled)) {
   background: var(--surface-pressed);
+  border-color: var(--color-border);
   transform: translateY(1px);
 }
 
-/* Icon sizing in ActionBar buttons */
+/* Icon sizing - consistent across both buttons */
 .action-bar :deep(.btn__content svg) {
   width: var(--control-icon-size);
   height: var(--control-icon-size);
