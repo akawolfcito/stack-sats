@@ -801,16 +801,16 @@ const handleManageTokens = () => {
   margin-bottom: var(--stack-gap);
 }
 
-/* Ambient Glow - v17: neutral */
+/* Ambient Glow - V27: minimal, premium clean */
 .ambient-glow {
   position: absolute;
   top: -10%;
   left: -20%;
-  width: 80%;
-  height: 40%;
-  background: rgba(255, 255, 255, 0.5);
-  opacity: 0.05;
-  filter: blur(100px);
+  width: 60%;
+  height: 30%;
+  background: rgba(255, 255, 255, 0.3);
+  opacity: 0.02; /* Reduced from 0.05 for cleaner look */
+  filter: blur(80px);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -859,7 +859,7 @@ const handleManageTokens = () => {
 }
 
 .balance-label span {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -896,7 +896,7 @@ const handleManageTokens = () => {
 }
 
 .balance-value {
-  font-size: 48px;
+  font-size: var(--font-size-5xl);
   font-weight: 900;
   color: var(--color-text-primary); /* v17: neutral balance */
   letter-spacing: -0.02em;
@@ -904,7 +904,7 @@ const handleManageTokens = () => {
 }
 
 .balance-unit {
-  font-size: 48px;
+  font-size: var(--font-size-5xl);
   font-weight: 900;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
@@ -919,15 +919,19 @@ const handleManageTokens = () => {
 }
 
 .balance-usd span {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-text-secondary);
 }
 
-/* Action Bar */
+/* Action Bar (V27 - Premium controls) */
 .actions {
-  padding: 0 var(--page-pad-x);
+  padding: var(--space-sm) var(--page-pad-x);
   margin-bottom: var(--stack-gap);
+  /* Subtle separator from balance */
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.01);
 }
 
 /* Assets Section */
@@ -951,7 +955,7 @@ const handleManageTokens = () => {
 }
 
 .token-initial {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
@@ -967,7 +971,7 @@ const handleManageTokens = () => {
   text-align: center;
   color: var(--color-text-muted);
   padding: var(--space-xl);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 /* Spin animation */

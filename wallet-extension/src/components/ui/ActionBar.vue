@@ -54,10 +54,12 @@ function handleAction(key: string) {
 </template>
 
 <style scoped>
+/* ActionBar - Premium control group (V27) */
 .action-bar {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm); /* Tighter gap for unified feel */
   width: 100%;
+  padding: var(--space-xs) 0; /* Vertical breathing room */
 }
 
 .action-bar__btn {
@@ -69,5 +71,26 @@ function handleAction(key: string) {
 .action-bar :deep(.btn) {
   height: var(--control-h);
   border-radius: var(--radius-control);
+}
+
+/* Secondary button in ActionBar: ghost-like for less visual weight (V27) */
+.action-bar :deep(.btn--secondary) {
+  background: transparent;
+  border: 1px solid var(--color-border);
+}
+
+.action-bar :deep(.btn--secondary:hover:not(:disabled)) {
+  background: var(--surface-hover);
+  border-color: var(--color-border-hover);
+}
+
+.action-bar :deep(.btn--secondary:active:not(:disabled)) {
+  background: var(--surface-pressed);
+}
+
+/* Icon sizing in ActionBar buttons */
+.action-bar :deep(.btn__content svg) {
+  width: var(--control-icon-size);
+  height: var(--control-icon-size);
 }
 </style>
