@@ -49,23 +49,23 @@ function selectTab(key: string) {
 .segmented-tabs {
   display: flex;
   position: relative;
-  height: var(--control-h); /* Same as ActionBar for visual parity */
+  height: 36px; /* REDUCED from control-h for lighter weight (v14) */
   background: var(--surface-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
-  padding: 4px;
+  padding: 3px; /* Tighter padding (v14) */
   gap: 2px;
 }
 
 .tab-indicator {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  bottom: 4px;
+  top: 3px;
+  left: 3px;
+  bottom: 3px;
   /* Pro surface with visible border, no glow */
   background: var(--surface-2);
   border: 1px solid var(--color-border-hover);
-  border-radius: calc(var(--radius-control) - 4px);
+  border-radius: calc(var(--radius-control) - 3px);
   box-shadow: none; /* No elevation shadow - clean */
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
@@ -76,10 +76,10 @@ function selectTab(key: string) {
   position: relative;
   z-index: 1;
   height: 100%;
-  padding: 0 var(--space-md);
+  padding: 0 var(--space-sm); /* Tighter padding (v14) */
   background: transparent;
   border: none;
-  border-radius: calc(var(--radius-control) - 4px);
+  border-radius: calc(var(--radius-control) - 3px);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
