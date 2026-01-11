@@ -47,27 +47,28 @@ function selectTab(key: string) {
 </template>
 
 <style scoped>
-/* Minimal Tabs - Pro underline style (v15) */
+/* Premium Minimal Tabs (V27) */
 .minimal-tabs {
   display: flex;
   position: relative;
-  height: 36px;
-  background: transparent; /* No background - cleaner */
+  height: var(--control-h); /* Density-aware hit area */
+  background: transparent;
   border: none;
   border-bottom: 1px solid var(--color-border);
   gap: 0;
 }
 
-/* Underline indicator */
+/* Underline indicator - clean, no glow (V27) */
 .tab-underline {
   position: absolute;
   bottom: -1px;
   left: 0;
   height: 2px;
-  background: var(--color-accent-primary);
-  border-radius: 1px 1px 0 0;
+  background: var(--color-text-primary); /* Neutral underline, not lime */
+  border-radius: 0; /* Sharp edges for premium look */
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
+  /* No shadow, no glow */
 }
 
 .tab-item {
@@ -75,12 +76,12 @@ function selectTab(key: string) {
   position: relative;
   z-index: 1;
   height: 100%;
-  padding: 0 var(--space-md);
+  padding: 0 var(--space-lg);
   background: transparent;
   border: none;
   border-radius: 0;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: 500; /* Inactive: 500 */
   color: var(--color-text-muted);
   cursor: pointer;
   transition: color var(--transition-fast);
@@ -101,6 +102,6 @@ function selectTab(key: string) {
 
 .tab-item--active {
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
+  font-weight: 600; /* Active: 600 */
 }
 </style>
