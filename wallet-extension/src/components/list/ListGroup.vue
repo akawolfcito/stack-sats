@@ -49,23 +49,34 @@ defineProps<{
 .list-group-items {
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-card);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--color-border);
-  overflow: hidden;
+  background: transparent; /* No card background - cleaner (v15) */
+  border-radius: 0;
+  border: none; /* Remove outer border - pro look */
+  overflow: visible;
 }
 
 .list-group--danger .list-group-items {
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(239, 68, 68, 0.03);
+  border-radius: var(--radius-control);
+  padding: var(--space-xs);
 }
 
-/* Child rows get dividers */
+/* Inset dividers - iOS/macOS Settings style (v15) */
 .list-group-items > :deep(*:not(:last-child)) {
-  border-bottom: 1px solid var(--color-border);
+  position: relative;
 }
 
-.list-group--danger .list-group-items > :deep(*:not(:last-child)) {
-  border-bottom-color: rgba(239, 68, 68, 0.2);
+.list-group-items > :deep(*:not(:last-child))::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 44px; /* Inset to align after icon */
+  right: 0;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.list-group--danger .list-group-items > :deep(*:not(:last-child))::after {
+  background: rgba(239, 68, 68, 0.2);
 }
 </style>

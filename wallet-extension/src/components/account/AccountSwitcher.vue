@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { Button } from '@/components/ui'
 
 export interface AccountItem {
   index: number
@@ -84,7 +85,12 @@ onUnmounted(() => {
       <div v-if="isOpen" class="account-overlay">
         <div class="account-overlay__header">
           <h3 class="account-overlay__title">Switch Account</h3>
-          <button class="account-overlay__close" @click="close">&#10005;</button>
+          <Button variant="icon" @click="close">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </Button>
         </div>
 
         <div class="account-overlay__list">
@@ -105,9 +111,9 @@ onUnmounted(() => {
         </div>
 
         <div v-if="canAddAccount" class="account-overlay__footer">
-          <button class="account-add-btn" @click="handleAddAccount">
+          <Button variant="ghost" full-width class="account-add-btn" @click="handleAddAccount">
             + Add Account
-          </button>
+          </Button>
         </div>
       </div>
     </Transition>
@@ -119,40 +125,36 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* Trigger Pill */
+/* Trigger Pill - unified with header controls (v15) */
 .account-pill {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-md);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-pill);
+  height: 32px; /* Compact header control */
+  padding: 0 var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .account-pill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--surface-hover);
+  border-color: var(--color-border-hover);
 }
 
 .account-pill:active {
-  transform: scale(0.97);
+  background: var(--surface-pressed);
 }
 
 .account-pill__dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--color-accent-primary);
+  background: var(--color-success);
   flex-shrink: 0;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  /* No glow, no animation - pro */
 }
 
 .account-pill__info {
@@ -197,8 +199,8 @@ onUnmounted(() => {
   max-height: 60vh;
   background: var(--color-bg-elevated, #1a1a1a);
   border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
-  border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-elev-3);
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -219,26 +221,6 @@ onUnmounted(() => {
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
-}
-
-.account-overlay__close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  border-radius: 50%;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.account-overlay__close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
 }
 
 .account-overlay__list {
@@ -317,21 +299,16 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.account-add-btn {
-  width: 100%;
+.account-add-btn :deep(.btn) {
   min-height: var(--row-h);
-  padding: var(--space-md);
-  background: transparent;
   border: 1px dashed rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
 }
 
-.account-add-btn:hover {
+.account-add-btn :deep(.btn:hover) {
   background: rgba(255, 255, 255, 0.03);
   border-color: var(--color-accent-primary);
   color: var(--color-accent-primary);

@@ -98,58 +98,54 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
+  height: 32px; /* Unified header control height (v15) */
+  padding: 0 var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .network-chip:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--surface-hover);
+  border-color: var(--color-border-hover);
 }
 
 .network-chip:active {
-  transform: scale(0.97);
+  background: var(--surface-pressed);
 }
 
-/* Dot indicator */
+/* Dot indicator - no glow (v15) */
 .network-chip__dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .network-chip--mainnet .network-chip__dot {
-  background: var(--color-accent-primary);
-  box-shadow: 0 0 6px rgba(232, 248, 89, 0.5);
+  background: var(--color-success);
 }
 
 .network-chip--testnet .network-chip__dot {
   background: #60a5fa;
-  box-shadow: 0 0 6px rgba(96, 165, 250, 0.5);
 }
 
 .network-chip--devnet .network-chip__dot {
   background: #f59e0b;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
 }
 
-/* Testnet/Devnet visual highlight */
+/* Testnet/Devnet subtle highlight - no glow (v15) */
 .network-chip--testnet {
-  border-color: rgba(96, 165, 250, 0.3);
-  background: rgba(96, 165, 250, 0.08);
+  border-color: rgba(96, 165, 250, 0.4);
 }
 
 .network-chip--devnet {
-  border-color: rgba(245, 158, 11, 0.3);
-  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .network-chip__label {

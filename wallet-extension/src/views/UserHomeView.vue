@@ -653,7 +653,7 @@ const handleManageTokens = () => {
       <section v-if="activeTab === 'assets'" class="assets-section">
         <SectionHeader title="Assets">
           <template #actions>
-            <Button variant="ghost" size="sm" class="text-accent" @click="handleManageTokens">
+            <Button variant="ghost" size="sm" @click="handleManageTokens">
               Manage
             </Button>
             <Button
@@ -682,7 +682,7 @@ const handleManageTokens = () => {
       <section v-if="activeTab === 'assets' && (tokens.length > 0 || isLoadingTokens)" class="tokens-section">
         <SectionHeader title="Tokens" :subtitle="`(${tokens.length})`">
           <template #actions>
-            <Button variant="ghost" size="sm" class="text-accent" @click="showTokens = !showTokens">
+            <Button variant="ghost" size="sm" @click="showTokens = !showTokens">
               {{ showTokens ? 'Hide' : 'Show' }}
             </Button>
           </template>
