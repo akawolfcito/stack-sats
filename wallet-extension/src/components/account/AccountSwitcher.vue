@@ -125,64 +125,72 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* Trigger Pill - unified with header controls (v15) */
+/* Trigger Pill - V28: Premium, minimal border, hierarchy emphasis */
 .account-pill {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  height: 32px; /* Compact header control */
+  height: var(--control-h);
   padding: 0 var(--space-sm);
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: none; /* V28: Remove border for cleaner look */
   border-radius: var(--radius-control);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 .account-pill:hover {
   background: var(--surface-hover);
-  border-color: var(--color-border-hover);
 }
 
 .account-pill:active {
   background: var(--surface-pressed);
 }
 
+.account-pill:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .account-pill__dot {
-  width: 6px;
-  height: 6px;
+  width: 8px; /* V28: Slightly larger for visibility */
+  height: 8px;
   border-radius: 50%;
   background: var(--color-success);
   flex-shrink: 0;
-  /* No glow, no animation - pro */
 }
 
 .account-pill__info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  line-height: 1.2;
+  line-height: 1.15;
+  gap: 1px;
 }
 
 .account-pill__label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: var(--font-size-2xs); /* V28: Tokenized */
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary); /* V28: Primary for account name */
+  letter-spacing: 0.01em;
 }
 
 .account-pill__address {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  font-family: monospace;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted); /* V28: Muted for address */
+  font-family: var(--font-mono);
 }
 
 .account-pill__arrow {
   color: var(--color-text-muted);
   transition: transform 0.2s ease;
   flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.account-pill:hover .account-pill__arrow {
+  opacity: 1;
 }
 
 .account-pill__arrow--open {
