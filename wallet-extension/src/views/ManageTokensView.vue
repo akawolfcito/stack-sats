@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import TokenList, { type TokenItem } from "@/components/tokens/TokenList.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import { TextField, Button } from "@/components/ui";
 import { getSelectedNetwork, type NetworkName } from "@/utils/network";
 import {
   getCustomTokensForNetwork,
@@ -166,15 +167,17 @@ function handleAddToken() {
 
     <!-- Search Bar -->
     <div class="search-container">
-      <div class="search-wrapper">
-        <span class="search-icon">&#128269;</span>
-        <input
-          v-model="searchQuery"
-          type="text"
-          class="search-input"
-          placeholder="Search tokens or add by contract"
-        />
-      </div>
+      <TextField
+        v-model="searchQuery"
+        placeholder="Search tokens or add by contract"
+      >
+        <template #prefix>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </template>
+      </TextField>
     </div>
 
     <!-- Loading -->
@@ -240,51 +243,27 @@ function handleAddToken() {
     </main>
 
     <!-- Floating Add Button -->
-    <button class="fab" @click="handleAddToken">
-      <span class="fab-icon">+</span>
-    </button>
+    <Button class="fab" variant="primary" :pill="false" @click="handleAddToken">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </Button>
   </ScreenShell>
 </template>
 
 <style scoped>
-/* Search */
+/* Search - uses TextField component */
 .search-container {
   padding: var(--space-xs) var(--space-md) var(--space-md);
 }
 
-.search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: var(--space-md);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-base);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  height: var(--row-h);
-  padding: 0 var(--space-md) 0 40px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+.search-container :deep(.textfield) {
   border-radius: var(--radius-pill);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  outline: none;
 }
 
-.search-input::placeholder {
+.search-container :deep(.textfield__prefix) {
   color: var(--color-text-muted);
-}
-
-.search-input:focus {
-  border-color: var(--color-accent-primary);
-  box-shadow: 0 0 0 2px var(--color-accent-primary-muted);
 }
 
 /* Loading */
@@ -392,38 +371,16 @@ function handleAddToken() {
   background: rgba(232, 248, 89, 0.1);
 }
 
-/* FAB */
+/* FAB - uses Button component with custom positioning */
 .fab {
   position: fixed;
   bottom: var(--space-lg);
   right: var(--space-lg);
   width: var(--control-h);
   height: var(--control-h);
+  min-width: var(--control-h);
+  padding: 0;
   border-radius: 50%;
-  background: var(--color-accent-primary);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px var(--color-accent-primary-muted);
-  transition: all var(--transition-base);
   z-index: 30;
-}
-
-.fab:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px var(--color-accent-primary-muted);
-}
-
-.fab:active {
-  transform: scale(0.95);
-}
-
-.fab-icon {
-  font-size: 24px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-bg-primary);
-  line-height: 1;
 }
 </style>
