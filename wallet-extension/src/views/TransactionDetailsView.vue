@@ -242,7 +242,7 @@ function openExplorer() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   font-weight: bold;
   color: white;
 }
