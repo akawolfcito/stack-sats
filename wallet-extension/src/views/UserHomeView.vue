@@ -571,9 +571,13 @@ const handleManageTokens = () => {
         <!-- Header -->
         <header class="header">
         <!-- Menu Button -->
-        <button class="btn-icon header-btn menu-btn" @click="handleOpenUserMenu" title="Menu">
-          <span class="menu-icon-text">☰</span>
-        </button>
+        <Button variant="icon" @click="handleOpenUserMenu" title="Menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </Button>
 
         <!-- Account Switcher -->
         <AccountSwitcher
@@ -637,20 +641,20 @@ const handleManageTokens = () => {
         <ListGroup title="Assets">
           <template #headerAction>
             <div class="section-actions">
-              <button class="manage-btn" @click="handleManageTokens">
+              <Button variant="ghost" size="sm" class="text-accent" @click="handleManageTokens">
                 Manage
-              </button>
-              <button
-                class="refresh-btn"
-                @click="refreshBalance"
+              </Button>
+              <Button
+                variant="icon"
                 :disabled="isLoadingBalance"
                 title="Refresh"
+                @click="refreshBalance"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
                   <path d="M23 4v6h-6M1 20v-6h6"/>
                   <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                 </svg>
-              </button>
+              </Button>
             </div>
           </template>
           <!-- Asset rows rendered inside card -->
@@ -667,9 +671,9 @@ const handleManageTokens = () => {
           <template #headerAction>
             <div class="tokens-header-row">
               <span class="tokens-title">Tokens <span class="token-count">({{ tokens.length }})</span></span>
-              <button class="toggle-btn" @click="showTokens = !showTokens">
+              <Button variant="ghost" size="sm" class="text-accent" @click="showTokens = !showTokens">
                 {{ showTokens ? 'Hide' : 'Show' }}
-              </button>
+              </Button>
             </div>
           </template>
 
@@ -715,17 +719,17 @@ const handleManageTokens = () => {
       <section v-if="activeTab === 'activity'" class="activity-section">
         <ListGroup title="Recent Activity">
           <template #headerAction>
-            <button
-              class="refresh-btn"
-              @click="loadTransactions"
+            <Button
+              variant="icon"
               :disabled="isLoadingTx"
               title="Refresh"
+              @click="loadTransactions"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingTx }">
                 <path d="M23 4v6h-6M1 20v-6h6"/>
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
               </svg>
-            </button>
+            </Button>
           </template>
           <ActivityList
             :items="activityItems"
@@ -757,7 +761,7 @@ const handleManageTokens = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #0a0a0a;
+  background: var(--color-bg-primary);
   position: relative;
   overflow: hidden;
 }
@@ -821,34 +825,11 @@ const handleManageTokens = () => {
   padding-bottom: var(--space-sm);
 }
 
-.header-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
-  min-width: var(--icon-btn-size);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+/* Menu button now uses Button variant="icon" */
 
-.header-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.header-btn:active {
-  transform: scale(0.95);
-}
-
-/* Menu Icon */
-.menu-icon-text {
-  font-size: 18px;
-  line-height: 1;
-  color: #FFFFFF;
+/* Utility: accent text color for ghost buttons */
+.text-accent :deep(.btn__content) {
+  color: var(--color-accent-primary);
 }
 
 /* Account Switcher and Network Chip styles are in their respective components */
@@ -886,9 +867,9 @@ const handleManageTokens = () => {
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.15s ease;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
 }
 
 .visibility-btn:hover {
@@ -962,45 +943,7 @@ const handleManageTokens = () => {
   gap: var(--space-xs);
 }
 
-.manage-btn {
-  background: transparent;
-  border: none;
-  color: var(--color-accent-primary);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  transition: all 0.15s ease;
-}
-
-.manage-btn:hover {
-  background: rgba(232, 248, 89, 0.1);
-}
-
-.refresh-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  border: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: all 0.15s ease;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  color: var(--color-text-secondary);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+/* Manage and refresh buttons now use Button component */
 
 /* Tokens Section */
 .tokens-section {
@@ -1029,21 +972,7 @@ const handleManageTokens = () => {
   color: var(--color-text-muted);
 }
 
-.toggle-btn {
-  background: transparent;
-  border: none;
-  color: var(--color-accent-primary);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  transition: all 0.15s ease;
-}
-
-.toggle-btn:hover {
-  background: rgba(232, 248, 89, 0.1);
-}
+/* Toggle button now uses Button variant="ghost" with text-accent class */
 
 /* Token rows inside ListGroup */
 .token-row {
@@ -1061,11 +990,11 @@ const handleManageTokens = () => {
 }
 
 .token-row:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-hover);
 }
 
 .token-row:active {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-pressed);
 }
 
 .token-icon {

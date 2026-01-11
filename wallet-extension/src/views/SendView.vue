@@ -511,7 +511,7 @@ function truncateAddress(address: string): string {
         <p class="txid-label">Transaction ID:</p>
         <div class="txid-row">
           <span class="txid-value">{{ txid.slice(0, 10) }}...{{ txid.slice(-10) }}</span>
-          <button class="copy-btn" @click="copyTxid">Copy</button>
+          <Button variant="ghost" size="sm" @click="copyTxid">Copy</Button>
         </div>
       </div>
 
@@ -658,7 +658,6 @@ function truncateAddress(address: string): string {
   align-items: center;
   justify-content: center;
   color: var(--color-accent-primary);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .from-info {
@@ -740,7 +739,7 @@ function truncateAddress(address: string): string {
   margin-right: var(--space-sm);
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -763,13 +762,13 @@ function truncateAddress(address: string): string {
   padding: var(--space-sm) var(--space-md);
   background: var(--color-accent-primary);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   color: #0a0a0a;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 0 10px rgba(232, 248, 89, 0.2);
+  box-shadow: var(--shadow-accent);
 }
 
 .max-btn:hover {
@@ -978,13 +977,13 @@ function truncateAddress(address: string): string {
 .result-icon-success {
   background: var(--color-success);
   color: #0a0a0a;
-  box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+  box-shadow: var(--shadow-success-lg);
 }
 
 .result-icon-error {
   background: var(--color-error);
   color: var(--color-text-primary);
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+  box-shadow: var(--shadow-error-lg);
 }
 
 .result-title {
@@ -1041,20 +1040,7 @@ function truncateAddress(address: string): string {
   color: var(--color-accent-primary);
 }
 
-.copy-btn {
-  padding: var(--space-xs) var(--space-md);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: var(--color-text-primary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.copy-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
+/* Copy button now uses Button variant="ghost" size="sm" */
 
 .error-message {
   font-size: 14px;

@@ -84,6 +84,16 @@
   --shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-elev-3: 0 8px 24px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.12);
 
+  /* Semantic Shadow Tokens (status feedback only) */
+  --shadow-success: 0 0 8px rgba(153, 225, 142, 0.4);
+  --shadow-error: 0 0 8px rgba(255, 107, 107, 0.4);
+  --shadow-warning: 0 0 8px rgba(251, 191, 36, 0.4);
+  --shadow-accent: 0 0 12px rgba(215, 248, 46, 0.25);
+
+  /* Result feedback shadows (larger glow for prominent status indicators) */
+  --shadow-success-lg: 0 0 30px rgba(34, 197, 94, 0.3);
+  --shadow-error-lg: 0 0 30px rgba(239, 68, 68, 0.3);
+
   /* Legacy shadow aliases (for compatibility) */
   --shadow-sm: var(--shadow-elev-1);
   --shadow-md: var(--shadow-elev-2);
@@ -91,8 +101,6 @@
   --shadow-control: var(--shadow-elev-1);
   --shadow-control-hover: var(--shadow-elev-2);
   --shadow-card: var(--shadow-elev-1);
-  --shadow-accent: var(--shadow-elev-0);
-  --shadow-accent-hover: var(--shadow-elev-1);
 
   /* Transitions */
   --transition-fast: 150ms ease;

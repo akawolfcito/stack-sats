@@ -3,6 +3,7 @@ import { onBeforeMount, ref, nextTick } from "vue";
 import { randomSeedPhrase } from "@stacks/wallet-sdk";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
+import { Button } from "@/components/ui";
 import { encryptWithPIN, isValidPIN } from "@/utils/security";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
@@ -178,14 +179,14 @@ onBeforeMount(() => {
       <!-- Actions -->
       <div class="actions">
         <!-- Primary Button -->
-        <button class="btn-primary-neon" @click="handleGenerateSecret">
+        <Button variant="primary" size="lg" full-width @click="handleGenerateSecret">
           Create New Wallet
-        </button>
+        </Button>
 
         <!-- Secondary Button -->
-        <button class="btn-secondary-neumorphic" @click="handleImportMnemonic">
+        <Button variant="secondary" size="lg" full-width @click="handleImportMnemonic">
           Import Existing Wallet
-        </button>
+        </Button>
 
         <p v-if="importError" class="error-text">{{ importError }}</p>
 
@@ -203,11 +204,13 @@ onBeforeMount(() => {
     <!-- Step 2: Show Mnemonic -->
     <div v-else-if="currentStep === 'mnemonic'" class="mnemonic-content">
       <!-- Header -->
-      <button class="btn-icon back-button" @click="handleBack">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </button>
+      <div class="back-button-wrapper">
+        <Button variant="icon" @click="handleBack">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </Button>
+      </div>
 
       <h2 class="step-title">Recovery Phrase</h2>
 
@@ -239,19 +242,23 @@ onBeforeMount(() => {
       </div>
 
       <!-- Continue Button -->
-      <button class="btn-primary-neon mt-auto" @click="handleContinueToPin">
-        I saved it securely
-      </button>
+      <div class="cta-wrapper">
+        <Button variant="primary" size="lg" full-width @click="handleContinueToPin">
+          I saved it securely
+        </Button>
+      </div>
     </div>
 
     <!-- Step 3 & 4: PIN -->
     <div v-else class="pin-content">
       <!-- Header -->
-      <button class="btn-icon back-button" @click="handleBack">
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </button>
+      <div class="back-button-wrapper">
+        <Button variant="icon" @click="handleBack">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </Button>
+      </div>
 
       <PinInput
         ref="pinInputRef"
@@ -330,9 +337,7 @@ onBeforeMount(() => {
   border-radius: 24px;
   background: linear-gradient(135deg, #2a2d15, #1a1c0d);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow:
-    8px 8px 16px rgba(18, 20, 9, 0.8),
-    -8px -8px 16px rgba(46, 48, 23, 0.3);
+  box-shadow: var(--shadow-elev-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -376,57 +381,10 @@ onBeforeMount(() => {
   gap: var(--space-md);
 }
 
-/* Primary Neon Button */
-.btn-primary-neon {
+/* CTA Wrapper */
+.cta-wrapper {
+  margin-top: auto;
   width: 100%;
-  height: 56px;
-  background: var(--color-accent-primary);
-  border: none;
-  border-radius: 9999px;
-  color: var(--color-bg-primary);
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 0 25px rgba(232, 248, 89, 0.15);
-  transition: all 0.2s ease;
-}
-
-.btn-primary-neon:hover {
-  background: #d9ea4d;
-  box-shadow: 0 0 35px rgba(232, 248, 89, 0.3);
-}
-
-.btn-primary-neon:active {
-  transform: scale(0.98);
-}
-
-/* Secondary Neumorphic Button */
-.btn-secondary-neumorphic {
-  width: 100%;
-  height: 56px;
-  background: #1a2424;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 9999px;
-  color: var(--color-text-primary);
-  font-size: 17px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow:
-    4px 4px 10px rgba(0, 0, 0, 0.3),
-    -2px -2px 5px rgba(255, 255, 255, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease;
-}
-
-.btn-secondary-neumorphic:hover {
-  color: var(--color-accent-primary);
-}
-
-.btn-secondary-neumorphic:active {
-  transform: scale(0.98);
-  box-shadow:
-    inset 4px 4px 10px rgba(0, 0, 0, 0.3),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.03);
 }
 
 /* Security Badge */
@@ -475,27 +433,12 @@ onBeforeMount(() => {
   margin: 0;
 }
 
-/* Back Button */
-.back-button {
+/* Back Button Wrapper */
+.back-button-wrapper {
   position: absolute;
   top: var(--space-xl);
   left: var(--space-lg);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.back-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-accent-primary);
+  z-index: 10;
 }
 
 /* Warning Box */

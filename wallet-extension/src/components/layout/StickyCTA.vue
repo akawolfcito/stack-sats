@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { Button } from "@/components/ui";
+
 defineProps<{
   primaryText: string;
   primaryDisabled?: boolean;
   secondaryText?: string;
+  showArrow?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -17,25 +20,27 @@ const emit = defineEmits<{
     <slot />
 
     <!-- Secondary button (optional) -->
-    <button
+    <Button
       v-if="secondaryText"
-      class="cta-btn cta-btn-secondary"
+      variant="secondary"
+      full-width
       @click="emit('secondary')"
     >
       {{ secondaryText }}
-    </button>
+    </Button>
 
     <!-- Primary button -->
-    <button
-      class="cta-btn cta-btn-primary"
+    <Button
+      variant="primary"
+      full-width
       :disabled="primaryDisabled"
       @click="emit('primary')"
     >
       <span>{{ primaryText }}</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <svg v-if="showArrow !== false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cta-arrow">
         <path d="M5 12h14M12 5l7 7-7 7" />
       </svg>
-    </button>
+    </Button>
   </div>
 </template>
 
@@ -63,57 +68,12 @@ const emit = defineEmits<{
   padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
 }
 
-.cta-btn {
-  width: 100%;
-  height: var(--control-h);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  border: none;
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-base);
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Arrow animation on hover */
+.cta-arrow {
+  transition: transform var(--transition-fast);
 }
 
-.cta-btn-primary {
-  background: var(--color-accent-primary);
-  color: #0a0a0a;
-  box-shadow: 0 0 20px rgba(232, 248, 89, 0.25);
-}
-
-.cta-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 0 35px rgba(232, 248, 89, 0.4);
-}
-
-.cta-btn-primary:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.cta-btn-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.cta-btn-primary svg {
-  transition: transform 0.2s ease;
-}
-
-.cta-btn-primary:hover:not(:disabled) svg {
+.sticky-cta :deep(.btn--primary:hover:not(:disabled)) .cta-arrow {
   transform: translateX(4px);
-}
-
-.cta-btn-secondary {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
-  font-weight: 500;
-}
-
-.cta-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
 }
 </style>

@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import { Button } from "@/components/ui";
 import { encryptWithPIN, isValidPIN } from "@/utils/security";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
@@ -182,12 +183,12 @@ function handleStepBack() {
       <div v-if="currentStep === 'start'" class="step-container">
         <p class="subtitle">Create a new wallet or import an existing one</p>
 
-        <button @click="handleGenerateSecret" class="btn-primary">
+        <Button variant="primary" full-width @click="handleGenerateSecret">
           Create New Wallet
-        </button>
-        <button @click="handleImportMnemonic" class="btn-secondary">
+        </Button>
+        <Button variant="secondary" full-width @click="handleImportMnemonic">
           Import Existing Wallet
-        </button>
+        </Button>
         <p v-if="importError" class="error-text">{{ importError }}</p>
       </div>
 
@@ -210,10 +211,10 @@ function handleStepBack() {
         </div>
 
         <div class="button-group">
-          <button @click="handleStepBack" class="btn-secondary">Back</button>
-          <button @click="handleContinueToName" class="btn-primary">
+          <Button variant="secondary" @click="handleStepBack">Back</Button>
+          <Button variant="primary" @click="handleContinueToName">
             I saved it
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -229,10 +230,10 @@ function handleStepBack() {
         />
 
         <div class="button-group">
-          <button @click="handleStepBack" class="btn-secondary">Back</button>
-          <button @click="handleContinueToPin" class="btn-primary">
+          <Button variant="secondary" @click="handleStepBack">Back</Button>
+          <Button variant="primary" @click="handleContinueToPin">
             Continue
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -248,9 +249,9 @@ function handleStepBack() {
         />
 
         <div class="button-group">
-          <button @click="handleStepBack" class="btn-secondary" :disabled="isLoading">
+          <Button variant="secondary" :disabled="isLoading" @click="handleStepBack">
             Back
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -266,9 +267,9 @@ function handleStepBack() {
         />
 
         <div class="button-group">
-          <button @click="handleStepBack" class="btn-secondary" :disabled="isLoading">
+          <Button variant="secondary" :disabled="isLoading" @click="handleStepBack">
             Back
-          </button>
+          </Button>
         </div>
 
         <p v-if="isLoading" class="loading-text">Creating wallet...</p>
@@ -303,11 +304,11 @@ function handleStepBack() {
   margin-top: var(--space-lg);
 }
 
-.button-group .btn-secondary {
+.button-group :deep(.btn--secondary) {
   flex: 1;
 }
 
-.button-group .btn-primary {
+.button-group :deep(.btn--primary) {
   flex: 2;
 }
 
