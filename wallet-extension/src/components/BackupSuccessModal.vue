@@ -129,13 +129,13 @@ function handleClose() {
   align-items: center;
   gap: var(--space-md);
   background: var(--color-bg-card);
-  border: 1px solid var(--color-accent-primary-muted);
+  border: 1px solid rgba(34, 197, 94, 0.2); /* v18: success */
   border-radius: var(--radius-pill);
   padding: var(--space-md);
   padding-right: var(--space-lg);
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.3),
-    0 0 30px var(--color-accent-primary-muted);
+    0 0 30px rgba(34, 197, 94, 0.15); /* v18: success */
   pointer-events: auto;
   max-width: 90%;
   transform: translateY(0);
@@ -185,7 +185,7 @@ function handleClose() {
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: var(--color-accent-primary-muted);
+  background: rgba(34, 197, 94, 0.15); /* v18: success */
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -193,7 +193,7 @@ function handleClose() {
 .toast-icon svg {
   width: 24px;
   height: 24px;
-  color: var(--color-accent-primary);
+  color: var(--color-success); /* v18: success */
 }
 
 /* Content */

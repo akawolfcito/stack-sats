@@ -405,7 +405,7 @@ function handleReject(reason?: string) {
 }
 
 .origin-badge svg {
-  stroke: var(--color-accent-primary);
+  stroke: var(--color-text-muted); /* v18: neutral */
 }
 
 .origin-badge strong {
