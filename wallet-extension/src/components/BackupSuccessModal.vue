@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
+import { Button } from "@/components/ui";
 
 const props = defineProps<{
   show: boolean;
@@ -98,21 +99,11 @@ function handleClose() {
           </div>
 
           <!-- Close Button -->
-          <button class="toast-close" @click="handleClose">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M18 6L6 18M6 6L18 18"
-                stroke="#FFFFFF"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
+          <Button variant="icon" class="toast-close" @click="handleClose">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6L18 18" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </button>
+          </Button>
         </div>
       </div>
     </Transition>
@@ -234,29 +225,15 @@ function handleClose() {
 }
 
 /* Close Button */
-.toast-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.toast-close :deep(.btn) {
   width: 28px;
   height: 28px;
-  background: transparent;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  flex-shrink: 0;
   opacity: 0.5;
-  transition: all var(--transition-fast);
+  color: var(--color-text-muted);
 }
 
-.toast-close:hover {
+.toast-close :deep(.btn:hover) {
   opacity: 1;
   background: var(--color-bg-primary);
-}
-
-.toast-close svg {
-  width: 16px;
-  height: 16px;
-  color: var(--color-text-muted);
 }
 </style>

@@ -6,6 +6,7 @@ import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import ListGroup from "@/components/list/ListGroup.vue";
 import ListRow from "@/components/list/ListRow.vue";
+import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import {
@@ -326,9 +327,9 @@ function cancelImport() {
       <!-- Your Wallets Section -->
       <ListGroup title="Your Wallets">
         <template #headerAction>
-          <button class="manage-btn" @click="toggleManageWallets">
+          <Button variant="ghost" size="sm" @click="toggleManageWallets">
             {{ isManagingWallets ? 'Done' : 'Manage' }}
-          </button>
+          </Button>
         </template>
         <ListRow
           v-for="wallet in wallets"
@@ -347,13 +348,17 @@ function cancelImport() {
             </svg>
           </template>
           <template v-if="isManagingWallets" #right>
-            <button
-              class="delete-btn"
+            <Button
+              variant="icon"
+              class="delete-icon-btn"
               @click.stop="initiateRemoveWallet(wallet.id)"
               title="Remove wallet"
             >
-              <span class="delete-icon">×</span>
-            </button>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </Button>
           </template>
         </ListRow>
         <ListRow
@@ -512,8 +517,8 @@ function cancelImport() {
         <p v-if="deleteError" class="error-text">{{ deleteError }}</p>
 
         <div class="button-group">
-          <button class="btn-secondary" @click="cancelDelete">Cancel</button>
-          <button class="btn-danger" @click="confirmDeleteText">Continue</button>
+          <Button variant="secondary" @click="cancelDelete">Cancel</Button>
+          <Button variant="danger" @click="confirmDeleteText">Continue</Button>
         </div>
       </div>
 
@@ -544,8 +549,8 @@ function cancelImport() {
               Your funds remain safe if you have your recovery phrase.
             </p>
             <div class="button-group">
-              <button class="btn-secondary" @click="cancelRemoveWallet">Cancel</button>
-              <button class="btn-danger" @click="confirmRemoveWallet">Remove</button>
+              <Button variant="secondary" @click="cancelRemoveWallet">Cancel</Button>
+              <Button variant="danger" @click="confirmRemoveWallet">Remove</Button>
             </div>
           </div>
         </div>
@@ -571,7 +576,7 @@ function cancelImport() {
               @cancel="cancelBackupPin"
             />
             <p v-if="backupPinError" class="error-text">{{ backupPinError }}</p>
-            <button class="btn-secondary full-width" @click="cancelBackupPin">Cancel</button>
+            <Button variant="secondary" full-width @click="cancelBackupPin">Cancel</Button>
           </div>
         </div>
       </Transition>
@@ -595,10 +600,10 @@ function cancelImport() {
             </p>
             <p class="modal-question">Do you want to replace it with the backup?</p>
             <div class="button-group">
-              <button class="btn-secondary" @click="cancelImport">Cancel</button>
-              <button class="btn-warning" @click="completeImport(pendingImportWallet!, true)">
+              <Button variant="secondary" @click="cancelImport">Cancel</Button>
+              <Button variant="danger" @click="completeImport(pendingImportWallet!, true)">
                 Replace
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -641,57 +646,22 @@ function cancelImport() {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Manage Button */
-.manage-btn {
-  padding: var(--space-xs) var(--space-sm);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  font-weight: 600;
+/* Accent text for ghost buttons */
+.text-accent :deep(.btn__content) {
   color: var(--color-accent-primary);
-  cursor: pointer;
-  transition: all 0.15s ease;
 }
 
-.manage-btn:hover {
-  background: rgba(232, 248, 89, 0.1);
-}
-
-/* Delete Button (inside ListRow) */
-.delete-btn {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  border-radius: var(--radius-sm);
-  background: rgba(239, 68, 68, 0.15);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
+/* Delete icon button styling */
+.delete-icon-btn {
   margin-left: var(--space-xs);
 }
 
-.delete-btn:hover {
+.delete-icon-btn :deep(.btn) {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.delete-icon-btn:hover :deep(.btn) {
   background: rgba(239, 68, 68, 0.25);
-}
-
-.delete-btn:active {
-  transform: scale(0.95);
-}
-
-.delete-icon {
-  font-size: var(--icon-size-md);
-  font-weight: 300;
-  line-height: 1;
-  color: #f87171;
-}
-
-.delete-btn:hover .delete-icon {
-  color: var(--color-error);
 }
 
 /* Backup Message */
@@ -841,18 +811,15 @@ function cancelImport() {
 .confirm-input {
   width: 100%;
   height: var(--control-h);
-  padding: 0 20px;
-  background: #16180c;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  padding: 0 var(--space-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   color: var(--color-text-primary);
-  font-size: 16px;
+  font-size: var(--font-size-base);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  box-shadow:
-    inset 2px 2px 5px rgba(0, 0, 0, 0.4),
-    inset -1px -1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .confirm-input:focus {
@@ -874,58 +841,12 @@ function cancelImport() {
 
 .button-group {
   display: flex;
-  gap: 12px;
+  gap: var(--space-md);
 }
 
-.btn-secondary {
+/* Ensure buttons stretch equally in button group */
+.button-group :deep(.btn) {
   flex: 1;
-  height: var(--control-h);
-  border-radius: 9999px;
-  background: #282828;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background: #333333;
-}
-
-.btn-danger {
-  flex: 1;
-  height: var(--control-h);
-  border-radius: 9999px;
-  background: var(--color-error);
-  border: none;
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
-}
-
-.btn-warning {
-  flex: 1;
-  height: var(--control-h);
-  border-radius: 9999px;
-  background: var(--color-warning);
-  border: none;
-  color: #0a0a0a;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-warning:hover {
-  filter: brightness(1.1);
 }
 
 /* PIN Step */

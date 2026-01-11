@@ -2,14 +2,34 @@
 
 # UI Audit Script - Finds violations of UI_CONTRACT.md
 # Run from wallet-extension directory: bash scripts/audit-ui.sh
+# v16: Added accent discipline and control family rules
 
 echo "═══════════════════════════════════════════════════════════════════════"
-echo "   UI AUDIT - Checking for hardcoded values and component violations"
+echo "   UI AUDIT - Design System Enforcement (v16)"
 echo "═══════════════════════════════════════════════════════════════════════"
 echo ""
 
 SRC_DIR="src"
+VIEWS_DIR="src/views"
 ISSUES_FOUND=0
+ERRORS=0
+
+# ============================================================================
+# RULE 0: Accent Discipline (BLOCKING)
+# ============================================================================
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "0. ACCENT DISCIPLINE (v16) - text-accent class is FORBIDDEN in views"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+TEXT_ACCENT=$(grep -rn 'class="[^"]*text-accent' "$VIEWS_DIR" --include="*.vue" 2>/dev/null || true)
+if [ -n "$TEXT_ACCENT" ]; then
+    echo "❌ FAIL: Found 'text-accent' class in views (lime text forbidden):"
+    echo "$TEXT_ACCENT"
+    ((ERRORS++))
+else
+    echo "✅ PASS: No 'text-accent' class in views"
+fi
+echo ""
 
 # ============================================================================
 # 1. Hardcoded Pixel Heights (should use --control-h, --row-h, etc.)
@@ -223,10 +243,21 @@ echo ""
 # Summary
 # ============================================================================
 echo "═══════════════════════════════════════════════════════════════════════"
-if [ $ISSUES_FOUND -eq 0 ]; then
-    echo "   ✅ AUDIT PASSED - No critical issues found"
-else
-    echo "   ⚠️  AUDIT COMPLETE - Found $ISSUES_FOUND potential issues"
-    echo "   Review UI_CONTRACT.md for migration guidelines"
-fi
+echo "   AUDIT SUMMARY (v16)"
 echo "═══════════════════════════════════════════════════════════════════════"
+echo ""
+echo "   Blocking Errors: $ERRORS"
+echo "   Warnings:        $ISSUES_FOUND"
+echo ""
+
+if [ $ERRORS -gt 0 ]; then
+    echo "❌ AUDIT FAILED - Fix blocking errors before committing"
+    echo "   See UI_CONTRACT.md for allowed patterns"
+    exit 1
+elif [ $ISSUES_FOUND -gt 50 ]; then
+    echo "⚠️  AUDIT PASSED WITH WARNINGS - Review recommended"
+    exit 0
+else
+    echo "✅ AUDIT PASSED"
+    exit 0
+fi
