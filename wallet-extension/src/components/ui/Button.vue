@@ -140,37 +140,38 @@ const classes = computed(() => [
 .btn--primary {
   background: var(--color-accent-primary);
   color: #0a0a0a;
-  box-shadow: var(--shadow-elev-0);
+  box-shadow: none; /* No shadow at rest - clean */
 }
 
 .btn--primary:hover:not(:disabled) {
   background: var(--color-accent-primary-hover);
-  box-shadow: var(--shadow-elev-1);
+  box-shadow: var(--shadow-elev-1); /* Subtle lift on hover */
 }
 
 .btn--primary:active:not(:disabled) {
   transform: translateY(1px);
-  box-shadow: var(--shadow-elev-0);
+  box-shadow: none;
 }
 
 /* === Variant: Secondary === */
 .btn--secondary {
-  /* Pro surface + subtle border, no shadow */
+  /* Pro surface + visible border, no glow */
   background: var(--surface-2);
-  border: var(--border-subtle);
+  border: 1px solid var(--color-border);
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
-  box-shadow: var(--shadow-elev-0);
+  box-shadow: none;
 }
 
 .btn--secondary:hover:not(:disabled) {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border);
+  background: var(--surface-3);
+  border-color: var(--color-border-hover);
 }
 
 .btn--secondary:active:not(:disabled) {
   transform: translateY(1px);
   background: var(--surface-pressed);
+  border-color: var(--color-border);
 }
 
 /* === Variant: Ghost === */
@@ -212,17 +213,19 @@ const classes = computed(() => [
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
   padding: 0;
-  background: var(--surface-hover);
+  background: transparent;
   border: none;
-  border-radius: var(--radius-control);
-  color: var(--color-text-primary);
+  border-radius: var(--radius-chip);
+  color: var(--color-text-secondary);
 }
 
 .btn--icon:hover:not(:disabled) {
-  background: var(--surface-pressed);
+  background: var(--surface-hover);
+  color: var(--color-text-primary);
 }
 
 .btn--icon:active:not(:disabled) {
+  background: var(--surface-pressed);
   transform: scale(0.95);
 }
 

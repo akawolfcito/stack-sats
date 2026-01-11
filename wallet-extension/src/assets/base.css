@@ -6,10 +6,10 @@
   --color-bg-card-hover: #252524;
   --color-bg-elevated: #141413;
 
-  /* Text Colors */
+  /* Text Colors - Calibrated for legibility */
   --color-text-primary: #FFFFFF;
-  --color-text-secondary: rgba(255, 255, 255, 0.64);
-  --color-text-muted: rgba(255, 255, 255, 0.40);
+  --color-text-secondary: rgba(255, 255, 255, 0.72); /* Bumped from 0.64 for better legibility */
+  --color-text-muted: rgba(255, 255, 255, 0.48);     /* Bumped from 0.40 for inactive tabs */
 
   /* Accent Colors */
   --color-accent-primary: #D7F82E;
@@ -25,18 +25,19 @@
   --color-warning: #FBBF24;
   --color-warning-muted: rgba(251, 191, 36, 0.15);
 
-  /* Border Colors */
-  --color-border: rgba(255, 255, 255, 0.12);
-  --color-border-hover: rgba(255, 255, 255, 0.24);
+  /* Border Colors - Pro visible contours */
+  --color-border: rgba(255, 255, 255, 0.14);       /* Bumped from 0.12 */
+  --color-border-hover: rgba(255, 255, 255, 0.28); /* Bumped from 0.24 */
   --color-border-accent: var(--color-accent-primary);
-  --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.10); /* Bumped from 0.08 */
 
-  /* Surface Colors (layered backgrounds) */
-  --surface-0: var(--color-bg-primary);
-  --surface-1: var(--color-bg-elevated);
-  --surface-2: var(--color-bg-card);
-  --surface-hover: rgba(255, 255, 255, 0.04);
-  --surface-pressed: rgba(255, 255, 255, 0.08);
+  /* Surface Colors (layered backgrounds) - Clear hierarchy */
+  --surface-0: var(--color-bg-primary);           /* Page background */
+  --surface-1: var(--color-bg-elevated);          /* Recessed controls (tabs container) */
+  --surface-2: var(--color-bg-card);              /* Cards, containers, modals */
+  --surface-3: #262625;                           /* Elevated controls on surface-2 */
+  --surface-hover: rgba(255, 255, 255, 0.05);     /* Bumped from 0.04 */
+  --surface-pressed: rgba(255, 255, 255, 0.10);   /* Bumped from 0.08 */
 
   /* Interaction States */
   --focus-ring: 2px solid var(--color-accent-primary);
