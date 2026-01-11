@@ -336,7 +336,7 @@ function cancelImport() {
           :key="wallet.id"
           :label="wallet.name"
           :badge="wallet.id === activeWalletId ? 'Active' : undefined"
-          icon-color="rgba(232, 248, 89, 0.15)"
+          icon-color="rgba(255, 255, 255, 0.08)"
           :chevron="!isManagingWallets"
           @click="switchWallet(wallet.id)"
         >
@@ -619,7 +619,7 @@ function cancelImport() {
   --card-pad-y: 6px;
 }
 
-/* Ambient Glow */
+/* Ambient Glow - v17: neutral */
 .ambient-glow {
   position: absolute;
   top: -20%;
@@ -627,7 +627,7 @@ function cancelImport() {
   transform: translateX(-50%);
   width: 150%;
   height: 40%;
-  background: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.5);
   opacity: 0.05;
   filter: blur(100px);
   border-radius: 50%;
@@ -646,9 +646,9 @@ function cancelImport() {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Accent text for ghost buttons */
+/* DEPRECATED: v17 neutral - ghost buttons use secondary text */
 .text-accent :deep(.btn__content) {
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary);
 }
 
 /* Delete icon button styling */
@@ -735,8 +735,8 @@ function cancelImport() {
 }
 
 .density-option.active {
-  background: var(--color-accent-primary);
-  color: #0a0a0a;
+  background: rgba(255, 255, 255, 0.15); /* v17: neutral active */
+  color: var(--color-text-primary);
 }
 
 /* Version Footer */
@@ -899,11 +899,11 @@ function cancelImport() {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: rgba(232, 248, 89, 0.1);
+  background: rgba(255, 255, 255, 0.08); /* v17: neutral icon bg */
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v17: neutral icon */
   margin-bottom: 8px;
 }
 

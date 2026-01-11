@@ -142,8 +142,8 @@ function handleBack() {
 .glow-effect {
   position: absolute;
   inset: 0;
-  background: var(--color-accent-primary);
-  opacity: 0.15;
+  background: rgba(255, 255, 255, 0.5); /* v17: neutral glow */
+  opacity: 0.1;
   filter: blur(60px);
   border-radius: 50%;
   transform: scale(0.8);
@@ -174,8 +174,8 @@ function handleBack() {
 .swap-icon {
   width: 140px;
   height: 140px;
-  color: var(--color-accent-primary);
-  filter: drop-shadow(0 0 20px var(--color-accent-primary-muted));
+  color: var(--color-text-secondary); /* v17: neutral icon */
+  filter: none;
 }
 
 /* Typography */
@@ -246,8 +246,8 @@ function handleBack() {
 }
 
 .toggle-btn.active {
-  background: var(--color-accent-primary);
-  border-color: var(--color-accent-primary);
+  background: var(--color-success); /* v17: success for on state */
+  border-color: var(--color-success);
 }
 
 .toggle-knob {

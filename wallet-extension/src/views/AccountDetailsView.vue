@@ -311,7 +311,7 @@ function handleClose() {
   width: 40px;
   height: 40px;
   border: 3px solid var(--color-bg-card);
-  border-top-color: var(--color-accent-primary);
+  border-top-color: var(--color-text-muted); /* v17: neutral spinner */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -348,8 +348,8 @@ function handleClose() {
   height: 64px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-bg-elevated), var(--color-bg-card));
-  border: 2px solid var(--color-accent-primary);
-  box-shadow: var(--shadow-accent);
+  border: 2px solid var(--color-border-hover); /* v17: neutral border */
+  box-shadow: var(--shadow-elev-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -358,7 +358,7 @@ function handleClose() {
 .avatar-text {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v17: neutral text */
 }
 
 .name-section {
@@ -384,7 +384,7 @@ function handleClose() {
 }
 
 .name-input-wrapper:focus-within {
-  border-color: var(--color-accent-primary);
+  border-color: var(--color-border-hover); /* v17: neutral focus */
 }
 
 .name-input {
@@ -403,7 +403,7 @@ function handleClose() {
 }
 
 .edit-icon {
-  color: var(--color-accent-primary);
+  color: var(--color-text-muted); /* v17: neutral icon */
   font-size: var(--font-size-lg);
   margin-left: var(--space-sm);
 }
@@ -411,9 +411,8 @@ function handleClose() {
 .address-preview {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v17: neutral address */
   margin-top: var(--space-sm);
-  opacity: 0.8;
 }
 
 /* Sections */
@@ -481,13 +480,13 @@ function handleClose() {
 }
 
 .key-icon {
-  background: var(--color-accent-primary-muted);
-  color: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.08); /* v17: neutral icon bg */
+  color: var(--color-text-primary);
 }
 
 .phrase-icon {
-  background: var(--color-accent-primary-muted);
-  color: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.08); /* v17: neutral icon bg */
+  color: var(--color-text-primary);
 }
 
 .action-content {
@@ -601,8 +600,8 @@ function handleClose() {
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: var(--color-accent-primary);
-  border-color: var(--color-accent-primary);
+  background-color: var(--color-success); /* v17: success for on state */
+  border-color: var(--color-success);
 }
 
 .toggle input:checked + .toggle-slider::before {
@@ -627,6 +626,6 @@ function handleClose() {
 
 .close-btn:hover {
   background: var(--color-bg-elevated);
-  border-color: var(--color-accent-primary);
+  border-color: var(--color-border-hover); /* v17: neutral hover */
 }
 </style>

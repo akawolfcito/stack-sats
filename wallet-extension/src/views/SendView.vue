@@ -647,12 +647,12 @@ function truncateAddress(address: string): string {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #353823, #1a1c0d);
+  background: linear-gradient(135deg, #252525, #1a1a1a); /* v17: neutral gradient */
   border: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v17: neutral icon */
 }
 
 .from-info {
@@ -682,7 +682,7 @@ function truncateAddress(address: string): string {
   display: block;
   font-size: 16px;
   font-weight: 700;
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v17: neutral balance */
   font-variant-numeric: tabular-nums;
 }
 
@@ -780,7 +780,7 @@ function truncateAddress(address: string): string {
 }
 
 .fee-card:hover .fee-icon {
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v17: neutral hover */
 }
 
 .fee-label {
@@ -839,7 +839,7 @@ function truncateAddress(address: string): string {
 .confirm-amount {
   font-size: 40px;
   font-weight: 800;
-  color: var(--color-accent-primary);
+  color: var(--color-text-primary); /* v17: neutral amount */
   margin: 0 0 var(--space-xl);
 }
 
@@ -893,7 +893,7 @@ function truncateAddress(address: string): string {
   width: 48px;
   height: 48px;
   border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--color-accent-primary);
+  border-top-color: var(--color-text-muted); /* v17: neutral spinner */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -982,7 +982,7 @@ function truncateAddress(address: string): string {
 .txid-value {
   font-size: 13px;
   font-family: monospace;
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary); /* v17: neutral txid */
 }
 
 /* Copy button now uses Button variant="ghost" size="sm" */
