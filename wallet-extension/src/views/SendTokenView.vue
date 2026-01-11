@@ -624,7 +624,7 @@ onBeforeMount(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   font-weight: bold;
   color: white;
 }
@@ -809,7 +809,7 @@ onBeforeMount(async () => {
 }
 
 .confirm-amount {
-  font-size: 2.5rem;
+  font-size: var(--font-size-4xl);
   font-weight: 800;
   color: var(--color-text-primary); /* v17: neutral amount */
   margin: 0;
@@ -887,7 +887,7 @@ onBeforeMount(async () => {
 }
 
 .result-title {
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0 0 var(--space-lg);
