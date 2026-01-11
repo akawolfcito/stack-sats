@@ -115,17 +115,19 @@ function handleClick() {
   cursor: not-allowed;
 }
 
-/* Icon - V27: consistent sizing */
+/* Icon - V30: iOS-grade chip styling */
 .list-row-icon {
   width: var(--icon-btn-size); /* 28px compact, 40px comfy */
   height: var(--icon-btn-size);
   border-radius: var(--radius-chip);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06); /* V30: Subtler bg */
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: var(--color-text-primary);
+  /* V30: Subtle inner border for depth */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .list-row--add .list-row-icon {
@@ -185,29 +187,31 @@ function handleClick() {
   text-overflow: ellipsis;
 }
 
-/* Value (balance, amount) - V27: premium tabular display */
+/* Value (balance, amount) - V30: iOS-grade tabular display */
 .list-row-value {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 1px; /* V30: Tighter gap */
   flex-shrink: 0;
-  min-width: 60px; /* Stable layout for numbers */
+  min-width: 64px; /* V30: Slightly wider for stability */
 }
 
 .list-row-value-primary {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold); /* Bumped for balance prominence */
+  font-weight: var(--font-weight-bold); /* V30: Bold for balance prominence */
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-family); /* Ensure consistent rendering */
-  letter-spacing: -0.01em; /* Tighter for numbers */
+  font-family: var(--font-mono); /* V30: Mono for consistent number width */
+  letter-spacing: -0.02em; /* V30: Tighter for numbers */
 }
 
 .list-row-value-secondary {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-2xs); /* V30: Smaller for hierarchy */
   color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums; /* Consistent number alignment */
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono); /* V30: Consistent mono */
+  letter-spacing: 0;
 }
 
 /* Badge - Neutral style (v16.1, lime reserved for CTAs) */
