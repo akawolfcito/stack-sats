@@ -54,12 +54,12 @@ function handleAction(key: string) {
 </template>
 
 <style scoped>
-/* ActionBar - Premium control group (V27) */
+/* ActionBar - V29: Premium control group with clear hierarchy */
 .action-bar {
   display: flex;
-  gap: var(--space-sm); /* Tighter gap for unified feel */
+  gap: var(--space-sm);
   width: 100%;
-  padding: var(--space-xs) 0; /* Vertical breathing room */
+  padding: var(--space-xs) 0;
 }
 
 .action-bar__btn {
@@ -73,19 +73,43 @@ function handleAction(key: string) {
   border-radius: var(--radius-control);
 }
 
-/* Secondary button in ActionBar: ghost-like for less visual weight (V27) */
+/* === V29: Primary button - Premium lime with inner glow === */
+.action-bar :deep(.btn--primary) {
+  background: var(--color-accent-primary);
+  color: #0a0a0a;
+  font-weight: var(--font-weight-bold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15); /* V29: Inner highlight */
+}
+
+.action-bar :deep(.btn--primary:hover:not(:disabled)) {
+  background: var(--color-accent-primary-hover);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 8px rgba(232, 248, 89, 0.2); /* V29: Subtle outer glow */
+}
+
+.action-bar :deep(.btn--primary:active:not(:disabled)) {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* V29: Pressed inset */
+}
+
+/* === V29: Secondary button - True ghost, never competes === */
 .action-bar :deep(.btn--secondary) {
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: none; /* V29: No border - true ghost */
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
 .action-bar :deep(.btn--secondary:hover:not(:disabled)) {
   background: var(--surface-hover);
-  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+  border: none;
 }
 
 .action-bar :deep(.btn--secondary:active:not(:disabled)) {
   background: var(--surface-pressed);
+  transform: translateY(1px);
 }
 
 /* Icon sizing in ActionBar buttons */
