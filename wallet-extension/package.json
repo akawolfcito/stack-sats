@@ -20,6 +20,7 @@
     "ui:snapshots": "VITE_UI_SNAPSHOT=1 playwright test golden-screenshots --project=chromium",
     "ui:verify": "bash scripts/ui-verify-snapshots.sh",
     "ui:baseline": "cp -r docs/ui/golden/CURRENT/* docs/ui/golden/BASELINE/ 2>/dev/null || echo 'No CURRENT screenshots to copy'",
+    "ui:diff": "bash scripts/ui-diff-snapshots.sh",
     "audit:accent": "bash scripts/audit-accent.sh",
     "audit:ui": "bash scripts/audit-ui.sh"
   },
