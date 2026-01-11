@@ -17,6 +17,7 @@ LIME_PATTERN="rgba\(232,\s*248,\s*89"
 ALLOWLIST=(
   "src/components/BottomNav.vue"      # QR button - Primary CTA
   "src/components/ui/Button.vue"       # Primary button variant
+  "src/components/ui/ActionBar.vue"    # Send button - Primary CTA (V29)
   "src/components/SegmentedTabs.vue"   # Active tab indicator
   "src/styles/tokens.css"              # Token definitions
 )
