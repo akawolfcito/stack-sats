@@ -167,9 +167,9 @@ onMounted(() => {
 .modal-container {
   width: 100%;
   max-width: 320px;
-  background: #1a1c0d;
-  border: 1px solid rgba(232, 248, 89, 0.15);
-  border-radius: 20px;
+  background: var(--color-bg-card); /* v19: token */
+  border: 1px solid var(--color-border); /* v19: neutral */
+  border-radius: var(--radius-xl);
   padding: var(--space-lg);
   display: flex;
   flex-direction: column;
@@ -178,8 +178,8 @@ onMounted(() => {
 }
 
 .modal-container.modal-btc {
-  background: #1a1510;
-  border-color: rgba(247, 147, 26, 0.2);
+  background: var(--color-bg-card); /* v19: same neutral */
+  border-color: var(--color-border);
 }
 
 /* Header */
@@ -225,11 +225,11 @@ onMounted(() => {
   background: white;
   border-radius: var(--radius-lg);
   padding: var(--space-sm);
-  box-shadow: 0 0 20px rgba(232, 248, 89, 0.1);
+  box-shadow: var(--shadow-elev-2); /* v19: neutral elevation */
 }
 
 .qr-container.qr-btc {
-  box-shadow: 0 0 20px rgba(247, 147, 26, 0.1);
+  box-shadow: var(--shadow-elev-2); /* v19: same neutral elevation */
 }
 
 .qr-container canvas {

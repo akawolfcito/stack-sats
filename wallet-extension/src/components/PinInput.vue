@@ -261,8 +261,8 @@ const modeLabels = {
 }
 
 .pin-dot--filled {
-  background: var(--color-accent-primary);
-  box-shadow: 0 0 10px rgba(232, 248, 89, 0.6);
+  background: var(--color-text-primary); /* v19: neutral white */
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3); /* v19: neutral glow */
 }
 
 .pin-dot--error {
@@ -274,21 +274,21 @@ const modeLabels = {
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
 }
 
-/* Active cursor (blinking) */
+/* Active cursor (blinking) - v19: neutral */
 .pin-dot--active {
-  background: rgba(232, 248, 89, 0.3);
-  box-shadow: 0 0 6px rgba(232, 248, 89, 0.4);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
   animation: blink 1s ease-in-out infinite;
 }
 
 @keyframes blink {
   0%, 100% {
-    background: rgba(232, 248, 89, 0.4);
-    box-shadow: 0 0 6px rgba(232, 248, 89, 0.4);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
   }
   50% {
-    background: rgba(232, 248, 89, 0.15);
-    box-shadow: 0 0 3px rgba(232, 248, 89, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.15);
   }
 }
 

@@ -618,7 +618,7 @@ function truncateAddress(address: string): string {
   right: -16px;
   width: 96px;
   height: 96px;
-  background: rgba(232, 248, 89, 0.2);
+  background: rgba(255, 255, 255, 0.08); /* v19: neutral glow */
   border-radius: 50%;
   filter: blur(32px);
   pointer-events: none;
@@ -626,7 +626,7 @@ function truncateAddress(address: string): string {
 }
 
 .from-card:hover .from-card-glow {
-  background: rgba(232, 248, 89, 0.3);
+  background: rgba(255, 255, 255, 0.12); /* v19: neutral hover */
 }
 
 .from-card-content {
