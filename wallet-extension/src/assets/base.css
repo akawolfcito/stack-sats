@@ -25,11 +25,11 @@
   --color-warning: #FBBF24;
   --color-warning-muted: rgba(251, 191, 36, 0.15);
 
-  /* Border Colors - Pro visible contours */
-  --color-border: rgba(255, 255, 255, 0.14);       /* Bumped from 0.12 */
-  --color-border-hover: rgba(255, 255, 255, 0.28); /* Bumped from 0.24 */
+  /* Border Colors - BOLD visible contours (v14) */
+  --color-border: rgba(255, 255, 255, 0.22);       /* +8% from 0.14 - VISIBLE */
+  --color-border-hover: rgba(255, 255, 255, 0.35); /* +7% from 0.28 - VISIBLE */
   --color-border-accent: var(--color-accent-primary);
-  --border-subtle: 1px solid rgba(255, 255, 255, 0.10); /* Bumped from 0.08 */
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.18); /* +8% from 0.10 - VISIBLE */
 
   /* Surface Colors (layered backgrounds) - Clear hierarchy */
   --surface-0: var(--color-bg-primary);           /* Page background */
@@ -61,8 +61,8 @@
   --radius-pill: 9999px;
 
   /* Semantic Radius Tokens (use these, not raw values) */
-  --radius-control: var(--radius-lg); /* Buttons, inputs, tabs, action bar */
-  --radius-card: var(--radius-xl);    /* Cards, modals, sheets */
+  --radius-control: var(--radius-md); /* 12px - reduced from 16px for less "pill" (v14) */
+  --radius-card: 20px;                /* Reduced from 24px for tighter cards (v14) */
   --radius-chip: var(--radius-sm);    /* Inline actions, badges, chips */
 
   /* Typography */
@@ -112,11 +112,11 @@
   --transition-slow: 300ms ease;
 
   /* === Density Tokens (Layout) - Compact by default === */
-  /* Heights */
-  --header-h: 44px;
-  --row-h: 44px;
-  --control-h: 44px;
-  --icon-btn-size: 32px;
+  /* Heights - REDUCED for tighter UI (v14) */
+  --header-h: 40px;
+  --row-h: 40px;
+  --control-h: 40px;   /* -4px from 44px - VISIBLE */
+  --icon-btn-size: 28px; /* -4px from 32px - VISIBLE */
 
   /* Spacing - Layout specific */
   --section-gap: 16px;
@@ -129,10 +129,10 @@
   --page-pad-y: var(--space-md);
   --stack-gap: var(--space-md);
 
-  /* Padding - Density-aware */
-  --control-pad-x: 14px;  /* Tightened from 12px for less "pill" feel */
+  /* Padding - TIGHT for pro look (v14) */
+  --control-pad-x: 10px;  /* -28% from 14px - VISIBLE tighter buttons */
   --control-pad-y: 0;
-  --row-pad-x: 10px;
+  --row-pad-x: 8px;       /* -20% from 10px */
 
   /* Control composition tokens */
   --control-icon-gap: 6px;   /* Gap between icon and text in buttons */
@@ -147,19 +147,19 @@
 
 /* === Density Mode: Explicit Compact (user choice, always wins) === */
 :root[data-density="compact"] {
-  --header-h: 44px;
-  --row-h: 44px;
-  --control-h: 44px;
-  --icon-btn-size: 32px;
+  --header-h: 40px;
+  --row-h: 40px;
+  --control-h: 40px;
+  --icon-btn-size: 28px;
 
-  --section-gap: 16px;
-  --card-pad: var(--space-md);
-  --card-pad-x: var(--space-md);
-  --card-pad-y: var(--space-sm);
+  --section-gap: 14px;
+  --card-pad: var(--space-sm);
+  --card-pad-x: var(--space-sm);
+  --card-pad-y: 6px;
 
-  /* Padding - compact */
-  --control-pad-x: 14px;
-  --row-pad-x: 10px;
+  /* Padding - compact (v14) */
+  --control-pad-x: 10px;
+  --row-pad-x: 8px;
 
   /* Control composition - compact */
   --control-icon-gap: 6px;
@@ -202,19 +202,19 @@
 @media (max-width: 480px), (max-height: 640px) {
   :root:not([data-density]),
   :root[data-density="auto"] {
-    --header-h: 44px;
-    --row-h: 44px;
-    --control-h: 44px;
-    --icon-btn-size: 32px;
+    --header-h: 40px;
+    --row-h: 40px;
+    --control-h: 40px;
+    --icon-btn-size: 28px;
 
-    --section-gap: 16px;
-    --card-pad: var(--space-md);
-    --card-pad-x: var(--space-md);
-    --card-pad-y: var(--space-sm);
+    --section-gap: 14px;
+    --card-pad: var(--space-sm);
+    --card-pad-x: var(--space-sm);
+    --card-pad-y: 6px;
 
-    /* Padding - compact (auto) */
-    --control-pad-x: 14px;
-    --row-pad-x: 10px;
+    /* Padding - compact (auto, v14) */
+    --control-pad-x: 10px;
+    --row-pad-x: 8px;
 
     /* Control composition - compact (auto) */
     --control-icon-gap: 6px;
