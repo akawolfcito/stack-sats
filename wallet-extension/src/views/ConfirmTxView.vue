@@ -1,14 +1,15 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.6 Fullscreen Confirm Transaction
+ * ConfirmTxView - V51.7 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.6 Changes:
- * - Removed copy UI (no tap-to-copy)
- * - Added Edit affordance to navigate back to Send with draft preserved
- * - From/To styling unified (both read-only display)
+ * V51.7 Changes:
+ * - Grid reordered to action/label/value (32px 72px 1fr)
+ * - Edit pencil icon on left (ghost button, muted color)
+ * - From/To have identical styling and truncation
+ * - Edit doesn't shift layout (placeholder in From row)
  *
  * V51.5 Fixes (retained):
  * - Zero overflow WITHOUT overflow-x:hidden hack
@@ -99,29 +100,32 @@ function handleConfirm() {
         </span>
       </div>
 
-      <!-- V51.5: Summary Card - 3-column grid, all children min-width:0 -->
+      <!-- V51.7: Summary Card - 3-column grid: action/label/value -->
       <div class="summary-card" data-roi="confirm-summary">
         <!-- Block 1: Parties (From/To) -->
         <div class="summary-block">
-          <!-- From -->
+          <!-- From (placeholder action for parity) -->
           <div class="summary-row">
+            <span class="row-action" aria-hidden="true" />
             <span class="row-label">From</span>
             <div class="row-value">
               <span v-if="fromLabel" class="value-name">{{ fromLabel }}</span>
               <span class="value-address">{{ fromAddressShort }}</span>
             </div>
-            <span class="row-action" />
           </div>
 
-          <!-- To (with Edit action) -->
+          <!-- To (with Edit pencil icon) -->
           <div class="summary-row" data-roi="confirm-to-row">
+            <button class="row-action row-action--edit" @click="handleEdit" title="Edit recipient">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                <path d="m15 5 4 4" />
+              </svg>
+            </button>
             <span class="row-label">To</span>
             <div class="row-value">
               <span class="value-address">{{ toAddressShort }}</span>
             </div>
-            <button class="row-action row-action--edit" @click="handleEdit">
-              Edit
-            </button>
           </div>
         </div>
 
@@ -132,32 +136,32 @@ function handleConfirm() {
         <div class="summary-block">
           <!-- Amount -->
           <div class="summary-row">
+            <span class="row-action" aria-hidden="true" />
             <span class="row-label">Amount</span>
             <span class="row-value row-value--amount">{{ amountText }}</span>
-            <span class="row-action" />
           </div>
 
           <!-- Fee -->
           <div v-if="feeText" class="summary-row">
+            <span class="row-action" aria-hidden="true" />
             <span class="row-label">Fee</span>
             <span class="row-value row-value--fee">{{ feeText }}</span>
-            <span class="row-action" />
           </div>
 
           <!-- Memo -->
           <div v-if="memo" class="summary-row">
+            <span class="row-action" aria-hidden="true" />
             <span class="row-label">Memo</span>
             <span class="row-value row-value--memo">{{ memo }}</span>
-            <span class="row-action" />
           </div>
         </div>
 
         <!-- Total (always separated, hero treatment) -->
         <div v-if="totalText" class="total-divider" />
         <div v-if="totalText" class="summary-row summary-row--total">
+          <span class="row-action" aria-hidden="true" />
           <span class="row-label row-label--total">Total</span>
           <span class="row-value row-value--total">{{ totalText }}</span>
-          <span class="row-action" />
         </div>
       </div>
 
@@ -307,11 +311,11 @@ function handleConfirm() {
   margin: var(--space-md) 0 var(--space-sm);
 }
 
-/* V51.5: Summary rows - 3-column CSS Grid, all children min-width:0 */
+/* V51.7: Summary rows - 3-column CSS Grid: action/label/value */
 .summary-row {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) 32px;
-  column-gap: var(--space-sm);
+  grid-template-columns: 32px 72px minmax(0, 1fr);
+  column-gap: var(--space-md);
   align-items: center;
   min-height: 32px;
   padding: 4px 0;
@@ -321,7 +325,42 @@ function handleConfirm() {
   padding-top: 0;
 }
 
-/* V51.5: Row labels - left column, min-width:0 */
+/* V51.7: Action column - left (32px fixed) */
+.row-action {
+  width: 32px;
+  height: 32px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+/* V51.7: Edit button - ghost icon button (matches Settings pattern) */
+.row-action--edit {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.row-action--edit:hover {
+  background: var(--surface-hover);
+  color: var(--color-text-primary);
+}
+
+.row-action--edit:active {
+  background: var(--surface-pressed);
+}
+
+.row-action--edit svg {
+  flex-shrink: 0;
+}
+
+/* V51.7: Row labels - center column, min-width:0 */
 .row-label {
   font-size: var(--font-size-2xs);
   font-weight: var(--font-weight-medium);
@@ -336,7 +375,7 @@ function handleConfirm() {
   color: var(--color-text-secondary);
 }
 
-/* V51.5: Row values - center column, right-aligned, min-width:0 */
+/* V51.7: Row values - right column, right-aligned, min-width:0 */
 .row-value {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -352,33 +391,6 @@ function handleConfirm() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* V51.5: Action placeholder - right column (32px fixed) */
-.row-action {
-  width: 32px;
-  min-width: 0;
-}
-
-/* V51.6: Edit button in action column */
-.row-action--edit {
-  background: transparent;
-  border: none;
-  padding: 0;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-accent-primary);
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-  text-align: right;
-}
-
-.row-action--edit:hover {
-  opacity: 0.8;
-}
-
-.row-action--edit:active {
-  opacity: 0.6;
 }
 
 /* V51.1: Account name - secondary */
