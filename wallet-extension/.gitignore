@@ -37,3 +37,12 @@ test-results/
 artifacts/ui/current/
 artifacts/ui/diff/
 artifacts/ui/*.json
+
+# Internal UI documentation (not versioned)
+docs/ui/GOLD_STATUS.md
+docs/ui/RUNBOOK.md
+docs/ui/CI_HOOKS.md
+docs/ui/agents/
+docs/ui/roadmap/
+docs/ui/golden/
+docs/ui/rfcs/
