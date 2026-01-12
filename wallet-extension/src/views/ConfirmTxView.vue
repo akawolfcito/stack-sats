@@ -1,16 +1,16 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.4 Fullscreen Confirm Transaction
+ * ConfirmTxView - V51.5 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.4 Fixes:
- * - 3-column grid: label (72px) | value (1fr) | action slot (32px)
- * - Tap-to-copy on TO address (no icon, cleaner premium feel)
- * - Unified From/To address display (same truncation, font, style)
- * - Zero horizontal overflow via proper grid containment
- * - "Copied" toast feedback
+ * V51.5 Fixes:
+ * - Zero overflow WITHOUT overflow-x:hidden hack
+ * - Ambient glow: clip with overflow:hidden on wrapper, not on scroll container
+ * - Copy feedback: inline flow instead of position:absolute outside container
+ * - All grid children: min-width:0 for proper truncation
+ * - box-sizing:border-box on all elements via *, *::before, *::after
  */
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
@@ -92,8 +92,10 @@ function handleConfirm() {
     </template>
 
     <div class="confirm-tx-view" data-roi="confirm-view-root">
-      <!-- Ambient Glow (V51: same as VerifyPinView) -->
-      <div class="ambient-glow"></div>
+      <!-- V51.5: Ambient glow wrapper - clips oversized glow -->
+      <div class="ambient-wrapper">
+        <div class="ambient-glow"></div>
+      </div>
 
       <!-- V51: Network Chip (pill style) -->
       <div class="confirm-header" data-roi="confirm-header">
@@ -103,7 +105,7 @@ function handleConfirm() {
         </span>
       </div>
 
-      <!-- V51.4: Summary Card - 3-column grid for stable alignment -->
+      <!-- V51.5: Summary Card - 3-column grid, all children min-width:0 -->
       <div class="summary-card" data-roi="confirm-summary">
         <!-- Block 1: Parties (From/To) -->
         <div class="summary-block">
@@ -126,8 +128,8 @@ function handleConfirm() {
               title="Tap to copy address"
               @click="handleCopyTo"
             >
-              <span class="value-address">{{ toAddressShort }}</span>
               <span v-if="copied" class="copy-feedback">Copied</span>
+              <span class="value-address">{{ toAddressShort }}</span>
             </button>
             <span class="row-action" />
           </div>
@@ -192,7 +194,17 @@ function handleConfirm() {
 </template>
 
 <style scoped>
-/* V51.4: Fullscreen confirm view layout - zero overflow */
+/* V51.5: Universal box-sizing for this component */
+.confirm-tx-view,
+.confirm-tx-view *,
+.confirm-tx-view *::before,
+.confirm-tx-view *::after,
+.cta-rail,
+.cta-rail * {
+  box-sizing: border-box;
+}
+
+/* V51.5: Fullscreen confirm view layout - ZERO overflow without hacks */
 .confirm-tx-view {
   flex: 1;
   display: flex;
@@ -201,22 +213,34 @@ function handleConfirm() {
   padding: 0 var(--space-lg);
   padding-bottom: 120px;
   overflow-y: auto;
-  box-sizing: border-box;
+  /* V51.5: NO overflow-x:hidden - proper containment instead */
+  width: 100%;
+  max-width: 100%;
 }
 
-/* V51.1: Ambient Glow - subtle */
+/* V51.5: Ambient glow wrapper - clips the oversized glow element */
+.ambient-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* V51.5: Ambient Glow - now safely clipped by wrapper */
 .ambient-glow {
   position: absolute;
   top: -20%;
   left: 50%;
   transform: translateX(-50%);
   width: 150%;
-  height: 50%;
+  height: 100%;
   background: var(--color-accent-primary);
   opacity: 0.04;
   filter: blur(100px);
   border-radius: 50%;
-  pointer-events: none;
 }
 
 /* === V51.1: Network Chip - Smaller, doesn't compete === */
@@ -260,7 +284,7 @@ function handleConfirm() {
   letter-spacing: 0.03em;
 }
 
-/* === V51.4: Summary Card - 3-column grid === */
+/* === V51.5: Summary Card - proper containment === */
 .summary-card {
   padding: var(--space-md);
   background: var(--surface-hover);
@@ -268,7 +292,8 @@ function handleConfirm() {
   border-radius: var(--radius-control);
   position: relative;
   z-index: 1;
-  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* V51.1: Logical blocks */
@@ -292,10 +317,10 @@ function handleConfirm() {
   margin: var(--space-md) 0 var(--space-sm);
 }
 
-/* V51.4: Summary rows - 3-column CSS Grid for perfect alignment */
+/* V51.5: Summary rows - 3-column CSS Grid, all children min-width:0 */
 .summary-row {
   display: grid;
-  grid-template-columns: 72px 1fr 32px;
+  grid-template-columns: 72px minmax(0, 1fr) 32px;
   column-gap: var(--space-sm);
   align-items: center;
   min-height: 32px;
@@ -306,13 +331,14 @@ function handleConfirm() {
   padding-top: 0;
 }
 
-/* V51.4: Row labels - left column */
+/* V51.5: Row labels - left column, min-width:0 */
 .row-label {
   font-size: var(--font-size-2xs);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  min-width: 0;
 }
 
 .row-label--total {
@@ -320,7 +346,7 @@ function handleConfirm() {
   color: var(--color-text-secondary);
 }
 
-/* V51.4: Row values - center column, right-aligned */
+/* V51.5: Row values - center column, right-aligned, min-width:0 */
 .row-value {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -332,19 +358,22 @@ function handleConfirm() {
   align-items: flex-end;
   gap: 2px;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* V51.4: Action placeholder - right column (32px fixed) */
+/* V51.5: Action placeholder - right column (32px fixed) */
 .row-action {
   width: 32px;
-  flex-shrink: 0;
+  min-width: 0;
 }
 
-/* V51.4: Copyable address - tap target */
+/* V51.5: Copyable address - inline tap target, no position:absolute overflow */
 .row-value--copyable {
+  flex-direction: row;
+  gap: var(--space-xs);
   background: transparent;
   border: none;
   padding: var(--space-xs) var(--space-sm);
@@ -352,7 +381,6 @@ function handleConfirm() {
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.15s ease;
-  position: relative;
 }
 
 .row-value--copyable:hover {
@@ -363,21 +391,18 @@ function handleConfirm() {
   background: var(--surface-pressed);
 }
 
-/* V51.4: Copy feedback */
+/* V51.5: Copy feedback - inline, not absolute positioned */
 .row-value--copied {
   background: var(--color-success-muted);
 }
 
 .copy-feedback {
-  position: absolute;
-  right: 100%;
-  margin-right: var(--space-xs);
   font-size: var(--font-size-2xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-success);
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* V51.1: Account name - secondary */
@@ -387,13 +412,17 @@ function handleConfirm() {
   color: var(--color-text-secondary);
 }
 
-/* V51.4: Addresses - unified mono style for From/To parity */
+/* V51.5: Addresses - unified mono style, truncation ready */
 .value-address {
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-normal);
   color: var(--color-text-muted);
   letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 /* V51.1: Amount - bold but not hero */
@@ -448,7 +477,7 @@ function handleConfirm() {
   opacity: 0.6;
 }
 
-/* === V51.4: CTA Rail - proper containment === */
+/* === V51.5: CTA Rail - proper containment === */
 .cta-rail {
   position: sticky;
   bottom: 0;
@@ -459,6 +488,7 @@ function handleConfirm() {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 10;
   padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
-  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 </style>
