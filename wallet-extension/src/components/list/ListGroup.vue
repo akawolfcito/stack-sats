@@ -61,7 +61,7 @@ defineProps<{
   padding: var(--space-xs);
 }
 
-/* Inset dividers - V29 Gold: Consistent iOS-style */
+/* Inset dividers - V32: Clearer structure */
 .list-group-items > :deep(*:not(:last-child)) {
   position: relative;
 }
@@ -70,12 +70,11 @@ defineProps<{
   content: '';
   position: absolute;
   bottom: 0;
-  /* V29: Inset from content start (after icon + gap) */
+  /* V32: Inset from content start (after icon + gap) */
   left: calc(var(--card-pad-x) + var(--icon-btn-size) + var(--space-sm));
-  right: var(--card-pad-x); /* V29: Consistent right inset */
+  right: var(--card-pad-x);
   height: 1px;
-  background: var(--color-border); /* V29: Solid, not gradient */
-  opacity: 0.4; /* V29: Subtle but visible structure */
+  background: rgba(255, 255, 255, 0.08); /* V32: Slightly more visible dividers */
 }
 
 .list-group--danger .list-group-items > :deep(*:not(:last-child))::after {
