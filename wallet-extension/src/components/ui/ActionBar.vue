@@ -92,21 +92,22 @@ function handleAction(key: string) {
   box-shadow: none;
 }
 
-/* === V28: Secondary (Receive) - Real button with visible border === */
+/* === V31: Secondary (Receive) - Premium but quiet (ghost-ish) === */
 .action-bar :deep(.btn--secondary) {
-  background: var(--surface-2); /* Visible surface, not transparent */
-  border: 1px solid var(--color-border); /* Visible border = real control */
-  color: var(--color-text-primary);
+  background: transparent; /* V31: Ghost at rest */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* V31: Nearly invisible border */
+  color: var(--color-text-secondary); /* V31: Muted text, not primary */
 }
 
 .action-bar :deep(.btn--secondary:hover:not(:disabled)) {
-  background: var(--surface-3);
-  border-color: var(--color-border-hover);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-text-primary); /* V31: Full contrast on hover */
 }
 
 .action-bar :deep(.btn--secondary:active:not(:disabled)) {
-  background: var(--surface-pressed);
-  border-color: var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
   transform: translateY(1px);
 }
 
