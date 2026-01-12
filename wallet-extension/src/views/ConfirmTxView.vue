@@ -1,15 +1,16 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.3 Fullscreen Confirm Transaction
+ * ConfirmTxView - V51.4 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.3 Fixes:
- * - Grid layout: CSS grid rows for perfect column alignment
- * - Copy button: 32px ghost icon button (matches AddressCard pattern)
- * - Overflow: Proper containment via grid/minmax, no overflow-x hack needed
- * - Premium coherence: All icon containers use same design system
+ * V51.4 Fixes:
+ * - 3-column grid: label (72px) | value (1fr) | action slot (32px)
+ * - Tap-to-copy on TO address (no icon, cleaner premium feel)
+ * - Unified From/To address display (same truncation, font, style)
+ * - Zero horizontal overflow via proper grid containment
+ * - "Copied" toast feedback
  */
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
@@ -30,6 +31,10 @@ const amountText = ref("");
 const feeText = ref("");
 const totalText = ref("");
 const memo = ref("");
+
+// Copy feedback state
+const copied = ref(false);
+let copyTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Computed: check if test/dev network
 const isTestOrDev = computed(() => {
@@ -55,8 +60,15 @@ onMounted(() => {
   }
 });
 
+// V51.4: Tap-to-copy with feedback
 function handleCopyTo() {
   navigator.clipboard.writeText(toAddress.value);
+  copied.value = true;
+
+  if (copyTimeout) clearTimeout(copyTimeout);
+  copyTimeout = setTimeout(() => {
+    copied.value = false;
+  }, 2000);
 }
 
 function handleCancel() {
@@ -79,7 +91,7 @@ function handleConfirm() {
       />
     </template>
 
-    <div class="confirm-tx-view">
+    <div class="confirm-tx-view" data-roi="confirm-view-root">
       <!-- Ambient Glow (V51: same as VerifyPinView) -->
       <div class="ambient-glow"></div>
 
@@ -91,7 +103,7 @@ function handleConfirm() {
         </span>
       </div>
 
-      <!-- V51.3: Summary Card - Grid-based rows for alignment -->
+      <!-- V51.4: Summary Card - 3-column grid for stable alignment -->
       <div class="summary-card" data-roi="confirm-summary">
         <!-- Block 1: Parties (From/To) -->
         <div class="summary-block">
@@ -102,44 +114,49 @@ function handleConfirm() {
               <span v-if="fromLabel" class="value-name">{{ fromLabel }}</span>
               <span class="value-address">{{ fromAddressShort }}</span>
             </div>
+            <span class="row-action" />
           </div>
 
-          <!-- To -->
+          <!-- To (tap-to-copy) -->
           <div class="summary-row" data-roi="confirm-to-row">
             <span class="row-label">To</span>
-            <div class="row-value row-value--with-action">
-              <span class="value-address value-address--truncate">{{ toAddressShort }}</span>
-              <button class="copy-btn" data-roi="confirm-copy-icon" title="Copy address" @click="handleCopyTo">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-              </button>
-            </div>
+            <button
+              class="row-value row-value--copyable"
+              :class="{ 'row-value--copied': copied }"
+              title="Tap to copy address"
+              @click="handleCopyTo"
+            >
+              <span class="value-address">{{ toAddressShort }}</span>
+              <span v-if="copied" class="copy-feedback">Copied</span>
+            </button>
+            <span class="row-action" />
           </div>
         </div>
 
         <!-- Divider between blocks -->
         <div class="block-divider" />
 
-        <!-- Block 2: Financials (Amount/Fee/Memo/Total) -->
+        <!-- Block 2: Financials (Amount/Fee/Memo) -->
         <div class="summary-block">
           <!-- Amount -->
           <div class="summary-row">
             <span class="row-label">Amount</span>
             <span class="row-value row-value--amount">{{ amountText }}</span>
+            <span class="row-action" />
           </div>
 
           <!-- Fee -->
           <div v-if="feeText" class="summary-row">
             <span class="row-label">Fee</span>
             <span class="row-value row-value--fee">{{ feeText }}</span>
+            <span class="row-action" />
           </div>
 
           <!-- Memo -->
           <div v-if="memo" class="summary-row">
             <span class="row-label">Memo</span>
             <span class="row-value row-value--memo">{{ memo }}</span>
+            <span class="row-action" />
           </div>
         </div>
 
@@ -148,6 +165,7 @@ function handleConfirm() {
         <div v-if="totalText" class="summary-row summary-row--total">
           <span class="row-label row-label--total">Total</span>
           <span class="row-value row-value--total">{{ totalText }}</span>
+          <span class="row-action" />
         </div>
       </div>
 
@@ -174,7 +192,7 @@ function handleConfirm() {
 </template>
 
 <style scoped>
-/* V51.3: Fullscreen confirm view layout */
+/* V51.4: Fullscreen confirm view layout - zero overflow */
 .confirm-tx-view {
   flex: 1;
   display: flex;
@@ -183,7 +201,7 @@ function handleConfirm() {
   padding: 0 var(--space-lg);
   padding-bottom: 120px;
   overflow-y: auto;
-  /* V51.3: No overflow-x hack - proper containment via max-width */
+  box-sizing: border-box;
 }
 
 /* V51.1: Ambient Glow - subtle */
@@ -242,7 +260,7 @@ function handleConfirm() {
   letter-spacing: 0.03em;
 }
 
-/* === V51.3: Summary Card - Grid-based === */
+/* === V51.4: Summary Card - 3-column grid === */
 .summary-card {
   padding: var(--space-md);
   background: var(--surface-hover);
@@ -250,7 +268,7 @@ function handleConfirm() {
   border-radius: var(--radius-control);
   position: relative;
   z-index: 1;
-  max-width: 100%; /* V51.3: Containment */
+  box-sizing: border-box;
 }
 
 /* V51.1: Logical blocks */
@@ -274,11 +292,11 @@ function handleConfirm() {
   margin: var(--space-md) 0 var(--space-sm);
 }
 
-/* V51.3: Summary rows - CSS Grid for perfect alignment */
+/* V51.4: Summary rows - 3-column CSS Grid for perfect alignment */
 .summary-row {
   display: grid;
-  grid-template-columns: 72px 1fr;
-  column-gap: var(--space-md);
+  grid-template-columns: 72px 1fr 32px;
+  column-gap: var(--space-sm);
   align-items: center;
   min-height: 32px;
   padding: 4px 0;
@@ -288,7 +306,7 @@ function handleConfirm() {
   padding-top: 0;
 }
 
-/* V51.1: Row labels - smaller, more muted */
+/* V51.4: Row labels - left column */
 .row-label {
   font-size: var(--font-size-2xs);
   font-weight: var(--font-weight-medium);
@@ -297,13 +315,12 @@ function handleConfirm() {
   letter-spacing: 0.06em;
 }
 
-/* V51.1: Total label - slightly more visible */
 .row-label--total {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
 }
 
-/* V51.3: Row values - right-aligned with proper overflow */
+/* V51.4: Row values - center column, right-aligned */
 .row-value {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -314,15 +331,53 @@ function handleConfirm() {
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
-  min-width: 0; /* V51.3: Allow truncation */
-  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* V51.3: Row with copy action - horizontal layout */
-.row-value--with-action {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--space-sm);
+/* V51.4: Action placeholder - right column (32px fixed) */
+.row-action {
+  width: 32px;
+  flex-shrink: 0;
+}
+
+/* V51.4: Copyable address - tap target */
+.row-value--copyable {
+  background: transparent;
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  margin: calc(-1 * var(--space-xs)) calc(-1 * var(--space-sm));
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.row-value--copyable:hover {
+  background: var(--surface-hover);
+}
+
+.row-value--copyable:active {
+  background: var(--surface-pressed);
+}
+
+/* V51.4: Copy feedback */
+.row-value--copied {
+  background: var(--color-success-muted);
+}
+
+.copy-feedback {
+  position: absolute;
+  right: 100%;
+  margin-right: var(--space-xs);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-success);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 /* V51.1: Account name - secondary */
@@ -332,21 +387,13 @@ function handleConfirm() {
   color: var(--color-text-secondary);
 }
 
-/* V51.3: Addresses - subdued mono, 12px for readability */
+/* V51.4: Addresses - unified mono style for From/To parity */
 .value-address {
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-normal);
   color: var(--color-text-muted);
   letter-spacing: 0.01em;
-}
-
-/* V51.3: Truncate long addresses */
-.value-address--truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
 }
 
 /* V51.1: Amount - bold but not hero */
@@ -368,42 +415,16 @@ function handleConfirm() {
   letter-spacing: -0.01em;
 }
 
-/* V51.1: Memo - compact */
+/* V51.1: Memo - compact, allows wrap */
 .row-value--memo {
   max-width: 160px;
   word-break: break-word;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-normal);
   color: var(--color-text-muted);
-}
-
-/* V51.3: Copy button - 32px ghost icon button (matches AddressCard pattern) */
-.copy-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.copy-btn:hover {
-  background: var(--surface-hover);
-  color: var(--color-text-primary);
-}
-
-.copy-btn:active {
-  background: var(--surface-pressed);
-}
-
-.copy-btn svg {
-  flex-shrink: 0;
+  white-space: normal;
+  text-overflow: unset;
+  overflow: visible;
 }
 
 /* === V51.1: Warning Hint - Softer, inline === */
@@ -427,7 +448,7 @@ function handleConfirm() {
   opacity: 0.6;
 }
 
-/* === V51.3: CTA Rail - proper containment === */
+/* === V51.4: CTA Rail - proper containment === */
 .cta-rail {
   position: sticky;
   bottom: 0;
@@ -438,6 +459,6 @@ function handleConfirm() {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 10;
   padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
-  max-width: 100%; /* V51.3: Containment */
+  box-sizing: border-box;
 }
 </style>
