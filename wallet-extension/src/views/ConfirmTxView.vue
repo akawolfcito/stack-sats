@@ -1,15 +1,15 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.7 Fullscreen Confirm Transaction
+ * ConfirmTxView - V51.8 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.7 Changes:
- * - Grid reordered to action/label/value (32px 72px 1fr)
- * - Edit pencil icon on left (ghost button, muted color)
- * - From/To have identical styling and truncation
- * - Edit doesn't shift layout (placeholder in From row)
+ * V51.8 Changes:
+ * - Edit pencil moved into value column (associated with address)
+ * - 2-column grid: label (72px) / value (1fr)
+ * - From/To identical structure (both have address line + optional action)
+ * - Edit button inline with address, doesn't affect truncation
  *
  * V51.5 Fixes (retained):
  * - Zero overflow WITHOUT overflow-x:hidden hack
@@ -100,31 +100,35 @@ function handleConfirm() {
         </span>
       </div>
 
-      <!-- V51.7: Summary Card - 3-column grid: action/label/value -->
+      <!-- V51.8: Summary Card - 2-column grid: label/value -->
       <div class="summary-card" data-roi="confirm-summary">
-        <!-- Block 1: Parties (From/To) -->
+        <!-- Block 1: Parties (From/To) - identical structure -->
         <div class="summary-block">
-          <!-- From (placeholder action for parity) -->
+          <!-- From -->
           <div class="summary-row">
-            <span class="row-action" aria-hidden="true" />
             <span class="row-label">From</span>
-            <div class="row-value">
+            <div class="row-value row-value--address">
               <span v-if="fromLabel" class="value-name">{{ fromLabel }}</span>
-              <span class="value-address">{{ fromAddressShort }}</span>
+              <div class="address-line">
+                <span class="value-address">{{ fromAddressShort }}</span>
+                <span class="icon-btn-placeholder" aria-hidden="true" />
+              </div>
             </div>
           </div>
 
-          <!-- To (with Edit pencil icon) -->
+          <!-- To (with Edit pencil inline with address) -->
           <div class="summary-row" data-roi="confirm-to-row">
-            <button class="row-action row-action--edit" @click="handleEdit" title="Edit recipient">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                <path d="m15 5 4 4" />
-              </svg>
-            </button>
             <span class="row-label">To</span>
-            <div class="row-value">
-              <span class="value-address">{{ toAddressShort }}</span>
+            <div class="row-value row-value--address">
+              <div class="address-line">
+                <span class="value-address">{{ toAddressShort }}</span>
+                <button class="icon-btn icon-btn--ghost" @click="handleEdit" aria-label="Edit recipient">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                    <path d="m15 5 4 4" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -136,21 +140,18 @@ function handleConfirm() {
         <div class="summary-block">
           <!-- Amount -->
           <div class="summary-row">
-            <span class="row-action" aria-hidden="true" />
             <span class="row-label">Amount</span>
             <span class="row-value row-value--amount">{{ amountText }}</span>
           </div>
 
           <!-- Fee -->
           <div v-if="feeText" class="summary-row">
-            <span class="row-action" aria-hidden="true" />
             <span class="row-label">Fee</span>
             <span class="row-value row-value--fee">{{ feeText }}</span>
           </div>
 
           <!-- Memo -->
           <div v-if="memo" class="summary-row">
-            <span class="row-action" aria-hidden="true" />
             <span class="row-label">Memo</span>
             <span class="row-value row-value--memo">{{ memo }}</span>
           </div>
@@ -159,7 +160,6 @@ function handleConfirm() {
         <!-- Total (always separated, hero treatment) -->
         <div v-if="totalText" class="total-divider" />
         <div v-if="totalText" class="summary-row summary-row--total">
-          <span class="row-action" aria-hidden="true" />
           <span class="row-label row-label--total">Total</span>
           <span class="row-value row-value--total">{{ totalText }}</span>
         </div>
@@ -311,10 +311,10 @@ function handleConfirm() {
   margin: var(--space-md) 0 var(--space-sm);
 }
 
-/* V51.7: Summary rows - 3-column CSS Grid: action/label/value */
+/* V51.8: Summary rows - 2-column CSS Grid: label/value */
 .summary-row {
   display: grid;
-  grid-template-columns: 32px 72px minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
   column-gap: var(--space-md);
   align-items: center;
   min-height: 32px;
@@ -325,42 +325,7 @@ function handleConfirm() {
   padding-top: 0;
 }
 
-/* V51.7: Action column - left (32px fixed) */
-.row-action {
-  width: 32px;
-  height: 32px;
-  min-width: 0;
-  flex-shrink: 0;
-}
-
-/* V51.7: Edit button - ghost icon button (matches Settings pattern) */
-.row-action--edit {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.row-action--edit:hover {
-  background: var(--surface-hover);
-  color: var(--color-text-primary);
-}
-
-.row-action--edit:active {
-  background: var(--surface-pressed);
-}
-
-.row-action--edit svg {
-  flex-shrink: 0;
-}
-
-/* V51.7: Row labels - center column, min-width:0 */
+/* V51.8: Row labels - left column */
 .row-label {
   font-size: var(--font-size-2xs);
   font-weight: var(--font-weight-medium);
@@ -375,7 +340,7 @@ function handleConfirm() {
   color: var(--color-text-secondary);
 }
 
-/* V51.7: Row values - right column, right-aligned, min-width:0 */
+/* V51.8: Row values - right column, right-aligned */
 .row-value {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -391,6 +356,55 @@ function handleConfirm() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* V51.8: Address value - allows for inline action */
+.row-value--address {
+  overflow: visible;
+}
+
+/* V51.8: Address line - flex row with address + optional action */
+.address-line {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+/* V51.8: Icon button placeholder (for parity in From row) */
+.icon-btn-placeholder {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+/* V51.8: Ghost icon button (inline with address) */
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.icon-btn--ghost:hover {
+  background: var(--surface-hover);
+  color: var(--color-text-primary);
+}
+
+.icon-btn--ghost:active {
+  background: var(--surface-pressed);
+}
+
+.icon-btn svg {
+  flex-shrink: 0;
 }
 
 /* V51.1: Account name - secondary */
