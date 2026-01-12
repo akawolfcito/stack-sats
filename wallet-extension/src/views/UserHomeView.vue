@@ -854,12 +854,23 @@ const handleManageTokens = () => {
   padding-bottom: var(--space-sm);
 }
 
-/* Header right actions group (V28) */
+/* Header right actions group (V33: aligned + balanced) */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm); /* V33: Slightly more breathing room */
   margin-left: auto;
+}
+
+/* V33: Fullpage button - subtle background for visibility */
+.header-actions :deep(.btn--icon) {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-muted);
+}
+
+.header-actions :deep(.btn--icon:hover:not(:disabled)) {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
 }
 
 /* Balance Hero */
