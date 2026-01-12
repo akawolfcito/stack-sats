@@ -145,6 +145,38 @@ const ROI_TARGETS: ROIConfig[] = [
     setup: setupUnlockedWallet,
     captureStyles: ['background-color', 'box-shadow', 'border-color'],
   },
+  // V49.3: Send flow - To textfield
+  {
+    name: 'send-textfield-to',
+    route: '/send',
+    selector: '[data-roi="send-textfield-to"]',
+    setup: setupUnlockedWallet,
+    captureStyles: ['border-radius'],
+  },
+  // V49.3: Send flow - Amount textfield
+  {
+    name: 'send-textfield-amount',
+    route: '/send',
+    selector: '[data-roi="send-textfield-amount"]',
+    setup: setupUnlockedWallet,
+    captureStyles: ['border-radius'],
+  },
+  // V49.3: Send flow - Paste pill action
+  {
+    name: 'send-pill-paste',
+    route: '/send',
+    selector: '[data-roi="send-pill-paste"]',
+    setup: setupUnlockedWallet,
+    captureStyles: ['background-color', 'border-radius'],
+  },
+  // V49.3: Send flow - Max pill action
+  {
+    name: 'send-pill-max',
+    route: '/send',
+    selector: '[data-roi="send-pill-max"]',
+    setup: setupUnlockedWallet,
+    captureStyles: ['background-color', 'border-radius'],
+  },
 ];
 
 // Expected ROI count - only counting targets that can be reliably captured
@@ -152,7 +184,8 @@ const ROI_TARGETS: ROIConfig[] = [
 // V46: Added pin-keypad-unlock-compact, pin-icons-row-compact
 // V48: Added verify-pin-header, verify-pin-keypad
 // V49: Added send-from-card, send-fee-card, send-continue-cta
-const EXPECTED_ROI_COUNT = 14;
+// V49.3: Added send-textfield-to, send-textfield-amount, send-pill-paste, send-pill-max
+const EXPECTED_ROI_COUNT = 18;
 
 // Helper: Clear wallet state
 async function clearWallet(page: Page) {

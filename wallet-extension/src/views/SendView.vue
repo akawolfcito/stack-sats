@@ -350,8 +350,8 @@ function truncateAddress(address: string): string {
         <span class="notice-text">Your balance is too low to send STX (fee required).</span>
       </div>
 
-      <!-- V49.1: Recipient Input - default variant for card-style surface -->
-      <div class="form-group">
+      <!-- V49.3: Recipient Input - PASTE/MAX parity with ghost variant -->
+      <div class="form-group" data-roi="send-textfield-to">
         <label class="form-label">To</label>
         <TextField
           v-model="recipient"
@@ -362,14 +362,14 @@ function truncateAddress(address: string): string {
           @blur="validateRecipient"
         >
           <template #suffix>
-            <InlineAction label="Paste" variant="ghost" @click="handlePaste" />
+            <InlineAction label="Paste" variant="ghost" data-roi="send-pill-paste" @click="handlePaste" />
           </template>
         </TextField>
         <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
       </div>
 
-      <!-- V49.1: Amount Input - MAX uses default (secondary chip) to not compete with CTA -->
-      <div class="form-group">
+      <!-- V49.3: Amount Input - MAX matches PASTE with ghost variant for pill parity -->
+      <div class="form-group" data-roi="send-textfield-amount">
         <label class="form-label">Amount</label>
         <TextField
           v-model="amount"
@@ -379,7 +379,7 @@ function truncateAddress(address: string): string {
           @blur="validateAmount"
         >
           <template #suffix>
-            <InlineAction label="Max" variant="default" @click="handleMaxAmount" />
+            <InlineAction label="Max" variant="ghost" data-roi="send-pill-max" @click="handleMaxAmount" />
           </template>
         </TextField>
         <div class="input-hint-row">
@@ -569,7 +569,7 @@ function truncateAddress(address: string): string {
   padding-bottom: var(--space-xl);
 }
 
-/* Zero Balance Notice */
+/* V49.3: Zero Balance Notice - radius-md for control coherence */
 .zero-balance-notice {
   display: flex;
   align-items: center;
@@ -577,7 +577,7 @@ function truncateAddress(address: string): string {
   padding: var(--space-md);
   background: rgba(234, 179, 8, 0.1);
   border: 1px solid rgba(234, 179, 8, 0.2);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   margin-bottom: var(--space-md);
 }
 
@@ -748,7 +748,7 @@ function truncateAddress(address: string): string {
   margin: 0;
 }
 
-/* V49.1: Fee Card - V43 card pattern with token-based styling */
+/* V49.3: Fee Card - radius-control for form-level coherence */
 .fee-card {
   display: flex;
   align-items: center;
@@ -756,7 +756,7 @@ function truncateAddress(address: string): string {
   padding: var(--space-md) var(--space-lg);
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   margin-bottom: var(--space-md);
   cursor: help;
   transition: all var(--transition-fast);
