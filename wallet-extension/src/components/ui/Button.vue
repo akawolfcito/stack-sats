@@ -143,7 +143,7 @@ const classes = computed(() => [
   width: 100%;
 }
 
-/* === Variant: Primary - V41 Premium Treatment === */
+/* === Variant: Primary - V43.1 Material Depth === */
 .btn--primary {
   background: var(--btn-primary-gradient), var(--btn-primary-bg);
   color: var(--btn-primary-text);
@@ -157,10 +157,11 @@ const classes = computed(() => [
   box-shadow: var(--btn-primary-shadow-hover);
 }
 
+/* V43.1: Pressed state uses inset shadow for "material pressed" feel */
 .btn--primary:active:not(:disabled) {
   background: var(--btn-primary-bg-active);
   transform: translateY(1px);
-  box-shadow: var(--btn-primary-shadow);
+  box-shadow: var(--btn-primary-shadow-active);
 }
 
 /* === Variant: Secondary (Ghost/Quiet) - V34 tokens === */
