@@ -39,15 +39,15 @@
   --surface-hover: rgba(255, 255, 255, 0.05);     /* Bumped from 0.04 */
   --surface-pressed: rgba(255, 255, 255, 0.10);   /* Bumped from 0.08 */
 
-  /* === Button Secondary (Ghost/Quiet) - V34 === */
-  --btn-secondary-bg: transparent;
-  --btn-secondary-border: rgba(255, 255, 255, 0.06);
+  /* === Button Secondary - V43 Visible Surface === */
+  --btn-secondary-bg: rgba(255, 255, 255, 0.04); /* V43: Visible surface */
+  --btn-secondary-border: rgba(255, 255, 255, 0.12); /* V43: Visible border */
   --btn-secondary-text: var(--color-text-secondary);
-  --btn-secondary-bg-hover: rgba(255, 255, 255, 0.06);
-  --btn-secondary-border-hover: rgba(255, 255, 255, 0.12);
+  --btn-secondary-bg-hover: rgba(255, 255, 255, 0.08);
+  --btn-secondary-border-hover: rgba(255, 255, 255, 0.18);
   --btn-secondary-text-hover: var(--color-text-primary);
-  --btn-secondary-bg-active: rgba(255, 255, 255, 0.04);
-  --btn-secondary-border-active: rgba(255, 255, 255, 0.08);
+  --btn-secondary-bg-active: rgba(255, 255, 255, 0.06);
+  --btn-secondary-border-active: rgba(255, 255, 255, 0.14);
 
   /* === Button Primary (Lime CTA) - V41 Premium Treatment === */
   /* Slightly warmer lime - less neon, more material */

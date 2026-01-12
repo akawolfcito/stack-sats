@@ -70,40 +70,41 @@ watch(activeIndex, () => {
 </template>
 
 <style scoped>
-/* V39: Text tabs with visible baseline anchor */
+/* V43: Pill segmented control - iOS-style premium */
 .minimal-tabs {
   display: flex;
   position: relative;
-  height: var(--control-h);
-  background: transparent;
+  height: 36px; /* V43: Compact pill height */
+  background: rgba(255, 255, 255, 0.06); /* V43: Recessed container */
   border: none;
-  /* V39: Visible baseline - clear section boundary */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  gap: var(--space-lg); /* Gap between tabs, not flex-1 */
-  padding: 0 var(--space-xs);
+  border-radius: var(--radius-pill); /* V43: Full pill shape */
+  padding: 3px; /* V43: Inner padding for thumb */
+  gap: 0; /* V43: No gap - tabs fill container */
 }
 
-/* V32: Lime indicator 2px under active tab only */
+/* V43: Sliding thumb behind active tab */
 .tab-underline {
   position: absolute;
-  bottom: -1px;
-  height: 2px;
-  background: var(--color-accent-primary); /* V32: Lime indicator */
-  border-radius: 1px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  top: 3px;
+  bottom: 3px;
+  background: rgba(255, 255, 255, 0.12); /* V43: Elevated thumb surface */
+  border-radius: calc(var(--radius-pill) - 2px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); /* V43: Subtle depth */
 }
 
 .tab-item {
   position: relative;
   z-index: 1;
+  flex: 1; /* V43: Equal width tabs */
   height: 100%;
-  padding: 0 var(--space-sm); /* V29: Tighter padding */
+  padding: 0 var(--space-md);
   background: transparent;
   border: none;
-  border-radius: 0;
+  border-radius: calc(var(--radius-pill) - 2px);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium); /* V29: 500 inactive */
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
   cursor: pointer;
   transition: color var(--transition-fast);
@@ -111,7 +112,6 @@ watch(activeIndex, () => {
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  /* V29: No flex-1, natural width */
 }
 
 .tab-item:hover:not(.tab-item--active) {
@@ -125,6 +125,6 @@ watch(activeIndex, () => {
 
 .tab-item--active {
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold); /* V29: 600 active */
+  font-weight: var(--font-weight-semibold);
 }
 </style>
