@@ -66,19 +66,24 @@ button {
   transform: scale(0.95);
 }
 
-/* Primary Button - Electric Lime CTA */
+/* Primary Button - V41 Premium Treatment */
 .btn-primary {
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
+  background: var(--btn-primary-gradient), var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--color-accent-primary-hover);
-  transform: translateY(-1px);
+  background: var(--btn-primary-gradient), var(--btn-primary-bg-hover);
+  border-color: var(--btn-primary-border-hover);
+  box-shadow: var(--btn-primary-shadow-hover);
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(0);
+  background: var(--btn-primary-bg-active);
+  transform: translateY(1px);
+  box-shadow: var(--btn-primary-shadow);
 }
 
 .btn-primary:disabled {

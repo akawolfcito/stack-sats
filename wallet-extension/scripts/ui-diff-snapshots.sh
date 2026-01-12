@@ -1,16 +1,20 @@
 #!/bin/bash
 #
-# UI Snapshot Diff - Visual Regression Check (V38)
+# UI Snapshot Diff - Visual Regression Check (V41)
 #
 # Compares CURRENT screenshots against GOLDEN using ImageMagick.
 # V38: Strict count validation - must be 24/24 to pass.
+# V41: Added ROI (Region of Interest) comparison with stricter threshold.
 #
 # Paths:
-#   Current:  artifacts/ui/current/
-#   Golden:   artifacts/ui/golden/
-#   Diff:     artifacts/ui/diff/
+#   Current:      artifacts/ui/current/
+#   Golden:       artifacts/ui/golden/
+#   Diff:         artifacts/ui/diff/
+#   ROI Current:  artifacts/ui/current/roi/
+#   ROI Golden:   artifacts/ui/golden/roi/
+#   ROI Diff:     artifacts/ui/diff/roi/
 #
-# Usage: ./scripts/ui-diff-snapshots.sh [--threshold=N]
+# Usage: ./scripts/ui-diff-snapshots.sh [--threshold=N] [--roi-threshold=N]
 #
 # Prerequisites: ImageMagick must be installed (brew install imagemagick)
 #
@@ -26,17 +30,29 @@ CURRENT_DIR="$ARTIFACTS_DIR/current"
 GOLDEN_DIR="$ARTIFACTS_DIR/golden"
 DIFF_DIR="$ARTIFACTS_DIR/diff"
 
+# V41: ROI paths
+ROI_CURRENT_DIR="$CURRENT_DIR/roi"
+ROI_GOLDEN_DIR="$GOLDEN_DIR/roi"
+ROI_DIFF_DIR="$DIFF_DIR/roi"
+
 # Expected count per UI_CONTRACT
 EXPECTED_COUNT=24
 
 # Default threshold (percentage difference to fail)
 THRESHOLD=5
 
+# V41: ROI threshold (stricter for component-level changes)
+ROI_THRESHOLD=0.5
+
 # Parse arguments
 for arg in "$@"; do
   case $arg in
     --threshold=*)
       THRESHOLD="${arg#*=}"
+      shift
+      ;;
+    --roi-threshold=*)
+      ROI_THRESHOLD="${arg#*=}"
       shift
       ;;
   esac
@@ -193,8 +209,9 @@ echo "{
   \"success\": $([ ${#FAILURES[@]} -eq 0 ] && [ ${#MISSING_CURRENT[@]} -eq 0 ] && echo "true" || echo "false")
 }" > "$DIFF_RESULT"
 
+FULLFRAME_FAILED=false
 if [ ${#FAILURES[@]} -gt 0 ]; then
-  echo -e "\nResult: ${RED}FAILED${NC} - ${#FAILURES[@]} screenshots exceed ${THRESHOLD}% threshold"
+  echo -e "\nFull-frame: ${RED}FAILED${NC} - ${#FAILURES[@]} screenshots exceed ${THRESHOLD}% threshold"
   echo ""
   echo "Failures:"
   for f in "${FAILURES[@]}"; do
@@ -202,12 +219,123 @@ if [ ${#FAILURES[@]} -gt 0 ]; then
   done
   echo ""
   echo "Diff images saved to: $DIFF_DIR"
+  FULLFRAME_FAILED=true
+else
+  echo -e "\nFull-frame: ${GREEN}PASSED${NC} - ${#PASSES[@]}/${EXPECTED_COUNT} screenshots within ${THRESHOLD}% threshold"
+  # Clean diff dir if all passed
+  rmdir "$DIFF_DIR" 2>/dev/null || true
+fi
+
+# ═══════════════════════════════════════════════════════════
+# V41: ROI (Region of Interest) Comparison
+# ═══════════════════════════════════════════════════════════
+
+ROI_FAILED=false
+ROI_PASSES=()
+ROI_FAILURES=()
+
+# Check if ROI directories exist
+if [ -d "$ROI_GOLDEN_DIR" ] && [ -d "$ROI_CURRENT_DIR" ]; then
+  ROI_GOLDEN_COUNT=$(ls -1 "$ROI_GOLDEN_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
+  ROI_CURRENT_COUNT=$(ls -1 "$ROI_CURRENT_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
+
+  if [ "$ROI_GOLDEN_COUNT" -gt 0 ] && [ "$ROI_CURRENT_COUNT" -gt 0 ]; then
+    echo -e "\n${YELLOW}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "${YELLOW}   ROI DIFF - Component-Level Regression (V41)${NC}"
+    echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
+    echo -e "ROI Threshold: ${CYAN}${ROI_THRESHOLD}%${NC}"
+    echo -e "ROI Golden:    ${CYAN}$ROI_GOLDEN_COUNT${NC} components"
+    echo -e "ROI Current:   ${CYAN}$ROI_CURRENT_COUNT${NC} components"
+    echo ""
+
+    # Create ROI diff directory
+    mkdir -p "$ROI_DIFF_DIR"
+    rm -f "$ROI_DIFF_DIR"/*.png 2>/dev/null || true
+
+    # Compare each ROI golden screenshot
+    for golden in "$ROI_GOLDEN_DIR"/*.png; do
+      [ -f "$golden" ] || continue
+
+      filename=$(basename "$golden")
+      current="$ROI_CURRENT_DIR/$filename"
+      diff_out="$ROI_DIFF_DIR/$filename"
+
+      if [ ! -f "$current" ]; then
+        echo -e "  ${YELLOW}⚠${NC} $filename - missing in current"
+        continue
+      fi
+
+      # Compare using ImageMagick
+      DIFF_VALUE=$(compare -metric AE "$golden" "$current" "$diff_out" 2>&1 || true)
+
+      # Get total pixels
+      TOTAL_PIXELS=$(identify -format "%w*%h\n" "$golden" | bc)
+
+      # Calculate percentage
+      if [ "$TOTAL_PIXELS" -gt 0 ] && [ -n "$DIFF_VALUE" ]; then
+        PERCENT=$(echo "scale=4; ($DIFF_VALUE / $TOTAL_PIXELS) * 100" | bc 2>/dev/null || echo "0")
+      else
+        PERCENT="0"
+      fi
+
+      # Check ROI threshold
+      EXCEEDS=$(echo "$PERCENT > $ROI_THRESHOLD" | bc -l 2>/dev/null || echo "0")
+
+      if [ "$EXCEEDS" = "1" ]; then
+        ROI_FAILURES+=("$filename: ${PERCENT}%")
+        echo -e "  ${RED}✗${NC} $filename - ${PERCENT}% diff (exceeds ${ROI_THRESHOLD}%)"
+      else
+        ROI_PASSES+=("$filename")
+        echo -e "  ${GREEN}✓${NC} $filename - ${PERCENT}% diff"
+        rm -f "$diff_out"
+      fi
+    done
+
+    if [ ${#ROI_FAILURES[@]} -gt 0 ]; then
+      echo -e "\nROI Result: ${RED}FAILED${NC} - ${#ROI_FAILURES[@]} components exceed ${ROI_THRESHOLD}% threshold"
+      ROI_FAILED=true
+    else
+      echo -e "\nROI Result: ${GREEN}PASSED${NC} - ${#ROI_PASSES[@]}/$ROI_GOLDEN_COUNT components within ${ROI_THRESHOLD}% threshold"
+      rmdir "$ROI_DIFF_DIR" 2>/dev/null || true
+    fi
+  fi
+else
+  echo -e "\n${YELLOW}ROI: Skipped (no ROI baseline found)${NC}"
+fi
+
+# ═══════════════════════════════════════════════════════════
+# Final Summary
+# ═══════════════════════════════════════════════════════════
+
+echo -e "\n${YELLOW}═══════════════════════════════════════════════════════════${NC}"
+
+# Update diff result JSON with ROI data
+DIFF_RESULT="$ARTIFACTS_DIR/diff-result.json"
+echo "{
+  \"fullFrame\": {
+    \"passed\": ${#PASSES[@]},
+    \"failed\": ${#FAILURES[@]},
+    \"expected\": $EXPECTED_COUNT,
+    \"threshold\": $THRESHOLD
+  },
+  \"roi\": {
+    \"passed\": ${#ROI_PASSES[@]},
+    \"failed\": ${#ROI_FAILURES[@]},
+    \"threshold\": $ROI_THRESHOLD
+  },
+  \"success\": $([ "$FULLFRAME_FAILED" = false ] && [ "$ROI_FAILED" = false ] && echo "true" || echo "false")
+}" > "$DIFF_RESULT"
+
+if [ "$FULLFRAME_FAILED" = true ] || [ "$ROI_FAILED" = true ]; then
+  echo -e "Result: ${RED}FAILED${NC}"
+  [ "$FULLFRAME_FAILED" = true ] && echo -e "  Full-frame: ${#FAILURES[@]} failures"
+  [ "$ROI_FAILED" = true ] && echo -e "  ROI: ${#ROI_FAILURES[@]} failures"
   echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
   exit 1
 else
-  echo -e "\nResult: ${GREEN}PASSED${NC} - ${#PASSES[@]}/${EXPECTED_COUNT} screenshots within ${THRESHOLD}% threshold"
-  # Clean diff dir if all passed
-  rmdir "$DIFF_DIR" 2>/dev/null || true
+  echo -e "Result: ${GREEN}PASSED${NC}"
+  echo -e "  Full-frame: ${#PASSES[@]}/${EXPECTED_COUNT} passed"
+  [ ${#ROI_PASSES[@]} -gt 0 ] && echo -e "  ROI: ${#ROI_PASSES[@]} passed"
   echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
   exit 0
 fi

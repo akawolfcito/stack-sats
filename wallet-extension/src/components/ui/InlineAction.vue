@@ -53,7 +53,7 @@ defineEmits<{
   justify-content: center;
   padding: var(--space-xs) var(--space-sm);
   min-width: 48px;
-  height: 28px;
+  height: var(--control-h-inline);
   background: var(--surface-2);
   border: var(--border-subtle);
   border-radius: var(--radius-sm);
@@ -84,16 +84,16 @@ defineEmits<{
   outline-offset: var(--focus-ring-offset);
 }
 
-/* Variant: Accent (primary action like MAX) */
+/* Variant: Accent (primary action like MAX) - V41 tokens */
 .inline-action--accent {
-  background: var(--color-accent-primary);
-  border: none;
-  color: #0a0a0a;
+  background: var(--btn-primary-bg);
+  border: 1px solid var(--btn-primary-border);
+  color: var(--btn-primary-text);
 }
 
 .inline-action--accent:hover:not(:disabled) {
-  background: var(--color-accent-primary-hover);
-  color: #0a0a0a;
+  background: var(--btn-primary-bg-hover);
+  color: var(--btn-primary-text);
 }
 
 /* Variant: Ghost (subtle) */

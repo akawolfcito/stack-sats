@@ -74,26 +74,8 @@ function handleAction(key: string) {
   font-weight: var(--font-weight-semibold);
 }
 
-/* === V28: Primary (Send) - Lime fill, clean and confident === */
-.action-bar :deep(.btn--primary) {
-  background: var(--color-accent-primary);
-  color: #0a0a0a;
-  border: none;
-  box-shadow: none; /* Clean at rest */
-}
-
-.action-bar :deep(.btn--primary:hover:not(:disabled)) {
-  background: var(--color-accent-primary-hover);
-  box-shadow: 0 2px 8px rgba(232, 248, 89, 0.25); /* Subtle lift */
-}
-
-.action-bar :deep(.btn--primary:active:not(:disabled)) {
-  transform: translateY(1px);
-  box-shadow: none;
-}
-
-/* V34: Secondary styling moved to Button.vue via tokens */
-/* ActionBar only defines layout; button look is in Button.vue */
+/* V41: Primary/Secondary styling fully delegated to Button.vue via tokens */
+/* ActionBar only defines layout - no color overrides here */
 
 /* Icon sizing - consistent across both buttons */
 .action-bar :deep(.btn__content svg) {
