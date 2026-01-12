@@ -71,9 +71,9 @@ const explorerUrl = computed(() => {
   const chainParam = network.value === "mainnet" ? "" : `?chain=${network.value}`;
   return `${base}/txid/${formattedTxId}${chainParam}`;
 });
+// V51.9: Unified address truncation (8...8 format)
 const truncatedRecipient = computed(() => {
-  if (recipient.value.length <= 20) return recipient.value;
-  return `${recipient.value.slice(0, 10)}...${recipient.value.slice(-10)}`;
+  return truncateAddress(recipient.value.trim());
 });
 const canSubmit = computed(() => {
   return recipient.value.trim() && amount.value.trim() && !recipientError.value && !amountError.value;
