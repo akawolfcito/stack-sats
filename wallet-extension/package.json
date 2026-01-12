@@ -19,10 +19,13 @@
     "test:e2e:headed": "playwright test --headed",
     "ui:snapshots": "VITE_UI_SNAPSHOT=1 playwright test golden-screenshots --project=chromium",
     "ui:shots": "VITE_UI_SNAPSHOT=1 playwright test golden-matrix --project=chromium",
+    "ui:roi": "VITE_UI_SNAPSHOT=1 playwright test golden-roi --project=chromium",
+    "ui:all": "pnpm ui:shots && pnpm ui:roi",
     "ui:verify": "bash scripts/ui-verify-snapshots.sh",
     "ui:accept": "bash scripts/ui-accept.sh",
     "ui:diff": "bash scripts/ui-diff-snapshots.sh",
     "ui:guard": "bash scripts/ui-commit-guard.sh",
+    "ui:probe": "bash scripts/ui-style-probe.sh",
     "audit:accent": "bash scripts/audit-accent.sh",
     "audit:ui": "bash scripts/audit-ui.sh"
   },

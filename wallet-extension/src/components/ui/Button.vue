@@ -143,21 +143,24 @@ const classes = computed(() => [
   width: 100%;
 }
 
-/* === Variant: Primary === */
+/* === Variant: Primary - V41 Premium Treatment === */
 .btn--primary {
-  background: var(--color-accent-primary);
-  color: #0a0a0a;
-  box-shadow: none; /* No shadow at rest - clean */
+  background: var(--btn-primary-gradient), var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: var(--color-accent-primary-hover);
-  box-shadow: var(--shadow-elev-1); /* Subtle lift on hover */
+  background: var(--btn-primary-gradient), var(--btn-primary-bg-hover);
+  border-color: var(--btn-primary-border-hover);
+  box-shadow: var(--btn-primary-shadow-hover);
 }
 
 .btn--primary:active:not(:disabled) {
+  background: var(--btn-primary-bg-active);
   transform: translateY(1px);
-  box-shadow: none;
+  box-shadow: var(--btn-primary-shadow);
 }
 
 /* === Variant: Secondary (Ghost/Quiet) - V34 tokens === */

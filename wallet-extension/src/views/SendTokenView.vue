@@ -966,23 +966,25 @@ onBeforeMount(async () => {
   word-break: break-word;
 }
 
-/* Buttons */
+/* Buttons - V41 tokens */
 .primary-btn {
   width: 100%;
   height: var(--control-h);
-  background: var(--color-accent-primary);
-  border: none;
+  background: var(--btn-primary-gradient), var(--btn-primary-bg);
+  border: 1px solid var(--btn-primary-border);
   border-radius: var(--radius-pill);
-  color: #0a0a0a;
+  color: var(--btn-primary-text);
   font-size: var(--font-size-base);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   margin-bottom: var(--space-sm);
+  box-shadow: var(--btn-primary-shadow);
 }
 
 .primary-btn:hover {
-  filter: brightness(1.1);
+  background: var(--btn-primary-gradient), var(--btn-primary-bg-hover);
+  box-shadow: var(--btn-primary-shadow-hover);
 }
 
 .secondary-btn {
