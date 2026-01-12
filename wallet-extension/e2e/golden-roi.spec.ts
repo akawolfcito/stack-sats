@@ -145,13 +145,13 @@ const ROI_TARGETS: ROIConfig[] = [
     setup: setupUnlockedWallet,
     captureStyles: ['background-color', 'box-shadow', 'border-color'],
   },
-  // V49.4: Send flow - To textfield (premium material probe)
+  // V49.5: Send flow - To textfield (premium material + typography probe)
   {
     name: 'send-textfield-to',
     route: '/send',
     selector: '[data-roi="send-textfield-to"] .textfield',
     setup: setupUnlockedWallet,
-    captureStyles: ['background-color', 'border-color', 'border-radius', 'box-shadow'],
+    captureStyles: ['background-color', 'border-color', 'border-radius', 'box-shadow', 'font-family'],
   },
   // V49.4: Send flow - Amount textfield (premium material probe)
   {
