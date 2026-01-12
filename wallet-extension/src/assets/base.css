@@ -49,25 +49,36 @@
   --btn-secondary-bg-active: rgba(255, 255, 255, 0.06);
   --btn-secondary-border-active: rgba(255, 255, 255, 0.14);
 
-  /* === Button Primary (Lime CTA) - V41 Premium Treatment === */
-  /* Slightly warmer lime - less neon, more material */
+  /* === Button Primary (Lime CTA) - V43.1 Material Depth === */
+  /* Warmer lime - material, not neon */
   --btn-primary-bg: #C9E426;
   --btn-primary-bg-hover: #D4EE38;
   --btn-primary-bg-active: #B5CF1E;
   --btn-primary-text: #0D1208;
-  /* Subtle inner glow for depth - gradient from light to base */
+  /* V43.1: Inner highlight gradient - more pronounced top edge */
   --btn-primary-gradient: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.08) 15%,
     rgba(255, 255, 255, 0) 50%,
-    rgba(0, 0, 0, 0.05) 100%
+    rgba(0, 0, 0, 0.06) 100%
   );
-  /* Shadow with lime tint for cohesion */
-  --btn-primary-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  --btn-primary-shadow-hover: 0 2px 8px rgba(201, 228, 38, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
-  /* Border for subtle definition */
-  --btn-primary-border: rgba(0, 0, 0, 0.08);
-  --btn-primary-border-hover: rgba(0, 0, 0, 0.05);
+  /* V43.1: Shadow stack - outer depth + subtle inner highlight */
+  --btn-primary-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  --btn-primary-shadow-hover:
+    0 2px 6px rgba(201, 228, 38, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  /* V43.1: Pressed - inset shadow for "pressed in" feel */
+  --btn-primary-shadow-active:
+    inset 0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  /* V43.1: Border - visible edge definition */
+  --btn-primary-border: rgba(0, 0, 0, 0.12);
+  --btn-primary-border-hover: rgba(0, 0, 0, 0.08);
 
   /* Interaction States */
   --focus-ring: 2px solid var(--color-accent-primary);
