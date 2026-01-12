@@ -969,14 +969,14 @@ const handleManageTokens = () => {
   color: var(--color-text-secondary);
 }
 
-/* Action Bar (V27 - Premium controls) */
+/* V42: Action Bar - Clean premium separator zone */
 .actions {
-  padding: var(--space-sm) var(--page-pad-x);
+  padding: var(--space-md) var(--page-pad-x);
   margin-bottom: var(--stack-gap);
-  /* Subtle separator from balance */
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  background: rgba(255, 255, 255, 0.01);
+  /* V42: Subtle but intentional separator */
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.015);
 }
 
 /* Assets Section */

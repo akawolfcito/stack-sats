@@ -45,65 +45,76 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
+/* V42: Premium fintech balance header - hero treatment */
 .balance-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-md) var(--card-pad-x);
+  gap: var(--space-sm); /* V42: Slightly more gap for breathing room */
+  padding: var(--space-lg) var(--card-pad-x) var(--space-md);
 }
 
 .balance-main {
   display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+  align-items: baseline; /* V42: Baseline alignment for typographic precision */
+  gap: var(--space-xs); /* V42: Tighter gap between amount and symbol */
 }
 
-/* V39: Bolder hero balance - instant visual impact */
+/* V42: Hero balance - fintech premium weight + tracking */
 .balance-amount {
-  font-size: 36px;
-  font-weight: 800;
+  font-size: 38px; /* V42: Slightly larger for more presence */
+  font-weight: 700; /* V42: 700 instead of 800 - less chunky, more premium */
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em; /* V42: Slightly tighter for premium feel */
+  line-height: 1; /* V42: Exact line-height for baseline precision */
 }
 
-/* V39: Compact size for popup mode - still bigger than before */
+/* V42: Popup mode - proportionally scaled */
 .mode-popup .balance-amount {
-  font-size: 30px;
+  font-size: 32px;
 }
 
 .balance-hidden {
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
+/* V42: Symbol as typographic companion */
 .balance-symbol {
-  font-size: 16px;
+  font-size: 18px; /* V42: Larger for better proportion with amount */
   font-weight: 600;
   color: var(--color-text-secondary);
+  margin-left: var(--space-xs); /* V42: Slight offset from amount */
+  transform: translateY(-2px); /* V42: Optical alignment to baseline */
 }
 
 .mode-popup .balance-symbol {
-  font-size: 14px;
+  font-size: 15px;
+  transform: translateY(-1px);
 }
 
+/* V42: Action buttons - subtle but accessible */
 .balance-action :deep(.btn) {
   color: var(--color-text-muted);
+  opacity: 0.7;
 }
 
 .balance-action :deep(.btn:hover) {
   color: var(--color-text-primary);
   background: var(--surface-hover);
+  opacity: 1;
 }
 
-/* V39: More prominent USD chip - clear secondary indicator */
+/* V42: USD chip - premium indicator with clear hierarchy */
 .balance-usd {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  padding: var(--space-xs) var(--space-md);
-  background: var(--surface-hover);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xs); /* V42: Smaller for clear hierarchy */
+  font-weight: 600; /* V42: Bolder weight for legibility at small size */
+  color: var(--color-text-muted); /* V42: Muted for secondary status */
+  padding: 5px var(--space-md); /* V42: Slightly more vertical padding */
+  background: rgba(255, 255, 255, 0.03); /* V42: Subtle surface */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* V42: Visible but quiet border */
+  border-radius: var(--radius-pill); /* V42: Pill shape for chip identity */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em; /* V42: Slight tracking for small caps feel */
 }
 </style>
