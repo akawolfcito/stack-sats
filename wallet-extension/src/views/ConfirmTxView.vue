@@ -1,21 +1,23 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.8 Fullscreen Confirm Transaction
+ * ConfirmTxView - V51.9 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.8 Changes:
- * - Edit pencil moved into value column (associated with address)
+ * V51.9 Changes:
+ * - Edit pencil BEFORE address (pencil → address order)
+ * - Unified address truncation format (8...8 in SendView)
+ * - From/To identical structure with placeholder for parity
+ *
+ * V51.8 (retained):
  * - 2-column grid: label (72px) / value (1fr)
- * - From/To identical structure (both have address line + optional action)
- * - Edit button inline with address, doesn't affect truncation
+ * - Edit button inline with address in address-line flex
  *
  * V51.5 Fixes (retained):
  * - Zero overflow WITHOUT overflow-x:hidden hack
  * - Ambient glow: clip with overflow:hidden on wrapper
  * - All grid children: min-width:0 for proper truncation
- * - box-sizing:border-box on all elements
  */
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
@@ -100,7 +102,7 @@ function handleConfirm() {
         </span>
       </div>
 
-      <!-- V51.8: Summary Card - 2-column grid: label/value -->
+      <!-- V51.9: Summary Card - 2-column grid: label/value -->
       <div class="summary-card" data-roi="confirm-summary">
         <!-- Block 1: Parties (From/To) - identical structure -->
         <div class="summary-block">
@@ -110,24 +112,24 @@ function handleConfirm() {
             <div class="row-value row-value--address">
               <span v-if="fromLabel" class="value-name">{{ fromLabel }}</span>
               <div class="address-line">
-                <span class="value-address">{{ fromAddressShort }}</span>
                 <span class="icon-btn-placeholder" aria-hidden="true" />
+                <span class="value-address">{{ fromAddressShort }}</span>
               </div>
             </div>
           </div>
 
-          <!-- To (with Edit pencil inline with address) -->
+          <!-- To (with Edit pencil before address) -->
           <div class="summary-row" data-roi="confirm-to-row">
             <span class="row-label">To</span>
             <div class="row-value row-value--address">
               <div class="address-line">
-                <span class="value-address">{{ toAddressShort }}</span>
                 <button class="icon-btn icon-btn--ghost" @click="handleEdit" aria-label="Edit recipient">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
                     <path d="m15 5 4 4" />
                   </svg>
                 </button>
+                <span class="value-address">{{ toAddressShort }}</span>
               </div>
             </div>
           </div>
