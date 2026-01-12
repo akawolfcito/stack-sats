@@ -520,11 +520,16 @@ const handleActionClick = (key: string) => {
   else if (key === 'receive') openReceiveModal();
 };
 
-// Open wallet in full-page tab
+// Open wallet in full-page tab (only in extension context)
 const openFullPage = () => {
-  const url = chrome.runtime.getURL("index.html");
-  chrome.tabs.create({ url });
-  window.close();
+  if (typeof chrome !== "undefined" && chrome.runtime?.getURL && chrome.tabs?.create) {
+    const url = chrome.runtime.getURL("index.html");
+    chrome.tabs.create({ url });
+    window.close();
+  } else {
+    // Fallback for non-extension context (e.g., Playwright tests)
+    console.log("Full page mode not available outside extension context");
+  }
 };
 
 const copiedAddress = ref<string | null>(null);

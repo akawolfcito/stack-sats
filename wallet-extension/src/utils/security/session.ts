@@ -2,6 +2,9 @@
  * Session management module
  * Handles wallet lock/unlock state and auto-lock timeout
  * Now uses WalletVault for secure chrome.storage.local access
+ *
+ * Snapshot Mode: When __UI_SNAPSHOT_MODE__ is set in localStorage,
+ * the session auto-unlocks with a test mnemonic for visual regression tests.
  */
 
 import { ref, type Ref } from "vue";
@@ -28,6 +31,10 @@ import { scheduleCleanup } from "./memory";
 const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_UNLOCK_ATTEMPTS = 3;
 
+// Snapshot mode storage keys (for UI visual regression tests)
+const SNAPSHOT_MODE_KEY = "__UI_SNAPSHOT_MODE__";
+const SNAPSHOT_MNEMONIC_KEY = "__UI_SNAPSHOT_MNEMONIC__";
+
 export interface SessionState {
   isLocked: Ref<boolean>;
   hasWallet: Ref<boolean>;
@@ -53,11 +60,30 @@ class SessionManager {
   /**
    * Initialize the session manager (must be called on app start)
    * Handles migration from localStorage to chrome.storage.local
+   *
+   * In snapshot mode (UI visual regression tests), auto-unlocks with mock data.
    */
   async initialize(): Promise<void> {
     if (this._isInitialized.value) return;
 
     try {
+      // Check for snapshot mode FIRST (UI visual regression tests)
+      const snapshotMode = localStorage.getItem(SNAPSHOT_MODE_KEY);
+      if (snapshotMode === "true" || snapshotMode === "1") {
+        const snapshotMnemonic = localStorage.getItem(SNAPSHOT_MNEMONIC_KEY);
+        if (snapshotMnemonic) {
+          // Auto-unlock for snapshots - bypass normal auth flow
+          this._hasWallet.value = true;
+          this._isLocked.value = false;
+          this._decryptedMnemonic = snapshotMnemonic;
+          this._activeWalletId = "snapshot_test_wallet";
+          this._isInitialized.value = true;
+          console.log("[SessionManager] Snapshot mode - auto-unlocked with test wallet");
+          return;
+        }
+      }
+
+      // Normal initialization flow
       // Initialize wallet system (includes migration)
       await initializeWallets();
 

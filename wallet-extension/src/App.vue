@@ -67,13 +67,15 @@ function handleDappRequest(request: { id: string; method: string; params: unknow
   tabId.value = "queue"; // Special marker for queue mode
 }
 
-// Listen for messages from background
-chrome.runtime.onMessage.addListener((message): undefined => {
-  if (message.type === "DAPP_REQUEST" && isQueueMode.value) {
-    handleDappRequest(message.payload);
-  }
-  return undefined;
-});
+// Listen for messages from background (only in extension context)
+if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+  chrome.runtime.onMessage.addListener((message): undefined => {
+    if (message.type === "DAPP_REQUEST" && isQueueMode.value) {
+      handleDappRequest(message.payload);
+    }
+    return undefined;
+  });
+}
 
 // Checking if popup was opened from a webpage with a payload, or via the extension icon.
 // The `tabId` and `payload` are passed as query params from the openPopupConfirmation function of background.js.
@@ -95,8 +97,10 @@ onBeforeMount(async () => {
   if (capturedSearchParams.get("mode") === "queue") {
     isQueueMode.value = true;
     secureLog("Queue mode enabled, sending UI_READY");
-    // Signal to background that UI is ready
-    chrome.runtime.sendMessage({ type: "UI_READY" });
+    // Signal to background that UI is ready (only in extension context)
+    if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({ type: "UI_READY" });
+    }
     return;
   }
 
