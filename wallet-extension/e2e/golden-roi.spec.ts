@@ -123,13 +123,36 @@ const ROI_TARGETS: ROIConfig[] = [
     selector: '.keypad',
     setup: setupLockedWallet,
   },
+  // V49: Send flow - from card (account info)
+  {
+    name: 'send-from-card',
+    route: '/send',
+    selector: '.from-card',
+    setup: setupUnlockedWallet,
+  },
+  // V49: Send flow - fee card in sticky footer
+  {
+    name: 'send-fee-card',
+    route: '/send',
+    selector: '.fee-card',
+    setup: setupUnlockedWallet,
+  },
+  // V49: Send flow - continue CTA button
+  {
+    name: 'send-continue-cta',
+    route: '/send',
+    selector: '.sticky-footer .btn--primary',
+    setup: setupUnlockedWallet,
+    captureStyles: ['background-color', 'box-shadow', 'border-color'],
+  },
 ];
 
 // Expected ROI count - only counting targets that can be reliably captured
 // inline-action-max removed as it requires specific send flow context
 // V46: Added pin-keypad-unlock-compact, pin-icons-row-compact
 // V48: Added verify-pin-header, verify-pin-keypad
-const EXPECTED_ROI_COUNT = 11;
+// V49: Added send-from-card, send-fee-card, send-continue-cta
+const EXPECTED_ROI_COUNT = 14;
 
 // Helper: Clear wallet state
 async function clearWallet(page: Page) {
