@@ -28,3 +28,12 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Playwright
+playwright-report/
+test-results/
+
+# V38: UI test artifacts (current and diff are transient, golden is versioned)
+artifacts/ui/current/
+artifacts/ui/diff/
+artifacts/ui/*.json
