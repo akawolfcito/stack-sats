@@ -83,13 +83,13 @@ watch(activeIndex, () => {
   padding: 0 var(--space-xs);
 }
 
-/* V29: Short indicator under label only */
+/* V32: Lime indicator 2px under active tab only */
 .tab-underline {
   position: absolute;
   bottom: -1px;
   height: 2px;
-  background: var(--color-text-primary);
-  border-radius: 1px; /* V29: Slightly rounded ends */
+  background: var(--color-accent-primary); /* V32: Lime indicator */
+  border-radius: 1px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
