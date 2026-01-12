@@ -70,16 +70,16 @@ watch(activeIndex, () => {
 </template>
 
 <style scoped>
-/* V29 Gold: Text tabs with short indicator */
+/* V39: Text tabs with visible baseline anchor */
 .minimal-tabs {
   display: flex;
   position: relative;
   height: var(--control-h);
   background: transparent;
   border: none;
-  /* V29: Subtle baseline instead of full border */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  gap: var(--space-lg); /* V29: Gap between tabs, not flex-1 */
+  /* V39: Visible baseline - clear section boundary */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  gap: var(--space-lg); /* Gap between tabs, not flex-1 */
   padding: 0 var(--space-xs);
 }
 

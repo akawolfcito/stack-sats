@@ -59,17 +59,18 @@ const emit = defineEmits<{
   gap: var(--space-sm);
 }
 
+/* V39: Bolder hero balance - instant visual impact */
 .balance-amount {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 800;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
-/* Compact size for popup mode */
+/* V39: Compact size for popup mode - still bigger than before */
 .mode-popup .balance-amount {
-  font-size: 24px;
+  font-size: 30px;
 }
 
 .balance-hidden {
@@ -95,12 +96,14 @@ const emit = defineEmits<{
   background: var(--surface-hover);
 }
 
+/* V39: More prominent USD chip - clear secondary indicator */
 .balance-usd {
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   padding: var(--space-xs) var(--space-md);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-lg);
 }
 </style>
