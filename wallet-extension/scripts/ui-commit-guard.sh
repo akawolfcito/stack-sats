@@ -1,27 +1,37 @@
 #!/bin/bash
 #
-# UI Commit Guard - Visual Delta Verification
+# UI Commit Guard - Visual Baseline Integrity (V38)
 #
-# Ensures that commits claiming "visible delta" have corresponding diff images.
-# Fails if:
-#   - Commit message contains "visible delta" but no diff images exist
-#   - Commit message contains "visible delta" but latest/ screenshots are missing
+# Ensures golden baseline integrity before commits:
+#   1. Current screenshots exist and are complete (24/24)
+#   2. Golden baseline exists and is complete (24/24)
+#   3. No visual regressions (diff check passes)
 #
-# Usage: ./scripts/ui-commit-guard.sh [commit-message]
+# Paths:
+#   Current:  artifacts/ui/current/
+#   Golden:   artifacts/ui/golden/
+#
+# Usage: ./scripts/ui-commit-guard.sh
 #
 # Exit codes:
 #   0 - All checks passed
-#   1 - Missing visual evidence for claimed delta
+#   1 - Integrity check failed
 #
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-GOLDEN_DIR="$ROOT_DIR/docs/ui/golden"
-LATEST_DIR="$GOLDEN_DIR/latest"
-BASELINE_DIR="$GOLDEN_DIR/baseline"
-DIFF_DIR="$GOLDEN_DIR/diff"
+
+# V38: Artifacts-based paths
+ARTIFACTS_DIR="$ROOT_DIR/artifacts/ui"
+CURRENT_DIR="$ARTIFACTS_DIR/current"
+GOLDEN_DIR="$ARTIFACTS_DIR/golden"
+DIFF_DIR="$ARTIFACTS_DIR/diff"
+DIFF_RESULT="$ARTIFACTS_DIR/diff-result.json"
+
+# Expected count per UI_CONTRACT
+EXPECTED_COUNT=24
 
 # Colors
 RED='\033[0;31m'
@@ -31,109 +41,100 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 echo -e "\n${YELLOW}═══════════════════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}   UI COMMIT GUARD - Visual Delta Verification${NC}"
+echo -e "${YELLOW}   UI COMMIT GUARD - Baseline Integrity (V38)${NC}"
 echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
 
-# Get commit message (from arg or last commit)
-if [ -n "$1" ]; then
-  COMMIT_MSG="$1"
-else
-  COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
-fi
-
-# Check if commit message claims visible delta
-CLAIMS_DELTA=false
-if echo "$COMMIT_MSG" | grep -qi "visible delta\|visual change\|ui change"; then
-  CLAIMS_DELTA=true
-fi
-
-echo -e "Commit message analyzed: ${CYAN}$(echo "$COMMIT_MSG" | head -1)${NC}"
-echo -e "Claims visible delta: ${CYAN}$CLAIMS_DELTA${NC}"
-echo ""
-
-# If no visible delta claimed, pass
-if [ "$CLAIMS_DELTA" = false ]; then
-  echo -e "${GREEN}✓ No visible delta claimed - skipping visual verification${NC}"
-  echo -e "\n${YELLOW}═══════════════════════════════════════════════════════════${NC}"
-  echo -e "Result: ${GREEN}PASSED${NC}"
-  echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
-  exit 0
-fi
-
-# Visible delta claimed - verify evidence exists
 ERRORS=()
 
-# Check 1: Latest screenshots exist
-echo -e "${CYAN}[1/3] Checking for latest screenshots...${NC}"
-if [ ! -d "$LATEST_DIR" ]; then
-  ERRORS+=("No latest/ directory found - run 'pnpm ui:shots' first")
+# Check 1: Golden directory exists
+echo -e "${CYAN}[1/4] Checking golden baseline...${NC}"
+if [ ! -d "$GOLDEN_DIR" ]; then
+  ERRORS+=("No golden baseline directory - run 'pnpm ui:accept' first")
+  echo -e "  ${RED}✗ No golden directory${NC}"
 else
-  LATEST_COUNT=$(ls -1 "$LATEST_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
-  if [ "$LATEST_COUNT" -eq 0 ]; then
-    ERRORS+=("No screenshots in latest/ - run 'pnpm ui:shots' first")
+  GOLDEN_COUNT=$(ls -1 "$GOLDEN_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$GOLDEN_COUNT" -eq "$EXPECTED_COUNT" ]; then
+    echo -e "  ${GREEN}✓ Golden: $GOLDEN_COUNT/$EXPECTED_COUNT${NC}"
   else
-    echo -e "  ${GREEN}✓ Found $LATEST_COUNT screenshots in latest/${NC}"
+    ERRORS+=("Golden count mismatch: $GOLDEN_COUNT != $EXPECTED_COUNT")
+    echo -e "  ${RED}✗ Golden: $GOLDEN_COUNT/$EXPECTED_COUNT (incomplete)${NC}"
   fi
 fi
 
-# Check 2: Baseline exists for comparison
-echo -e "\n${CYAN}[2/3] Checking for baseline screenshots...${NC}"
-if [ ! -d "$BASELINE_DIR" ]; then
-  echo -e "  ${YELLOW}! No baseline/ directory - creating from latest/${NC}"
-  # This is acceptable for first-time setup
+# Check 2: Current directory exists
+echo -e "\n${CYAN}[2/4] Checking current screenshots...${NC}"
+if [ ! -d "$CURRENT_DIR" ]; then
+  ERRORS+=("No current screenshots - run 'pnpm ui:shots' first")
+  echo -e "  ${RED}✗ No current directory${NC}"
 else
-  BASELINE_COUNT=$(ls -1 "$BASELINE_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
-  if [ "$BASELINE_COUNT" -eq 0 ]; then
-    echo -e "  ${YELLOW}! No baseline screenshots - run 'pnpm ui:baseline' after verifying latest/${NC}"
+  CURRENT_COUNT=$(ls -1 "$CURRENT_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$CURRENT_COUNT" -eq "$EXPECTED_COUNT" ]; then
+    echo -e "  ${GREEN}✓ Current: $CURRENT_COUNT/$EXPECTED_COUNT${NC}"
   else
-    echo -e "  ${GREEN}✓ Found $BASELINE_COUNT screenshots in baseline/${NC}"
+    ERRORS+=("Current count mismatch: $CURRENT_COUNT != $EXPECTED_COUNT")
+    echo -e "  ${RED}✗ Current: $CURRENT_COUNT/$EXPECTED_COUNT (incomplete)${NC}"
   fi
 fi
 
-# Check 3: Diff images exist (if baseline exists)
-echo -e "\n${CYAN}[3/3] Checking for diff images...${NC}"
-if [ -d "$BASELINE_DIR" ] && [ -d "$LATEST_DIR" ]; then
-  # Check if baseline was just established (same as latest - initial setup)
-  BASELINE_HASH=$(find "$BASELINE_DIR" -name "*.png" -exec md5 -q {} \; 2>/dev/null | sort | md5 || echo "baseline")
-  LATEST_HASH=$(find "$LATEST_DIR" -name "*.png" -exec md5 -q {} \; 2>/dev/null | sort | md5 || echo "latest")
-
-  if [ "$BASELINE_HASH" = "$LATEST_HASH" ]; then
-    echo -e "  ${YELLOW}! Baseline identical to latest (initial setup)${NC}"
-    echo -e "  ${GREEN}✓ Accepting as initial baseline establishment${NC}"
-  elif [ -d "$DIFF_DIR" ]; then
-    DIFF_COUNT=$(ls -1 "$DIFF_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
-    if [ "$DIFF_COUNT" -gt 0 ]; then
-      echo -e "  ${GREEN}✓ Found $DIFF_COUNT diff images showing changes${NC}"
-    else
-      # No diff PNGs but diff ran successfully (0% change is still valid)
-      echo -e "  ${GREEN}✓ Diff check ran - no visual differences detected${NC}"
-    fi
+# Check 3: No diff images (visual regressions)
+echo -e "\n${CYAN}[3/4] Checking for visual regressions...${NC}"
+if [ -d "$DIFF_DIR" ]; then
+  DIFF_COUNT=$(ls -1 "$DIFF_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$DIFF_COUNT" -gt 0 ]; then
+    ERRORS+=("$DIFF_COUNT visual regression(s) detected - review diffs in $DIFF_DIR")
+    echo -e "  ${RED}✗ Found $DIFF_COUNT diff images (regressions)${NC}"
+    ls -1 "$DIFF_DIR"/*.png 2>/dev/null | while read f; do
+      echo -e "    ${RED}•${NC} $(basename "$f")"
+    done
   else
-    ERRORS+=("No diff/ directory - run 'pnpm ui:diff' to generate visual evidence")
+    echo -e "  ${GREEN}✓ No diff images (no regressions)${NC}"
   fi
 else
-  echo -e "  ${YELLOW}! Skipping diff check (no baseline to compare)${NC}"
+  echo -e "  ${GREEN}✓ No diff directory (no regressions)${NC}"
+fi
+
+# Check 4: Diff result file (from last ui:diff run)
+echo -e "\n${CYAN}[4/4] Checking last diff result...${NC}"
+if [ -f "$DIFF_RESULT" ]; then
+  # Parse JSON result
+  SUCCESS=$(cat "$DIFF_RESULT" | grep -o '"success": *[a-z]*' | cut -d: -f2 | tr -d ' ')
+  PASSED=$(cat "$DIFF_RESULT" | grep -o '"passed": *[0-9]*' | cut -d: -f2 | tr -d ' ')
+  FAILED=$(cat "$DIFF_RESULT" | grep -o '"failed": *[0-9]*' | cut -d: -f2 | tr -d ' ')
+
+  if [ "$SUCCESS" = "true" ]; then
+    echo -e "  ${GREEN}✓ Last diff: $PASSED/$EXPECTED_COUNT passed${NC}"
+  else
+    ERRORS+=("Last diff check failed: $FAILED regressions")
+    echo -e "  ${RED}✗ Last diff: $FAILED failed, $PASSED passed${NC}"
+  fi
+else
+  echo -e "  ${YELLOW}! No diff result file - run 'pnpm ui:diff' first${NC}"
+  # Not an error if golden and current match, but warn
 fi
 
 # Summary
 echo -e "\n${YELLOW}═══════════════════════════════════════════════════════════${NC}"
 
 if [ ${#ERRORS[@]} -gt 0 ]; then
-  echo -e "Result: ${RED}FAILED${NC} - Missing visual evidence"
+  echo -e "Result: ${RED}FAILED${NC} - ${#ERRORS[@]} issue(s) found"
   echo ""
   echo -e "${RED}Errors:${NC}"
   for err in "${ERRORS[@]}"; do
     echo -e "  ${RED}•${NC} $err"
   done
   echo ""
-  echo -e "${YELLOW}Required for commits claiming visible delta:${NC}"
-  echo "  1. Run 'pnpm ui:shots' to capture current state"
-  echo "  2. Run 'pnpm ui:diff' to generate diff images"
-  echo "  3. Include diff images in commit or documentation"
+  echo -e "${YELLOW}Required before commit:${NC}"
+  echo "  1. Run 'pnpm ui:shots' to capture current screenshots"
+  echo "  2. Run 'pnpm ui:diff' to compare against golden"
+  echo "  3. If intentional changes, run 'pnpm ui:accept' to update golden"
+  echo "  4. Re-run this guard to verify"
   echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
   exit 1
 else
-  echo -e "Result: ${GREEN}PASSED${NC} - Visual evidence present"
+  echo -e "Result: ${GREEN}PASSED${NC} - Baseline integrity verified"
+  echo -e "  Golden:  $EXPECTED_COUNT/$EXPECTED_COUNT"
+  echo -e "  Current: $EXPECTED_COUNT/$EXPECTED_COUNT"
+  echo -e "  Diffs:   0"
   echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
   exit 0
 fi

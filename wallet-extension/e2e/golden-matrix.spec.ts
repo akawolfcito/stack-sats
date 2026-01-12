@@ -1,16 +1,19 @@
 /**
- * Golden Matrix Screenshots - Visual Regression Test Suite V30
+ * Golden Matrix Screenshots - Visual Regression Test Suite V38
  *
  * Captures screenshots of all critical screens across:
  * - 2 viewports: popup (400x600), sidepanel (360x800)
  * - 2 densities: compact, comfy
+ * - 6 routes: start, unlock, user, send, usermenu, receive-modal
  *
- * V30 FIX: Injects mock wallet state for protected routes (/user, /send, /usermenu)
- * so screenshots capture real Home content, not redirect/loading screens.
+ * Total: 2 × 2 × 6 = 24 screenshots
+ *
+ * V38: Screenshots now write to artifacts/ui/current/ (never auto-overwrite golden)
+ * Use pnpm ui:accept to promote current → golden after review.
  *
  * Run with: pnpm ui:shots
  *
- * Output: docs/ui/golden/latest/{viewport}-{density}-{route}.png
+ * Output: artifacts/ui/current/{viewport}-{density}-{route}.png
  */
 import { test, Page } from '@playwright/test';
 import * as fs from 'fs';
@@ -22,9 +25,10 @@ import { TEST_MNEMONIC } from './fixtures/mock-wallet.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuration
-const GOLDEN_DIR = path.join(__dirname, '../docs/ui/golden');
-const LATEST_DIR = path.join(GOLDEN_DIR, 'latest');
+// V38: Configuration - current screenshots go to artifacts/, golden stays versioned
+const ARTIFACTS_DIR = path.join(__dirname, '../artifacts/ui');
+const CURRENT_DIR = path.join(ARTIFACTS_DIR, 'current');
+const EXPECTED_COUNT = 24; // 2 viewports × 2 densities × 6 routes
 
 const VIEWPORTS = [
   { name: 'popup', width: 400, height: 600 },
@@ -146,19 +150,19 @@ async function waitForStableState(page: Page) {
 // Helper: Capture screenshot
 async function captureScreen(page: Page, filename: string) {
   await waitForStableState(page);
-  const screenshotPath = path.join(LATEST_DIR, `${filename}.png`);
+  const screenshotPath = path.join(CURRENT_DIR, `${filename}.png`);
   await page.screenshot({ path: screenshotPath, fullPage: false });
   console.log(`  Captured: ${filename}.png`);
 }
 
 // Ensure output directory exists
 test.beforeAll(async () => {
-  if (fs.existsSync(LATEST_DIR)) {
+  if (fs.existsSync(CURRENT_DIR)) {
     // Clear previous screenshots
-    const files = fs.readdirSync(LATEST_DIR).filter(f => f.endsWith('.png'));
-    files.forEach(f => fs.unlinkSync(path.join(LATEST_DIR, f)));
+    const files = fs.readdirSync(CURRENT_DIR).filter(f => f.endsWith('.png'));
+    files.forEach(f => fs.unlinkSync(path.join(CURRENT_DIR, f)));
   } else {
-    fs.mkdirSync(LATEST_DIR, { recursive: true });
+    fs.mkdirSync(CURRENT_DIR, { recursive: true });
   }
 });
 
@@ -226,16 +230,32 @@ for (const viewport of VIEWPORTS) {
   });
 }
 
-// Summary
+// V38: Summary with count validation
 test.afterAll(async () => {
   console.log('\n========================================');
-  console.log('Golden Matrix Screenshots captured to:');
-  console.log(`  ${LATEST_DIR}`);
-  console.log('========================================\n');
+  console.log('Golden Matrix Screenshots - V38');
+  console.log('========================================');
+  console.log(`Output: ${CURRENT_DIR}`);
 
-  const files = fs.readdirSync(LATEST_DIR).filter(f => f.endsWith('.png'));
-  console.log(`Total screenshots: ${files.length}`);
-  console.log(`Expected: ${VIEWPORTS.length * DENSITIES.length * ROUTES.length}`);
+  const files = fs.existsSync(CURRENT_DIR)
+    ? fs.readdirSync(CURRENT_DIR).filter(f => f.endsWith('.png'))
+    : [];
+  const actual = files.length;
+  const expected = EXPECTED_COUNT;
+
+  console.log(`\nCount: ${actual}/${expected}`);
+
+  if (actual === expected) {
+    console.log('Status: ✓ COMPLETE');
+  } else {
+    console.log(`Status: ✗ INCOMPLETE (missing ${expected - actual})`);
+  }
+
   console.log('\nFiles:');
   files.sort().forEach(f => console.log(`  - ${f}`));
+  console.log('========================================\n');
+
+  // V38: Write count file for ui:guard validation
+  const countFile = path.join(ARTIFACTS_DIR, 'current-count.json');
+  fs.writeFileSync(countFile, JSON.stringify({ actual, expected, complete: actual === expected }, null, 2));
 });
