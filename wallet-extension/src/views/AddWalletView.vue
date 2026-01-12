@@ -3,6 +3,7 @@ import { ref, nextTick, computed } from "vue";
 import { randomSeedPhrase } from "@stacks/wallet-sdk";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
+import ImportMnemonicModal from "@/components/ImportMnemonicModal.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import { Button } from "@/components/ui";
@@ -37,6 +38,7 @@ const pin = ref("");
 const pinError = ref("");
 const isLoading = ref(false);
 const importError = ref("");
+const showImportModal = ref(false);
 
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
 
@@ -53,26 +55,13 @@ function handleGenerateSecret() {
 
 function handleImportMnemonic() {
   importError.value = "";
-  const seedPhrase = prompt("Enter your 24-word mnemonic seed phrase");
+  showImportModal.value = true;
+}
 
-  if (!seedPhrase) return;
-
-  const trimmed = seedPhrase.trim().toLowerCase();
-  const words = trimmed.split(/\s+/);
-
-  if (words.length !== 24 && words.length !== 12) {
-    importError.value = "Mnemonic must be 12 or 24 words";
-    return;
-  }
-
-  const isValidFormat = words.every((word) => /^[a-z]+$/.test(word));
-  if (!isValidFormat) {
-    importError.value = "Invalid mnemonic format";
-    return;
-  }
-
+function handleImportConfirm(seedPhrase: string) {
+  showImportModal.value = false;
   secureLog("Mnemonic imported for new wallet");
-  mnemonic.value = trimmed;
+  mnemonic.value = seedPhrase;
   currentStep.value = "mnemonic";
 }
 
@@ -275,6 +264,13 @@ function handleStepBack() {
         <p v-if="isLoading" class="loading-text">Creating wallet...</p>
       </div>
     </div>
+
+    <!-- Import Mnemonic Modal -->
+    <ImportMnemonicModal
+      :is-open="showImportModal"
+      @close="showImportModal = false"
+      @confirm="handleImportConfirm"
+    />
   </ScreenShell>
 </template>
 
