@@ -1,11 +1,14 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.10 Fullscreen Confirm Transaction
+ * ConfirmTxView - V51.11 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.10 Changes:
+ * V51.11 Changes:
+ * - Perfect pencil icon centering: inline-flex + line-height:0 + SVG display:block
+ *
+ * V51.10 (retained):
  * - Compact pencil icon (20px vs 28px) for better alignment
  *
  * V51.9 (retained):
@@ -384,10 +387,11 @@ function handleConfirm() {
   flex: 0 0 auto;
 }
 
-/* V51.10: Ghost icon button - compact, inline with address */
+/* V51.11: Ghost icon button - perfect centering */
 .icon-btn {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
@@ -397,6 +401,8 @@ function handleConfirm() {
   color: var(--color-text-muted);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
+  line-height: 0; /* Prevent baseline offset */
+  padding: 0;
 }
 
 .icon-btn--ghost:hover {
@@ -408,8 +414,12 @@ function handleConfirm() {
   background: var(--surface-pressed);
 }
 
+/* V51.11: SVG icon - block display prevents baseline/descender offset */
 .icon-btn svg {
+  display: block;
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
 }
 
 /* V51.1: Account name - secondary */
