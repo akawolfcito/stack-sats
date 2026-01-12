@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import PinInput from "@/components/PinInput.vue";
+import { ref, onMounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import ListGroup from "@/components/list/ListGroup.vue";
@@ -27,6 +26,7 @@ import {
 import { DensityService, type DensityMode } from "@/services/density";
 
 const router = useRouter();
+const route = useRoute();
 
 // Density mode state
 const densityMode = ref<DensityMode>("auto");
@@ -63,8 +63,6 @@ const backupMessage = ref<{ type: "success" | "error"; text: string } | null>(nu
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const showImportConfirm = ref(false);
 const pendingImportWallet = ref<WalletEntry | null>(null);
-const showBackupPinInput = ref(false);
-const backupPinError = ref("");
 
 onMounted(async () => {
   loadDensityMode();
@@ -200,10 +198,9 @@ function handlePinCancel() {
   deleteError.value = "";
 }
 
-// Backup functions
+// V48: Backup functions - navigate to fullscreen PIN verification
 async function handleExportBackup() {
   backupMessage.value = null;
-  backupPinError.value = "";
 
   const activeWallet = await getActiveWalletAsync();
   if (!activeWallet) {
@@ -211,21 +208,21 @@ async function handleExportBackup() {
     return;
   }
 
-  showBackupPinInput.value = true;
+  // Navigate to fullscreen PIN verification
+  router.push({
+    path: "/verify-pin",
+    query: {
+      action: "backup",
+      returnTo: "/usermenu",
+    },
+  });
 }
 
-async function handleBackupPinComplete(pin: string) {
-  const mnemonic = await sessionManager.unlock(pin);
-
-  if (!mnemonic) {
-    backupPinError.value = "Incorrect PIN. Attempts remaining: " + (3 - sessionManager.failedAttempts);
-    return;
-  }
-
+// V48: Handle return from PIN verification
+async function handlePinVerifiedReturn() {
   const activeWallet = await getActiveWalletAsync();
   if (!activeWallet) {
     backupMessage.value = { type: "error", text: "No active wallet to export" };
-    showBackupPinInput.value = false;
     return;
   }
 
@@ -240,18 +237,24 @@ async function handleBackupPinComplete(pin: string) {
     secureLog("Backup export failed", { error: String(error) });
   }
 
-  showBackupPinInput.value = false;
-  backupPinError.value = "";
-
   setTimeout(() => {
     backupMessage.value = null;
   }, 3000);
 }
 
-function cancelBackupPin() {
-  showBackupPinInput.value = false;
-  backupPinError.value = "";
-}
+// V48: Watch for return from verify-pin route
+watch(
+  () => route.query,
+  async (query) => {
+    if (query.pinVerified === "true" && query.action === "backup") {
+      // Clear query params
+      router.replace({ path: "/usermenu" });
+      // Execute backup
+      await handlePinVerifiedReturn();
+    }
+  },
+  { immediate: true }
+);
 
 function triggerFileInput() {
   backupMessage.value = null;
@@ -555,29 +558,7 @@ function cancelImport() {
       </template>
     </ModalScaffold>
 
-    <!-- Backup PIN Modal -->
-    <ModalScaffold
-      :is-open="showBackupPinInput"
-      title="Verify PIN"
-      @close="cancelBackupPin"
-    >
-      <template #icon>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-      </template>
-      <p>Enter your PIN to export backup</p>
-      <PinInput
-        mode="unlock"
-        @complete="handleBackupPinComplete"
-        @cancel="cancelBackupPin"
-      />
-      <p v-if="backupPinError" class="error-text">{{ backupPinError }}</p>
-      <template #actions>
-        <Button variant="secondary" full-width @click="cancelBackupPin">Cancel</Button>
-      </template>
-    </ModalScaffold>
+    <!-- V48: Backup PIN verification moved to fullscreen /verify-pin route -->
 
     <!-- Import Confirmation Modal -->
     <ModalScaffold
@@ -862,4 +843,6 @@ function cancelImport() {
   color: var(--color-text-primary) !important;
   font-weight: var(--font-weight-medium);
 }
+
+/* V48: PIN modal styles removed - now using fullscreen /verify-pin route */
 </style>

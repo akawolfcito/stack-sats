@@ -95,11 +95,41 @@ const ROI_TARGETS: ROIConfig[] = [
     setup: clearWallet,
     captureStyles: ['background-color', 'border-color', 'color'],
   },
+  // V46: PIN keypad on Unlock screen
+  {
+    name: 'pin-keypad-unlock-compact',
+    route: '/unlock',
+    selector: '.keypad',
+    setup: setupLockedWallet,
+  },
+  // V46: PIN icons row (biometric + backspace)
+  {
+    name: 'pin-icons-row-compact',
+    route: '/unlock',
+    selector: '.keypad-btn--action svg',
+    setup: setupLockedWallet,
+  },
+  // V48: Verify PIN fullscreen - header area (logo + title)
+  {
+    name: 'verify-pin-header',
+    route: '/verify-pin?action=backup&returnTo=/usermenu',
+    selector: '.verify-header',
+    setup: setupLockedWallet,
+  },
+  // V48: Verify PIN fullscreen - keypad
+  {
+    name: 'verify-pin-keypad',
+    route: '/verify-pin?action=backup&returnTo=/usermenu',
+    selector: '.keypad',
+    setup: setupLockedWallet,
+  },
 ];
 
 // Expected ROI count - only counting targets that can be reliably captured
 // inline-action-max removed as it requires specific send flow context
-const EXPECTED_ROI_COUNT = 7;
+// V46: Added pin-keypad-unlock-compact, pin-icons-row-compact
+// V48: Added verify-pin-header, verify-pin-keypad
+const EXPECTED_ROI_COUNT = 11;
 
 // Helper: Clear wallet state
 async function clearWallet(page: Page) {
@@ -116,6 +146,20 @@ async function setupUnlockedWallet(page: Page) {
     sessionStorage.clear();
     localStorage.setItem('__UI_SNAPSHOT_MODE__', 'true');
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
+    localStorage.setItem('selected_network', 'devnet');
+    localStorage.setItem('density_mode', 'compact');
+  }, TEST_MNEMONIC);
+}
+
+// V46: Helper: Setup locked wallet (has wallet but not unlocked)
+async function setupLockedWallet(page: Page) {
+  await page.evaluate((mnemonic) => {
+    localStorage.clear();
+    sessionStorage.clear();
+    // Set wallet_encrypted to simulate existing wallet
+    localStorage.setItem('__UI_SNAPSHOT_MODE__', 'true');
+    localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
+    localStorage.setItem('__UI_SNAPSHOT_LOCKED__', 'true');
     localStorage.setItem('selected_network', 'devnet');
     localStorage.setItem('density_mode', 'compact');
   }, TEST_MNEMONIC);

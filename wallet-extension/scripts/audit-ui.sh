@@ -175,6 +175,8 @@ HARDCODE_ALLOWLIST=(
   "src/views/CreatePasswordView.vue"
   "src/views/ConfirmMnemonicView.vue"
   "src/views/AddTokenView.vue"
+  # V48: VerifyPinView reuses UnlockView scaffold
+  "src/views/VerifyPinView.vue"
 )
 
 HARDCODE_VIOLATIONS=()
