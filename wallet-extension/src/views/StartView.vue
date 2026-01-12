@@ -3,6 +3,7 @@ import { onBeforeMount, ref, nextTick } from "vue";
 import { randomSeedPhrase } from "@stacks/wallet-sdk";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
+import ImportMnemonicModal from "@/components/ImportMnemonicModal.vue";
 import { Button } from "@/components/ui";
 import { encryptWithPIN, isValidPIN } from "@/utils/security";
 import { sessionManager } from "@/utils/security/session";
@@ -20,6 +21,7 @@ const pinConfirm = ref("");
 const pinError = ref("");
 const isLoading = ref(false);
 const importError = ref("");
+const showImportModal = ref(false);
 
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
 
@@ -31,31 +33,17 @@ const handleGenerateSecret = () => {
   currentStep.value = "mnemonic";
 };
 
-// Import existing mnemonic
+// Open import modal
 const handleImportMnemonic = () => {
   importError.value = "";
-  const seedPhrase = prompt("Enter your 24-word mnemonic seed phrase");
+  showImportModal.value = true;
+};
 
-  if (!seedPhrase) return;
-
-  const trimmed = seedPhrase.trim().toLowerCase();
-  const words = trimmed.split(/\s+/);
-
-  // Basic validation
-  if (words.length !== 24 && words.length !== 12) {
-    importError.value = "Mnemonic must be 12 or 24 words";
-    return;
-  }
-
-  // Basic validation - check if words look valid (alphanumeric lowercase)
-  const isValidFormat = words.every((word) => /^[a-z]+$/.test(word));
-  if (!isValidFormat) {
-    importError.value = "Invalid mnemonic format";
-    return;
-  }
-
+// Handle confirmed import from modal
+const handleImportConfirm = (seedPhrase: string) => {
+  showImportModal.value = false;
   secureLog("Mnemonic imported");
-  mnemonic.value = trimmed;
+  mnemonic.value = seedPhrase;
   currentStep.value = "mnemonic";
 };
 
@@ -270,6 +258,13 @@ onBeforeMount(() => {
 
       <p v-if="isLoading" class="loading-text">Creating wallet...</p>
     </div>
+
+    <!-- Import Mnemonic Modal -->
+    <ImportMnemonicModal
+      :is-open="showImportModal"
+      @close="showImportModal = false"
+      @confirm="handleImportConfirm"
+    />
   </section>
 </template>
 
@@ -358,7 +353,7 @@ onBeforeMount(() => {
 }
 
 .title {
-  font-size: 32px;
+  font-size: var(--font-size-3xl);
   font-weight: 600;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
@@ -399,7 +394,7 @@ onBeforeMount(() => {
 }
 
 .security-badge span {
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -426,7 +421,7 @@ onBeforeMount(() => {
 }
 
 .step-title {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--color-text-primary);
   text-align: center;

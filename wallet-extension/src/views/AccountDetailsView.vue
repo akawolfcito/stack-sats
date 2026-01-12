@@ -16,6 +16,7 @@ import AddressCard from "@/components/account/AddressCard.vue";
 import AddressQrModal from "@/components/account/AddressQrModal.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import { ModalScaffold, Button } from "@/components/ui";
 
 const router = useRouter();
 const route = useRoute();
@@ -33,6 +34,10 @@ const qrModalOpen = ref(false);
 const qrModalLabel = ref("");
 const qrModalAddress = ref("");
 const qrModalAsset = ref<"STX" | "BTC" | "P2TR">("STX");
+
+// Coming soon modal state
+const showComingSoonModal = ref(false);
+const comingSoonFeature = ref("");
 
 // Get account index from route params
 const accountIndex = computed(() => {
@@ -122,13 +127,13 @@ function handleCloseQr() {
 }
 
 function handleViewPrivateKey() {
-  // TODO: Implement with PIN verification
-  alert("This feature requires PIN verification. Coming soon!");
+  comingSoonFeature.value = "Private Key";
+  showComingSoonModal.value = true;
 }
 
 function handleViewSecretPhrase() {
-  // TODO: Implement with PIN verification
-  alert("This feature requires PIN verification. Coming soon!");
+  comingSoonFeature.value = "Secret Phrase";
+  showComingSoonModal.value = true;
 }
 
 function handleClose() {
@@ -292,6 +297,34 @@ function handleClose() {
       :assetTag="qrModalAsset"
       @close="handleCloseQr"
     />
+
+    <!-- Coming Soon Modal -->
+    <ModalScaffold
+      :is-open="showComingSoonModal"
+      :title="`View ${comingSoonFeature}`"
+      variant="default"
+      @close="showComingSoonModal = false"
+    >
+      <template #icon>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </template>
+
+      <p>
+        This feature requires PIN verification and is <strong>coming soon</strong>.
+      </p>
+      <p style="margin-top: var(--space-sm); font-size: var(--font-size-xs);">
+        Your security is our priority.
+      </p>
+
+      <template #actions>
+        <Button variant="primary" full-width @click="showComingSoonModal = false">
+          Got it
+        </Button>
+      </template>
+    </ModalScaffold>
   </ScreenShell>
 </template>
 
