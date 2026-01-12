@@ -662,7 +662,7 @@ function cancelImport() {
   margin: 8px 0 0;
   padding: 12px 16px;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   text-align: center;
 }
 
@@ -715,7 +715,7 @@ function cancelImport() {
   background: transparent;
   border: none;
   border-radius: calc(var(--radius-md) - 2px);
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
   cursor: pointer;
@@ -735,7 +735,7 @@ function cancelImport() {
 /* Version Footer */
 .version-footer {
   text-align: center;
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
   font-weight: 500;
   color: #4b5563;
   letter-spacing: 0.15em;
@@ -773,14 +773,14 @@ function cancelImport() {
 }
 
 .warning-card h3 {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-error);
   margin: 0 0 12px;
 }
 
 .warning-card p {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: 1.6;
   margin: 0;
@@ -793,7 +793,7 @@ function cancelImport() {
 }
 
 .confirm-label {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
@@ -827,7 +827,7 @@ function cancelImport() {
 
 .error-text {
   color: var(--color-error);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   text-align: center;
   margin: 0;
 }
@@ -851,7 +851,7 @@ function cancelImport() {
 }
 
 .pin-prompt {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   color: var(--color-text-secondary);
   text-align: center;
   margin: 0;

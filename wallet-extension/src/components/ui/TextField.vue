@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+/**
+ * TextField variant type
+ * @deprecated 'neumorphic' variant is deprecated - use 'default' for new implementations
+ */
 export type TextFieldVariant = 'default' | 'neumorphic';
 
 const props = withDefaults(
@@ -185,9 +189,13 @@ const hasSuffix = computed(() => !!slots.suffix);
   box-shadow: 0 0 0 2px var(--color-error-muted);
 }
 
-/* === Variant: Neumorphic === */
+/* === Variant: Neumorphic (DEPRECATED - V26) ===
+ * This variant is deprecated and will be removed in a future version.
+ * Use 'default' variant instead for new implementations.
+ * Kept for backward compatibility with SendView.
+ */
 .textfield--neumorphic {
-  background: #16180c;
+  background: var(--color-bg-elevated);
   border: none;
   border-radius: var(--radius-lg);
   box-shadow:
@@ -199,18 +207,18 @@ const hasSuffix = computed(() => !!slots.suffix);
   box-shadow:
     inset 2px 2px 5px rgba(0, 0, 0, 0.4),
     inset -1px -1px 1px rgba(255, 255, 255, 0.05),
-    0 0 0 1px rgba(215, 248, 46, 0.5);
+    0 0 0 1px var(--color-accent-primary-muted);
 }
 
 .textfield--neumorphic.textfield--error {
   box-shadow:
     inset 2px 2px 5px rgba(0, 0, 0, 0.4),
     inset -1px -1px 1px rgba(255, 255, 255, 0.05),
-    0 0 0 1px rgba(255, 107, 107, 0.5);
+    0 0 0 1px var(--color-error-muted);
 }
 
 .textfield--neumorphic .textfield__input::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--color-text-muted);
 }
 
 /* === Disabled state === */

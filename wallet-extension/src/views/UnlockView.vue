@@ -320,7 +320,7 @@ onMounted(() => {
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
@@ -353,7 +353,7 @@ onMounted(() => {
 }
 
 .reset-header h1 {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -420,7 +420,7 @@ onMounted(() => {
 
 /* Headline */
 .danger-headline {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0 0 8px;
@@ -429,7 +429,7 @@ onMounted(() => {
 
 /* Danger Text */
 .danger-text {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: #9ca3af;
   line-height: 1.6;
   margin: 0 0 24px;
@@ -450,7 +450,7 @@ onMounted(() => {
 }
 
 .input-label {
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   font-weight: 600;
   color: #6b7280;
   text-transform: uppercase;
@@ -473,7 +473,7 @@ onMounted(() => {
   border-radius: 12px;
   color: var(--color-text-primary);
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.3em;
@@ -536,7 +536,7 @@ onMounted(() => {
 }
 
 .info-note p {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: #6b7280;
   line-height: 1.5;
   margin: 0;

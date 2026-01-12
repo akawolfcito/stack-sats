@@ -115,12 +115,13 @@ function handleClick() {
   cursor: not-allowed;
 }
 
-/* Icon - V29 Gold: Clean chip styling */
+/* V39: Icon chip - elevated treatment */
 .list-row-icon {
   width: var(--icon-btn-size); /* 28px compact, 40px comfy */
   height: var(--icon-btn-size);
   border-radius: var(--radius-chip);
-  background: rgba(255, 255, 255, 0.08); /* V29: Visible but subtle */
+  background: rgba(255, 255, 255, 0.12); /* V39: More visible */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); /* V39: Subtle inner highlight */
   display: flex;
   align-items: center;
   justify-content: center;
