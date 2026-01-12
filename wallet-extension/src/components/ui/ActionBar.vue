@@ -92,24 +92,8 @@ function handleAction(key: string) {
   box-shadow: none;
 }
 
-/* === V31: Secondary (Receive) - Premium but quiet (ghost-ish) === */
-.action-bar :deep(.btn--secondary) {
-  background: transparent; /* V31: Ghost at rest */
-  border: 1px solid rgba(255, 255, 255, 0.06); /* V31: Nearly invisible border */
-  color: var(--color-text-secondary); /* V31: Muted text, not primary */
-}
-
-.action-bar :deep(.btn--secondary:hover:not(:disabled)) {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: var(--color-text-primary); /* V31: Full contrast on hover */
-}
-
-.action-bar :deep(.btn--secondary:active:not(:disabled)) {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-  transform: translateY(1px);
-}
+/* V34: Secondary styling moved to Button.vue via tokens */
+/* ActionBar only defines layout; button look is in Button.vue */
 
 /* Icon sizing - consistent across both buttons */
 .action-bar :deep(.btn__content svg) {

@@ -160,25 +160,25 @@ const classes = computed(() => [
   box-shadow: none;
 }
 
-/* === Variant: Secondary === */
+/* === Variant: Secondary (Ghost/Quiet) - V34 tokens === */
 .btn--secondary {
-  /* Pro surface + visible border, no glow */
-  background: var(--surface-2);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--btn-secondary-border);
+  color: var(--btn-secondary-text);
   font-weight: var(--font-weight-medium);
   box-shadow: none;
 }
 
 .btn--secondary:hover:not(:disabled) {
-  background: var(--surface-3);
-  border-color: var(--color-border-hover);
+  background: var(--btn-secondary-bg-hover);
+  border-color: var(--btn-secondary-border-hover);
+  color: var(--btn-secondary-text-hover);
 }
 
 .btn--secondary:active:not(:disabled) {
   transform: translateY(1px);
-  background: var(--surface-pressed);
-  border-color: var(--color-border);
+  background: var(--btn-secondary-bg-active);
+  border-color: var(--btn-secondary-border-active);
 }
 
 /* === Variant: Ghost === */

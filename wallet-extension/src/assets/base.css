@@ -39,6 +39,16 @@
   --surface-hover: rgba(255, 255, 255, 0.05);     /* Bumped from 0.04 */
   --surface-pressed: rgba(255, 255, 255, 0.10);   /* Bumped from 0.08 */
 
+  /* === Button Secondary (Ghost/Quiet) - V34 === */
+  --btn-secondary-bg: transparent;
+  --btn-secondary-border: rgba(255, 255, 255, 0.06);
+  --btn-secondary-text: var(--color-text-secondary);
+  --btn-secondary-bg-hover: rgba(255, 255, 255, 0.06);
+  --btn-secondary-border-hover: rgba(255, 255, 255, 0.12);
+  --btn-secondary-text-hover: var(--color-text-primary);
+  --btn-secondary-bg-active: rgba(255, 255, 255, 0.04);
+  --btn-secondary-border-active: rgba(255, 255, 255, 0.08);
+
   /* Interaction States */
   --focus-ring: 2px solid var(--color-accent-primary);
   --focus-ring-offset: 2px;
@@ -69,13 +79,16 @@
   --font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 2rem;
+  --font-size-2xs: 0.625rem;  /* 10px - micro labels */
+  --font-size-xs: 0.75rem;    /* 12px - captions */
+  --font-size-sm: 0.875rem;   /* 14px - body small */
+  --font-size-base: 1rem;     /* 16px - body */
+  --font-size-lg: 1.125rem;   /* 18px - subheadings */
+  --font-size-xl: 1.25rem;    /* 20px - headings */
+  --font-size-2xl: 1.5rem;    /* 24px - section titles */
+  --font-size-3xl: 2rem;      /* 32px - page titles */
+  --font-size-4xl: 2.5rem;    /* 40px - hero amounts */
+  --font-size-5xl: 3rem;      /* 48px - balance hero */
 
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -115,8 +128,9 @@
   /* Heights - REDUCED for tighter UI (v14) */
   --header-h: 40px;
   --row-h: 40px;
-  --control-h: 40px;   /* -4px from 44px - VISIBLE */
-  --icon-btn-size: 28px; /* -4px from 32px - VISIBLE */
+  --control-h: 40px;         /* -4px from 44px - VISIBLE */
+  --control-h-inline: 28px;  /* Compact height for inline actions (MAX, PASTE) */
+  --icon-btn-size: 28px;     /* -4px from 32px - VISIBLE */
 
   /* Spacing - Layout specific */
   --section-gap: 16px;
@@ -150,6 +164,7 @@
   --header-h: 40px;
   --row-h: 40px;
   --control-h: 40px;
+  --control-h-inline: 28px;
   --icon-btn-size: 28px;
 
   --section-gap: 14px;
@@ -176,6 +191,7 @@
   --header-h: 56px;
   --row-h: 52px;
   --control-h: 52px;
+  --control-h-inline: 32px;
   --icon-btn-size: 40px;
 
   --section-gap: 24px;
@@ -205,6 +221,7 @@
     --header-h: 40px;
     --row-h: 40px;
     --control-h: 40px;
+    --control-h-inline: 28px;
     --icon-btn-size: 28px;
 
     --section-gap: 14px;
