@@ -350,12 +350,12 @@ function truncateAddress(address: string): string {
         <span class="notice-text">Your balance is too low to send STX (fee required).</span>
       </div>
 
-      <!-- Recipient Input -->
+      <!-- V49.1: Recipient Input - default variant for card-style surface -->
       <div class="form-group">
         <label class="form-label">To</label>
         <TextField
           v-model="recipient"
-          variant="neumorphic"
+          variant="default"
           mono
           placeholder="Address or BNS Name"
           :error="recipientError"
@@ -368,18 +368,18 @@ function truncateAddress(address: string): string {
         <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
       </div>
 
-      <!-- Amount Input -->
+      <!-- V49.1: Amount Input - MAX uses default (secondary chip) to not compete with CTA -->
       <div class="form-group">
         <label class="form-label">Amount</label>
         <TextField
           v-model="amount"
-          variant="neumorphic"
+          variant="default"
           placeholder="0.00"
           :error="amountError"
           @blur="validateAmount"
         >
           <template #suffix>
-            <InlineAction label="Max" variant="accent" @click="handleMaxAmount" />
+            <InlineAction label="Max" variant="default" @click="handleMaxAmount" />
           </template>
         </TextField>
         <div class="input-hint-row">
@@ -388,7 +388,7 @@ function truncateAddress(address: string): string {
         </div>
       </div>
 
-      <!-- Memo Input -->
+      <!-- V49.1: Memo Input - default variant -->
       <div class="form-group">
         <div class="label-row">
           <label class="form-label">Memo</label>
@@ -396,7 +396,7 @@ function truncateAddress(address: string): string {
         </div>
         <TextField
           v-model="memo"
-          variant="neumorphic"
+          variant="default"
           placeholder="Enter a message to the recipient"
           :maxlength="34"
         />
@@ -695,31 +695,36 @@ function truncateAddress(address: string): string {
   letter-spacing: 0.05em;
 }
 
-/* Form Group */
+/* V49.1: Form Group - tighter vertical rhythm */
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-md);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
 
 .form-label {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-left: var(--space-sm);
 }
 
 .label-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   padding: 0 var(--space-sm);
 }
 
 .optional-label {
-  font-size: var(--font-size-xs);
-  color: rgba(255, 255, 255, 0.2);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* InlineAction styles are handled by the component */
@@ -728,12 +733,12 @@ function truncateAddress(address: string): string {
   display: flex;
   justify-content: flex-end;
   padding: 0 var(--space-sm);
-  min-height: 20px;
+  min-height: 18px;
 }
 
 .input-hint {
   font-size: var(--font-size-xs);
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--color-text-muted);
   letter-spacing: 0.02em;
 }
 
@@ -743,69 +748,74 @@ function truncateAddress(address: string): string {
   margin: 0;
 }
 
-/* V44: Fee Card - Using V43 card pattern */
+/* V49.1: Fee Card - V43 card pattern with token-based styling */
 .fee-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
-  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-md);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
   cursor: help;
-  transition: background 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .fee-card:hover {
-  background: rgba(255, 255, 255, 0.04); /* V43: Subtle hover */
+  background: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .fee-left {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
 
 .fee-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.6);
-  transition: color 0.15s ease;
+  width: 32px;
+  height: 32px;
+  background: var(--surface-hover);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
 }
 
 .fee-card:hover .fee-icon {
-  color: var(--color-text-primary); /* v17: neutral hover */
+  color: var(--color-text-secondary);
+  background: var(--surface-pressed);
 }
 
 .fee-label {
   font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
 }
 
 .fee-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 2px;
 }
 
 .fee-value {
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .fee-type {
   font-size: var(--font-size-2xs);
-  color: rgba(255, 255, 255, 0.2);
-  letter-spacing: 0.03em;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* Sticky Footer */
