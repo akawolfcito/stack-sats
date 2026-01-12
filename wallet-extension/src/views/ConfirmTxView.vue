@@ -1,16 +1,20 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.5 Fullscreen Confirm Transaction
+ * ConfirmTxView - V51.6 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.5 Fixes:
+ * V51.6 Changes:
+ * - Removed copy UI (no tap-to-copy)
+ * - Added Edit affordance to navigate back to Send with draft preserved
+ * - From/To styling unified (both read-only display)
+ *
+ * V51.5 Fixes (retained):
  * - Zero overflow WITHOUT overflow-x:hidden hack
- * - Ambient glow: clip with overflow:hidden on wrapper, not on scroll container
- * - Copy feedback: inline flow instead of position:absolute outside container
+ * - Ambient glow: clip with overflow:hidden on wrapper
  * - All grid children: min-width:0 for proper truncation
- * - box-sizing:border-box on all elements via *, *::before, *::after
+ * - box-sizing:border-box on all elements
  */
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
@@ -31,10 +35,6 @@ const amountText = ref("");
 const feeText = ref("");
 const totalText = ref("");
 const memo = ref("");
-
-// Copy feedback state
-const copied = ref(false);
-let copyTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Computed: check if test/dev network
 const isTestOrDev = computed(() => {
@@ -60,15 +60,9 @@ onMounted(() => {
   }
 });
 
-// V51.4: Tap-to-copy with feedback
-function handleCopyTo() {
-  navigator.clipboard.writeText(toAddress.value);
-  copied.value = true;
-
-  if (copyTimeout) clearTimeout(copyTimeout);
-  copyTimeout = setTimeout(() => {
-    copied.value = false;
-  }, 2000);
+// V51.6: Edit - go back to Send with draft preserved
+function handleEdit() {
+  router.push({ path: "/send", query: { edit: "true" } });
 }
 
 function handleCancel() {
@@ -119,19 +113,15 @@ function handleConfirm() {
             <span class="row-action" />
           </div>
 
-          <!-- To (tap-to-copy) -->
+          <!-- To (with Edit action) -->
           <div class="summary-row" data-roi="confirm-to-row">
             <span class="row-label">To</span>
-            <button
-              class="row-value row-value--copyable"
-              :class="{ 'row-value--copied': copied }"
-              title="Tap to copy address"
-              @click="handleCopyTo"
-            >
-              <span v-if="copied" class="copy-feedback">Copied</span>
+            <div class="row-value">
               <span class="value-address">{{ toAddressShort }}</span>
+            </div>
+            <button class="row-action row-action--edit" @click="handleEdit">
+              Edit
             </button>
-            <span class="row-action" />
           </div>
         </div>
 
@@ -370,39 +360,25 @@ function handleConfirm() {
   min-width: 0;
 }
 
-/* V51.5: Copyable address - inline tap target, no position:absolute overflow */
-.row-value--copyable {
-  flex-direction: row;
-  gap: var(--space-xs);
+/* V51.6: Edit button in action column */
+.row-action--edit {
   background: transparent;
   border: none;
-  padding: var(--space-xs) var(--space-sm);
-  margin: calc(-1 * var(--space-xs)) calc(-1 * var(--space-sm));
-  border-radius: var(--radius-sm);
+  padding: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-primary);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: opacity 0.15s ease;
+  text-align: right;
 }
 
-.row-value--copyable:hover {
-  background: var(--surface-hover);
+.row-action--edit:hover {
+  opacity: 0.8;
 }
 
-.row-value--copyable:active {
-  background: var(--surface-pressed);
-}
-
-/* V51.5: Copy feedback - inline, not absolute positioned */
-.row-value--copied {
-  background: var(--color-success-muted);
-}
-
-.copy-feedback {
-  font-size: var(--font-size-2xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-success);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
+.row-action--edit:active {
+  opacity: 0.6;
 }
 
 /* V51.1: Account name - secondary */
