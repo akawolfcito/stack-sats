@@ -818,20 +818,16 @@ function truncateAddress(address: string): string {
   letter-spacing: 0.05em;
 }
 
-/* Sticky Footer */
+/* V49.2: Bottom Rail - Solid anchored footer for CTA presence */
 .sticky-footer {
   position: sticky;
   bottom: 0;
   margin-top: auto;
-  padding: var(--space-md) var(--space-lg) var(--space-lg);
-  background: linear-gradient(
-    to top,
-    var(--color-bg-primary) 70%,
-    rgba(10, 10, 10, 0.95) 85%,
-    transparent
-  );
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  padding: var(--space-lg) var(--space-lg);
+  /* V49.2: Solid background - no transparency to mute CTA */
+  background: var(--color-bg-primary);
+  /* V49.2: Subtle top border for rail definition */
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 10;
   /* Safe area for mobile */
   padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
