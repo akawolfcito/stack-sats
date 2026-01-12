@@ -145,21 +145,21 @@ const ROI_TARGETS: ROIConfig[] = [
     setup: setupUnlockedWallet,
     captureStyles: ['background-color', 'box-shadow', 'border-color'],
   },
-  // V49.3: Send flow - To textfield
+  // V49.4: Send flow - To textfield (premium material probe)
   {
     name: 'send-textfield-to',
     route: '/send',
-    selector: '[data-roi="send-textfield-to"]',
+    selector: '[data-roi="send-textfield-to"] .textfield',
     setup: setupUnlockedWallet,
-    captureStyles: ['border-radius'],
+    captureStyles: ['background-color', 'border-color', 'border-radius', 'box-shadow'],
   },
-  // V49.3: Send flow - Amount textfield
+  // V49.4: Send flow - Amount textfield (premium material probe)
   {
     name: 'send-textfield-amount',
     route: '/send',
-    selector: '[data-roi="send-textfield-amount"]',
+    selector: '[data-roi="send-textfield-amount"] .textfield',
     setup: setupUnlockedWallet,
-    captureStyles: ['border-radius'],
+    captureStyles: ['background-color', 'border-color', 'border-radius', 'box-shadow'],
   },
   // V49.3: Send flow - Paste pill action
   {
@@ -379,7 +379,7 @@ test.afterAll(async () => {
     console.log('Style Probe Results (V41 Verification)');
     console.log('========================================');
 
-    // V41 expected values
+    // V41/V49.4 expected values
     const v41Expected = {
       'primary-cta-start': {
         'background-color': 'rgb(201, 228, 38)', // #C9E426
@@ -389,6 +389,13 @@ test.afterAll(async () => {
       },
       'inline-action-max': {
         'background-color': 'rgb(201, 228, 38)', // #C9E426
+      },
+      // V49.4: TextField premium material tokens
+      'send-textfield-to': {
+        'border-radius': '12px', // --radius-control
+      },
+      'send-textfield-amount': {
+        'border-radius': '12px', // --radius-control
       },
     };
 
