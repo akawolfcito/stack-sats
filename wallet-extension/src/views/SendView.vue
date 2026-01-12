@@ -829,21 +829,27 @@ function truncateAddress(address: string): string {
 
 /* Continue button now uses Button component */
 
-/* Confirm */
+/* V49: Confirm - Hero amount styling aligned with Home */
 .confirm-label {
-  font-size: var(--font-size-sm);
-  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   margin: 0 0 var(--space-sm);
 }
 
 .confirm-amount {
-  font-size: var(--font-size-4xl);
-  font-weight: 800;
-  color: var(--color-text-primary); /* v17: neutral amount */
+  font-size: var(--font-size-5xl); /* V49: Match Home balance hero */
+  font-weight: 900; /* V49: Match Home balance weight */
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em; /* V49: Match Home tracking */
+  line-height: 1;
   margin: 0 0 var(--space-xl);
 }
 
 .confirm-amount span {
+  font-weight: 900;
   color: var(--color-text-primary);
 }
 
@@ -857,31 +863,36 @@ function truncateAddress(address: string): string {
   margin-bottom: var(--space-xl);
 }
 
+/* V49: Confirm card rows - token-based typography */
 .confirm-row {
   display: flex;
   justify-content: space-between;
-  padding: var(--space-xs) 0;
+  padding: var(--space-sm) 0;
+  font-size: var(--font-size-sm);
 }
 
 .confirm-row-total {
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
+  padding-top: var(--space-md);
 }
 
 .confirm-key {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-muted);
 }
 
 .confirm-value {
   color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
   word-break: break-all;
   text-align: right;
   max-width: 60%;
+  font-family: var(--font-mono);
 }
 
 .confirm-divider {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin: var(--space-sm) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: var(--space-md) 0;
 }
 
 .pin-section {
@@ -889,12 +900,12 @@ function truncateAddress(address: string): string {
   margin-top: var(--space-md);
 }
 
-/* Spinner */
+/* V49: Spinner - token-based styling */
 .spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--color-text-muted); /* v17: neutral spinner */
+  border: 4px solid var(--surface-hover);
+  border-top-color: var(--color-text-muted);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -905,7 +916,7 @@ function truncateAddress(address: string): string {
 
 .status-text {
   font-size: var(--font-size-sm);
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-muted);
   margin-top: var(--space-lg);
 }
 
@@ -949,18 +960,22 @@ function truncateAddress(address: string): string {
   margin-bottom: var(--space-lg);
 }
 
+/* V49: Result rows - token-based typography */
 .result-row {
   display: flex;
   justify-content: space-between;
-  padding: var(--space-xs) 0;
+  padding: var(--space-sm) 0;
+  font-size: var(--font-size-sm);
 }
 
 .result-key {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-muted);
 }
 
 .result-value {
   color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-mono);
 }
 
 .txid-section {
@@ -970,8 +985,11 @@ function truncateAddress(address: string): string {
 
 .txid-label {
   font-size: var(--font-size-xs);
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0 0 var(--space-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-sm);
 }
 
 .txid-row {
