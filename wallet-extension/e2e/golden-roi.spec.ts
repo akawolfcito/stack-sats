@@ -177,6 +177,32 @@ const ROI_TARGETS: ROIConfig[] = [
     setup: setupUnlockedWallet,
     captureStyles: ['background-color', 'border-radius'],
   },
+  // V50: Confirm modal - header with network chip
+  {
+    name: 'confirm-header',
+    route: '/send',
+    selector: '[data-roi="confirm-header"]',
+    setup: setupUnlockedWallet,
+    afterNav: openConfirmModal,
+    captureStyles: ['background-color', 'border-radius'],
+  },
+  // V50: Confirm modal - summary rows
+  {
+    name: 'confirm-rows',
+    route: '/send',
+    selector: '[data-roi="confirm-rows"]',
+    setup: setupUnlockedWallet,
+    afterNav: openConfirmModal,
+    captureStyles: ['background-color', 'border-color', 'border-radius'],
+  },
+  // V50: Confirm modal - CTA rail
+  {
+    name: 'confirm-cta-rail',
+    route: '/send',
+    selector: '[data-roi="confirm-cta-rail"]',
+    setup: setupUnlockedWallet,
+    afterNav: openConfirmModal,
+  },
 ];
 
 // Expected ROI count - only counting targets that can be reliably captured
@@ -185,7 +211,8 @@ const ROI_TARGETS: ROIConfig[] = [
 // V48: Added verify-pin-header, verify-pin-keypad
 // V49: Added send-from-card, send-fee-card, send-continue-cta
 // V49.3: Added send-textfield-to, send-textfield-amount, send-pill-paste, send-pill-max
-const EXPECTED_ROI_COUNT = 18;
+// V50: Added confirm-header, confirm-rows, confirm-cta-rail
+const EXPECTED_ROI_COUNT = 21;
 
 // Helper: Clear wallet state
 async function clearWallet(page: Page) {
@@ -219,6 +246,27 @@ async function setupLockedWallet(page: Page) {
     localStorage.setItem('selected_network', 'devnet');
     localStorage.setItem('density_mode', 'compact');
   }, TEST_MNEMONIC);
+}
+
+// V50: Helper: Open confirm modal on Send page
+async function openConfirmModal(page: Page) {
+  // Fill in required fields to enable Continue button
+  const toField = page.locator('input[placeholder="Address or BNS Name"]');
+  const amountField = page.locator('input[placeholder="0.00"]');
+
+  await toField.fill('ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG');
+  await amountField.fill('1');
+
+  // Wait for validation
+  await page.waitForTimeout(300);
+
+  // Click Continue to open modal
+  const continueBtn = page.locator('button:has-text("Continue")');
+  if (await continueBtn.isEnabled()) {
+    await continueBtn.click();
+    // Wait for modal to appear
+    await page.waitForTimeout(500);
+  }
 }
 
 // Helper: Wait for stable state

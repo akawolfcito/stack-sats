@@ -45,27 +45,29 @@ function handleConfirm() {
     title="Confirm Transaction"
     @close="handleClose"
   >
-    <!-- Network Banner -->
-    <div class="network-banner" :class="{ 'network-warning': isTestOrDev }">
-      <span class="network-dot" :class="{ 'dot-warning': isTestOrDev }" />
-      <span class="network-text">{{ networkLabel }}</span>
+    <!-- V50: Network Chip (pill style) -->
+    <div class="confirm-header" data-roi="confirm-header">
+      <span class="network-chip" :class="{ 'network-chip--warning': isTestOrDev }">
+        <span class="network-dot" />
+        <span class="network-label">{{ networkLabel }}</span>
+      </span>
     </div>
 
-    <!-- Summary -->
-    <div class="summary">
+    <!-- V50: Summary Card (V43 card surface) -->
+    <div class="summary-card" data-roi="confirm-rows">
       <!-- From -->
       <div class="summary-row">
-        <span class="summary-label">From</span>
-        <div class="summary-value">
-          <span v-if="fromLabel" class="value-label">{{ fromLabel }}</span>
+        <span class="row-label">From</span>
+        <div class="row-value">
+          <span v-if="fromLabel" class="value-name">{{ fromLabel }}</span>
           <span class="value-address">{{ fromAddressShort }}</span>
         </div>
       </div>
 
       <!-- To -->
       <div class="summary-row">
-        <span class="summary-label">To</span>
-        <div class="summary-value summary-value-copyable">
+        <span class="row-label">To</span>
+        <div class="row-value row-value--copyable">
           <span class="value-address">{{ toAddressShort }}</span>
           <button class="copy-btn" title="Copy address" @click="handleCopyTo">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -78,41 +80,43 @@ function handleConfirm() {
 
       <!-- Amount -->
       <div class="summary-row">
-        <span class="summary-label">Amount</span>
-        <span class="summary-value value-amount">{{ amountText }}</span>
+        <span class="row-label">Amount</span>
+        <span class="row-value row-value--amount">{{ amountText }}</span>
       </div>
 
       <!-- Fee -->
       <div v-if="feeText" class="summary-row">
-        <span class="summary-label">Network Fee</span>
-        <span class="summary-value">{{ feeText }}</span>
-      </div>
-
-      <!-- Total -->
-      <div v-if="totalText" class="summary-row summary-row-total">
-        <span class="summary-label">Total</span>
-        <span class="summary-value value-total">{{ totalText }}</span>
+        <span class="row-label">Fee</span>
+        <span class="row-value">{{ feeText }}</span>
       </div>
 
       <!-- Memo -->
       <div v-if="memo" class="summary-row">
-        <span class="summary-label">Memo</span>
-        <span class="summary-value value-memo">{{ memo }}</span>
+        <span class="row-label">Memo</span>
+        <span class="row-value row-value--memo">{{ memo }}</span>
+      </div>
+
+      <!-- Total (separated) -->
+      <div v-if="totalText" class="summary-divider" />
+      <div v-if="totalText" class="summary-row summary-row--total">
+        <span class="row-label">Total</span>
+        <span class="row-value row-value--total">{{ totalText }}</span>
       </div>
     </div>
 
-    <!-- Warning -->
-    <div class="warning-banner">
+    <!-- V50: Warning Card (discrete) -->
+    <div class="warning-card">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 9v4M12 17h.01" />
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
       </svg>
-      <span>Double-check the address and network. Transactions are irreversible.</span>
+      <span>Double-check address and network. Transactions are irreversible.</span>
     </div>
 
+    <!-- V50: CTA Rail (solid footer) -->
     <template #footer>
-      <div class="modal-actions">
-        <Button variant="secondary" full-width @click="handleClose">
+      <div class="cta-rail" data-roi="confirm-cta-rail">
+        <Button variant="ghost" full-width @click="handleClose">
           Cancel
         </Button>
         <Button variant="primary" full-width @click="handleConfirm">
@@ -124,68 +128,88 @@ function handleConfirm() {
 </template>
 
 <style scoped>
-/* Network Banner */
-.network-banner {
+/* === V50: Confirm Header with Network Chip === */
+.confirm-header {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(34, 197, 94, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-md) var(--space-lg);
 }
 
-.network-banner.network-warning {
-  background: rgba(251, 191, 36, 0.15);
+.network-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-success-muted);
+  border-radius: var(--radius-pill);
+}
+
+.network-chip--warning {
+  background: var(--color-warning-muted);
 }
 
 .network-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--color-success, #22c55e);
+  background: var(--color-success);
 }
 
-.network-dot.dot-warning {
-  background: #fbbf24;
+.network-chip--warning .network-dot {
+  background: var(--color-warning);
 }
 
-.network-text {
-  font-size: 13px;
-  font-weight: 600;
+.network-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   text-transform: capitalize;
 }
 
-/* Summary */
-.summary {
-  padding: var(--space-sm) var(--space-lg) var(--space-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
+/* === V50: Summary Card (V43 card pattern) === */
+.summary-card {
+  margin: 0 var(--space-lg);
+  padding: var(--space-md);
+  background: var(--surface-hover);
+  border: 1px solid var(--textfield-border);
+  border-radius: var(--radius-control);
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: var(--space-xs) 0;
+  padding: var(--space-sm) 0;
 }
 
-.summary-row-total {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: var(--space-sm);
-  margin-top: var(--space-xs);
+.summary-row:first-child {
+  padding-top: 0;
 }
 
-.summary-label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+.summary-row--total {
+  padding-top: var(--space-md);
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--textfield-border);
+  margin: var(--space-sm) 0;
+}
+
+/* V50: Row labels - uppercase muted */
+.row-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   flex-shrink: 0;
 }
 
-.summary-value {
-  font-size: 13px;
+/* V50: Row values - right-aligned, 600 weight */
+.row-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   text-align: right;
   display: flex;
@@ -194,83 +218,88 @@ function handleConfirm() {
   gap: 2px;
 }
 
-.summary-value-copyable {
+.row-value--copyable {
   flex-direction: row;
   align-items: center;
   gap: var(--space-xs);
 }
 
-.value-label {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+.value-name {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
 }
 
 .value-address {
-  font-family: monospace;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-secondary);
   letter-spacing: 0.02em;
 }
 
-.value-amount {
-  font-weight: 600;
-  color: var(--color-text-primary); /* v18: neutral */
+.row-value--amount {
+  font-weight: var(--font-weight-bold);
 }
 
-.value-total {
-  font-weight: 700;
-  font-size: 14px;
+.row-value--total {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
 }
 
-.value-memo {
+.row-value--memo {
   max-width: 180px;
   word-break: break-word;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-muted);
 }
 
+/* V50: Copy button */
 .copy-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.4);
+  background: var(--surface-hover);
+  border: 1px solid var(--textfield-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .copy-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary); /* v18: neutral */
+  background: var(--surface-pressed);
+  border-color: var(--textfield-border-hover);
+  color: var(--color-text-primary);
 }
 
-/* Warning Banner */
-.warning-banner {
+/* === V50: Warning Card (discrete) === */
+.warning-card {
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm);
-  margin: 0 var(--space-lg);
+  margin: var(--space-md) var(--space-lg);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.2);
-  border-radius: 10px;
-  color: rgba(251, 191, 36, 0.9);
-  font-size: 11px;
+  background: var(--color-warning-muted);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-sm);
+  color: var(--color-warning);
+  font-size: var(--font-size-xs);
   line-height: 1.4;
 }
 
-.warning-banner svg {
+.warning-card svg {
   flex-shrink: 0;
   margin-top: 1px;
 }
 
-/* Actions */
-.modal-actions {
+/* === V50: CTA Rail (solid footer) === */
+.cta-rail {
   display: flex;
   gap: var(--space-sm);
+  padding: var(--space-md) 0 0;
 }
 </style>
