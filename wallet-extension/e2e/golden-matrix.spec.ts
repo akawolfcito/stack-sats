@@ -1,9 +1,12 @@
 /**
- * Golden Matrix Screenshots - Visual Regression Test Suite V26
+ * Golden Matrix Screenshots - Visual Regression Test Suite V30
  *
  * Captures screenshots of all critical screens across:
  * - 2 viewports: popup (400x600), sidepanel (360x800)
  * - 2 densities: compact, comfy
+ *
+ * V30 FIX: Injects mock wallet state for protected routes (/user, /send, /usermenu)
+ * so screenshots capture real Home content, not redirect/loading screens.
  *
  * Run with: pnpm ui:shots
  *
@@ -13,6 +16,7 @@ import { test, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { TEST_MNEMONIC } from './fixtures/mock-wallet.js';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -29,12 +33,15 @@ const VIEWPORTS = [
 
 const DENSITIES = ['compact', 'comfy'] as const;
 
+// Routes that require wallet auth
+const PROTECTED_ROUTES = ['/user', '/send', '/usermenu'];
+
 const ROUTES = [
   { path: '/', name: 'start', setup: clearWallet },
-  { path: '/unlock', name: 'unlock' },
-  { path: '/user', name: 'user' },
-  { path: '/send', name: 'send' },
-  { path: '/usermenu', name: 'usermenu' },
+  { path: '/unlock', name: 'unlock', setup: setupLockedWallet },
+  { path: '/user', name: 'user', setup: setupUnlockedWallet },
+  { path: '/send', name: 'send', setup: setupUnlockedWallet },
+  { path: '/usermenu', name: 'usermenu', setup: setupUnlockedWallet },
 ] as const;
 
 // Helper: Clear wallet state for clean start screen
@@ -43,7 +50,50 @@ async function clearWallet(page: Page) {
     localStorage.clear();
     sessionStorage.clear();
   });
-  await page.reload();
+  // No reload - navigation happens after setup
+}
+
+// Helper: Setup wallet in locked state (for unlock screen)
+async function setupLockedWallet(page: Page) {
+  await page.evaluate(() => {
+    // Clear first
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Set up mock vault state (wallet exists but locked)
+    const mockVault = {
+      entries: [{
+        id: 'vault_snapshot_locked',
+        name: 'Test Wallet',
+        encryptedData: { ciphertext: 'mock', iv: 'mock', salt: 'mock' },
+        createdAt: Date.now(),
+        version: 1,
+      }],
+      activeId: 'vault_snapshot_locked',
+      version: 1,
+    };
+    localStorage.setItem('wallet_vault', JSON.stringify(mockVault));
+
+    // Do NOT set snapshot mode - we want the locked screen
+  });
+  // No reload - navigation happens after setup
+}
+
+// Helper: Setup wallet in unlocked state (for protected routes)
+async function setupUnlockedWallet(page: Page) {
+  await page.evaluate((mnemonic) => {
+    // Clear first
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Enable snapshot mode with test mnemonic
+    localStorage.setItem('__UI_SNAPSHOT_MODE__', 'true');
+    localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
+
+    // Also set density and network for consistent screenshots
+    localStorage.setItem('selected_network', 'devnet');
+  }, TEST_MNEMONIC);
+  // No reload - navigation happens after setup
 }
 
 // Helper: Set density mode
@@ -104,18 +154,40 @@ for (const viewport of VIEWPORTS) {
       test.describe(`Density: ${density}`, () => {
         for (const route of ROUTES) {
           test(`${route.name}`, async ({ page }) => {
-            // Navigate first
-            await page.goto(route.path);
+            // V30: Setup state BEFORE app initialization
+            // The key is to set localStorage and reload so sessionManager picks it up
 
-            // Run setup if defined
+            // Step 1: Go to blank page to initialize browser context
+            await page.goto('about:blank');
+
+            // Step 2: Navigate to app base to get localStorage access
+            await page.goto('/');
+
+            // Step 3: Run setup to inject localStorage state
             if (route.setup) {
               await route.setup(page);
             }
 
-            // Set density
-            await setDensityMode(page, density);
+            // Step 4: Set density mode in localStorage
+            await page.evaluate((m) => {
+              localStorage.setItem('density_mode', m);
+            }, density);
 
-            // Capture screenshot with naming: viewport-density-route.png
+            // Step 5: Reload page to pick up new localStorage state
+            await page.reload();
+
+            // Step 6: Navigate to target route (if not root)
+            if (route.path !== '/') {
+              await page.goto(route.path);
+            }
+
+            // Step 7: Apply density class to document
+            await page.evaluate((m) => {
+              document.documentElement.dataset.density = m;
+            }, density);
+
+            // Step 8: Wait and capture screenshot
+            await page.waitForTimeout(500); // Allow Vue to fully initialize
             const filename = `${viewport.name}-${density}-${route.name}`;
             await captureScreen(page, filename);
           });
