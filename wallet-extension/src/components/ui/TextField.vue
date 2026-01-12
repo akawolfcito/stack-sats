@@ -114,13 +114,15 @@ const hasSuffix = computed(() => !!slots.suffix);
   transition: all var(--transition-fast);
 }
 
-/* Prefix/Suffix containers */
+/* V49.4: Prefix/Suffix containers - improved vertical alignment */
 .textfield__prefix,
 .textfield__suffix {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* V49.4: Ensure consistent height with input for baseline alignment */
+  height: var(--control-h);
 }
 
 .textfield__prefix {
@@ -128,7 +130,7 @@ const hasSuffix = computed(() => !!slots.suffix);
 }
 
 .textfield__suffix {
-  padding-right: var(--space-md);
+  padding-right: var(--space-sm);
 }
 
 /* Base input styles - using density-aware padding */
@@ -145,8 +147,10 @@ const hasSuffix = computed(() => !!slots.suffix);
   transition: all var(--transition-fast);
 }
 
+/* V49.4: Placeholder hierarchy - clearly subordinate to input text */
 .textfield__input::placeholder {
-  color: var(--color-text-muted);
+  color: var(--textfield-placeholder);
+  font-weight: var(--font-weight-normal);
 }
 
 .textfield__input:disabled {
@@ -172,21 +176,28 @@ const hasSuffix = computed(() => !!slots.suffix);
   padding-right: var(--space-sm);
 }
 
-/* === Variant: Default (card style) === */
+/* === Variant: Default - V49.4 Premium Material === */
 .textfield--default {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  /* V49.4: Subtle fill - doesn't compete with content */
+  background: var(--textfield-bg);
+  border: 1px solid var(--textfield-border);
+  border-radius: var(--radius-control);
 }
 
+/* V49.4: Hover state - subtle border lift */
+.textfield--default:hover:not(:focus-within):not(.textfield--disabled) {
+  border-color: var(--textfield-border-hover);
+}
+
+/* V49.4: Focus - subtle ring, premium fintech feel (no neon) */
 .textfield--default:focus-within {
-  border-color: var(--color-accent-primary);
-  box-shadow: 0 0 0 2px var(--color-accent-primary-muted);
+  border-color: var(--textfield-focus-border);
+  box-shadow: var(--textfield-focus-shadow);
 }
 
 .textfield--default.textfield--error {
   border-color: var(--color-error);
-  box-shadow: 0 0 0 2px var(--color-error-muted);
+  box-shadow: 0 0 0 1px var(--color-error-muted);
 }
 
 /* === Variant: Neumorphic (DEPRECATED - V26) ===

@@ -80,6 +80,17 @@
   --btn-primary-border: rgba(0, 0, 0, 0.12);
   --btn-primary-border-hover: rgba(0, 0, 0, 0.08);
 
+  /* === TextField Tokens - V49.4 Premium Material === */
+  /* Surface: subtle fill that doesn't compete with content */
+  --textfield-bg: rgba(255, 255, 255, 0.03);
+  --textfield-border: rgba(255, 255, 255, 0.10);
+  --textfield-border-hover: rgba(255, 255, 255, 0.16);
+  /* Focus: subtle ring, not neon - premium fintech feel */
+  --textfield-focus-border: rgba(255, 255, 255, 0.28);
+  --textfield-focus-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  /* Placeholder: clearly subordinate to input text */
+  --textfield-placeholder: rgba(255, 255, 255, 0.36);
+
   /* Interaction States */
   --focus-ring: 2px solid var(--color-accent-primary);
   --focus-ring-offset: 2px;
