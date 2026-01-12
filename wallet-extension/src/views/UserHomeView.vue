@@ -566,6 +566,19 @@ const closeReceiveModal = () => {
   showReceiveModal.value = false;
 };
 
+// V35: Expose snapshot hooks for UI testing
+// Only available when __UI_SNAPSHOT_MODE__ is set
+if (typeof window !== 'undefined' && localStorage.getItem('__UI_SNAPSHOT_MODE__')) {
+  (window as any).__UI_SNAPSHOT__ = {
+    openReceiveModal: () => {
+      showReceiveModal.value = true;
+    },
+    closeReceiveModal: () => {
+      showReceiveModal.value = false;
+    },
+  };
+}
+
 // Handle token click - navigate to send token view
 const handleTokenClick = (token: TokenInfo) => {
   const tokenKey = `${selectedNetwork.value}:${token.contractId}`;

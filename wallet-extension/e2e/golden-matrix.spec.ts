@@ -36,13 +36,23 @@ const DENSITIES = ['compact', 'comfy'] as const;
 // Routes that require wallet auth
 const PROTECTED_ROUTES = ['/user', '/send', '/usermenu'];
 
-const ROUTES = [
+// V35: Routes now include receive-modal which opens modal programmatically
+interface RouteConfig {
+  path: string;
+  name: string;
+  setup: (page: Page) => Promise<void>;
+  afterNav?: (page: Page) => Promise<void>;
+}
+
+const ROUTES: RouteConfig[] = [
   { path: '/', name: 'start', setup: clearWallet },
   { path: '/unlock', name: 'unlock', setup: setupLockedWallet },
   { path: '/user', name: 'user', setup: setupUnlockedWallet },
   { path: '/send', name: 'send', setup: setupUnlockedWallet },
   { path: '/usermenu', name: 'usermenu', setup: setupUnlockedWallet },
-] as const;
+  // V35: ReceiveModal - opens modal via snapshot hook after navigating to /user
+  { path: '/user', name: 'receive-modal', setup: setupUnlockedWallet, afterNav: openReceiveModal },
+];
 
 // Helper: Clear wallet state for clean start screen
 async function clearWallet(page: Page) {
@@ -94,6 +104,20 @@ async function setupUnlockedWallet(page: Page) {
     localStorage.setItem('selected_network', 'devnet');
   }, TEST_MNEMONIC);
   // No reload - navigation happens after setup
+}
+
+// V35: Helper to open ReceiveModal via snapshot hook
+async function openReceiveModal(page: Page) {
+  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
+  await page.evaluate(() => {
+    const hook = (window as any).__UI_SNAPSHOT__;
+    if (hook?.openReceiveModal) {
+      hook.openReceiveModal();
+    } else {
+      console.warn('Snapshot hook not available for ReceiveModal');
+    }
+  });
+  await page.waitForTimeout(300); // Wait for modal animation
 }
 
 // Helper: Set density mode
@@ -186,7 +210,12 @@ for (const viewport of VIEWPORTS) {
               document.documentElement.dataset.density = m;
             }, density);
 
-            // Step 8: Wait and capture screenshot
+            // Step 8: Run afterNav hook if defined (V35: for modals)
+            if (route.afterNav) {
+              await route.afterNav(page);
+            }
+
+            // Step 9: Wait and capture screenshot
             await page.waitForTimeout(500); // Allow Vue to fully initialize
             const filename = `${viewport.name}-${density}-${route.name}`;
             await captureScreen(page, filename);
