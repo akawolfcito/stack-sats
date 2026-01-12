@@ -177,31 +177,37 @@ const ROI_TARGETS: ROIConfig[] = [
     setup: setupUnlockedWallet,
     captureStyles: ['background-color', 'border-radius'],
   },
-  // V50: Confirm modal - header with network chip
+  // V51: Confirm fullscreen - header with network chip
   {
     name: 'confirm-header',
-    route: '/send',
+    route: '/confirm-tx?networkLabel=Devnet&fromLabel=Account%201&fromAddressShort=ST2C...X4AG&toAddress=ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG&toAddressShort=ST2C...K9AG&amountText=1.00%20STX&feeText=0.001%20STX&totalText=1.001%20STX',
     selector: '[data-roi="confirm-header"]',
     setup: setupUnlockedWallet,
-    afterNav: openConfirmModal,
     captureStyles: ['background-color', 'border-radius'],
   },
-  // V50: Confirm modal - summary rows
+  // V51: Confirm fullscreen - summary card
   {
-    name: 'confirm-rows',
-    route: '/send',
-    selector: '[data-roi="confirm-rows"]',
+    name: 'confirm-summary',
+    route: '/confirm-tx?networkLabel=Devnet&fromLabel=Account%201&fromAddressShort=ST2C...X4AG&toAddress=ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG&toAddressShort=ST2C...K9AG&amountText=1.00%20STX&feeText=0.001%20STX&totalText=1.001%20STX',
+    selector: '[data-roi="confirm-summary"]',
     setup: setupUnlockedWallet,
-    afterNav: openConfirmModal,
     captureStyles: ['background-color', 'border-color', 'border-radius'],
   },
-  // V50: Confirm modal - CTA rail
+  // V51: Confirm fullscreen - warning card
+  {
+    name: 'confirm-warning',
+    route: '/confirm-tx?networkLabel=Devnet&fromLabel=Account%201&fromAddressShort=ST2C...X4AG&toAddress=ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG&toAddressShort=ST2C...K9AG&amountText=1.00%20STX&feeText=0.001%20STX&totalText=1.001%20STX',
+    selector: '[data-roi="confirm-warning"]',
+    setup: setupUnlockedWallet,
+    captureStyles: ['background-color', 'border-color'],
+  },
+  // V51: Confirm fullscreen - CTA rail
   {
     name: 'confirm-cta-rail',
-    route: '/send',
+    route: '/confirm-tx?networkLabel=Devnet&fromLabel=Account%201&fromAddressShort=ST2C...X4AG&toAddress=ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG&toAddressShort=ST2C...K9AG&amountText=1.00%20STX&feeText=0.001%20STX&totalText=1.001%20STX',
     selector: '[data-roi="confirm-cta-rail"]',
     setup: setupUnlockedWallet,
-    afterNav: openConfirmModal,
+    captureStyles: ['background-color'],
   },
 ];
 
@@ -211,8 +217,8 @@ const ROI_TARGETS: ROIConfig[] = [
 // V48: Added verify-pin-header, verify-pin-keypad
 // V49: Added send-from-card, send-fee-card, send-continue-cta
 // V49.3: Added send-textfield-to, send-textfield-amount, send-pill-paste, send-pill-max
-// V50: Added confirm-header, confirm-rows, confirm-cta-rail
-const EXPECTED_ROI_COUNT = 21;
+// V51: Updated confirm targets to fullscreen view, added confirm-warning
+const EXPECTED_ROI_COUNT = 22;
 
 // Helper: Clear wallet state
 async function clearWallet(page: Page) {
@@ -246,27 +252,6 @@ async function setupLockedWallet(page: Page) {
     localStorage.setItem('selected_network', 'devnet');
     localStorage.setItem('density_mode', 'compact');
   }, TEST_MNEMONIC);
-}
-
-// V50: Helper: Open confirm modal on Send page
-async function openConfirmModal(page: Page) {
-  // Fill in required fields to enable Continue button
-  const toField = page.locator('input[placeholder="Address or BNS Name"]');
-  const amountField = page.locator('input[placeholder="0.00"]');
-
-  await toField.fill('ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG');
-  await amountField.fill('1');
-
-  // Wait for validation
-  await page.waitForTimeout(300);
-
-  // Click Continue to open modal
-  const continueBtn = page.locator('button:has-text("Continue")');
-  if (await continueBtn.isEnabled()) {
-    await continueBtn.click();
-    // Wait for modal to appear
-    await page.waitForTimeout(500);
-  }
 }
 
 // Helper: Wait for stable state

@@ -74,6 +74,11 @@ const router = createRouter({
       name: "verify-pin",
       component: () => import("../views/VerifyPinView.vue"),
     },
+    {
+      path: "/confirm-tx",
+      name: "confirm-tx",
+      component: () => import("../views/ConfirmTxView.vue"),
+    },
   ],
 });
 
