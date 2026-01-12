@@ -209,6 +209,21 @@ const ROI_TARGETS: ROIConfig[] = [
     setup: setupUnlockedWallet,
     captureStyles: ['background-color'],
   },
+  // V51.2: Confirm fullscreen - To row (overflow regression)
+  {
+    name: 'confirm-to-row',
+    route: '/confirm-tx?networkLabel=Devnet&fromLabel=Account%201&fromAddressShort=ST2C...X4AG&toAddress=ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG&toAddressShort=ST2C...K9AG&amountText=1.00%20STX&feeText=0.001%20STX&totalText=1.001%20STX',
+    selector: '[data-roi="confirm-to-row"]',
+    setup: setupUnlockedWallet,
+  },
+  // V51.2: Confirm fullscreen - Copy icon (visibility regression)
+  {
+    name: 'confirm-copy-icon',
+    route: '/confirm-tx?networkLabel=Devnet&fromLabel=Account%201&fromAddressShort=ST2C...X4AG&toAddress=ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG&toAddressShort=ST2C...K9AG&amountText=1.00%20STX&feeText=0.001%20STX&totalText=1.001%20STX',
+    selector: '[data-roi="confirm-copy-icon"]',
+    setup: setupUnlockedWallet,
+    captureStyles: ['width', 'height', 'border-color'],
+  },
 ];
 
 // Expected ROI count - only counting targets that can be reliably captured
@@ -218,7 +233,8 @@ const ROI_TARGETS: ROIConfig[] = [
 // V49: Added send-from-card, send-fee-card, send-continue-cta
 // V49.3: Added send-textfield-to, send-textfield-amount, send-pill-paste, send-pill-max
 // V51: Updated confirm targets to fullscreen view, added confirm-warning
-const EXPECTED_ROI_COUNT = 22;
+// V51.2: Added confirm-to-row, confirm-copy-icon (overflow/icon regression)
+const EXPECTED_ROI_COUNT = 24;
 
 // Helper: Clear wallet state
 async function clearWallet(page: Page) {
