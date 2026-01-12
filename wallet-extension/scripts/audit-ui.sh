@@ -177,6 +177,8 @@ HARDCODE_ALLOWLIST=(
   "src/views/AddTokenView.vue"
   # V48: VerifyPinView reuses UnlockView scaffold
   "src/views/VerifyPinView.vue"
+  # V51: ConfirmTxView fullscreen confirm
+  "src/views/ConfirmTxView.vue"
 )
 
 HARDCODE_VIOLATIONS=()

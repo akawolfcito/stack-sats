@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onBeforeMount, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onBeforeMount, nextTick, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
-import ConfirmSendModal from "@/components/send/ConfirmSendModal.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import { Button, TextField, InlineAction } from "@/components/ui";
@@ -22,6 +21,7 @@ import {
 import { scheduleCleanup } from "@/utils/security/memory";
 
 const router = useRouter();
+const route = useRoute();
 
 // Steps
 type Step = "form" | "confirm" | "sending" | "success" | "error";
@@ -50,9 +50,6 @@ const amountError = ref("");
 // PIN
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
 const pinError = ref("");
-
-// Confirm Modal
-const showConfirmModal = ref(false);
 
 // Computed
 const formattedBalance = computed(() => formatStxDisplay(microStxToStx(balanceMicroStx.value)));
@@ -229,20 +226,39 @@ function handleContinue() {
     return;
   }
 
-  showConfirmModal.value = true;
-}
-
-function handleModalClose() {
-  showConfirmModal.value = false;
-}
-
-function handleModalConfirm() {
-  showConfirmModal.value = false;
-  currentStep.value = "confirm";
-  nextTick(() => {
-    pinInputRef.value?.focus();
+  // V51: Navigate to fullscreen confirm-tx view
+  router.push({
+    path: "/confirm-tx",
+    query: {
+      networkLabel: networkLabel.value,
+      fromLabel: accountName.value,
+      fromAddressShort: senderAddressShort.value,
+      toAddress: recipient.value.trim(),
+      toAddressShort: truncatedRecipient.value,
+      amountText: `${formattedAmount.value} STX`,
+      feeText: `${formattedFee.value} STX`,
+      totalText: `${formattedTotal.value} STX`,
+      memo: memo.value.trim() || undefined,
+    },
   });
 }
+
+// V51: Watch for return from confirm-tx view
+watch(
+  () => route.query.confirmed,
+  (confirmed) => {
+    if (confirmed === "true") {
+      // User confirmed, proceed to PIN step
+      currentStep.value = "confirm";
+      nextTick(() => {
+        pinInputRef.value?.focus();
+      });
+      // Clear query param
+      router.replace({ path: "/send", query: {} });
+    }
+  },
+  { immediate: true }
+);
 
 async function handlePinComplete(pin: string) {
   pinError.value = "";
@@ -531,21 +547,6 @@ function truncateAddress(address: string): string {
       <Button variant="secondary" full-width @click="handleDone">Cancel</Button>
     </div>
 
-    <!-- Confirm Modal -->
-    <ConfirmSendModal
-      :is-open="showConfirmModal"
-      :network-label="networkLabel"
-      :from-label="accountName"
-      :from-address-short="senderAddressShort"
-      :to-address="recipient.trim()"
-      :to-address-short="truncatedRecipient"
-      :amount-text="`${formattedAmount} STX`"
-      :fee-text="`${formattedFee} STX`"
-      :total-text="`${formattedTotal} STX`"
-      :memo="memo.trim() || undefined"
-      @close="handleModalClose"
-      @confirm="handleModalConfirm"
-    />
   </ScreenShell>
 </template>
 
