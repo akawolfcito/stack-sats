@@ -46,13 +46,14 @@ defineProps<{
   color: var(--color-error);
 }
 
+/* V43: Card container - visible structure */
 .list-group-items {
   display: flex;
   flex-direction: column;
-  background: transparent; /* No card background - cleaner (v15) */
-  border-radius: 0;
-  border: none; /* Remove outer border - pro look */
-  overflow: visible;
+  background: rgba(255, 255, 255, 0.02); /* V43: Subtle card surface */
+  border-radius: var(--radius-md); /* V43: Rounded card */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Visible boundary */
+  overflow: hidden; /* V43: Clip children to radius */
 }
 
 .list-group--danger .list-group-items {

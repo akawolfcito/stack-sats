@@ -142,28 +142,34 @@ for golden in "$GOLDEN_DIR"/*.png; do
     continue
   fi
 
-  # Compare using ImageMagick - get percentage difference
+  # V43: Compare using ImageMagick - get absolute pixel difference
   DIFF_VALUE=$(compare -metric AE "$golden" "$current" "$diff_out" 2>&1 || true)
+  # Clean up non-numeric output
+  DIFF_VALUE=$(echo "$DIFF_VALUE" | grep -o '^[0-9]*' || echo "0")
 
   # Get total pixels
-  TOTAL_PIXELS=$(identify -format "%w*%h\n" "$golden" | bc)
+  TOTAL_PIXELS=$(identify -format "%[fx:w*h]" "$golden" 2>/dev/null || echo "0")
 
-  # Calculate percentage
-  if [ "$TOTAL_PIXELS" -gt 0 ] && [ -n "$DIFF_VALUE" ]; then
-    PERCENT=$(echo "scale=2; ($DIFF_VALUE / $TOTAL_PIXELS) * 100" | bc 2>/dev/null || echo "0")
+  # V43: Calculate percentage with 4 decimal precision
+  if [ "$TOTAL_PIXELS" -gt 0 ] && [ -n "$DIFF_VALUE" ] && [ "$DIFF_VALUE" != "0" ]; then
+    PERCENT=$(awk "BEGIN {printf \"%.4f\", ($DIFF_VALUE / $TOTAL_PIXELS) * 100}")
   else
-    PERCENT="0"
+    PERCENT="0.0000"
   fi
 
+  # V43: Format for display (show 2 decimals, but use 4 for comparison)
+  PERCENT_DISPLAY=$(awk "BEGIN {printf \"%.2f\", $PERCENT}")
+
   # Check threshold
-  EXCEEDS=$(echo "$PERCENT > $THRESHOLD" | bc -l 2>/dev/null || echo "0")
+  EXCEEDS=$(awk "BEGIN {print ($PERCENT > $THRESHOLD) ? 1 : 0}")
 
   if [ "$EXCEEDS" = "1" ]; then
-    FAILURES+=("$filename: ${PERCENT}%")
-    echo -e "  ${RED}✗${NC} $filename - ${PERCENT}% diff (exceeds ${THRESHOLD}%)"
+    FAILURES+=("$filename: ${PERCENT_DISPLAY}%")
+    echo -e "  ${RED}✗${NC} $filename - ${PERCENT_DISPLAY}% diff (exceeds ${THRESHOLD}%)"
   else
     PASSES+=("$filename")
-    echo -e "  ${GREEN}✓${NC} $filename - ${PERCENT}% diff"
+    # V43: Always show actual diff, even if 0
+    echo -e "  ${GREEN}✓${NC} $filename - ${PERCENT_DISPLAY}% diff"
     # Remove diff file if passed
     rm -f "$diff_out"
   fi
@@ -265,28 +271,31 @@ if [ -d "$ROI_GOLDEN_DIR" ] && [ -d "$ROI_CURRENT_DIR" ]; then
         continue
       fi
 
-      # Compare using ImageMagick
+      # V43: Compare using ImageMagick
       DIFF_VALUE=$(compare -metric AE "$golden" "$current" "$diff_out" 2>&1 || true)
+      DIFF_VALUE=$(echo "$DIFF_VALUE" | grep -o '^[0-9]*' || echo "0")
 
       # Get total pixels
-      TOTAL_PIXELS=$(identify -format "%w*%h\n" "$golden" | bc)
+      TOTAL_PIXELS=$(identify -format "%[fx:w*h]" "$golden" 2>/dev/null || echo "0")
 
-      # Calculate percentage
-      if [ "$TOTAL_PIXELS" -gt 0 ] && [ -n "$DIFF_VALUE" ]; then
-        PERCENT=$(echo "scale=4; ($DIFF_VALUE / $TOTAL_PIXELS) * 100" | bc 2>/dev/null || echo "0")
+      # V43: Calculate percentage with 4 decimal precision
+      if [ "$TOTAL_PIXELS" -gt 0 ] && [ -n "$DIFF_VALUE" ] && [ "$DIFF_VALUE" != "0" ]; then
+        PERCENT=$(awk "BEGIN {printf \"%.4f\", ($DIFF_VALUE / $TOTAL_PIXELS) * 100}")
       else
-        PERCENT="0"
+        PERCENT="0.0000"
       fi
 
+      PERCENT_DISPLAY=$(awk "BEGIN {printf \"%.2f\", $PERCENT}")
+
       # Check ROI threshold
-      EXCEEDS=$(echo "$PERCENT > $ROI_THRESHOLD" | bc -l 2>/dev/null || echo "0")
+      EXCEEDS=$(awk "BEGIN {print ($PERCENT > $ROI_THRESHOLD) ? 1 : 0}")
 
       if [ "$EXCEEDS" = "1" ]; then
-        ROI_FAILURES+=("$filename: ${PERCENT}%")
-        echo -e "  ${RED}✗${NC} $filename - ${PERCENT}% diff (exceeds ${ROI_THRESHOLD}%)"
+        ROI_FAILURES+=("$filename: ${PERCENT_DISPLAY}%")
+        echo -e "  ${RED}✗${NC} $filename - ${PERCENT_DISPLAY}% diff (exceeds ${ROI_THRESHOLD}%)"
       else
         ROI_PASSES+=("$filename")
-        echo -e "  ${GREEN}✓${NC} $filename - ${PERCENT}% diff"
+        echo -e "  ${GREEN}✓${NC} $filename - ${PERCENT_DISPLAY}% diff"
         rm -f "$diff_out"
       fi
     done
