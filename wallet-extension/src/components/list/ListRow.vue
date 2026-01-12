@@ -115,13 +115,15 @@ function handleClick() {
   cursor: not-allowed;
 }
 
-/* V39: Icon chip - elevated treatment */
+/* V42: Icon chip - premium depth without glow */
 .list-row-icon {
   width: var(--icon-btn-size); /* 28px compact, 40px comfy */
   height: var(--icon-btn-size);
   border-radius: var(--radius-chip);
-  background: rgba(255, 255, 255, 0.12); /* V39: More visible */
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); /* V39: Subtle inner highlight */
+  background: rgba(255, 255, 255, 0.08); /* V42: Slightly less aggressive */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.1); /* V42: Subtle outer shadow for depth */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,29 +188,30 @@ function handleClick() {
   text-overflow: ellipsis;
 }
 
-/* Value (balance, amount) - V29 Gold: Clear hierarchy */
+/* V42: Value (balance, amount) - Premium numeric hierarchy */
 .list-row-value {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 3px; /* V42: Slightly more gap for clarity */
   flex-shrink: 0;
-  min-width: 60px; /* Stable layout */
+  min-width: 70px; /* V42: Slightly wider for larger numbers */
 }
 
 .list-row-value-primary {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold); /* V29: 600 - value dominates */
+  font-weight: 600; /* V42: Bold value for instant readability */
   color: var(--color-text-primary);
-  font-variant-numeric: tabular-nums; /* V29: Universal tabular */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em; /* V42: Tighter tracking for numbers */
 }
 
 .list-row-value-secondary {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  color: var(--color-text-muted); /* V29: Clearly subordinate */
+  font-size: 11px; /* V42: Slightly smaller for clear hierarchy */
+  font-weight: 500;
+  color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
-  opacity: 0.8; /* V29: Extra muting for hierarchy */
+  letter-spacing: 0.01em; /* V42: Slightly open for small text */
 }
 
 /* Badge - Neutral style (v16.1, lime reserved for CTAs) */

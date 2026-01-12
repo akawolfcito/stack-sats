@@ -54,12 +54,12 @@ function handleAction(key: string) {
 </template>
 
 <style scoped>
-/* ActionBar - V28 Gold: Symmetrical controls, fintech-grade */
+/* V42: ActionBar - Premium segmented control with clear hierarchy */
 .action-bar {
   display: flex;
-  gap: var(--space-sm);
+  gap: var(--space-md); /* V42: More breathing room between buttons */
   width: 100%;
-  padding: var(--space-xs) 0;
+  padding: var(--space-sm) 0; /* V42: Slightly more vertical padding */
 }
 
 .action-bar__btn {
@@ -67,19 +67,26 @@ function handleAction(key: string) {
   min-width: 0;
 }
 
-/* Both buttons share same baseline: height, radius, alignment */
+/* V42: Both buttons share unified baseline */
 .action-bar :deep(.btn) {
   height: var(--control-h);
   border-radius: var(--radius-control);
   font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em; /* V42: Subtle tracking for premium feel */
 }
 
-/* V41: Primary/Secondary styling fully delegated to Button.vue via tokens */
+/* V42: Primary/Secondary styling via Button.vue tokens */
 /* ActionBar only defines layout - no color overrides here */
 
-/* Icon sizing - consistent across both buttons */
+/* V42: Icon sizing - precise alignment */
 .action-bar :deep(.btn__content svg) {
   width: var(--control-icon-size);
   height: var(--control-icon-size);
+  flex-shrink: 0;
+}
+
+/* V42: Ensure icons don't shift on hover */
+.action-bar :deep(.btn__content) {
+  gap: var(--control-icon-gap);
 }
 </style>
