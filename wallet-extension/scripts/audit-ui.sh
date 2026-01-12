@@ -90,7 +90,116 @@ else
   echo -e "  ${GREEN}✓ No custom modal overlays${NC}"
 fi
 
-echo -e "\n${CYAN}[3/3] Counting primitive usage...${NC}"
+echo -e "\n${CYAN}[3/4] Checking for deprecated neumorphic usage...${NC}"
+
+# Neumorphic is deprecated - only allowed in SendView.vue (legacy)
+NEUMORPHIC_ALLOWLIST=(
+  "src/views/SendView.vue"
+)
+
+NEUMORPHIC_VIOLATIONS=()
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  file=$(echo "$line" | cut -d: -f1)
+  is_allowed=false
+  for allowed in "${NEUMORPHIC_ALLOWLIST[@]}"; do
+    if [[ "$file" == *"$allowed"* ]]; then
+      is_allowed=true
+      break
+    fi
+  done
+  if [ "$is_allowed" = false ]; then
+    NEUMORPHIC_VIOLATIONS+=("$line")
+  fi
+done < <(grep -rn 'variant="neumorphic"' src/ --include="*.vue" 2>/dev/null || true)
+
+if [ ${#NEUMORPHIC_VIOLATIONS[@]} -gt 0 ]; then
+  echo -e "  ${RED}Found ${#NEUMORPHIC_VIOLATIONS[@]} new neumorphic usage (deprecated):${NC}"
+  for v in "${NEUMORPHIC_VIOLATIONS[@]}"; do
+    echo -e "    ${RED}•${NC} $v"
+  done
+  echo -e "  ${YELLOW}Fix:${NC} Use variant=\"default\" instead"
+else
+  echo -e "  ${GREEN}✓ No new neumorphic usage${NC}"
+fi
+
+echo -e "\n${CYAN}[4/5] Checking for hardcoded rgba() in components (V36 Contract)...${NC}"
+
+# V36: Hardcoded rgba() allowlist - per UI_CONTRACT_V1.md Section 8.2
+# Strategy: Allow established files, block new files from introducing hardcodes
+HARDCODE_ALLOWLIST=(
+  # === Token definitions (always allowed) ===
+  "src/assets/base.css"
+  "src/styles/tokens.css"
+  "src/styles/base.css"
+
+  # === UI Primitives (design system components) ===
+  "src/components/ui/"                    # All UI primitives
+  "src/components/layout/"                # Layout components
+
+  # === Established components (pre-V36 legacy) ===
+  "src/components/list/"                  # ListGroup, ListRow
+  "src/components/send/"                  # ConfirmSendModal
+  "src/components/tokens/"                # TokenRow
+  "src/components/BottomNav.vue"
+  "src/components/BackupSuccessModal.vue"
+  "src/components/network/"
+  "src/components/account/"
+  "src/components/activity/"
+  "src/components/forms/"
+  "src/components/transaction/"
+  "src/components/SegmentedTabs.vue"
+  "src/components/ReceiveModal.vue"
+  "src/components/Confirmation.vue"
+  "src/components/BalanceHeader.vue"
+  "src/components/AssetRow.vue"
+  "src/components/PinInput.vue"
+
+  # === Established views (pre-V36 legacy) ===
+  "src/views/UserHomeView.vue"
+  "src/views/SendView.vue"
+  "src/views/SendTokenView.vue"
+  "src/views/UnlockView.vue"
+  "src/views/UserMenu.vue"
+  "src/views/SwapView.vue"
+  "src/views/AccountDetailsView.vue"
+  "src/views/StartView.vue"
+  "src/views/ManageTokensView.vue"
+  "src/views/ImportWalletView.vue"
+  "src/views/SetupView.vue"
+  "src/views/RestoreWalletView.vue"
+  "src/views/CreatePasswordView.vue"
+  "src/views/ConfirmMnemonicView.vue"
+  "src/views/AddTokenView.vue"
+)
+
+HARDCODE_VIOLATIONS=()
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  file=$(echo "$line" | cut -d: -f1)
+  is_allowed=false
+  for allowed in "${HARDCODE_ALLOWLIST[@]}"; do
+    if [[ "$file" == *"$allowed"* ]]; then
+      is_allowed=true
+      break
+    fi
+  done
+  if [ "$is_allowed" = false ]; then
+    HARDCODE_VIOLATIONS+=("$line")
+  fi
+done < <(grep -rn 'rgba([0-9]' src/components/ src/views/ --include="*.vue" 2>/dev/null | grep -v "^Binary" | grep "<style" -A 1000 2>/dev/null || grep -rn 'rgba([0-9]' src/components/ src/views/ --include="*.vue" 2>/dev/null | grep -v "^Binary" || true)
+
+if [ ${#HARDCODE_VIOLATIONS[@]} -gt 0 ]; then
+  echo -e "  ${RED}Found ${#HARDCODE_VIOLATIONS[@]} hardcoded rgba() outside allowlist:${NC}"
+  for v in "${HARDCODE_VIOLATIONS[@]}"; do
+    echo -e "    ${RED}•${NC} $v"
+  done
+  echo -e "  ${YELLOW}Fix:${NC} Use tokens from base.css or add to UI_CONTRACT allowlist"
+else
+  echo -e "  ${GREEN}✓ All rgba() values in allowlist or tokens${NC}"
+fi
+
+echo -e "\n${CYAN}[5/5] Counting primitive usage...${NC}"
 
 SHEET_COUNT=$(grep -r '<Sheet' src/ --include="*.vue" 2>/dev/null | wc -l | tr -d ' ')
 MODAL_SCAFFOLD_COUNT=$(grep -r '<ModalScaffold' src/ --include="*.vue" 2>/dev/null | wc -l | tr -d ' ')
@@ -102,15 +211,18 @@ echo -e "  Total primitive modals: ${GREEN}$TOTAL_PRIMITIVES${NC}"
 
 echo -e "\n${YELLOW}═══════════════════════════════════════════════════════════${NC}"
 
-TOTAL_VIOLATIONS=$((${#TELEPORT_VIOLATIONS[@]} + ${#MODAL_VIOLATIONS[@]}))
+TOTAL_VIOLATIONS=$((${#TELEPORT_VIOLATIONS[@]} + ${#MODAL_VIOLATIONS[@]} + ${#NEUMORPHIC_VIOLATIONS[@]} + ${#HARDCODE_VIOLATIONS[@]}))
 
 if [ $TOTAL_VIOLATIONS -gt 0 ]; then
   echo -e "Result: ${RED}FAILED${NC} - $TOTAL_VIOLATIONS violations found"
-  echo -e "${YELLOW}Fix:${NC} Migrate custom modals to Sheet or ModalScaffold"
+  echo -e "${YELLOW}Fixes:${NC}"
+  echo "  - Migrate custom modals to Sheet or ModalScaffold"
+  echo "  - Replace hardcoded rgba() with tokens from base.css"
+  echo "  - See docs/ui/UI_CONTRACT_V1.md for allowlist process"
   echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
   exit 1
 else
-  echo -e "Result: ${GREEN}PASSED${NC}"
+  echo -e "Result: ${GREEN}PASSED${NC} - UI Contract v1 compliant"
   echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}\n"
   exit 0
 fi
