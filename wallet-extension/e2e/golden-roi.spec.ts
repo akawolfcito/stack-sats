@@ -348,6 +348,40 @@ test.use({
   viewport: { width: 400, height: 600 }, // Popup viewport for consistency
 });
 
+// V51.5: Zero overflow guard - catches horizontal scroll regressions
+test('V51.5: ConfirmTxView zero horizontal overflow', async ({ page }) => {
+  // Setup unlocked wallet
+  await page.goto('about:blank');
+  await page.goto('/');
+  await setupUnlockedWallet(page);
+  await page.reload();
+
+  // Navigate to confirm-tx with test data
+  const confirmRoute = '/confirm-tx?networkLabel=Devnet&fromLabel=Account%201&fromAddressShort=ST2C...X4AG&toAddress=ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG&toAddressShort=ST2C...K9AG&amountText=1.00%20STX&feeText=0.001%20STX&totalText=1.001%20STX';
+  await page.goto(confirmRoute);
+  await waitForStableState(page);
+
+  // Assert: scrollWidth should equal clientWidth (no horizontal overflow)
+  const overflowCheck = await page.evaluate(() => {
+    const root = document.documentElement;
+    return {
+      scrollWidth: root.scrollWidth,
+      clientWidth: root.clientWidth,
+      hasOverflow: root.scrollWidth > root.clientWidth,
+    };
+  });
+
+  console.log(`  V51.5 Overflow Guard: scrollWidth=${overflowCheck.scrollWidth}, clientWidth=${overflowCheck.clientWidth}`);
+
+  if (overflowCheck.hasOverflow) {
+    throw new Error(
+      `V51.5 FAIL: Horizontal overflow detected! ` +
+      `scrollWidth (${overflowCheck.scrollWidth}) > clientWidth (${overflowCheck.clientWidth})`
+    );
+  }
+  console.log('  ✓ V51.5 PASS: Zero horizontal overflow');
+});
+
 // Generate tests for each ROI
 for (const roi of ROI_TARGETS) {
   test(`ROI: ${roi.name}`, async ({ page }) => {
