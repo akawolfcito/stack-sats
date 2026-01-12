@@ -1,11 +1,14 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.9 Fullscreen Confirm Transaction
+ * ConfirmTxView - V51.10 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.9 Changes:
+ * V51.10 Changes:
+ * - Compact pencil icon (20px vs 28px) for better alignment
+ *
+ * V51.9 (retained):
  * - Edit pencil BEFORE address (pencil → address order)
  * - Unified address truncation format (8...8 in SendView)
  * - From/To identical structure with placeholder for parity
@@ -374,23 +377,23 @@ function handleConfirm() {
   min-width: 0;
 }
 
-/* V51.8: Icon button placeholder (for parity in From row) */
+/* V51.10: Icon button placeholder (for parity in From row) */
 .icon-btn-placeholder {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   flex: 0 0 auto;
 }
 
-/* V51.8: Ghost icon button (inline with address) */
+/* V51.10: Ghost icon button - compact, inline with address */
 .icon-btn {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   flex: 0 0 auto;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-xs);
   color: var(--color-text-muted);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
