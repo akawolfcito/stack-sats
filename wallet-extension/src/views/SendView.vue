@@ -350,13 +350,12 @@ function truncateAddress(address: string): string {
         <span class="notice-text">Your balance is too low to send STX (fee required).</span>
       </div>
 
-      <!-- V49.3: Recipient Input - PASTE/MAX parity with ghost variant -->
+      <!-- V49.5: Recipient Input - NO mono in form (reduces visual noise), mono only in confirm/result -->
       <div class="form-group" data-roi="send-textfield-to">
         <label class="form-label">To</label>
         <TextField
           v-model="recipient"
           variant="default"
-          mono
           placeholder="Address or BNS Name"
           :error="recipientError"
           @blur="validateRecipient"
