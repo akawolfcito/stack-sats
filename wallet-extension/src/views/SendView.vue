@@ -600,13 +600,13 @@ function truncateAddress(address: string): string {
   color: rgba(253, 224, 71, 0.9);
 }
 
-/* From Card */
+/* V44: From Card - Using V43 card pattern */
 .from-card {
   position: relative;
   overflow: hidden;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
   padding: var(--space-sm) var(--space-md) var(--space-sm) var(--space-sm);
   margin-top: var(--space-xs);
   margin-bottom: var(--space-lg);
@@ -743,22 +743,22 @@ function truncateAddress(address: string): string {
   margin: 0;
 }
 
-/* Fee Card */
+/* V44: Fee Card - Using V43 card pattern */
 .fee-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) var(--space-md);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
+  border-radius: var(--radius-md);
   margin-bottom: var(--space-sm);
   cursor: help;
   transition: background 0.15s ease;
 }
 
 .fee-card:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04); /* V43: Subtle hover */
 }
 
 .fee-left {
@@ -847,11 +847,12 @@ function truncateAddress(address: string): string {
   color: var(--color-text-primary);
 }
 
+/* V44: Confirm Card - Using V43 card pattern */
 .confirm-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
+  border-radius: var(--radius-card);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
 }
@@ -938,11 +939,12 @@ function truncateAddress(address: string): string {
   margin: 0 0 var(--space-lg);
 }
 
+/* V44: Result Card - Using V43 card pattern */
 .result-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
+  border-radius: var(--radius-card);
   padding: var(--space-lg);
   margin-bottom: var(--space-lg);
 }

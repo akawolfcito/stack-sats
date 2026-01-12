@@ -469,15 +469,15 @@ onBeforeMount(() => {
   line-height: 1.5;
 }
 
-/* Mnemonic Grid */
+/* V44: Mnemonic Grid - Using V43 card pattern */
 .mnemonic-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-sm);
   padding: var(--space-lg);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
+  border-radius: var(--radius-card);
 }
 
 .mnemonic-word {
