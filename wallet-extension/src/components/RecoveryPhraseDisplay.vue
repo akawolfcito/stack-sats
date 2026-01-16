@@ -124,6 +124,7 @@ function handleBack() {
     <div class="mnemonic-actions" data-roi="mnemonic-actions">
       <button
         class="action-btn action-btn--primary"
+        :class="{ 'action-btn--active': isRevealed }"
         data-roi="reveal-btn"
         @click="toggleReveal"
       >
@@ -140,8 +141,10 @@ function handleBack() {
       </button>
       <button
         class="action-btn"
+        :class="{ 'action-btn--disabled': !isRevealed }"
+        :disabled="!isRevealed"
         data-roi="copy-btn"
-        @click="handleCopyClick"
+        @click="isRevealed ? handleCopyClick() : undefined"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
@@ -149,6 +152,10 @@ function handleBack() {
         </svg>
         Copy
       </button>
+    </div>
+    <!-- V53.3: State hint slot (fixed height for no layout shift) -->
+    <div class="action-hint-slot" aria-live="polite">
+      <span v-if="!isRevealed" class="action-hint">Reveal phrase to enable copy</span>
     </div>
 
     <!-- V53.2: Responsive Mnemonic Grid - blurred by default -->
@@ -232,11 +239,11 @@ function handleBack() {
 </template>
 
 <style scoped>
-/* V53.2: Main container */
+/* V53.3: Main container - intentional rhythm */
 .recovery-phrase-display {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   flex: 1;
 }
 
@@ -313,8 +320,35 @@ function handleBack() {
   color: var(--color-text-primary);
 }
 
-.action-btn:active {
+.action-btn:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+/* V53.3: Reveal active state - accent border when revealed */
+.action-btn--active {
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+/* V53.3: Disabled state for copy button */
+.action-btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* V53.3: State hint slot - fixed height for no layout shift */
+.action-hint-slot {
+  min-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-hint {
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
 }
 
 /* V53.2: Responsive Mnemonic Grid */
