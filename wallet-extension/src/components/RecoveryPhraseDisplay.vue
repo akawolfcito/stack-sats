@@ -154,9 +154,9 @@ function handleBack() {
           Copy
         </button>
       </div>
-      <!-- V53.5: Hint slot - left-aligned, closer to buttons, better legibility -->
+      <!-- V53.6: Hint slot - premium neutral styling -->
       <div class="action-hint-slot" aria-live="polite">
-        <span v-if="!isRevealed" class="action-hint">Reveal phrase to enable copy</span>
+        <span v-if="!isRevealed" class="action-hint">Reveal your phrase to enable Copy.</span>
       </div>
     </div>
 
@@ -366,20 +366,19 @@ function handleBack() {
   pointer-events: none;
 }
 
-/* V53.5: State hint slot - left-aligned, fixed height, better legibility */
+/* V53.6: State hint slot - fixed height, premium neutral */
 .action-hint-slot {
   min-height: 16px;
   display: flex;
   align-items: center;
-  justify-content: center; /* Center to match button row */
+  justify-content: center;
   flex-shrink: 0;
 }
 
 .action-hint {
   font-size: var(--font-size-2xs);
-  color: rgba(255, 255, 255, 0.5); /* V53.5: Higher opacity for legibility */
-  letter-spacing: 0.03em;
-  font-style: italic; /* Subtle differentiation from labels */
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
 }
 
 /* V53.4: Responsive Mnemonic Grid - scrollable in short viewports */
