@@ -307,11 +307,13 @@ function handleBack() {
   gap: var(--space-md);
 }
 
+/* V53.9: Caption - matches dialog rhythm */
 .action-panel__caption {
-  font-size: var(--font-size-2xs);
-  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
   margin: 0;
   text-align: center;
+  line-height: 1.5;
 }
 
 /* V53.9: Action buttons with premium material */
@@ -327,7 +329,7 @@ function handleBack() {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em; /* V53.9: Reduced for softer feel, matches dialog */
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
