@@ -257,7 +257,7 @@ test.describe("V53 ImportMnemonicModal Guards", () => {
   });
 });
 
-test.describe("V53 Mnemonic Grid Containment", () => {
+test.describe("V54 Mnemonic Grid - No Ellipsis", () => {
   test.describe("StartView Mnemonic Step", () => {
     test("mnemonic words should not overflow grid", async ({ page }) => {
       // This would need navigation to mnemonic step which requires clicking Create Wallet
@@ -281,7 +281,7 @@ test.describe("V53 Mnemonic Grid Containment", () => {
       }
     });
 
-    test("mnemonic words should have proper min-width:0 for truncation", async ({ page }) => {
+    test("mnemonic words should have proper min-width:0 for flex", async ({ page }) => {
       await page.goto("/#/start");
       await page.waitForTimeout(500);
 
@@ -296,6 +296,52 @@ test.describe("V53 Mnemonic Grid Containment", () => {
             getComputedStyle(el).minWidth
           );
           expect(style).toBe("0px");
+        }
+      }
+    });
+
+    test("V54: mnemonic words should NOT have text-overflow ellipsis", async ({ page }) => {
+      await page.goto("/#/start");
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const wordText = await page.$(".word-text");
+        if (wordText) {
+          const style = await wordText.evaluate((el) =>
+            getComputedStyle(el).textOverflow
+          );
+          // V54: Should NOT be ellipsis - words must be fully readable
+          expect(style).not.toBe("ellipsis");
+        }
+      }
+    });
+
+    test("V54: mnemonic cells should have fixed height", async ({ page }) => {
+      await page.goto("/#/start");
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const cells = await page.$$(".mnemonic-word");
+        if (cells.length >= 2) {
+          // All cells should have same height
+          const heights = await Promise.all(
+            cells.slice(0, 6).map(async (cell) => {
+              const box = await cell.boundingBox();
+              return box?.height ?? 0;
+            })
+          );
+          const firstHeight = heights[0];
+          for (const height of heights) {
+            expect(height).toBe(firstHeight);
+          }
         }
       }
     });
