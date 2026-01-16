@@ -290,13 +290,14 @@ function handleBack() {
   gap: var(--space-md);
 }
 
+/* V53.3: Action buttons with premium material */
 .action-btn {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-chip);
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
@@ -305,23 +306,31 @@ function handleBack() {
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: all var(--transition-fast);
+  /* V53.3: Subtle depth for tactile feel */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* V53.2: Reveal is primary action - more prominent */
+/* V53.3: Reveal is primary action - elevated prominence */
 .action-btn--primary {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: var(--color-text-primary);
-}
-
-.action-btn:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
   color: var(--color-text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* V53.3: Hover - lift effect with shadow + border glow */
+.action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--color-text-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
+}
+
+/* V53.3: Pressed - depth change */
 .action-btn:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 /* V53.3: Reveal active state - accent border when revealed */
