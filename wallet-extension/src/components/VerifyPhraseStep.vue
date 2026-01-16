@@ -39,7 +39,7 @@ function handleVerify() {
   const input2 = word2Input.value.trim().toLowerCase();
 
   if (input1 !== expectedWord1.value || input2 !== expectedWord2.value) {
-    error.value = "Words don't match. Please check and try again.";
+    error.value = "Those words don't match. Check positions and try again.";
     return;
   }
 
@@ -58,15 +58,15 @@ function handleBack() {
 
 <template>
   <div class="verify-step" data-roi="verify-phrase-step">
-    <!-- V53.5: Left-aligned subtitle for consistency with field labels -->
+    <!-- V53.6: Left-aligned subtitle -->
     <p class="verify-subtitle">
-      Confirm you saved your recovery phrase by entering the requested words.
+      Enter the requested words to confirm you saved your recovery phrase.
     </p>
 
-    <!-- V53.5: Input fields with premium surface treatment -->
+    <!-- V53.6: Input fields with consistent spacing -->
     <div class="verify-inputs">
       <div class="verify-field">
-        <label class="verify-label">Word #{{ word1Index + 1 }}</label>
+        <label class="verify-label">Word {{ word1Index + 1 }}</label>
         <input
           v-model="word1Input"
           type="text"
@@ -81,7 +81,7 @@ function handleBack() {
       </div>
 
       <div class="verify-field">
-        <label class="verify-label">Word #{{ word2Index + 1 }}</label>
+        <label class="verify-label">Word {{ word2Index + 1 }}</label>
         <input
           v-model="word2Input"
           type="text"
@@ -96,12 +96,12 @@ function handleBack() {
       </div>
     </div>
 
-    <!-- V53.5: Premium error slot with reserved height -->
+    <!-- V53.6: Error slot - reserved height, clean typography -->
     <div class="error-slot" aria-live="polite">
       <p v-if="error" class="error-text">{{ error }}</p>
     </div>
 
-    <!-- V53.5: CTA Rail - matches RecoveryPhraseDisplay pattern -->
+    <!-- V53.6: CTA Rail -->
     <div class="cta-rail" data-roi="verify-phrase-cta">
       <Button variant="secondary" size="lg" class="cta-rail__back" @click="handleBack">
         Back
@@ -114,16 +114,16 @@ function handleBack() {
 </template>
 
 <style scoped>
-/* V53.5: Main container with flex layout */
+/* V53.6: Main container */
 .verify-step {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
   flex: 1;
-  min-height: 0; /* Allow flex shrinking */
+  min-height: 0;
 }
 
-/* V53.5: Left-aligned subtitle for consistency */
+/* V53.6: Subtitle - left-aligned, secondary text */
 .verify-subtitle {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
@@ -132,13 +132,11 @@ function handleBack() {
   line-height: 1.5;
 }
 
-/* V53.5: Input container with reduced gap */
+/* V53.6: Input container */
 .verify-inputs {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  flex: 1;
-  min-height: 0;
 }
 
 .verify-field {
@@ -147,16 +145,14 @@ function handleBack() {
   gap: var(--space-xs);
 }
 
-/* V53.5: Label with better contrast */
+/* V53.6: Label - sentence case, no uppercase transform */
 .verify-label {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
-/* V53.5: Premium input surface */
+/* V53.6: Input surface */
 .verify-input {
   width: 100%;
   padding: var(--space-md);
@@ -179,20 +175,18 @@ function handleBack() {
   outline: none;
   border-color: var(--color-accent-primary);
   background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 2px rgba(var(--color-accent-primary-rgb, 163, 230, 53), 0.15);
 }
 
 .verify-input::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--color-text-muted);
   font-family: var(--font-family);
 }
 
-/* V53.5: Premium error slot with reserved height */
+/* V53.6: Error slot - reserved height, clean typography */
 .error-slot {
-  min-height: 24px;
+  min-height: 20px;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   flex-shrink: 0;
 }
 
@@ -200,28 +194,9 @@ function handleBack() {
   color: var(--color-error);
   font-size: var(--font-size-sm);
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
 }
 
-/* V53.5: Error text with icon-like prefix */
-.error-text::before {
-  content: '!';
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-error);
-  color: var(--color-bg-base);
-  font-size: 10px;
-  font-weight: var(--font-weight-bold);
-  flex-shrink: 0;
-}
-
-/* V53.5: CTA Rail - matches RecoveryPhraseDisplay pattern */
+/* V53.6: CTA Rail */
 .cta-rail {
   display: flex;
   gap: var(--space-md);
