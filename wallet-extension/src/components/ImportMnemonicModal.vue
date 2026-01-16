@@ -122,7 +122,7 @@ watch(() => props.isOpen, (isOpen) => {
       </svg>
     </template>
 
-    <div class="import-modal">
+    <div class="import-modal" data-roi="import-mnemonic-modal">
       <!-- Security Notice -->
       <div class="security-notice">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -134,7 +134,7 @@ watch(() => props.isOpen, (isOpen) => {
       </div>
 
       <!-- Input Area -->
-      <div class="input-area">
+      <div class="input-area" data-roi="import-mnemonic-input">
         <textarea
           ref="textareaRef"
           v-model="inputValue"
@@ -148,7 +148,7 @@ watch(() => props.isOpen, (isOpen) => {
         />
 
         <!-- Paste Button -->
-        <button class="paste-btn" type="button" @click="handlePaste">
+        <button class="paste-btn" type="button" data-roi="import-mnemonic-paste" @click="handlePaste">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -158,13 +158,13 @@ watch(() => props.isOpen, (isOpen) => {
       </div>
 
       <!-- Word Count Indicator -->
-      <div class="word-count" :class="`word-count--${wordCountColor}`">
+      <div class="word-count" :class="`word-count--${wordCountColor}`" data-roi="import-mnemonic-count">
         <span class="word-count__number">{{ wordCount }}</span>
         <span class="word-count__label">/ 12 or 24 words</span>
       </div>
 
       <!-- Word Preview Grid (shows parsed words) -->
-      <div v-if="words.length > 0" class="word-preview">
+      <div v-if="words.length > 0" class="word-preview" data-roi="import-mnemonic-preview">
         <div
           v-for="(word, index) in words.slice(0, 24)"
           :key="index"
@@ -176,18 +176,21 @@ watch(() => props.isOpen, (isOpen) => {
         </div>
       </div>
 
-      <!-- Error Message -->
-      <p v-if="error" class="error-message">{{ error }}</p>
+      <!-- V53: Error with reserved slot -->
+      <div class="error-slot" aria-live="polite">
+        <p v-if="error" class="error-message">{{ error }}</p>
+      </div>
     </div>
 
     <template #footer>
-      <div class="footer-actions">
+      <div class="footer-actions" data-roi="import-mnemonic-cta">
         <Button variant="secondary" @click="handleClose">
           Cancel
         </Button>
         <Button
           variant="primary"
           :disabled="!canSubmit"
+          data-roi="import-mnemonic-submit"
           @click="handleConfirm"
         >
           Import Wallet
@@ -198,21 +201,22 @@ watch(() => props.isOpen, (isOpen) => {
 </template>
 
 <style scoped>
+/* V45: Import modal - card form layout with V43 patterns */
 .import-modal {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: var(--space-md);
 }
 
-/* Security Notice */
+/* V45: Security Notice - using warning muted token */
 .security-notice {
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm);
   padding: var(--space-md);
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  border-radius: var(--radius-lg);
+  background: var(--color-warning-muted);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   color: var(--color-warning);
   line-height: 1.5;
@@ -223,19 +227,22 @@ watch(() => props.isOpen, (isOpen) => {
   margin-top: 1px;
 }
 
-/* Input Area */
+/* V45: Input Area - V43 card pattern */
 .input-area {
   position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .phrase-input {
   width: 100%;
-  min-height: 100px;
-  padding: var(--space-lg);
-  padding-right: 80px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  min-height: 88px;
+  padding: var(--space-md);
+  padding-right: 72px;
+  background: transparent;
+  border: none;
   color: var(--color-text-primary);
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
@@ -246,7 +253,11 @@ watch(() => props.isOpen, (isOpen) => {
 
 .phrase-input:focus {
   outline: none;
-  border-color: var(--color-accent-primary);
+}
+
+/* V45: Focus ring on container */
+.input-area:focus-within {
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .phrase-input::placeholder {
@@ -254,7 +265,7 @@ watch(() => props.isOpen, (isOpen) => {
   font-family: var(--font-family);
 }
 
-/* Paste Button */
+/* V45: Paste Button - using InlineAction-style tokens */
 .paste-btn {
   position: absolute;
   top: var(--space-sm);
@@ -262,20 +273,34 @@ watch(() => props.isOpen, (isOpen) => {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--surface-hover);
-  border: none;
-  border-radius: var(--radius-sm);
+  height: var(--control-h-inline);
+  padding: 0 var(--space-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-chip);
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .paste-btn:hover {
-  background: var(--surface-pressed);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
   color: var(--color-text-primary);
+}
+
+.paste-btn:active {
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(0.98);
+}
+
+.paste-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Word Count */
@@ -284,6 +309,7 @@ watch(() => props.isOpen, (isOpen) => {
   align-items: baseline;
   gap: var(--space-xs);
   font-size: var(--font-size-sm);
+  padding: 0 var(--space-xs);
 }
 
 .word-count__number {
@@ -311,43 +337,46 @@ watch(() => props.isOpen, (isOpen) => {
   color: var(--color-error);
 }
 
-/* Word Preview Grid */
+/* V45: Word Preview Grid - V43 card pattern */
 .word-preview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-xs);
-  padding: var(--space-md);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  max-height: 140px;
+  padding: var(--space-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  max-height: 120px;
   overflow-y: auto;
 }
 
+/* V45: Word chip - premium hierarchy */
 .word-chip {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--surface-hover);
+  gap: 4px;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-2xs);
+  font-size: 10px;
 }
 
 .word-chip--invalid {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--color-error-muted);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .word-chip__index {
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  min-width: 14px;
+  font-weight: var(--font-weight-medium);
+  min-width: 12px;
 }
 
 .word-chip__text {
   color: var(--color-text-primary);
   font-family: var(--font-mono);
+  font-weight: var(--font-weight-medium);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -355,6 +384,14 @@ watch(() => props.isOpen, (isOpen) => {
 
 .word-chip--invalid .word-chip__text {
   color: var(--color-error);
+}
+
+/* V53: Error slot - reserved height for no layout shift */
+.error-slot {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Error Message */
