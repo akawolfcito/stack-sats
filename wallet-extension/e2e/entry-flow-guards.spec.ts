@@ -858,3 +858,121 @@ test.describe("V53.2 Visual Consistency Guards", () => {
     });
   });
 });
+
+test.describe("V54.1 Single-CTA Reveal Interaction Guards", () => {
+  test.describe("Clickable Hero Overlay", () => {
+    test("V54.1: Phrase veil should be a clickable button", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // V54.1: Verify phrase-veil-btn exists and is a button
+        const veilBtn = await page.$('[data-roi="phrase-veil-btn"]');
+        expect(veilBtn, "Phrase veil button should exist when phrase is hidden").toBeTruthy();
+
+        if (veilBtn) {
+          const tagName = await veilBtn.evaluate((el) => el.tagName.toLowerCase());
+          expect(tagName, "Phrase veil should be a button element for a11y").toBe("button");
+
+          const ariaLabel = await veilBtn.getAttribute("aria-label");
+          expect(ariaLabel, "Phrase veil should have aria-label").toBe("Reveal recovery phrase");
+
+          console.log("[V54.1] Phrase veil is a button with proper a11y");
+        }
+      }
+    });
+
+    test("V54.1: Clicking phrase veil should reveal the phrase", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // V54.1: Verify phrase is initially hidden (veil is visible)
+        const veilBefore = await page.$('[data-roi="phrase-veil-btn"]');
+        expect(veilBefore, "Phrase veil should exist before reveal").toBeTruthy();
+
+        // Check grid is blurred
+        const gridBlurredBefore = await page.$('.mnemonic-grid--hidden');
+        expect(gridBlurredBefore, "Grid should be blurred before reveal").toBeTruthy();
+
+        // Click the veil to reveal
+        if (veilBefore) {
+          await veilBefore.click();
+          await page.waitForTimeout(300);
+
+          // V54.1: Verify phrase is now revealed (veil is gone)
+          const veilAfter = await page.$('[data-roi="phrase-veil-btn"]');
+          expect(veilAfter, "Phrase veil should be removed after reveal").toBeNull();
+
+          // Check grid is no longer blurred
+          const gridBlurredAfter = await page.$('.mnemonic-grid--hidden');
+          expect(gridBlurredAfter, "Grid should not be blurred after reveal").toBeNull();
+
+          console.log("[V54.1] Clicking phrase veil successfully reveals the phrase");
+        }
+      }
+    });
+
+    test("V54.1: Keyboard activation (Enter/Space) should reveal phrase", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const veilBtn = await page.$('[data-roi="phrase-veil-btn"]');
+        if (veilBtn) {
+          // Focus the veil button
+          await veilBtn.focus();
+
+          // Press Enter to activate
+          await page.keyboard.press("Enter");
+          await page.waitForTimeout(300);
+
+          // V54.1: Verify phrase is revealed
+          const veilAfter = await page.$('[data-roi="phrase-veil-btn"]');
+          expect(veilAfter, "Phrase veil should be removed after Enter key").toBeNull();
+
+          console.log("[V54.1] Keyboard activation (Enter) successfully reveals the phrase");
+        }
+      }
+    });
+
+    test("V54.1: Phrase veil should have proper cursor style", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const veilBtn = await page.$('[data-roi="phrase-veil-btn"]');
+        if (veilBtn) {
+          const cursor = await veilBtn.evaluate((el) => getComputedStyle(el).cursor);
+          expect(cursor, "Phrase veil should have pointer cursor").toBe("pointer");
+
+          console.log("[V54.1] Phrase veil has correct cursor: pointer");
+        }
+      }
+    });
+  });
+});
