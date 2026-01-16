@@ -53,7 +53,42 @@ const isLoading = ref(false);
 const importError = ref("");
 const showImportModal = ref(false);
 
+// V53.1: Reveal/Hide toggle for mnemonic grid (default hidden for security)
+const isRevealed = ref(false);
+const showCopyConfirm = ref(false);
+const copyToastVisible = ref(false);
+
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
+
+// V53.1: Toggle reveal state
+function toggleReveal() {
+  isRevealed.value = !isRevealed.value;
+}
+
+// V53.1: Show copy confirmation dialog
+function handleCopyClick() {
+  showCopyConfirm.value = true;
+}
+
+// V53.1: Confirm copy and show toast
+async function confirmCopy() {
+  showCopyConfirm.value = false;
+  try {
+    await navigator.clipboard.writeText(mnemonic.value);
+    copyToastVisible.value = true;
+    setTimeout(() => {
+      copyToastVisible.value = false;
+    }, 2000);
+  } catch {
+    // Clipboard API may fail in some contexts
+    secureLog("Clipboard copy failed");
+  }
+}
+
+// V53.1: Cancel copy
+function cancelCopy() {
+  showCopyConfirm.value = false;
+}
 
 // Generate random mnemonic seed phrase
 const handleGenerateSecret = () => {
@@ -270,9 +305,43 @@ onBeforeMount(() => {
           </div>
         </div>
 
-        <!-- V53: Mnemonic Grid - V43 card pattern -->
-        <!-- V54: Font autoscale for long words (no ellipsis truncation) -->
-        <div class="mnemonic-grid" data-roi="mnemonic-grid">
+        <!-- V53.1: Action bar with Reveal/Hide toggle and Copy button -->
+        <div class="mnemonic-actions" data-roi="mnemonic-actions">
+          <button
+            class="action-btn"
+            data-roi="mnemonic-reveal-toggle"
+            @click="toggleReveal"
+          >
+            <svg v-if="isRevealed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            {{ isRevealed ? 'Hide' : 'Reveal' }}
+          </button>
+          <button
+            class="action-btn"
+            data-roi="mnemonic-copy-btn"
+            @click="handleCopyClick"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy
+          </button>
+        </div>
+
+        <!-- V53.1: Mnemonic Grid - blurred by default -->
+        <div
+          class="mnemonic-grid"
+          :class="{ 'mnemonic-grid--hidden': !isRevealed }"
+          data-roi="mnemonic-grid"
+        >
           <div
             v-for="(word, index) in mnemonic.split(' ')"
             :key="index"
@@ -292,6 +361,37 @@ onBeforeMount(() => {
             I saved it securely
           </Button>
         </div>
+
+        <!-- V53.1: Copy Confirmation Dialog -->
+        <div v-if="showCopyConfirm" class="copy-confirm-overlay" data-roi="copy-confirm-dialog">
+          <div class="copy-confirm-dialog">
+            <div class="copy-confirm-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <h3 class="copy-confirm-title">Copy Recovery Phrase?</h3>
+            <p class="copy-confirm-text">
+              Your clipboard may be accessible to other apps. Only copy if you're sure it's safe.
+            </p>
+            <div class="copy-confirm-actions">
+              <Button variant="secondary" @click="cancelCopy">Cancel</Button>
+              <Button variant="primary" @click="confirmCopy">Copy</Button>
+            </div>
+          </div>
+        </div>
+
+        <!-- V53.1: Copied Toast -->
+        <Transition name="toast">
+          <div v-if="copyToastVisible" class="copy-toast" data-roi="copy-toast">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Copied to clipboard
+          </div>
+        </Transition>
       </div>
 
       <!-- Step 3 & 4: PIN -->
@@ -522,6 +622,40 @@ onBeforeMount(() => {
   line-height: 1.5;
 }
 
+/* V53.1: Action bar - Reveal/Copy buttons */
+.mnemonic-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-chip);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-text-primary);
+}
+
+.action-btn:active {
+  transform: scale(0.98);
+}
+
 /* V45: Mnemonic Grid - Premium word list with V43 card */
 .mnemonic-grid {
   display: grid;
@@ -531,6 +665,14 @@ onBeforeMount(() => {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-card);
+  transition: filter var(--transition-normal);
+}
+
+/* V53.1: Hidden/blurred state for mnemonic grid */
+.mnemonic-grid--hidden {
+  filter: blur(8px);
+  user-select: none;
+  pointer-events: none;
 }
 
 /* V54: Word cell - fixed height for consistency */
@@ -599,5 +741,86 @@ onBeforeMount(() => {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   margin-top: var(--space-lg);
+}
+
+/* V53.1: Copy Confirmation Dialog */
+.copy-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--space-lg);
+}
+
+.copy-confirm-dialog {
+  background: var(--color-bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-card);
+  padding: var(--space-xl);
+  max-width: 320px;
+  text-align: center;
+  box-shadow: var(--shadow-elev-3);
+}
+
+.copy-confirm-icon {
+  color: var(--color-warning);
+  margin-bottom: var(--space-md);
+}
+
+.copy-confirm-title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--space-sm);
+}
+
+.copy-confirm-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  margin: 0 0 var(--space-lg);
+}
+
+.copy-confirm-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.copy-confirm-actions :deep(.btn) {
+  flex: 1;
+}
+
+/* V53.1: Copied Toast */
+.copy-toast {
+  position: fixed;
+  bottom: var(--space-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-success);
+  color: var(--color-bg-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-chip);
+  box-shadow: var(--shadow-elev-2);
+  z-index: 101;
+}
+
+/* Toast transition */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
 }
 </style>
