@@ -1,7 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 
 /**
- * Entry Flow Guard Tests - V53 Entry Flow Premium Parity
+ * Entry Flow Guard Tests - V53.1 Recovery Phrase Legibility
  *
  * Guards for:
  * - StartView: Wallet creation onboarding
@@ -13,6 +13,12 @@ import { test, expect, Page } from "@playwright/test";
  * - Ambient glow properly clipped
  * - All ROI targets present
  * - Error slots with reserved height (no layout shift)
+ *
+ * V53.1 Word Legibility Checks:
+ * - No text-overflow: ellipsis on word tokens
+ * - No line wrapping (white-space: nowrap)
+ * - No scrollWidth > clientWidth (word doesn't overflow)
+ * - Consistent cell heights
  *
  * Run with: pnpm test:e2e
  */
@@ -257,20 +263,17 @@ test.describe("V53 ImportMnemonicModal Guards", () => {
   });
 });
 
-test.describe("V54 Mnemonic Grid - No Ellipsis", () => {
+test.describe("V53.1 Mnemonic Word Legibility Guards", () => {
   test.describe("StartView Mnemonic Step", () => {
     test("mnemonic words should not overflow grid", async ({ page }) => {
-      // This would need navigation to mnemonic step which requires clicking Create Wallet
       await page.goto("/#/start");
       await page.waitForTimeout(500);
 
-      // Click Create New Wallet
       const createBtn = await page.$('[data-roi="start-primary-cta"]');
       if (createBtn) {
         await createBtn.click();
         await page.waitForTimeout(500);
 
-        // Should now be on mnemonic step
         const mnemonicGrid = await page.$('[data-roi="mnemonic-grid"]');
         if (mnemonicGrid) {
           const overflow = await getElementOverflow(page, '[data-roi="mnemonic-grid"]');
@@ -300,7 +303,7 @@ test.describe("V54 Mnemonic Grid - No Ellipsis", () => {
       }
     });
 
-    test("V54: mnemonic words should NOT have text-overflow ellipsis", async ({ page }) => {
+    test("V53.1: word text should NOT have text-overflow ellipsis", async ({ page }) => {
       await page.goto("/#/start");
       await page.waitForTimeout(500);
 
@@ -314,13 +317,62 @@ test.describe("V54 Mnemonic Grid - No Ellipsis", () => {
           const style = await wordText.evaluate((el) =>
             getComputedStyle(el).textOverflow
           );
-          // V54: Should NOT be ellipsis - words must be fully readable
+          // V53.1: No ellipsis - words must be fully readable
           expect(style).not.toBe("ellipsis");
         }
       }
     });
 
-    test("V54: mnemonic cells should have fixed height", async ({ page }) => {
+    test("V53.1: word text should have white-space: nowrap (no line wrapping)", async ({ page }) => {
+      await page.goto("/#/start");
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const wordText = await page.$(".word-text");
+        if (wordText) {
+          const style = await wordText.evaluate((el) =>
+            getComputedStyle(el).whiteSpace
+          );
+          // V53.1: No line wrapping inside word token
+          expect(style).toBe("nowrap");
+        }
+      }
+    });
+
+    test("V53.1: word text should not have scrollWidth > clientWidth", async ({ page }) => {
+      await page.goto("/#/start");
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // Check all word elements don't overflow
+        const wordOverflows = await page.evaluate(() => {
+          const words = document.querySelectorAll(".word-text");
+          const results: { word: string; overflows: boolean }[] = [];
+          words.forEach((word) => {
+            const el = word as HTMLElement;
+            results.push({
+              word: el.textContent || "",
+              overflows: el.scrollWidth > el.clientWidth,
+            });
+          });
+          return results;
+        });
+
+        // No word should overflow its container
+        const overflowingWords = wordOverflows.filter((w) => w.overflows);
+        expect(overflowingWords, "No word should overflow its container").toHaveLength(0);
+      }
+    });
+
+    test("V53.1: mnemonic cells should have consistent height", async ({ page }) => {
       await page.goto("/#/start");
       await page.waitForTimeout(500);
 
@@ -331,7 +383,6 @@ test.describe("V54 Mnemonic Grid - No Ellipsis", () => {
 
         const cells = await page.$$(".mnemonic-word");
         if (cells.length >= 2) {
-          // All cells should have same height
           const heights = await Promise.all(
             cells.slice(0, 6).map(async (cell) => {
               const box = await cell.boundingBox();

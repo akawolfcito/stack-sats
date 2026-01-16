@@ -156,13 +156,13 @@ function handleStepBack() {
   }
 }
 
-// V54: Font autoscale for long mnemonic words (no ellipsis truncation)
+// V53.1: Font autoscale for long mnemonic words (no ellipsis, no line-wrap)
+// Tiers: normal (<=8), long (9-10), xlong (>=11)
 function getWordSizeClass(word: string): string {
   const len = word.length;
-  if (len > 12) return 'word-text--2xs';
-  if (len > 10) return 'word-text--xs';
-  if (len > 8) return 'word-text--sm';
-  return '';
+  if (len >= 11) return 'word-text--xlong';  // xlong: 11+ chars
+  if (len >= 9) return 'word-text--long';    // long: 9-10 chars
+  return '';                                  // normal: <=8 chars
 }
 </script>
 
@@ -427,26 +427,27 @@ function getWordSizeClass(word: string): string {
   flex-shrink: 0;
 }
 
-/* V54: Word text - no ellipsis, font autoscale + 2-line clamp fallback */
+/* V53.1: Word text - no ellipsis, no line-wrap, font autoscale */
 .word-text {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   letter-spacing: 0.01em;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  line-height: 1.2;
-  max-height: calc(1.2em * 2);
+  /* V53.1: Single line only - no wrapping, no ellipsis */
+  white-space: nowrap;
+  overflow: visible;
+  /* NO text-overflow: ellipsis - word must be fully readable */
 }
 
-/* V54: Font autoscale classes */
-.word-text--sm { font-size: var(--font-size-sm); }
-.word-text--xs { font-size: var(--font-size-xs); }
-.word-text--2xs { font-size: var(--font-size-2xs); }
+/* V53.1: Font autoscale tiers for long words */
+.word-text--long {
+  font-size: var(--font-size-xs);  /* 9-10 char words */
+}
+
+.word-text--xlong {
+  font-size: 10px;  /* 11+ char words - smallest readable */
+}
 
 .input-label {
   color: var(--color-text-secondary);
