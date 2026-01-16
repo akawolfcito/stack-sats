@@ -474,31 +474,48 @@ function handleBack() {
   min-width: 0;
 }
 
-/* Copy Confirmation Dialog */
+/* V53.4: Copy Confirmation Dialog - polished premium modal */
 .copy-confirm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
   padding: var(--space-lg);
+  /* V53.4: Smooth fade-in */
+  animation: modal-fade-in 0.15s ease-out;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .copy-confirm-dialog {
   background: var(--color-bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-card);
   padding: var(--space-xl);
   max-width: 320px;
   text-align: center;
   box-shadow: var(--shadow-elev-3);
+  /* V53.4: Subtle scale-in */
+  animation: modal-scale-in 0.15s ease-out;
 }
 
+@keyframes modal-scale-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* V53.4: Icon intentionally spaced from title */
 .copy-confirm-icon {
   color: var(--color-warning);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  justify-content: center;
 }
 
 .copy-confirm-title {
@@ -506,12 +523,14 @@ function handleBack() {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   margin: 0 0 var(--space-sm);
+  letter-spacing: -0.01em;
 }
 
+/* V53.4: Body text - increased contrast for legibility */
 .copy-confirm-text {
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
-  line-height: 1.5;
+  line-height: 1.6;
   margin: 0 0 var(--space-lg);
 }
 
@@ -520,8 +539,14 @@ function handleBack() {
   gap: var(--space-md);
 }
 
+/* V53.4: Ensure Cancel looks like a real button, not disabled */
 .copy-confirm-actions :deep(.btn) {
   flex: 1;
+}
+
+.copy-confirm-actions :deep(.btn--secondary) {
+  /* Ensure secondary button has visible presence */
+  opacity: 1;
 }
 
 /* Copied Toast */
