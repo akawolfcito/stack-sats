@@ -25,8 +25,8 @@ import { secureLog } from "@/utils/security/logger";
 
 const router = useRouter();
 
-// Steps: 'start' -> 'mnemonic' -> 'pin-create' -> 'pin-confirm' -> done
-type Step = "start" | "mnemonic" | "pin-create" | "pin-confirm";
+// Steps: 'start' -> 'mnemonic' -> 'verify' -> 'pin-create' -> 'pin-confirm' -> done
+type Step = "start" | "mnemonic" | "verify" | "pin-create" | "pin-confirm";
 const currentStep = ref<Step>("start");
 
 // V53: Dynamic header config based on step
@@ -36,6 +36,8 @@ const headerConfig = computed(() => {
       return { title: "", left: "none" as const, showHeader: false };
     case "mnemonic":
       return { title: "Recovery Phrase", left: "back" as const, showHeader: true };
+    case "verify":
+      return { title: "Verify Phrase", left: "back" as const, showHeader: true };
     case "pin-create":
       return { title: "Create PIN", left: "back" as const, showHeader: true };
     case "pin-confirm":
@@ -58,7 +60,52 @@ const isRevealed = ref(false);
 const showCopyConfirm = ref(false);
 const copyToastVisible = ref(false);
 
+// V53.1: Verification step state (2-word check)
+const verifyWord1Index = ref(0);
+const verifyWord2Index = ref(0);
+const verifyWord1Input = ref("");
+const verifyWord2Input = ref("");
+const verifyError = ref("");
+
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
+
+// V53.1: Generate random word indices for verification (1-indexed for display)
+function generateVerifyIndices() {
+  const words = mnemonic.value.split(" ");
+  const wordCount = words.length;
+
+  // Pick 2 random different indices
+  const idx1 = Math.floor(Math.random() * wordCount);
+  let idx2 = Math.floor(Math.random() * wordCount);
+  while (idx2 === idx1) {
+    idx2 = Math.floor(Math.random() * wordCount);
+  }
+
+  // Sort so lower index comes first
+  const [first, second] = [idx1, idx2].sort((a, b) => a - b);
+  verifyWord1Index.value = first;
+  verifyWord2Index.value = second;
+}
+
+// V53.1: Handle verification submission
+function handleVerify() {
+  const words = mnemonic.value.split(" ");
+  const expected1 = words[verifyWord1Index.value].toLowerCase();
+  const expected2 = words[verifyWord2Index.value].toLowerCase();
+  const input1 = verifyWord1Input.value.trim().toLowerCase();
+  const input2 = verifyWord2Input.value.trim().toLowerCase();
+
+  if (input1 !== expected1 || input2 !== expected2) {
+    verifyError.value = "Words don't match. Please check and try again.";
+    return;
+  }
+
+  verifyError.value = "";
+  currentStep.value = "pin-create";
+  nextTick(() => {
+    pinInputRef.value?.focus();
+  });
+}
 
 // V53.1: Toggle reveal state
 function toggleReveal() {
@@ -112,12 +159,13 @@ const handleImportConfirm = (seedPhrase: string) => {
   currentStep.value = "mnemonic";
 };
 
-// Proceed to PIN creation
-const handleContinueToPin = () => {
-  currentStep.value = "pin-create";
-  nextTick(() => {
-    pinInputRef.value?.focus();
-  });
+// V53.1: Proceed to verification step (was: handleContinueToPin)
+const handleContinueToVerify = () => {
+  generateVerifyIndices();
+  verifyWord1Input.value = "";
+  verifyWord2Input.value = "";
+  verifyError.value = "";
+  currentStep.value = "verify";
 };
 
 // Handle PIN creation
@@ -177,15 +225,22 @@ const handlePinConfirm = async (enteredPin: string) => {
 // Go back to previous step
 const handleBack = () => {
   pinError.value = "";
+  verifyError.value = "";
 
   switch (currentStep.value) {
     case "mnemonic":
       mnemonic.value = "";
+      isRevealed.value = false;
       currentStep.value = "start";
+      break;
+    case "verify":
+      verifyWord1Input.value = "";
+      verifyWord2Input.value = "";
+      currentStep.value = "mnemonic";
       break;
     case "pin-create":
       pin.value = "";
-      currentStep.value = "mnemonic";
+      currentStep.value = "verify";
       break;
     case "pin-confirm":
       pinConfirm.value = "";
@@ -357,7 +412,7 @@ onBeforeMount(() => {
 
         <!-- Continue Button -->
         <div class="cta-wrapper">
-          <Button variant="primary" size="lg" full-width @click="handleContinueToPin">
+          <Button variant="primary" size="lg" full-width @click="handleContinueToVerify">
             I saved it securely
           </Button>
         </div>
@@ -394,7 +449,55 @@ onBeforeMount(() => {
         </Transition>
       </div>
 
-      <!-- Step 3 & 4: PIN -->
+      <!-- V53.1: Step 3: Verification (2-word check) -->
+      <div v-else-if="currentStep === 'verify'" class="verify-content" data-roi="verify-step">
+        <p class="verify-subtitle">
+          Confirm you saved your recovery phrase by entering the words at positions:
+        </p>
+
+        <div class="verify-inputs">
+          <div class="verify-field">
+            <label class="verify-label">Word #{{ verifyWord1Index + 1 }}</label>
+            <input
+              v-model="verifyWord1Input"
+              type="text"
+              class="verify-input"
+              placeholder="Enter word"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+            />
+          </div>
+
+          <div class="verify-field">
+            <label class="verify-label">Word #{{ verifyWord2Index + 1 }}</label>
+            <input
+              v-model="verifyWord2Input"
+              type="text"
+              class="verify-input"
+              placeholder="Enter word"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+
+        <!-- V53.1: Error slot with reserved height -->
+        <div class="error-slot" aria-live="polite">
+          <p v-if="verifyError" class="error-text">{{ verifyError }}</p>
+        </div>
+
+        <div class="cta-wrapper">
+          <Button variant="primary" size="lg" full-width @click="handleVerify">
+            Verify & Continue
+          </Button>
+        </div>
+      </div>
+
+      <!-- Step 4 & 5: PIN -->
       <div v-else class="pin-content" data-roi="pin-step">
         <PinInput
           ref="pinInputRef"
@@ -723,6 +826,68 @@ onBeforeMount(() => {
 
 .word-text--xlong {
   font-size: 10px;  /* 11+ char words - smallest readable */
+}
+
+/* V53.1: Verify Content - 2-word verification step */
+.verify-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-lg);
+  gap: var(--space-lg);
+  position: relative;
+  z-index: 1;
+}
+
+.verify-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.verify-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.verify-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.verify-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.verify-input {
+  width: 100%;
+  padding: var(--space-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  box-sizing: border-box;
+}
+
+.verify-input:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.verify-input::placeholder {
+  color: var(--color-text-muted);
+  font-family: var(--font-family);
 }
 
 /* V53: PIN Content - uses AppHeader, centered layout */
