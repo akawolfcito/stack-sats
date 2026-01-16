@@ -290,17 +290,15 @@ function handleBack() {
   line-height: 1.5;
 }
 
-/* V53.7: Action Panel - visible surface grouping actions + caption */
+/* V53.8: Ghost Action Rail - subtle grouping, buttons are hero */
 .action-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-md);
+  gap: var(--space-xs);
+  padding: var(--space-sm) 0;
   flex-shrink: 0;
+  /* Ghost: no background, no border - just logical grouping */
 }
 
 .action-panel__buttons {
