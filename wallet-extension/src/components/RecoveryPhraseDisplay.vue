@@ -154,13 +154,13 @@ function handleBack() {
           Copy
         </button>
       </div>
-      <!-- V53.7: Caption inside panel -->
+      <!-- V54.1: Caption - 1 line max, space-efficient -->
       <p v-if="!isRevealed" class="action-panel__caption" aria-live="polite">
-        Reveal your phrase to enable Copy.
+        Reveal to enable Copy
       </p>
     </div>
 
-    <!-- V54.0: Phrase Area - hero section with premium surface -->
+    <!-- V54.1: Phrase Area - hero section with clickable reveal overlay -->
     <div class="phrase-hero" data-roi="phrase-hero">
       <div
         class="mnemonic-grid"
@@ -179,10 +179,17 @@ function handleBack() {
           >{{ word }}</span>
         </div>
       </div>
-      <!-- V54.0: Blur veil - intentional overlay when hidden -->
-      <div v-if="!isRevealed" class="phrase-veil">
-        <span class="phrase-veil__label">Click Reveal to show phrase</span>
-      </div>
+      <!-- V54.1: Clickable reveal overlay - primary reveal affordance -->
+      <button
+        v-if="!isRevealed"
+        type="button"
+        class="phrase-veil"
+        data-roi="phrase-veil-btn"
+        aria-label="Reveal recovery phrase"
+        @click="toggleReveal"
+      >
+        <span class="phrase-veil__label">Click to reveal</span>
+      </button>
     </div>
 
     <!-- V53.2: CTA Rail - ALWAYS 2-slot for visual parity -->
@@ -327,75 +334,60 @@ function handleBack() {
   line-height: 1.5;
 }
 
-/* V53.9: Action buttons with premium material */
+/* V54.1: Action buttons - secondary text-button style (downgraded prominence) */
 .action-btn {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-chip);
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.03em; /* V53.9: Reduced for softer feel, matches dialog */
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  /* V53.9: Prevent icon clipping */
   line-height: 1;
   overflow: visible;
 }
 
-/* V53.9: Prevent icon clipping in buttons */
+/* V54.1: Prevent icon clipping in buttons */
 .action-btn svg {
   display: block;
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
-/* V53.3: Reveal is primary action - elevated prominence */
+/* V54.1: Reveal button - subtle, not competing with hero overlay */
 .action-btn--primary {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: var(--color-text-primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  color: var(--color-text-muted);
 }
 
-/* V53.3: Hover - lift effect with shadow + border glow */
+/* V54.1: Hover - subtle background highlight */
 .action-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--color-text-primary);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  transform: translateY(-1px);
 }
 
-/* V53.3: Pressed - depth change */
+/* V54.1: Pressed */
 .action-btn:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.05);
 }
 
-/* V53.3: Focus-visible - keyboard accessibility */
+/* V54.1: Focus-visible - keyboard accessibility */
 .action-btn:focus-visible {
   outline: none;
-  border-color: var(--color-accent-primary);
-  box-shadow:
-    0 0 0 2px var(--color-bg-primary),
-    0 0 0 4px var(--color-accent-primary);
+  box-shadow: 0 0 0 2px var(--color-accent-primary);
 }
 
-/* V53.3: Reveal active state - accent border when revealed */
+/* V54.1: Active state - accent color when revealed */
 .action-btn--active {
-  border-color: var(--color-accent-primary);
   color: var(--color-accent-primary);
 }
 
-/* V53.3: Disabled state for copy button */
+/* V54.1: Disabled state for copy button */
 .action-btn--disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -435,7 +427,7 @@ function handleBack() {
   pointer-events: none;
 }
 
-/* V54.0: Blur Veil - intentional overlay when phrase is hidden */
+/* V54.1: Clickable Reveal Overlay - primary reveal affordance */
 .phrase-veil {
   position: absolute;
   inset: 0;
@@ -444,16 +436,44 @@ function handleBack() {
   justify-content: center;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(2px);
-  pointer-events: none;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.phrase-veil:hover {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.phrase-veil:active {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.phrase-veil:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px var(--color-accent-primary);
 }
 
 .phrase-veil__label {
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-chip);
+  transition: all var(--transition-fast);
+}
+
+.phrase-veil:hover .phrase-veil__label {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.02);
+}
+
+.phrase-veil:active .phrase-veil__label {
+  transform: scale(0.98);
 }
 
 /* Word cell - fixed height for consistency */
