@@ -120,9 +120,9 @@ function handleBack() {
       </div>
     </div>
 
-    <!-- V53.5: Action Area - actions + hint in cohesive block -->
-    <div class="action-area" data-roi="mnemonic-actions">
-      <div class="action-row">
+    <!-- V53.7: Action Panel - visible surface grouping actions + caption -->
+    <div class="action-panel" data-roi="mnemonic-actions">
+      <div class="action-panel__buttons">
         <button
           class="action-btn action-btn--primary"
           :class="{ 'action-btn--active': isRevealed }"
@@ -154,10 +154,10 @@ function handleBack() {
           Copy
         </button>
       </div>
-      <!-- V53.6: Hint slot - premium neutral styling -->
-      <div class="action-hint-slot" aria-live="polite">
-        <span v-if="!isRevealed" class="action-hint">Reveal your phrase to enable Copy.</span>
-      </div>
+      <!-- V53.7: Caption inside panel -->
+      <p v-if="!isRevealed" class="action-panel__caption" aria-live="polite">
+        Reveal your phrase to enable Copy.
+      </p>
     </div>
 
     <!-- V53.2: Responsive Mnemonic Grid - blurred by default -->
@@ -290,18 +290,30 @@ function handleBack() {
   line-height: 1.5;
 }
 
-/* V53.5: Action Area - cohesive block with row + hint */
-.action-area {
+/* V53.7: Action Panel - visible surface grouping actions + caption */
+.action-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
   flex-shrink: 0;
 }
 
-.action-row {
+.action-panel__buttons {
   display: flex;
   justify-content: center;
   gap: var(--space-md);
+}
+
+.action-panel__caption {
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-muted);
+  margin: 0;
+  text-align: center;
 }
 
 /* V53.3: Action buttons with premium material */
@@ -367,21 +379,6 @@ function handleBack() {
   opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
-}
-
-/* V53.6: State hint slot - fixed height, premium neutral */
-.action-hint-slot {
-  min-height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.action-hint {
-  font-size: var(--font-size-2xs);
-  color: var(--color-text-secondary);
-  letter-spacing: 0.02em;
 }
 
 /* V53.4: Responsive Mnemonic Grid - scrollable in short viewports */
