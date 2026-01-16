@@ -160,22 +160,28 @@ function handleBack() {
       </p>
     </div>
 
-    <!-- V53.2: Responsive Mnemonic Grid - blurred by default -->
-    <div
-      class="mnemonic-grid"
-      :class="{ 'mnemonic-grid--hidden': !isRevealed }"
-      data-roi="mnemonic-grid"
-    >
+    <!-- V54.0: Phrase Area - hero section with premium surface -->
+    <div class="phrase-hero" data-roi="phrase-hero">
       <div
-        v-for="(word, index) in words"
-        :key="index"
-        class="mnemonic-word"
+        class="mnemonic-grid"
+        :class="{ 'mnemonic-grid--hidden': !isRevealed }"
+        data-roi="mnemonic-grid"
       >
-        <span class="word-index">{{ index + 1 }}</span>
-        <span
-          class="word-text"
-          :class="getWordSizeClass(word)"
-        >{{ word }}</span>
+        <div
+          v-for="(word, index) in words"
+          :key="index"
+          class="mnemonic-word"
+        >
+          <span class="word-index">{{ index + 1 }}</span>
+          <span
+            class="word-text"
+            :class="getWordSizeClass(word)"
+          >{{ word }}</span>
+        </div>
+      </div>
+      <!-- V54.0: Blur veil - intentional overlay when hidden -->
+      <div v-if="!isRevealed" class="phrase-veil">
+        <span class="phrase-veil__label">Click Reveal to show phrase</span>
       </div>
     </div>
 
@@ -253,41 +259,46 @@ function handleBack() {
   min-height: 0; /* Allow flex shrinking in short viewports */
 }
 
-/* V53.4: Warning Box - fixed height, never shrinks */
+/* V54.0: Warning Box - compact, reduced vertical weight */
 .warning-box {
   display: flex;
-  gap: var(--space-md);
-  padding: var(--space-md);
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   background: var(--color-warning-muted);
-  border: 1px solid rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(234, 179, 8, 0.15);
   border-radius: var(--radius-md);
-  flex-shrink: 0; /* Never shrink - warning must be visible */
+  flex-shrink: 0;
 }
 
 .warning-icon {
   flex-shrink: 0;
   color: var(--color-warning);
   display: flex;
-  align-items: flex-start;
-  padding-top: 2px;
+  align-items: center;
+}
+
+.warning-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .warning-text {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: 2px;
 }
 
 .warning-text strong {
   color: var(--color-warning);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
 }
 
 .warning-text p {
   color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-2xs);
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* V53.8: Ghost Action Rail - subtle grouping, buttons are hero */
@@ -391,29 +402,58 @@ function handleBack() {
   pointer-events: none;
 }
 
-/* V53.4: Responsive Mnemonic Grid - scrollable in short viewports */
+/* V54.0: Phrase Hero - elevated surface, visual prominence */
+.phrase-hero {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+/* V54.0: Mnemonic Grid - hero content */
 .mnemonic-grid {
   display: grid;
-  /* Responsive: auto-fit with min 90px for side panel support */
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
   gap: 6px;
   padding: var(--space-md);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-card);
   transition: filter var(--transition-normal);
-  /* V53.4: Allow scroll in short viewports to keep CTA visible */
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  align-content: start; /* Grid items align to top when scrollable */
+  align-content: start;
 }
 
 /* Hidden/blurred state */
 .mnemonic-grid--hidden {
-  filter: blur(8px);
+  filter: blur(6px);
   user-select: none;
   pointer-events: none;
+}
+
+/* V54.0: Blur Veil - intentional overlay when phrase is hidden */
+.phrase-veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.phrase-veil__label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: var(--radius-chip);
 }
 
 /* Word cell - fixed height for consistency */
