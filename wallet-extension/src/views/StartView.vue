@@ -1,7 +1,21 @@
 <script setup lang="ts">
-import { onBeforeMount, ref, nextTick } from "vue";
+/**
+ * StartView - V53 Entry Flow Premium Parity
+ *
+ * Wallet onboarding flow: create/import → mnemonic → PIN setup
+ * Uses ScreenShell + AppHeader for consistent scaffold.
+ *
+ * V53 Changes:
+ * - Migrated to ScreenShell + AppHeader pattern
+ * - Ambient glow properly clipped (no overflow)
+ * - data-roi targets for e2e testing
+ * - Premium typography and surfaces
+ */
+import { onBeforeMount, ref, nextTick, computed } from "vue";
 import { randomSeedPhrase } from "@stacks/wallet-sdk";
 import { useRouter } from "vue-router";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
 import PinInput from "@/components/PinInput.vue";
 import ImportMnemonicModal from "@/components/ImportMnemonicModal.vue";
 import { Button } from "@/components/ui";
@@ -14,6 +28,22 @@ const router = useRouter();
 // Steps: 'start' -> 'mnemonic' -> 'pin-create' -> 'pin-confirm' -> done
 type Step = "start" | "mnemonic" | "pin-create" | "pin-confirm";
 const currentStep = ref<Step>("start");
+
+// V53: Dynamic header config based on step
+const headerConfig = computed(() => {
+  switch (currentStep.value) {
+    case "start":
+      return { title: "", left: "none" as const, showHeader: false };
+    case "mnemonic":
+      return { title: "Recovery Phrase", left: "back" as const, showHeader: true };
+    case "pin-create":
+      return { title: "Create PIN", left: "back" as const, showHeader: true };
+    case "pin-confirm":
+      return { title: "Confirm PIN", left: "back" as const, showHeader: true };
+    default:
+      return { title: "", left: "none" as const, showHeader: false };
+  }
+});
 
 const mnemonic = ref("");
 const pin = ref("");
@@ -142,121 +172,128 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <section class="start-view">
-    <!-- Ambient Glow -->
-    <div class="ambient-glow"></div>
-
-    <!-- Step 1: Start -->
-    <div v-if="currentStep === 'start'" class="start-content">
-      <!-- Logo -->
-      <div class="logo-container">
-        <div class="logo-glow"></div>
-        <div class="logo-box">
-          <img src="/denvault-i.png" alt="DenVault" class="logo-image" />
-        </div>
-      </div>
-
-      <!-- Text -->
-      <div class="text-section">
-        <h1 class="title">Set Up Your Wallet</h1>
-        <p class="subtitle">
-          Securely store your Stacks (STX) and Bitcoin (BTC).
-        </p>
-      </div>
-
-      <!-- Actions -->
-      <div class="actions">
-        <!-- Primary Button -->
-        <Button variant="primary" size="lg" full-width @click="handleGenerateSecret">
-          Create New Wallet
-        </Button>
-
-        <!-- Secondary Button -->
-        <Button variant="secondary" size="lg" full-width @click="handleImportMnemonic">
-          Import Existing Wallet
-        </Button>
-
-        <p v-if="importError" class="error-text">{{ importError }}</p>
-
-        <!-- Security Badge -->
-        <div class="security-badge">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          <span>END-TO-END ENCRYPTED</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 2: Show Mnemonic -->
-    <div v-else-if="currentStep === 'mnemonic'" class="mnemonic-content">
-      <!-- Header -->
-      <div class="back-button-wrapper">
-        <Button variant="icon" @click="handleBack">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-        </Button>
-      </div>
-
-      <h2 class="step-title">Recovery Phrase</h2>
-
-      <!-- Warning -->
-      <div class="warning-box">
-        <div class="warning-icon">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        </div>
-        <div class="warning-text">
-          <strong>Save your recovery phrase</strong>
-          <p>Store it securely. Anyone with this phrase can access your wallet.</p>
-        </div>
-      </div>
-
-      <!-- Mnemonic Grid -->
-      <div class="mnemonic-grid">
-        <div
-          v-for="(word, index) in mnemonic.split(' ')"
-          :key="index"
-          class="mnemonic-word"
-        >
-          <span class="word-index">{{ index + 1 }}</span>
-          <span class="word-text">{{ word }}</span>
-        </div>
-      </div>
-
-      <!-- Continue Button -->
-      <div class="cta-wrapper">
-        <Button variant="primary" size="lg" full-width @click="handleContinueToPin">
-          I saved it securely
-        </Button>
-      </div>
-    </div>
-
-    <!-- Step 3 & 4: PIN -->
-    <div v-else class="pin-content">
-      <!-- Header -->
-      <div class="back-button-wrapper">
-        <Button variant="icon" @click="handleBack">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-        </Button>
-      </div>
-
-      <PinInput
-        ref="pinInputRef"
-        :mode="currentStep === 'pin-create' ? 'create' : 'confirm'"
-        :error="pinError"
-        :disabled="isLoading"
-        @complete="currentStep === 'pin-create' ? handlePinCreate($event) : handlePinConfirm($event)"
+  <ScreenShell :padded="false">
+    <!-- V53: Header only shown on steps after 'start' -->
+    <template v-if="headerConfig.showHeader" #header>
+      <AppHeader
+        :title="headerConfig.title"
+        :left="headerConfig.left"
+        @left-click="handleBack"
       />
+    </template>
 
-      <p v-if="isLoading" class="loading-text">Creating wallet...</p>
+    <div class="start-view" data-roi="start-view-root">
+      <!-- V53: Ambient glow wrapper - clips oversized glow -->
+      <div class="ambient-wrapper">
+        <div class="ambient-glow"></div>
+      </div>
+
+      <!-- Step 1: Start (Hero landing) -->
+      <div v-if="currentStep === 'start'" class="start-content" data-roi="start-hero">
+        <!-- Logo -->
+        <div class="logo-container">
+          <div class="logo-glow"></div>
+          <div class="logo-box">
+            <img src="/denvault-i.png" alt="DenVault" class="logo-image" />
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="text-section">
+          <h1 class="title">Set Up Your Wallet</h1>
+          <p class="subtitle">
+            Securely store your Stacks (STX) and Bitcoin (BTC).
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions" data-roi="start-cta-rail">
+          <Button
+            variant="primary"
+            size="lg"
+            full-width
+            data-roi="start-primary-cta"
+            @click="handleGenerateSecret"
+          >
+            Create New Wallet
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="lg"
+            full-width
+            data-roi="start-secondary-cta"
+            @click="handleImportMnemonic"
+          >
+            Import Existing Wallet
+          </Button>
+
+          <!-- V53: Error with reserved slot (no layout shift) -->
+          <div class="error-slot" aria-live="polite">
+            <p v-if="importError" class="error-text">{{ importError }}</p>
+          </div>
+
+          <!-- Security Badge -->
+          <div class="security-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span>END-TO-END ENCRYPTED</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Show Mnemonic -->
+      <div v-else-if="currentStep === 'mnemonic'" class="mnemonic-content" data-roi="mnemonic-step">
+        <!-- Warning -->
+        <div class="warning-box">
+          <div class="warning-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="warning-text">
+            <strong>Save your recovery phrase</strong>
+            <p>Store it securely. Anyone with this phrase can access your wallet.</p>
+          </div>
+        </div>
+
+        <!-- V53: Mnemonic Grid - V43 card pattern -->
+        <div class="mnemonic-grid" data-roi="mnemonic-grid">
+          <div
+            v-for="(word, index) in mnemonic.split(' ')"
+            :key="index"
+            class="mnemonic-word"
+          >
+            <span class="word-index">{{ index + 1 }}</span>
+            <span class="word-text">{{ word }}</span>
+          </div>
+        </div>
+
+        <!-- Continue Button -->
+        <div class="cta-wrapper">
+          <Button variant="primary" size="lg" full-width @click="handleContinueToPin">
+            I saved it securely
+          </Button>
+        </div>
+      </div>
+
+      <!-- Step 3 & 4: PIN -->
+      <div v-else class="pin-content" data-roi="pin-step">
+        <PinInput
+          ref="pinInputRef"
+          :mode="currentStep === 'pin-create' ? 'create' : 'confirm'"
+          hide-label
+          :error="pinError"
+          :disabled="isLoading"
+          @complete="currentStep === 'pin-create' ? handlePinCreate($event) : handlePinConfirm($event)"
+        />
+
+        <p v-if="isLoading" class="loading-text">Creating wallet...</p>
+      </div>
     </div>
 
     <!-- Import Mnemonic Modal -->
@@ -265,20 +302,30 @@ onBeforeMount(() => {
       @close="showImportModal = false"
       @confirm="handleImportConfirm"
     />
-  </section>
+  </ScreenShell>
 </template>
 
 <style scoped>
+/* V53: Main container - flex within ScreenShell */
 .start-view {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  background: var(--color-bg-primary);
+  flex: 1;
+  min-height: 0;
   position: relative;
-  overflow: hidden;
+  /* V53: NO overflow:hidden hack - use ambient-wrapper clipping */
 }
 
-/* Ambient Glow */
+/* V53: Ambient glow wrapper - clips oversized glow (same as ConfirmTxView) */
+.ambient-wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* V53: Ambient glow - contained within wrapper */
 .ambient-glow {
   position: absolute;
   top: -20%;
@@ -290,7 +337,6 @@ onBeforeMount(() => {
   opacity: 0.05;
   filter: blur(100px);
   border-radius: 50%;
-  pointer-events: none;
 }
 
 /* Start Content */
@@ -400,6 +446,14 @@ onBeforeMount(() => {
   text-transform: uppercase;
 }
 
+/* V53: Error slot - reserved height for no layout shift */
+.error-slot {
+  min-height: 20px; /* Reserved for error text */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Error Text */
 .error-text {
   color: var(--color-error);
@@ -408,47 +462,33 @@ onBeforeMount(() => {
   margin: 0;
 }
 
-/* Mnemonic Content */
+/* Mnemonic Content - V53: uses AppHeader, no extra top padding */
 .mnemonic-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: var(--space-xl);
-  padding-top: 60px;
+  padding: var(--space-lg);
   gap: var(--space-lg);
   position: relative;
-  z-index: 10;
+  z-index: 1;
 }
 
-.step-title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  text-align: center;
-  margin: 0;
-}
-
-/* Back Button Wrapper */
-.back-button-wrapper {
-  position: absolute;
-  top: var(--space-xl);
-  left: var(--space-lg);
-  z-index: 10;
-}
-
-/* Warning Box */
+/* V53: Warning Box - using warning tokens */
 .warning-box {
   display: flex;
   gap: var(--space-md);
-  padding: var(--space-lg);
-  background: rgba(234, 179, 8, 0.1);
-  border: 1px solid rgba(234, 179, 8, 0.3);
-  border-radius: var(--radius-xl);
+  padding: var(--space-md);
+  background: var(--color-warning-muted);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: var(--radius-md);
 }
 
 .warning-icon {
   flex-shrink: 0;
-  color: #eab308;
+  color: var(--color-warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .warning-text {
@@ -458,7 +498,7 @@ onBeforeMount(() => {
 }
 
 .warning-text strong {
-  color: #eab308;
+  color: var(--color-warning);
   font-size: var(--font-size-sm);
 }
 
@@ -469,56 +509,66 @@ onBeforeMount(() => {
   line-height: 1.5;
 }
 
-/* V44: Mnemonic Grid - Using V43 card pattern */
+/* V45: Mnemonic Grid - Premium word list with V43 card */
 .mnemonic-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-sm);
-  padding: var(--space-lg);
-  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
-  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
+  gap: 6px;
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-card);
 }
 
+/* V45: Word row - premium hierarchy */
 .mnemonic-word {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm);
+  padding: 6px var(--space-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
 }
 
+.mnemonic-word:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* V45: Index - muted numeric badge */
 .word-index {
-  font-size: var(--font-size-xs);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
-  min-width: 20px;
+  min-width: 16px;
+  text-align: right;
 }
 
+/* V45: Word text - premium mono with hierarchy */
 .word-text {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
+  letter-spacing: 0.01em;
 }
 
-/* PIN Content */
+/* V53: PIN Content - uses AppHeader, centered layout */
 .pin-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-xl);
-  padding-top: 80px;
+  padding: var(--space-lg);
   position: relative;
-  z-index: 10;
+  z-index: 1;
 }
 
 .loading-text {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   margin-top: var(--space-lg);
-}
-
-.mt-auto {
-  margin-top: auto;
 }
 </style>
