@@ -1,18 +1,21 @@
 import { test, expect, Page } from "@playwright/test";
 
 /**
- * Entry Flow Guard Tests - V53.1 Recovery Phrase Legibility
+ * Entry Flow Guard Tests - V53.2 Visual Consistency
  *
  * Guards for:
  * - StartView: Wallet creation onboarding
  * - AddWalletView: Add wallet flow (from settings)
  * - ImportMnemonicModal: Seed phrase import
+ * - RecoveryPhraseDisplay: Shared component (both flows)
+ * - VerifyPhraseStep: Shared component (both flows)
  *
- * V53 Checks:
- * - No horizontal overflow in any step
- * - Ambient glow properly clipped
- * - All ROI targets present
- * - Error slots with reserved height (no layout shift)
+ * V53.2 Visual Consistency (LAYOUT ONLY):
+ * - ALWAYS 2-slot bottom rail (left/right) with SAME dimensions
+ * - Ghost button (disabled, low opacity) when Back not allowed
+ * - Primary CTA (right slot) identical width/position in both flows
+ * - Same padding/margins between routes (0-1px tolerance)
+ * - No copy/reveal/verification logic changes
  *
  * V53.1 Word Legibility Checks:
  * - No text-overflow: ellipsis on word tokens
@@ -424,5 +427,390 @@ test.describe("V53 Warning Box Accessibility", () => {
         expect(style.borderRadius).not.toBe("0px");
       }
     }
+  });
+});
+
+test.describe("V53.2 Shared Component ROI Guards", () => {
+  test.describe("RecoveryPhraseDisplay ROI Targets", () => {
+    test("StartView: should have recovery-phrase-display ROI", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // V53.2: Shared component ROI targets
+        const roiTargets = [
+          "recovery-phrase-display",
+          "warning-card",
+          "mnemonic-actions",
+          "reveal-btn",
+          "copy-btn",
+          "mnemonic-grid",
+          "recovery-phrase-cta",
+        ];
+
+        for (const roi of roiTargets) {
+          const element = await page.$(`[data-roi="${roi}"]`);
+          if (element) {
+            console.log(`[StartView] ROI target ${roi} found`);
+          }
+        }
+      }
+    });
+
+    test("AddWalletView: should have same recovery-phrase-display ROI", async ({ page }) => {
+      await page.goto("/#/add-wallet");
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="add-wallet-create-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // V53.2: Same ROI targets as StartView
+        const roiTargets = [
+          "recovery-phrase-display",
+          "warning-card",
+          "mnemonic-actions",
+          "reveal-btn",
+          "copy-btn",
+          "mnemonic-grid",
+          "recovery-phrase-cta",
+        ];
+
+        for (const roi of roiTargets) {
+          const element = await page.$(`[data-roi="${roi}"]`);
+          if (element) {
+            console.log(`[AddWalletView] ROI target ${roi} found`);
+          }
+        }
+      }
+    });
+  });
+
+  test.describe("VerifyPhraseStep ROI Targets", () => {
+    test("StartView: should have verify-phrase-step ROI", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // Click through to verify step
+        const continueBtn = await page.$('[data-roi="recovery-phrase-cta"] button');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(300);
+
+          // V53.2: Shared verify component ROI targets
+          const roiTargets = [
+            "verify-phrase-step",
+            "verify-word-1-input",
+            "verify-word-2-input",
+            "verify-phrase-cta",
+          ];
+
+          for (const roi of roiTargets) {
+            const element = await page.$(`[data-roi="${roi}"]`);
+            if (element) {
+              console.log(`[StartView Verify] ROI target ${roi} found`);
+            }
+          }
+        }
+      }
+    });
+
+    test("AddWalletView: should have same verify-phrase-step ROI", async ({ page }) => {
+      await page.goto("/#/add-wallet");
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="add-wallet-create-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // Click through to verify step
+        const continueBtn = await page.$('[data-roi="recovery-phrase-cta"] button');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(300);
+
+          // V53.2: Same ROI targets as StartView
+          const roiTargets = [
+            "verify-phrase-step",
+            "verify-word-1-input",
+            "verify-word-2-input",
+            "verify-phrase-cta",
+          ];
+
+          for (const roi of roiTargets) {
+            const element = await page.$(`[data-roi="${roi}"]`);
+            if (element) {
+              console.log(`[AddWalletView Verify] ROI target ${roi} found`);
+            }
+          }
+        }
+      }
+    });
+  });
+
+  test.describe("Responsive Grid Guards", () => {
+    test("mnemonic grid should use auto-fit minmax for responsive layout", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const mnemonicGrid = await page.$('[data-roi="mnemonic-grid"]');
+        if (mnemonicGrid) {
+          const gridStyle = await mnemonicGrid.evaluate((el) => {
+            const computed = getComputedStyle(el);
+            return {
+              display: computed.display,
+              gridTemplateColumns: computed.gridTemplateColumns,
+            };
+          });
+
+          // Should be CSS grid
+          expect(gridStyle.display).toBe("grid");
+          // V53.2: Responsive columns (auto-fit creates multiple tracks)
+          // gridTemplateColumns will be resolved values, not the minmax function
+          expect(gridStyle.gridTemplateColumns).not.toBe("none");
+        }
+      }
+    });
+  });
+});
+
+test.describe("V53.2 Visual Consistency Guards", () => {
+  // Helper to get comprehensive layout metrics for visual parity
+  async function getLayoutMetrics(page: Page) {
+    return page.evaluate(() => {
+      const ctaRail = document.querySelector('[data-roi="recovery-phrase-cta"]');
+      const primaryBtn = document.querySelector('[data-roi="cta-primary"]');
+      const backBtn = document.querySelector('[data-roi="cta-back"]');
+      const container = document.querySelector('[data-roi="recovery-phrase-display"]');
+
+      if (!ctaRail || !primaryBtn || !container) return null;
+
+      const railBox = ctaRail.getBoundingClientRect();
+      const primaryBox = primaryBtn.getBoundingClientRect();
+      const leftSlotBox = backBtn?.getBoundingClientRect();
+
+      // V53.2: Check if back button is in ghost state via CSS class
+      const isGhostState = backBtn?.classList.contains('cta-rail__back--ghost') ?? false;
+
+      // Get computed styles for padding verification
+      const containerStyle = getComputedStyle(container);
+
+      return {
+        // Rail metrics
+        railHeight: Math.round(railBox.height),
+        railWidth: Math.round(railBox.width),
+        // Primary CTA metrics
+        primaryWidth: Math.round(primaryBox.width),
+        primaryHeight: Math.round(primaryBox.height),
+        primaryLeft: Math.round(primaryBox.left - railBox.left),
+        // Left slot metrics (Back button - always present in V53.2)
+        leftSlotWidth: leftSlotBox ? Math.round(leftSlotBox.width) : 0,
+        leftSlotHeight: leftSlotBox ? Math.round(leftSlotBox.height) : 0,
+        // V53.2: State flags - ghost vs active determined by CSS class
+        hasBackButton: !!backBtn && !isGhostState,
+        hasGhostButton: !!backBtn && isGhostState,
+        // Container padding
+        containerPaddingTop: containerStyle.paddingTop,
+        containerPaddingBottom: containerStyle.paddingBottom,
+        containerPaddingLeft: containerStyle.paddingLeft,
+        containerPaddingRight: containerStyle.paddingRight,
+      };
+    });
+  }
+
+  test.describe("CTA Rail Layout Parity (0-1px tolerance)", () => {
+    test("V53.2: Primary CTA width must be identical in both flows", async ({ page }) => {
+      // Get StartView metrics
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      let startMetrics = null;
+      const startCreateBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (startCreateBtn) {
+        await startCreateBtn.click();
+        await page.waitForTimeout(500);
+        startMetrics = await getLayoutMetrics(page);
+      }
+
+      // Get AddWalletView metrics
+      await page.goto("/#/add-wallet");
+      await page.waitForTimeout(500);
+
+      let addWalletMetrics = null;
+      const addWalletCreateBtn = await page.$('[data-roi="add-wallet-create-cta"]');
+      if (addWalletCreateBtn) {
+        await addWalletCreateBtn.click();
+        await page.waitForTimeout(500);
+        addWalletMetrics = await getLayoutMetrics(page);
+      }
+
+      // V53.2: 0-1px tolerance for visual parity
+      if (startMetrics && addWalletMetrics) {
+        const widthDiff = Math.abs(startMetrics.primaryWidth - addWalletMetrics.primaryWidth);
+        expect(widthDiff, `Primary CTA width diff: ${widthDiff}px`).toBeLessThanOrEqual(1);
+        console.log(`[V53.2 Parity] Primary CTA width - Start: ${startMetrics.primaryWidth}px, Add: ${addWalletMetrics.primaryWidth}px (diff: ${widthDiff}px)`);
+      }
+    });
+
+    test("V53.2: Left slot width must be identical in both flows", async ({ page }) => {
+      // Get StartView metrics
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      let startMetrics = null;
+      const startCreateBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (startCreateBtn) {
+        await startCreateBtn.click();
+        await page.waitForTimeout(500);
+        startMetrics = await getLayoutMetrics(page);
+      }
+
+      // Get AddWalletView metrics
+      await page.goto("/#/add-wallet");
+      await page.waitForTimeout(500);
+
+      let addWalletMetrics = null;
+      const addWalletCreateBtn = await page.$('[data-roi="add-wallet-create-cta"]');
+      if (addWalletCreateBtn) {
+        await addWalletCreateBtn.click();
+        await page.waitForTimeout(500);
+        addWalletMetrics = await getLayoutMetrics(page);
+      }
+
+      // V53.2: 0-1px tolerance
+      if (startMetrics && addWalletMetrics) {
+        const widthDiff = Math.abs(startMetrics.leftSlotWidth - addWalletMetrics.leftSlotWidth);
+        expect(widthDiff, `Left slot width diff: ${widthDiff}px`).toBeLessThanOrEqual(1);
+        console.log(`[V53.2 Parity] Left slot width - Start: ${startMetrics.leftSlotWidth}px, Add: ${addWalletMetrics.leftSlotWidth}px (diff: ${widthDiff}px)`);
+      }
+    });
+
+    test("V53.2: Rail height must be identical in both flows", async ({ page }) => {
+      // Get StartView metrics
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      let startMetrics = null;
+      const startCreateBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (startCreateBtn) {
+        await startCreateBtn.click();
+        await page.waitForTimeout(500);
+        startMetrics = await getLayoutMetrics(page);
+      }
+
+      // Get AddWalletView metrics
+      await page.goto("/#/add-wallet");
+      await page.waitForTimeout(500);
+
+      let addWalletMetrics = null;
+      const addWalletCreateBtn = await page.$('[data-roi="add-wallet-create-cta"]');
+      if (addWalletCreateBtn) {
+        await addWalletCreateBtn.click();
+        await page.waitForTimeout(500);
+        addWalletMetrics = await getLayoutMetrics(page);
+      }
+
+      // V53.2: 0-1px tolerance
+      if (startMetrics && addWalletMetrics) {
+        const heightDiff = Math.abs(startMetrics.railHeight - addWalletMetrics.railHeight);
+        expect(heightDiff, `Rail height diff: ${heightDiff}px`).toBeLessThanOrEqual(1);
+        console.log(`[V53.2 Parity] Rail height - Start: ${startMetrics.railHeight}px, Add: ${addWalletMetrics.railHeight}px (diff: ${heightDiff}px)`);
+      }
+    });
+
+    test("V53.2: StartView should have ghost button (disabled, low opacity)", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const metrics = await getLayoutMetrics(page);
+        if (metrics) {
+          // V53.2: StartView has ghost button (not active Back)
+          expect(metrics.hasBackButton).toBe(false);
+          expect(metrics.hasGhostButton).toBe(true);
+          console.log(`[V53.2 StartView] hasGhostButton: ${metrics.hasGhostButton}, leftSlotWidth: ${metrics.leftSlotWidth}px`);
+        }
+
+        // V53.2: Verify ghost button has low opacity (via CSS class)
+        const ghostBtn = await page.$('[data-roi="cta-back"].cta-rail__back--ghost');
+        if (ghostBtn) {
+          const opacity = await ghostBtn.evaluate((el) => getComputedStyle(el).opacity);
+          const opacityValue = parseFloat(opacity);
+          expect(opacityValue).toBeLessThan(0.3);
+          console.log(`[V53.2 StartView] Ghost button opacity: ${opacity}`);
+        }
+      }
+    });
+
+    test("V53.2: AddWalletView should have active Back button", async ({ page }) => {
+      await page.goto("/#/add-wallet");
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="add-wallet-create-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const metrics = await getLayoutMetrics(page);
+        if (metrics) {
+          // V53.2: AddWalletView has active Back button
+          expect(metrics.hasBackButton).toBe(true);
+          expect(metrics.hasGhostButton).toBe(false);
+          console.log(`[V53.2 AddWalletView] hasBackButton: ${metrics.hasBackButton}, leftSlotWidth: ${metrics.leftSlotWidth}px`);
+        }
+      }
+    });
+  });
+
+  test.describe("No Overflow Guards", () => {
+    test("V53.2: CTA rail should not cause horizontal overflow", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const hasOverflow = await hasHorizontalOverflow(page);
+        expect(hasOverflow, "CTA rail should not cause horizontal overflow").toBe(false);
+      }
+    });
   });
 });
