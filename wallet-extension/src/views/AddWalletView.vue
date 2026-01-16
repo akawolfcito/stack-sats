@@ -167,28 +167,42 @@ function handleStepBack() {
       />
     </template>
 
-    <div class="page-content">
+    <div class="page-content" data-roi="add-wallet-content">
       <!-- Step 1: Choose action -->
-      <div v-if="currentStep === 'start'" class="step-container">
+      <div v-if="currentStep === 'start'" class="step-container" data-roi="add-wallet-start">
         <p class="subtitle">Create a new wallet or import an existing one</p>
 
-        <Button variant="primary" full-width @click="handleGenerateSecret">
+        <Button variant="primary" full-width data-roi="add-wallet-create-cta" @click="handleGenerateSecret">
           Create New Wallet
         </Button>
-        <Button variant="secondary" full-width @click="handleImportMnemonic">
+        <Button variant="secondary" full-width data-roi="add-wallet-import-cta" @click="handleImportMnemonic">
           Import Existing Wallet
         </Button>
-        <p v-if="importError" class="error-text">{{ importError }}</p>
+        <!-- V53: Error slot with reserved height -->
+        <div class="error-slot" aria-live="polite">
+          <p v-if="importError" class="error-text">{{ importError }}</p>
+        </div>
       </div>
 
       <!-- Step 2: Show Mnemonic -->
-      <div v-else-if="currentStep === 'mnemonic'" class="step-container">
+      <div v-else-if="currentStep === 'mnemonic'" class="step-container" data-roi="add-wallet-mnemonic">
+        <!-- V53: Warning box using tokens -->
         <div class="mnemonic-warning">
-          <strong>Save your recovery phrase</strong>
-          <p>Anyone with this phrase can access your wallet.</p>
+          <div class="warning-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="warning-text">
+            <strong>Save your recovery phrase</strong>
+            <p>Anyone with this phrase can access your wallet.</p>
+          </div>
         </div>
 
-        <div class="mnemonic-display">
+        <!-- V53: Mnemonic grid - V43 card pattern -->
+        <div class="mnemonic-display" data-roi="add-wallet-mnemonic-grid">
           <div
             v-for="(word, index) in mnemonic.split(' ')"
             :key="index"
@@ -199,7 +213,7 @@ function handleStepBack() {
           </div>
         </div>
 
-        <div class="button-group">
+        <div class="button-group" data-roi="add-wallet-mnemonic-cta">
           <Button variant="secondary" @click="handleStepBack">Back</Button>
           <Button variant="primary" @click="handleContinueToName">
             I saved it
@@ -226,12 +240,13 @@ function handleStepBack() {
         </div>
       </div>
 
-      <!-- Step 4: Create PIN -->
+      <!-- Step 4: Create PIN (V47: hide-label - subtitle provides context) -->
       <div v-else-if="currentStep === 'pin-create'" class="step-container">
         <p class="subtitle">Create a 6-digit PIN</p>
         <PinInput
           ref="pinInputRef"
           mode="create"
+          hide-label
           :error="pinError"
           :disabled="isLoading"
           @complete="handlePinCreate"
@@ -244,12 +259,13 @@ function handleStepBack() {
         </div>
       </div>
 
-      <!-- Step 5: Confirm PIN -->
+      <!-- Step 5: Confirm PIN (V47: hide-label - subtitle provides context) -->
       <div v-else-if="currentStep === 'pin-confirm'" class="step-container">
         <p class="subtitle">Confirm your PIN</p>
         <PinInput
           ref="pinInputRef"
           mode="confirm"
+          hide-label
           :error="pinError"
           :disabled="isLoading"
           @complete="handlePinConfirm"
@@ -308,51 +324,104 @@ function handleStepBack() {
   flex: 2;
 }
 
-.mnemonic-warning {
-  background: var(--color-warning-muted);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  text-align: center;
+/* V53: Error slot - reserved height for no layout shift */
+.error-slot {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.mnemonic-warning strong {
-  color: var(--color-warning);
-  font-size: var(--font-size-base);
-}
-
-.mnemonic-warning p {
-  margin: var(--space-sm) 0 0;
+.error-text {
+  color: var(--color-error);
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0;
 }
 
+/* V53: Warning box - flex layout with icon */
+.mnemonic-warning {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-warning-muted);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: var(--radius-md);
+}
+
+.warning-icon {
+  flex-shrink: 0;
+  color: var(--color-warning);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.warning-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.warning-text strong {
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+}
+
+.warning-text p {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* V53: Mnemonic display - V43 card pattern */
 .mnemonic-display {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-sm);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  padding: var(--space-lg);
-  border-radius: var(--radius-lg);
+  gap: 6px;
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-card);
 }
 
+/* V53: Word row - premium hierarchy */
 .mnemonic-word {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  padding: 6px var(--space-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  min-width: 0; /* V53: Prevent overflow */
+}
+
+.mnemonic-word:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* V53: Index - muted numeric badge */
+.word-number {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  min-width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* V53: Word text - premium mono */
+.word-text {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
-}
-
-.word-number {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  min-width: 18px;
-}
-
-.word-text {
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .input-label {
