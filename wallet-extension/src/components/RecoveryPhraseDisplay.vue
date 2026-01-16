@@ -1,22 +1,23 @@
 <script setup lang="ts">
 /**
- * RecoveryPhraseDisplay - V53.2 Visual Consistency Component
+ * RecoveryPhraseDisplay - V54.2 Zero-Shift Layout Component
  *
  * Shared component for displaying recovery phrase in both:
  * - StartView (onboarding / first wallet)
  * - AddWalletView (settings / add wallet)
  *
- * V53.2 Visual Consistency (LAYOUT ONLY):
- * - ALWAYS 2-slot bottom rail (left/right) with SAME dimensions
- * - When showBackButton=false: disabled ghost button with low opacity
- *   (NOT removed - maintains pixel-perfect layout parity)
- * - Primary CTA (right slot) has identical width/position in both flows
- * - No padding/margin differences between routes
+ * V54.2 Zero-Shift Layout:
+ * - ZERO layout shift across states (hidden → revealed → hidden)
+ * - Caption slot reserves fixed height even when invisible
+ * - Bottom Back button REMOVED (header back exists in parent)
+ * - Primary CTA is full-width for cleaner layout
+ * - Modal aligned to app visual system
  *
- * Features (unchanged):
+ * Features:
  * - Default blur for security
- * - Reveal/Hide toggle (primary action)
- * - Copy with confirmation dialog (secondary action)
+ * - Reveal/Hide toggle via hero overlay (primary) or text button (secondary)
+ * - Copy disabled until revealed (security-by-design)
+ * - Copy with confirmation dialog
  * - "Copied" toast notification
  * - Responsive grid for side panel support
  * - No truncation/ellipsis on words
@@ -24,26 +25,20 @@
  *
  * Props:
  * - mnemonic: The recovery phrase string
- * - showBackButton: Whether Back button is interactive (default: false)
  */
 import { ref, computed } from 'vue';
 import { Button } from '@/components/ui';
 import { secureLog } from '@/utils/security/logger';
 
-// V53.2: Props for visual consistency
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   mnemonic: string;
-  showBackButton?: boolean;
-}>(), {
-  showBackButton: false,
-});
+}>();
 
-// V53.2: Fixed CTA copy for visual parity between flows
+// V54.2: Simplified CTA - single primary button
 const PRIMARY_CTA_LABEL = 'I saved it securely';
 
 const emit = defineEmits<{
   continue: [];
-  back: [];
 }>();
 
 // V53.1: Reveal/Hide toggle (default hidden for security)
@@ -96,11 +91,6 @@ function cancelCopy() {
 function handleContinue() {
   emit('continue');
 }
-
-// Handle back
-function handleBack() {
-  emit('back');
-}
 </script>
 
 <template>
@@ -120,7 +110,7 @@ function handleBack() {
       </div>
     </div>
 
-    <!-- V53.7: Action Panel - visible surface grouping actions + caption -->
+    <!-- V54.2: Action Panel - stable height across states (zero layout shift) -->
     <div class="action-panel" data-roi="mnemonic-actions">
       <div class="action-panel__buttons">
         <button
@@ -154,8 +144,12 @@ function handleBack() {
           Copy
         </button>
       </div>
-      <!-- V54.1: Caption - 1 line max, space-efficient -->
-      <p v-if="!isRevealed" class="action-panel__caption" aria-live="polite">
+      <!-- V54.2: Caption - always rendered, visibility controlled via CSS (zero shift) -->
+      <p
+        class="action-panel__caption"
+        :class="{ 'action-panel__caption--hidden': isRevealed }"
+        aria-live="polite"
+      >
         Reveal to enable Copy
       </p>
     </div>
@@ -192,27 +186,12 @@ function handleBack() {
       </button>
     </div>
 
-    <!-- V53.2: CTA Rail - ALWAYS 2-slot for visual parity -->
+    <!-- V54.2: CTA Rail - Single primary button (header back exists in parent) -->
     <div class="cta-rail" data-roi="recovery-phrase-cta">
-      <!-- V53.2: Left slot - Back button (active OR ghost/disabled for layout parity) -->
-      <Button
-        variant="secondary"
-        size="lg"
-        class="cta-rail__back"
-        :class="{ 'cta-rail__back--ghost': !showBackButton }"
-        :disabled="!showBackButton"
-        :tabindex="showBackButton ? 0 : -1"
-        :aria-hidden="!showBackButton"
-        data-roi="cta-back"
-        @click="showBackButton ? handleBack() : undefined"
-      >
-        Back
-      </Button>
-      <!-- V53.2: Right slot - Primary CTA (same width/position in both flows) -->
       <Button
         variant="primary"
         size="lg"
-        class="cta-rail__primary"
+        full-width
         data-roi="cta-primary"
         @click="handleContinue"
       >
@@ -325,13 +304,23 @@ function handleBack() {
   gap: var(--space-md);
 }
 
-/* V53.9: Caption - matches dialog rhythm */
+/* V54.2: Caption - fixed height slot for zero layout shift */
 .action-panel__caption {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   margin: 0;
   text-align: center;
   line-height: 1.5;
+  /* V54.2: Reserve height even when invisible */
+  min-height: 1.5em;
+  transition: opacity var(--transition-fast), visibility var(--transition-fast);
+}
+
+/* V54.2: Hidden state - invisible but reserves space (zero shift) */
+.action-panel__caption--hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* V54.1: Action buttons - secondary text-button style (downgraded prominence) */
@@ -524,44 +513,27 @@ function handleBack() {
   font-size: 10px;
 }
 
-/* V53.4: CTA Rail - ALWAYS 2-slot, never clipped */
+/* V54.2: CTA Rail - single full-width button (header back exists) */
 .cta-rail {
   display: flex;
-  gap: var(--space-md);
   margin-top: auto;
   flex-shrink: 0; /* Never shrink - CTA must always be visible */
   padding-bottom: env(safe-area-inset-bottom, 0); /* Mobile/extension safe area */
 }
 
-/* V53.2: Left slot (Back button) - flex: 1 */
-.cta-rail__back {
-  flex: 1;
-  min-width: 0;
-}
-
-/* V53.2: Ghost state - low opacity, no interaction (pixel-perfect layout parity) */
-.cta-rail__back--ghost {
-  opacity: 0.15;
-  pointer-events: none;
-  cursor: default;
-}
-
-/* V53.2: Right slot (Primary CTA) - flex: 2 (same width in both flows) */
-.cta-rail__primary {
-  flex: 2;
-  min-width: 0;
-}
-
-/* V53.8: Copy Confirmation Dialog - premium modal */
+/* V54.2: Copy Confirmation Dialog - aligned to app visual system */
 .copy-confirm-overlay {
   position: fixed;
   inset: 0;
+  /* V54.2: Backdrop matches existing overlays (phrase-veil style) */
   background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  padding: var(--space-lg);
+  /* V54.2: Responsive safe padding for extension viewport */
+  padding: var(--space-md);
   animation: modal-fade-in 0.15s ease-out;
 }
 
@@ -571,12 +543,16 @@ function handleBack() {
 }
 
 .copy-confirm-dialog {
-  background: var(--color-bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* V54.2: Match phrase-hero surface style */
+  background: rgba(255, 255, 255, 0.03);
+  /* V54.2: Border matches phrase-hero border */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* V54.2: Radius matches card/hero radius */
   border-radius: var(--radius-card);
-  padding: var(--space-xl);
-  max-width: 320px;
-  width: 100%;
+  padding: var(--space-lg);
+  /* V54.2: Responsive width for extension viewports */
+  width: min(320px, calc(100vw - var(--space-xl)));
+  max-width: 100%;
   box-shadow: var(--shadow-elev-3);
   animation: modal-scale-in 0.15s ease-out;
 }
@@ -586,12 +562,12 @@ function handleBack() {
   to { transform: scale(1); opacity: 1; }
 }
 
-/* V53.8: Header row - icon + title baseline aligned */
+/* V54.2: Header row - consistent with app typography */
 .copy-confirm-header {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
 }
 
 .copy-confirm-icon {
@@ -601,23 +577,24 @@ function handleBack() {
 
 .copy-confirm-title {
   color: var(--color-text-primary);
-  font-size: var(--font-size-base);
+  /* V54.2: Match warning-text strong styling */
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   margin: 0;
 }
 
-/* V53.8: Body text */
+/* V54.2: Body text - matches app body style */
 .copy-confirm-text {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
-  margin: 0 0 var(--space-lg);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  margin: 0 0 var(--space-md);
 }
 
-/* V53.8: Actions rail */
+/* V54.2: Actions rail - consistent button styling */
 .copy-confirm-actions {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .copy-confirm-actions :deep(.btn) {
