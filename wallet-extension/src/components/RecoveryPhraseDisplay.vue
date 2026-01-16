@@ -207,20 +207,23 @@ function handleBack() {
       </Button>
     </div>
 
-    <!-- Copy Confirmation Dialog -->
+    <!-- V53.6: Copy Confirmation Dialog - proper header/body/actions structure -->
     <div v-if="showCopyConfirm" class="copy-confirm-overlay" data-roi="copy-confirm-dialog">
       <div class="copy-confirm-dialog">
-        <div class="copy-confirm-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Header: icon + title baseline aligned -->
+        <div class="copy-confirm-header">
+          <svg class="copy-confirm-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
             <line x1="12" y1="9" x2="12" y2="13"/>
             <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
+          <h3 class="copy-confirm-title">Copy Recovery Phrase?</h3>
         </div>
-        <h3 class="copy-confirm-title">Copy Recovery Phrase?</h3>
+        <!-- Body -->
         <p class="copy-confirm-text">
           Your clipboard may be accessible to other apps. Only copy if you're sure it's safe.
         </p>
+        <!-- Actions rail -->
         <div class="copy-confirm-actions">
           <Button variant="secondary" @click="cancelCopy">Cancel</Button>
           <Button variant="primary" @click="confirmCopy">Copy</Button>
@@ -482,7 +485,7 @@ function handleBack() {
   min-width: 0;
 }
 
-/* V53.4: Copy Confirmation Dialog - polished premium modal */
+/* V53.6: Copy Confirmation Dialog - header/body/actions structure */
 .copy-confirm-overlay {
   position: fixed;
   inset: 0;
@@ -492,7 +495,6 @@ function handleBack() {
   justify-content: center;
   z-index: 100;
   padding: var(--space-lg);
-  /* V53.4: Smooth fade-in */
   animation: modal-fade-in 0.15s ease-out;
 }
 
@@ -505,11 +507,10 @@ function handleBack() {
   background: var(--color-bg-card);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-card);
-  padding: var(--space-xl);
-  max-width: 320px;
-  text-align: center;
+  padding: var(--space-lg);
+  max-width: 300px;
+  width: 100%;
   box-shadow: var(--shadow-elev-3);
-  /* V53.4: Subtle scale-in */
   animation: modal-scale-in 0.15s ease-out;
 }
 
@@ -518,43 +519,43 @@ function handleBack() {
   to { transform: scale(1); opacity: 1; }
 }
 
-/* V53.4: Icon intentionally spaced from title */
+/* V53.6: Header row - icon + title baseline aligned */
+.copy-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
 .copy-confirm-icon {
   color: var(--color-warning);
-  margin-bottom: var(--space-sm);
-  display: flex;
-  justify-content: center;
+  flex-shrink: 0;
 }
 
 .copy-confirm-title {
   color: var(--color-text-primary);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
-  margin: 0 0 var(--space-sm);
+  margin: 0;
   letter-spacing: -0.01em;
 }
 
-/* V53.4: Body text - increased contrast for legibility */
+/* V53.6: Body text */
 .copy-confirm-text {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0 0 var(--space-lg);
 }
 
+/* V53.6: Actions rail */
 .copy-confirm-actions {
   display: flex;
   gap: var(--space-md);
 }
 
-/* V53.4: Ensure Cancel looks like a real button, not disabled */
 .copy-confirm-actions :deep(.btn) {
   flex: 1;
-}
-
-.copy-confirm-actions :deep(.btn--secondary) {
-  /* Ensure secondary button has visible presence */
-  opacity: 1;
 }
 
 /* Copied Toast */
