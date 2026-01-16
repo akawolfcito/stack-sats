@@ -79,6 +79,11 @@ const router = createRouter({
       name: "confirm-tx",
       component: () => import("../views/ConfirmTxView.vue"),
     },
+    {
+      path: "/tx-result",
+      name: "tx-result",
+      component: () => import("../views/TxResultView.vue"),
+    },
   ],
 });
 
