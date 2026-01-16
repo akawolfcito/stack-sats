@@ -1,4 +1,22 @@
 <script setup lang="ts">
+/**
+ * SendView - V52.3 Confirm Send PIN Premium Pass
+ *
+ * Single source of truth for tx state via useTxDraft composable.
+ * Data flows: SendView → ConfirmTxView → SendView (PIN) → TxResultView
+ *
+ * V52.3 Changes (Confirm PIN step only):
+ * - PIN-first hierarchy: reduced amount dominance, promoted PIN intent
+ * - Tighter vertical rhythm: less spacing between card ↔ PIN header ↔ dots
+ * - Improved 'To' legibility: secondary color + semibold (not muted)
+ * - Error slot uses PinInput V52.3 (fixed height, no layout shift)
+ *
+ * V52.2 (retained):
+ * - Formalized state transitions with guards
+ * - Anti double-submit protection
+ * - Disabled keypad/back during submission
+ * - Premium scaffold with ambient glow + card tokens
+ */
 import { ref, computed, onBeforeMount, nextTick, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
@@ -7,7 +25,7 @@ import AppHeader from "@/components/layout/AppHeader.vue";
 import { Button, TextField, InlineAction } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { getPrivateKey } from "@/utils/accounts";
-import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
+import { getSelectedNetwork, type NetworkName } from "@/utils/network";
 import { fetchStxBalance } from "@/utils/balance";
 import {
   transferStx,
@@ -19,15 +37,32 @@ import {
   TRANSFER_FEE_MICRO_STX,
 } from "@/utils/transfer";
 import { scheduleCleanup } from "@/utils/security/memory";
+import { useTxDraft, truncateAddress } from "@/composables/useTxDraft";
 
 const router = useRouter();
 const route = useRoute();
 
-// Steps
-type Step = "form" | "confirm" | "sending" | "success" | "error";
+// V52.2: Single source of truth with explicit transitions
+const {
+  draft,
+  setDraft,
+  transitionToConfirmTx,
+  transitionToConfirmPin,
+  transitionToSubmitting,
+  transitionToForm,
+  setResult,
+  setError,
+  clearDraft,
+  isValidForConfirmTx,
+  isSubmitting,
+  canSubmit,
+} = useTxDraft();
+
+// V52: Steps simplified - sending/success/error now in TxResultView
+type Step = "form" | "confirm";
 const currentStep = ref<Step>("form");
 
-// Form state
+// Form state (local refs for form input)
 const recipient = ref("");
 const amount = ref("");
 const memo = ref("");
@@ -38,10 +73,6 @@ const balanceMicroStx = ref("0");
 const accountName = ref("");
 const network = ref<NetworkName>("devnet");
 const accountIndex = ref(0);
-
-// Result state
-const txid = ref("");
-const errorMessage = ref("");
 
 // Validation
 const recipientError = ref("");
@@ -63,19 +94,12 @@ const formattedTotal = computed(() => {
   const total = amountMicro + TRANSFER_FEE_MICRO_STX;
   return formatStxDisplay(microStxToStx(total));
 });
-const explorerUrl = computed(() => {
-  if (!txid.value) return "";
-  const base = NETWORKS[network.value].explorerUrl;
-  if (!base) return "";
-  const formattedTxId = txid.value.startsWith("0x") ? txid.value : `0x${txid.value}`;
-  const chainParam = network.value === "mainnet" ? "" : `?chain=${network.value}`;
-  return `${base}/txid/${formattedTxId}${chainParam}`;
-});
 // V51.9: Unified address truncation (8...8 format)
 const truncatedRecipient = computed(() => {
   return truncateAddress(recipient.value.trim());
 });
-const canSubmit = computed(() => {
+// V52.2: Renamed to canContinue (form Continue button) to avoid conflict with draft.canSubmit
+const canContinue = computed(() => {
   return recipient.value.trim() && amount.value.trim() && !recipientError.value && !amountError.value;
 });
 
@@ -95,18 +119,21 @@ const networkLabel = computed(() => {
 });
 const senderAddressShort = computed(() => truncateAddress(senderAddress.value));
 
-// Header
+// Header - V52.2: With submitting state
 const headerTitle = computed(() => {
-  switch (currentStep.value) {
-    case "form": return "Send STX";
-    case "confirm": return "Confirm Send";
-    case "sending": return "Sending...";
-    case "success": return "Success!";
-    case "error": return "Error";
-    default: return "Send STX";
-  }
+  if (isSubmitting.value) return "Sending...";
+  return currentStep.value === "confirm" ? "Confirm Send" : "Send STX";
 });
-const showBackButton = computed(() => currentStep.value === "form" || currentStep.value === "confirm");
+// V52.2: Disable back button during submission
+const showBackButton = computed(() => {
+  if (isSubmitting.value) return false;
+  return currentStep.value === "form" || currentStep.value === "confirm";
+});
+// V52.2: Check if test/dev network (for chip warning style)
+const isTestOrDev = computed(() => {
+  const label = networkLabel.value.toLowerCase();
+  return label.includes("test") || label.includes("dev");
+});
 
 // Load account info
 onBeforeMount(async () => {
@@ -210,7 +237,11 @@ async function handlePaste() {
 }
 
 function handleBack() {
+  // V52.2: Prevent back during submission
+  if (isSubmitting.value) return;
+
   if (currentStep.value === "confirm") {
+    transitionToForm();
     currentStep.value = "form";
     pinError.value = "";
   } else {
@@ -226,29 +257,49 @@ function handleContinue() {
     return;
   }
 
-  // V51: Navigate to fullscreen confirm-tx view
-  router.push({
-    path: "/confirm-tx",
-    query: {
-      networkLabel: networkLabel.value,
-      fromLabel: accountName.value,
-      fromAddressShort: senderAddressShort.value,
-      toAddress: recipient.value.trim(),
-      toAddressShort: truncatedRecipient.value,
-      amountText: `${formattedAmount.value} STX`,
-      feeText: `${formattedFee.value} STX`,
-      totalText: `${formattedTotal.value} STX`,
-      memo: memo.value.trim() || undefined,
-    },
+  // V52.2: Set draft before navigating (single source of truth)
+  setDraft({
+    senderAddress: senderAddress.value,
+    senderAddressShort: senderAddressShort.value,
+    accountName: accountName.value,
+    accountIndex: accountIndex.value,
+    recipient: recipient.value.trim(),
+    recipientShort: truncatedRecipient.value,
+    amount: amount.value,
+    amountDisplay: `${formattedAmount.value} STX`,
+    feeDisplay: `${formattedFee.value} STX`,
+    totalDisplay: `${formattedTotal.value} STX`,
+    amountMicroStx: stxToMicroStx(amount.value),
+    memo: memo.value.trim(),
+    network: network.value,
+    networkLabel: networkLabel.value,
+    step: "confirmTx",
+    status: "idle",
+    txid: "",
+    error: "",
   });
+
+  // Use explicit transition
+  transitionToConfirmTx();
+
+  // Navigate to fullscreen confirm-tx view
+  router.push({ path: "/confirm-tx" });
 }
 
-// V51: Watch for return from confirm-tx view
+// V52.2: Watch for return from confirm-tx view
 watch(
   () => route.query.confirmed,
   (confirmed) => {
     if (confirmed === "true") {
-      // User confirmed, proceed to PIN step
+      // V52.2: Guard - validate draft before showing PIN step
+      if (!isValidForConfirmTx.value) {
+        // Draft is incomplete, redirect to form
+        router.replace({ path: "/send", query: { error: "incomplete" } });
+        return;
+      }
+
+      // User confirmed, proceed to PIN step via explicit transition
+      transitionToConfirmPin();
       currentStep.value = "confirm";
       nextTick(() => {
         pinInputRef.value?.focus();
@@ -263,66 +314,58 @@ watch(
 async function handlePinComplete(pin: string) {
   pinError.value = "";
 
+  // V52.2: Anti double-submit guard
+  if (!canSubmit.value) {
+    pinError.value = "Please wait...";
+    return;
+  }
+
   const mnemonic = await sessionManager.unlock(pin);
   if (!mnemonic) {
     pinError.value = `Invalid PIN. ${sessionManager.attemptsRemaining} attempts remaining`;
     return;
   }
 
-  currentStep.value = "sending";
+  // V52.2: Transition to submitting state (prevents double-submit)
+  if (!transitionToSubmitting()) {
+    pinError.value = "Transaction already in progress.";
+    return;
+  }
 
   let privateKey: string | null = null;
 
   try {
-    privateKey = await getPrivateKey(mnemonic, accountIndex.value);
+    // V52.2: Use draft data (single source of truth)
+    privateKey = await getPrivateKey(mnemonic, draft.accountIndex);
 
     const result = await transferStx({
-      recipient: recipient.value.trim(),
-      amountMicroStx: stxToMicroStx(amount.value),
-      memo: memo.value.trim() || undefined,
+      recipient: draft.recipient,
+      amountMicroStx: draft.amountMicroStx,
+      memo: draft.memo || undefined,
       senderKey: privateKey,
-      network: network.value,
+      network: draft.network,
     });
 
     if (result.success && result.txid) {
-      txid.value = result.txid;
-      currentStep.value = "success";
+      // V52.1: Set result in draft and navigate
+      setResult(result.txid);
+      router.push({ path: "/tx-result" });
     } else {
-      errorMessage.value = result.error || "Transaction failed";
-      currentStep.value = "error";
+      // V52.1: Set error in draft and navigate
+      setError(result.error || "Transaction failed");
+      router.push({ path: "/tx-result" });
     }
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : "Unknown error";
-    currentStep.value = "error";
+    // V52.1: Set error in draft and navigate
+    setError(error instanceof Error ? error.message : "Unknown error");
+    router.push({ path: "/tx-result" });
   } finally {
     privateKey = null;
     scheduleCleanup();
   }
 }
 
-function handleTryAgain() {
-  errorMessage.value = "";
-  currentStep.value = "form";
-}
-
-function handleDone() {
-  router.push({ path: "/user" });
-}
-
-function copyTxid() {
-  navigator.clipboard.writeText(txid.value);
-}
-
-function openExplorer() {
-  if (explorerUrl.value) {
-    window.open(explorerUrl.value, "_blank");
-  }
-}
-
-function truncateAddress(address: string): string {
-  if (address.length <= 16) return address;
-  return `${address.slice(0, 8)}...${address.slice(-8)}`;
-}
+// V52.1: truncateAddress imported from useTxDraft composable
 </script>
 
 <template>
@@ -446,7 +489,7 @@ function truncateAddress(address: string): string {
       <Button
         variant="primary"
         full-width
-        :disabled="!canSubmit"
+        :disabled="!canContinue"
         @click="handleContinue"
       >
         <span>Continue</span>
@@ -456,96 +499,77 @@ function truncateAddress(address: string): string {
       </Button>
     </div>
 
-    <!-- Step: Confirm -->
-    <div v-else-if="currentStep === 'confirm'" class="content content-center">
-      <p class="confirm-label">You are sending:</p>
-      <p class="confirm-amount">{{ formattedAmount }} <span>STX</span></p>
+    <!-- Step: Confirm (PIN) - V52.2: Premium scaffold with ambient glow -->
+    <div v-else-if="currentStep === 'confirm'" class="confirm-pin-view" data-roi="send-confirm-pin">
+      <!-- V52.2: Ambient glow wrapper (same as ConfirmTxView) -->
+      <div class="ambient-wrapper">
+        <div class="ambient-glow" :class="{ 'ambient-glow--sending': isSubmitting }"></div>
+      </div>
 
-      <div class="confirm-card">
-        <div class="confirm-row">
-          <span class="confirm-key">To:</span>
-          <span class="confirm-value">{{ truncatedRecipient }}</span>
+      <!-- V52.2: Network Chip (pill style) -->
+      <div class="confirm-header">
+        <span class="network-chip" :class="{ 'network-chip--warning': isTestOrDev }">
+          <span class="network-dot" />
+          <span class="network-label">{{ draft.networkLabel }}</span>
+        </span>
+      </div>
+
+      <!-- V52.2: Submitting Spinner Overlay -->
+      <div v-if="isSubmitting" class="submitting-overlay" data-roi="send-submitting">
+        <div class="submitting-spinner">
+          <svg class="spinner-svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
+          </svg>
         </div>
-        <div v-if="memo" class="confirm-row">
-          <span class="confirm-key">Memo:</span>
-          <span class="confirm-value">{{ memo }}</span>
-        </div>
-        <div class="confirm-row">
-          <span class="confirm-key">Fee:</span>
-          <span class="confirm-value">{{ formattedFee }} STX</span>
-        </div>
-        <hr class="confirm-divider" />
-        <div class="confirm-row confirm-row-total">
-          <span class="confirm-key">Total:</span>
-          <span class="confirm-value">{{ formattedTotal }} STX</span>
+        <p class="submitting-text">Sending transaction...</p>
+      </div>
+
+      <!-- V52.3: Transaction Summary Section (reduced dominance) -->
+      <div class="tx-summary-section" data-roi="send-confirm-summary-section">
+        <!-- Amount (reduced hero - demoted 1 step) -->
+        <p class="confirm-label">You are sending</p>
+        <p class="confirm-amount" data-roi="send-confirm-amount">{{ draft.amountDisplay }}</p>
+
+        <!-- V52.3: Summary Card (V48-V51 card tokens) - tighter to amount -->
+        <div class="summary-card" data-roi="send-confirm-card">
+          <div class="summary-row" data-roi="send-confirm-to">
+            <span class="row-label">To</span>
+            <span class="row-value row-value--recipient">{{ draft.recipientShort }}</span>
+          </div>
+          <div v-if="draft.memo" class="summary-row">
+            <span class="row-label">Memo</span>
+            <span class="row-value row-value--memo">{{ draft.memo }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="row-label">Fee</span>
+            <span class="row-value">{{ draft.feeDisplay }}</span>
+          </div>
+          <div class="block-divider" />
+          <div class="summary-row summary-row--total">
+            <span class="row-label row-label--total">Total</span>
+            <span class="row-value row-value--total">{{ draft.totalDisplay }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="pin-section">
+      <!-- V52.3: PIN Section with promoted intent -->
+      <div class="pin-section" :class="{ 'pin-section--disabled': isSubmitting }">
+        <!-- V52.3: PIN Intent Label (promoted hierarchy) -->
+        <p class="pin-intent-label">Enter PIN to send</p>
+
         <PinInput
           ref="pinInputRef"
           mode="unlock"
           :error="pinError"
+          :disabled="isSubmitting"
+          hide-label
           @complete="handlePinComplete"
         />
       </div>
     </div>
 
-    <!-- Step: Sending -->
-    <div v-else-if="currentStep === 'sending'" class="content content-center">
-      <div class="spinner"></div>
-      <p class="status-text">Broadcasting transaction...</p>
-    </div>
-
-    <!-- Step: Success -->
-    <div v-else-if="currentStep === 'success'" class="content content-center">
-      <div class="result-icon result-icon-success">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      </div>
-      <p class="result-title">Transaction Sent</p>
-
-      <div class="result-card">
-        <div class="result-row">
-          <span class="result-key">Amount:</span>
-          <span class="result-value">{{ formattedAmount }} STX</span>
-        </div>
-        <div class="result-row">
-          <span class="result-key">To:</span>
-          <span class="result-value">{{ truncatedRecipient }}</span>
-        </div>
-      </div>
-
-      <div class="txid-section">
-        <p class="txid-label">Transaction ID:</p>
-        <div class="txid-row">
-          <span class="txid-value">{{ txid.slice(0, 10) }}...{{ txid.slice(-10) }}</span>
-          <Button variant="ghost" size="sm" @click="copyTxid">Copy</Button>
-        </div>
-      </div>
-
-      <Button v-if="explorerUrl" variant="secondary" full-width @click="openExplorer">
-        View in Explorer
-      </Button>
-
-      <Button variant="primary" full-width @click="handleDone">Done</Button>
-    </div>
-
-    <!-- Step: Error -->
-    <div v-else-if="currentStep === 'error'" class="content content-center">
-      <div class="result-icon result-icon-error">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </div>
-      <p class="result-title">Transaction Failed</p>
-      <p class="error-message">{{ errorMessage }}</p>
-
-      <Button variant="primary" full-width @click="handleTryAgain">Try Again</Button>
-      <Button variant="secondary" full-width @click="handleDone">Cancel</Button>
-    </div>
+    <!-- V52: Steps sending/success/error now handled by TxResultView -->
 
   </ScreenShell>
 </template>
@@ -835,84 +859,127 @@ function truncateAddress(address: string): string {
 
 /* Continue button now uses Button component */
 
-/* V49: Confirm - Hero amount styling aligned with Home */
-.confirm-label {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin: 0 0 var(--space-sm);
-}
+/* ========== V52.3: Premium Confirm PIN View ========== */
 
-.confirm-amount {
-  font-size: var(--font-size-5xl); /* V49: Match Home balance hero */
-  font-weight: 900; /* V49: Match Home balance weight */
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em; /* V49: Match Home tracking */
-  line-height: 1;
-  margin: 0 0 var(--space-xl);
-}
-
-.confirm-amount span {
-  font-weight: 900;
-  color: var(--color-text-primary);
-}
-
-/* V44: Confirm Card - Using V43 card pattern */
-.confirm-card {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
-  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
-  border-radius: var(--radius-card);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-xl);
-}
-
-/* V49: Confirm card rows - token-based typography */
-.confirm-row {
+/* V52.3: Confirm PIN View - fullscreen premium scaffold */
+.confirm-pin-view {
+  flex: 1;
   display: flex;
-  justify-content: space-between;
-  padding: var(--space-sm) 0;
-  font-size: var(--font-size-sm);
-}
-
-.confirm-row-total {
-  font-weight: var(--font-weight-bold);
-  padding-top: var(--space-md);
-}
-
-.confirm-key {
-  color: var(--color-text-muted);
-}
-
-.confirm-value {
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
-  word-break: break-all;
-  text-align: right;
-  max-width: 60%;
-  font-family: var(--font-mono);
-}
-
-.confirm-divider {
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin: var(--space-md) 0;
-}
-
-.pin-section {
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 0 var(--space-lg);
+  padding-bottom: var(--space-md); /* V52.3: Tighter bottom padding */
+  overflow-y: auto;
   width: 100%;
-  margin-top: var(--space-md);
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-/* V49: Spinner - token-based styling */
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid var(--surface-hover);
-  border-top-color: var(--color-text-muted);
+.confirm-pin-view *,
+.confirm-pin-view *::before,
+.confirm-pin-view *::after {
+  box-sizing: border-box;
+}
+
+/* V52.2: Ambient glow wrapper */
+.ambient-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150%;
+  height: 100%;
+  background: var(--color-success);
+  opacity: 0.04;
+  filter: blur(100px);
   border-radius: 50%;
+  transition: background 0.3s ease, opacity 0.3s ease;
+}
+
+.ambient-glow--sending {
+  background: var(--color-warning);
+  opacity: 0.06;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.04; }
+  50% { opacity: 0.08; }
+}
+
+/* V52.2: Network Chip */
+.confirm-header {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-md) 0;
+  position: relative;
+  z-index: 1;
+}
+
+.network-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px var(--space-sm);
+  background: var(--color-success-muted);
+  border-radius: var(--radius-pill);
+}
+
+.network-chip--warning {
+  background: var(--color-warning-muted);
+}
+
+.network-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+
+.network-chip--warning .network-dot {
+  background: var(--color-warning);
+}
+
+.network-label {
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* V52.2: Submitting Overlay */
+.submitting-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  z-index: 100;
+  background: rgba(10, 10, 10, 0.9);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+}
+
+.submitting-spinner {
+  color: var(--color-warning);
+}
+
+.spinner-svg {
   animation: spin 1s linear infinite;
 }
 
@@ -920,109 +987,152 @@ function truncateAddress(address: string): string {
   to { transform: rotate(360deg); }
 }
 
-.status-text {
+.submitting-text {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  margin-top: var(--space-lg);
-}
-
-/* Result */
-.result-icon {
-  width: var(--icon-size-xl);
-  height: var(--icon-size-xl);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--space-lg);
-}
-
-.result-icon-success {
-  background: var(--color-success);
-  color: #0a0a0a;
-  box-shadow: var(--shadow-success-lg);
-}
-
-.result-icon-error {
-  background: var(--color-error);
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-error-lg);
-}
-
-.result-title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--space-lg);
-}
-
-/* V44: Result Card - Using V43 card pattern */
-.result-card {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.02); /* V43: Card surface */
-  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Card border */
-  border-radius: var(--radius-card);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
-}
-
-/* V49: Result rows - token-based typography */
-.result-row {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--space-sm) 0;
-  font-size: var(--font-size-sm);
-}
-
-.result-key {
-  color: var(--color-text-muted);
-}
-
-.result-value {
-  color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
-  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  margin: 0;
 }
 
-.txid-section {
+/* V52.3: Transaction Summary Section - groups amount + card */
+.tx-summary-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  margin-bottom: var(--space-lg);
+  position: relative;
+  z-index: 1;
 }
 
-.txid-label {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
+/* V52.3: Confirm Label - demoted (secondary context) */
+.confirm-label {
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 var(--space-sm);
+  letter-spacing: 0.08em;
+  margin: 0 0 var(--space-xs); /* V52.3: Tighter to amount */
 }
 
-.txid-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
+/* V52.3: Amount - reduced dominance (down 1 step from hero) */
+.confirm-amount {
+  font-size: var(--font-size-3xl); /* V52.3: Reduced from 5xl */
+  font-weight: var(--font-weight-bold); /* V52.3: Reduced from 900 */
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin: 0 0 var(--space-md); /* V52.3: Tighter to card */
 }
 
-.txid-value {
-  font-size: var(--font-size-sm);
-  font-family: monospace;
-  color: var(--color-text-secondary); /* v17: neutral txid */
-}
-
-/* Copy button now uses Button variant="ghost" size="sm" */
-
-.error-message {
-  font-size: var(--font-size-sm);
-  color: var(--color-error);
-  margin: 0 0 var(--space-xl);
+/* V52.2: Summary Card (V48-V51 tokens) */
+.summary-card {
+  padding: var(--space-md);
+  background: var(--surface-hover);
+  border: 1px solid var(--textfield-border);
+  border-radius: var(--radius-control);
+  position: relative;
+  z-index: 1;
+  width: 100%;
   max-width: 100%;
-  word-break: break-word;
 }
 
-/* Result step buttons use unified Button component with margin */
-.content-center :deep(.btn) {
-  margin-bottom: var(--space-sm);
+/* V52.2: Summary rows - 2-column grid */
+.summary-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  column-gap: var(--space-md);
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 0;
 }
+
+.summary-row--total {
+  padding-top: var(--space-sm);
+}
+
+.row-label {
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.row-label--total {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.row-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  text-align: right;
+  justify-self: end;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* V52.3: Recipient address - improved legibility (not placeholder-like) */
+.row-value--recipient {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium); /* V52.3: Semibold for legibility */
+  color: var(--color-text-secondary); /* V52.3: Less muted than before */
+  letter-spacing: 0.01em;
+}
+
+/* V52.3: Memo stays muted (secondary info) */
+.row-value--memo {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
+}
+
+.row-value--total {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.block-divider {
+  height: 1px;
+  background: var(--textfield-border);
+  margin: var(--space-sm) 0;
+  opacity: 0.6;
+}
+
+/* V52.3: PIN Section - promoted hierarchy */
+.pin-section {
+  width: 100%;
+  margin-top: var(--space-md); /* V52.3: Tighter to card */
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1; /* V52.3: Fill remaining space to push keypad down consistently */
+}
+
+.pin-section--disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* V52.3: PIN Intent Label - promoted (higher contrast than "You are sending") */
+.pin-intent-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary); /* V52.3: Higher contrast than muted */
+  text-align: center;
+  margin: 0 0 var(--space-sm); /* V52.3: Tight to dots */
+  letter-spacing: 0.02em;
+}
+
+/* V52: Result styles moved to TxResultView.vue */
 </style>
