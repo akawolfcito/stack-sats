@@ -235,14 +235,13 @@ function handleStepBack() {
         />
       </div>
 
-      <!-- V53.2: Step 3: Verify Phrase (2-word check) -->
+      <!-- V54.3: Step 3: Verify Phrase (header back handles navigation) -->
       <div v-else-if="currentStep === 'verify'" class="step-container" data-roi="add-wallet-verify">
         <VerifyPhraseStep
           :mnemonic="mnemonic"
           :word1-index="verifyWord1Index"
           :word2-index="verifyWord2Index"
           @verified="handleVerified"
-          @back="handleStepBack"
         />
       </div>
 

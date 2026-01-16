@@ -285,14 +285,13 @@ onBeforeMount(() => {
         />
       </div>
 
-      <!-- V53.2: Step 3: Verification (unified component) -->
+      <!-- V54.3: Step 3: Verification (header back handles navigation) -->
       <div v-else-if="currentStep === 'verify'" class="verify-content" data-roi="verify-step">
         <VerifyPhraseStep
           :mnemonic="mnemonic"
           :word1-index="verifyWord1Index"
           :word2-index="verifyWord2Index"
           @verified="handleVerified"
-          @back="handleBack"
         />
       </div>
 

@@ -843,6 +843,213 @@ test.describe("V53.2 Visual Consistency Guards (Updated for V54.2)", () => {
   });
 });
 
+test.describe("V54.3 Verify Phrase Premium Guards", () => {
+  test.describe("CTA Disabled State", () => {
+    test("V54.3: Verify CTA should be disabled when inputs are empty", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      // Navigate to verify step
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // Click reveal and continue
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const continueBtn = await page.$('[data-roi="cta-primary"]');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(500);
+
+          // Check verify CTA is disabled when empty
+          const verifyCta = await page.$('[data-roi="verify-cta-primary"]');
+          if (verifyCta) {
+            const isDisabled = await verifyCta.evaluate((el) => (el as HTMLButtonElement).disabled);
+            expect(isDisabled, "Verify CTA should be disabled when inputs empty").toBe(true);
+            console.log(`[V54.3 Verify CTA] Disabled when empty: ${isDisabled}`);
+          }
+        }
+      }
+    });
+
+    test("V54.3: Verify CTA should enable when both inputs filled", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      // Navigate to verify step
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const continueBtn = await page.$('[data-roi="cta-primary"]');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(500);
+
+          // Fill both inputs
+          const input1 = await page.$('[data-roi="verify-word-1-input"]');
+          const input2 = await page.$('[data-roi="verify-word-2-input"]');
+
+          if (input1 && input2) {
+            await input1.fill("test");
+            await input2.fill("word");
+            await page.waitForTimeout(100);
+
+            // Check verify CTA is now enabled
+            const verifyCta = await page.$('[data-roi="verify-cta-primary"]');
+            if (verifyCta) {
+              const isDisabled = await verifyCta.evaluate((el) => (el as HTMLButtonElement).disabled);
+              expect(isDisabled, "Verify CTA should be enabled when both inputs filled").toBe(false);
+              console.log(`[V54.3 Verify CTA] Disabled when filled: ${isDisabled}`);
+            }
+          }
+        }
+      }
+    });
+  });
+
+  test.describe("Single CTA Layout", () => {
+    test("V54.3: Verify step should have no bottom back button", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      // Navigate to verify step
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const continueBtn = await page.$('[data-roi="cta-primary"]');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(500);
+
+          // V54.3: No back button should exist in verify step
+          const backBtn = await page.$('[data-roi="verify-phrase-cta"] .cta-rail__back');
+          expect(backBtn, "Bottom back button should not exist in verify step").toBeNull();
+
+          // Verify primary CTA exists and is full-width
+          const primaryCta = await page.$('[data-roi="verify-cta-primary"]');
+          expect(primaryCta, "Primary CTA should exist").toBeTruthy();
+
+          if (primaryCta) {
+            const ctaWidth = await primaryCta.evaluate((el) => el.getBoundingClientRect().width);
+            const railWidth = await page.evaluate(() => {
+              const rail = document.querySelector('[data-roi="verify-phrase-cta"]');
+              return rail?.getBoundingClientRect().width ?? 0;
+            });
+
+            const widthRatio = ctaWidth / railWidth;
+            expect(widthRatio).toBeGreaterThan(0.95);
+            console.log(`[V54.3 Verify Full-Width] CTA: ${ctaWidth}px, Rail: ${railWidth}px (ratio: ${widthRatio.toFixed(2)})`);
+          }
+        }
+      }
+    });
+  });
+
+  test.describe("Premium Layout Elements", () => {
+    test("V54.3: Verify step should have step indicator", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      // Navigate to verify step
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const continueBtn = await page.$('[data-roi="cta-primary"]');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(500);
+
+          // Check for step indicator
+          const stepIndicator = await page.$('.step-indicator');
+          expect(stepIndicator, "Step indicator should exist").toBeTruthy();
+
+          if (stepIndicator) {
+            const text = await stepIndicator.textContent();
+            expect(text?.toLowerCase()).toContain("final");
+            console.log(`[V54.3 Step Indicator] Text: ${text}`);
+          }
+        }
+      }
+    });
+
+    test("V54.3: Verify inputs card should exist with premium styling", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      // Navigate to verify step
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const continueBtn = await page.$('[data-roi="cta-primary"]');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(500);
+
+          // Check for inputs card
+          const inputsCard = await page.$('[data-roi="verify-inputs-card"]');
+          expect(inputsCard, "Verify inputs card should exist").toBeTruthy();
+
+          // Check inputs exist inside card
+          const input1 = await page.$('[data-roi="verify-word-1-input"]');
+          const input2 = await page.$('[data-roi="verify-word-2-input"]');
+          expect(input1, "Word 1 input should exist").toBeTruthy();
+          expect(input2, "Word 2 input should exist").toBeTruthy();
+
+          console.log(`[V54.3 Verify Card] Inputs card and fields present`);
+        }
+      }
+    });
+  });
+});
+
 test.describe("V54.2 Zero-Shift Layout Guards", () => {
   // Helper to get element position for shift detection
   async function getElementPositions(page: Page) {
