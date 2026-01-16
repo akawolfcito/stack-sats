@@ -812,5 +812,49 @@ test.describe("V53.2 Visual Consistency Guards", () => {
         expect(hasOverflow, "CTA rail should not cause horizontal overflow").toBe(false);
       }
     });
+
+    test("V53.4: CTA rail must be fully visible (no vertical clipping)", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // V53.4: Verify CTA rail is within viewport bounds
+        const ctaClipping = await page.evaluate(() => {
+          const ctaRail = document.querySelector('[data-roi="recovery-phrase-cta"]');
+          const ctaPrimary = document.querySelector('[data-roi="cta-primary"]');
+          const ctaBack = document.querySelector('[data-roi="cta-back"]');
+
+          if (!ctaRail || !ctaPrimary || !ctaBack) return null;
+
+          const viewportHeight = window.innerHeight;
+          const railBox = ctaRail.getBoundingClientRect();
+          const primaryBox = ctaPrimary.getBoundingClientRect();
+          const backBox = ctaBack.getBoundingClientRect();
+
+          return {
+            viewportHeight,
+            railBottom: Math.round(railBox.bottom),
+            primaryBottom: Math.round(primaryBox.bottom),
+            backBottom: Math.round(backBox.bottom),
+            isRailClipped: railBox.bottom > viewportHeight,
+            isPrimaryClipped: primaryBox.bottom > viewportHeight,
+            isBackClipped: backBox.bottom > viewportHeight,
+          };
+        });
+
+        if (ctaClipping) {
+          console.log(`[V53.4 No Clipping] viewport: ${ctaClipping.viewportHeight}px, rail bottom: ${ctaClipping.railBottom}px`);
+          expect(ctaClipping.isRailClipped, "CTA rail should not be clipped below viewport").toBe(false);
+          expect(ctaClipping.isPrimaryClipped, "Primary CTA should not be clipped").toBe(false);
+          expect(ctaClipping.isBackClipped, "Back CTA should not be clipped").toBe(false);
+        }
+      }
+    });
   });
 });
