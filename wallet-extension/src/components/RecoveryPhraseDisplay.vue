@@ -207,7 +207,7 @@ function handleBack() {
       </Button>
     </div>
 
-    <!-- V53.7: Copy Confirmation Dialog - compact premium modal -->
+    <!-- V53.8: Copy Confirmation Dialog - premium modal -->
     <div v-if="showCopyConfirm" class="copy-confirm-overlay" data-roi="copy-confirm-dialog">
       <div class="copy-confirm-dialog">
         <!-- Header: icon + title baseline aligned -->
@@ -219,9 +219,9 @@ function handleBack() {
           </svg>
           <h3 class="copy-confirm-title">Copy to Clipboard?</h3>
         </div>
-        <!-- Body: 1-2 lines max -->
+        <!-- Body -->
         <p class="copy-confirm-text">
-          Other apps may access your clipboard. Proceed with caution.
+          Your clipboard may be readable by other apps on this device. Copy only if you trust it.
         </p>
         <!-- Actions rail -->
         <div class="copy-confirm-actions">
@@ -480,16 +480,16 @@ function handleBack() {
   min-width: 0;
 }
 
-/* V53.7: Copy Confirmation Dialog - compact premium modal */
+/* V53.8: Copy Confirmation Dialog - premium modal */
 .copy-confirm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  padding: var(--space-xl);
+  padding: var(--space-lg);
   animation: modal-fade-in 0.15s ease-out;
 }
 
@@ -500,10 +500,10 @@ function handleBack() {
 
 .copy-confirm-dialog {
   background: var(--color-bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-card);
   padding: var(--space-xl);
-  max-width: 280px;
+  max-width: 320px;
   width: 100%;
   box-shadow: var(--shadow-elev-3);
   animation: modal-scale-in 0.15s ease-out;
@@ -514,12 +514,12 @@ function handleBack() {
   to { transform: scale(1); opacity: 1; }
 }
 
-/* V53.7: Header row - icon + title baseline aligned */
+/* V53.8: Header row - icon + title baseline aligned */
 .copy-confirm-header {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .copy-confirm-icon {
@@ -534,18 +534,18 @@ function handleBack() {
   margin: 0;
 }
 
-/* V53.7: Body text - compact, 1-2 lines */
+/* V53.8: Body text */
 .copy-confirm-text {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
-  line-height: 1.5;
+  line-height: 1.6;
   margin: 0 0 var(--space-lg);
 }
 
-/* V53.7: Actions rail */
+/* V53.8: Actions rail */
 .copy-confirm-actions {
   display: flex;
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
 
 .copy-confirm-actions :deep(.btn) {
