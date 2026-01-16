@@ -239,15 +239,16 @@ function handleBack() {
 </template>
 
 <style scoped>
-/* V53.3: Main container - intentional rhythm */
+/* V53.4: Main container - robust height handling */
 .recovery-phrase-display {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
   flex: 1;
+  min-height: 0; /* Allow flex shrinking in short viewports */
 }
 
-/* Warning Box */
+/* V53.4: Warning Box - fixed height, never shrinks */
 .warning-box {
   display: flex;
   gap: var(--space-md);
@@ -255,6 +256,7 @@ function handleBack() {
   background: var(--color-warning-muted);
   border: 1px solid rgba(234, 179, 8, 0.2);
   border-radius: var(--radius-md);
+  flex-shrink: 0; /* Never shrink - warning must be visible */
 }
 
 .warning-icon {
@@ -283,11 +285,12 @@ function handleBack() {
   line-height: 1.5;
 }
 
-/* Action Bar */
+/* V53.4: Action Bar - fixed height, never shrinks */
 .mnemonic-actions {
   display: flex;
   justify-content: center;
   gap: var(--space-md);
+  flex-shrink: 0;
 }
 
 /* V53.3: Action buttons with premium material */
@@ -355,12 +358,13 @@ function handleBack() {
   pointer-events: none;
 }
 
-/* V53.3: State hint slot - fixed height for no layout shift */
+/* V53.4: State hint slot - fixed height, never shrinks */
 .action-hint-slot {
   min-height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .action-hint {
@@ -369,7 +373,7 @@ function handleBack() {
   letter-spacing: 0.02em;
 }
 
-/* V53.2: Responsive Mnemonic Grid */
+/* V53.4: Responsive Mnemonic Grid - scrollable in short viewports */
 .mnemonic-grid {
   display: grid;
   /* Responsive: auto-fit with min 90px for side panel support */
@@ -380,6 +384,11 @@ function handleBack() {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-card);
   transition: filter var(--transition-normal);
+  /* V53.4: Allow scroll in short viewports to keep CTA visible */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start; /* Grid items align to top when scrollable */
 }
 
 /* Hidden/blurred state */
@@ -437,11 +446,13 @@ function handleBack() {
   font-size: 10px;
 }
 
-/* V53.2: CTA Rail - ALWAYS 2-slot for visual parity */
+/* V53.4: CTA Rail - ALWAYS 2-slot, never clipped */
 .cta-rail {
   display: flex;
   gap: var(--space-md);
   margin-top: auto;
+  flex-shrink: 0; /* Never shrink - CTA must always be visible */
+  padding-bottom: env(safe-area-inset-bottom, 0); /* Mobile/extension safe area */
 }
 
 /* V53.2: Left slot (Back button) - flex: 1 */
