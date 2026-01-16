@@ -314,7 +314,7 @@ function handleBack() {
   text-align: center;
 }
 
-/* V53.3: Action buttons with premium material */
+/* V53.9: Action buttons with premium material */
 .action-btn {
   display: flex;
   align-items: center;
@@ -330,8 +330,18 @@ function handleBack() {
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: all var(--transition-fast);
-  /* V53.3: Subtle depth for tactile feel */
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  /* V53.9: Prevent icon clipping */
+  line-height: 1;
+  overflow: visible;
+}
+
+/* V53.9: Prevent icon clipping in buttons */
+.action-btn svg {
+  display: block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
 /* V53.3: Reveal is primary action - elevated prominence */
