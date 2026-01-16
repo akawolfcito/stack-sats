@@ -62,3 +62,6 @@ docs/agent-loop.md
 
 # CWS build artifacts
 *.zip
+
+# Playwright test snapshots (generated locally)
+wallet-extension/e2e/*-snapshots/
