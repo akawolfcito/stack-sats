@@ -1,71 +1,46 @@
 <script setup lang="ts">
 /**
- * ConfirmTxView - V51.11 Fullscreen Confirm Transaction
+ * ConfirmTxView - V52.1 Fullscreen Confirm Transaction
  *
  * Design rule: Fullscreen for security-critical/irreversible steps
  * (Verify PIN, Confirm Tx, Delete Wallet confirm)
  *
- * V51.11 Changes:
+ * V52.1 Changes:
+ * - Reads from useTxDraft composable (single source of truth)
+ * - No query params for tx data
+ * - Guard redirect if draft incomplete
+ *
+ * V51.11 (retained):
  * - Perfect pencil icon centering: inline-flex + line-height:0 + SVG display:block
- *
- * V51.10 (retained):
- * - Compact pencil icon (20px vs 28px) for better alignment
- *
- * V51.9 (retained):
- * - Edit pencil BEFORE address (pencil → address order)
- * - Unified address truncation format (8...8 in SendView)
- * - From/To identical structure with placeholder for parity
- *
- * V51.8 (retained):
- * - 2-column grid: label (72px) / value (1fr)
- * - Edit button inline with address in address-line flex
  *
  * V51.5 Fixes (retained):
  * - Zero overflow WITHOUT overflow-x:hidden hack
  * - Ambient glow: clip with overflow:hidden on wrapper
  * - All grid children: min-width:0 for proper truncation
  */
-import { ref, computed, onMounted } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import { Button } from "@/components/ui";
+import { useTxDraft } from "@/composables/useTxDraft";
 
 const router = useRouter();
-const route = useRoute();
 
-// Transaction data from query params
-const networkLabel = ref("");
-const fromLabel = ref("");
-const fromAddressShort = ref("");
-const toAddress = ref("");
-const toAddressShort = ref("");
-const amountText = ref("");
-const feeText = ref("");
-const totalText = ref("");
-const memo = ref("");
+// V52.1: Single source of truth for tx state
+const { draft, isValidForConfirmTx, clearDraft } = useTxDraft();
 
 // Computed: check if test/dev network
 const isTestOrDev = computed(() => {
-  const label = networkLabel.value.toLowerCase();
+  const label = draft.networkLabel.toLowerCase();
   return label.includes("test") || label.includes("dev");
 });
 
-// Parse query params on mount
+// V52.1: Validate draft on mount
 onMounted(() => {
-  networkLabel.value = (route.query.networkLabel as string) || "Mainnet";
-  fromLabel.value = (route.query.fromLabel as string) || "";
-  fromAddressShort.value = (route.query.fromAddressShort as string) || "";
-  toAddress.value = (route.query.toAddress as string) || "";
-  toAddressShort.value = (route.query.toAddressShort as string) || "";
-  amountText.value = (route.query.amountText as string) || "";
-  feeText.value = (route.query.feeText as string) || "";
-  totalText.value = (route.query.totalText as string) || "";
-  memo.value = (route.query.memo as string) || "";
-
-  // Validate we have required data
-  if (!toAddress.value || !amountText.value) {
-    router.push({ path: "/send" });
+  if (!isValidForConfirmTx.value) {
+    // Draft is incomplete, redirect to form with error
+    router.push({ path: "/send", query: { error: "incomplete" } });
   }
 });
 
@@ -75,7 +50,8 @@ function handleEdit() {
 }
 
 function handleCancel() {
-  router.push({ path: "/send", query: { cancelled: "true" } });
+  clearDraft();
+  router.push({ path: "/send" });
 }
 
 function handleConfirm() {
@@ -100,15 +76,15 @@ function handleConfirm() {
         <div class="ambient-glow"></div>
       </div>
 
-      <!-- V51: Network Chip (pill style) -->
+      <!-- V52.1: Network Chip (pill style) - reads from draft -->
       <div class="confirm-header" data-roi="confirm-header">
         <span class="network-chip" :class="{ 'network-chip--warning': isTestOrDev }">
           <span class="network-dot" />
-          <span class="network-label">{{ networkLabel }}</span>
+          <span class="network-label">{{ draft.networkLabel }}</span>
         </span>
       </div>
 
-      <!-- V51.9: Summary Card - 2-column grid: label/value -->
+      <!-- V52.1: Summary Card - reads from draft -->
       <div class="summary-card" data-roi="confirm-summary">
         <!-- Block 1: Parties (From/To) - identical structure -->
         <div class="summary-block">
@@ -116,10 +92,10 @@ function handleConfirm() {
           <div class="summary-row">
             <span class="row-label">From</span>
             <div class="row-value row-value--address">
-              <span v-if="fromLabel" class="value-name">{{ fromLabel }}</span>
+              <span v-if="draft.accountName" class="value-name">{{ draft.accountName }}</span>
               <div class="address-line">
                 <span class="icon-btn-placeholder" aria-hidden="true" />
-                <span class="value-address">{{ fromAddressShort }}</span>
+                <span class="value-address">{{ draft.senderAddressShort }}</span>
               </div>
             </div>
           </div>
@@ -135,7 +111,7 @@ function handleConfirm() {
                     <path d="m15 5 4 4" />
                   </svg>
                 </button>
-                <span class="value-address">{{ toAddressShort }}</span>
+                <span class="value-address">{{ draft.recipientShort }}</span>
               </div>
             </div>
           </div>
@@ -149,27 +125,27 @@ function handleConfirm() {
           <!-- Amount -->
           <div class="summary-row">
             <span class="row-label">Amount</span>
-            <span class="row-value row-value--amount">{{ amountText }}</span>
+            <span class="row-value row-value--amount">{{ draft.amountDisplay }}</span>
           </div>
 
           <!-- Fee -->
-          <div v-if="feeText" class="summary-row">
+          <div v-if="draft.feeDisplay" class="summary-row">
             <span class="row-label">Fee</span>
-            <span class="row-value row-value--fee">{{ feeText }}</span>
+            <span class="row-value row-value--fee">{{ draft.feeDisplay }}</span>
           </div>
 
           <!-- Memo -->
-          <div v-if="memo" class="summary-row">
+          <div v-if="draft.memo" class="summary-row">
             <span class="row-label">Memo</span>
-            <span class="row-value row-value--memo">{{ memo }}</span>
+            <span class="row-value row-value--memo">{{ draft.memo }}</span>
           </div>
         </div>
 
         <!-- Total (always separated, hero treatment) -->
-        <div v-if="totalText" class="total-divider" />
-        <div v-if="totalText" class="summary-row summary-row--total">
+        <div v-if="draft.totalDisplay" class="total-divider" />
+        <div v-if="draft.totalDisplay" class="summary-row summary-row--total">
           <span class="row-label row-label--total">Total</span>
-          <span class="row-value row-value--total">{{ totalText }}</span>
+          <span class="row-value row-value--total">{{ draft.totalDisplay }}</span>
         </div>
       </div>
 
