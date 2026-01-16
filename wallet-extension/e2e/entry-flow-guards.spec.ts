@@ -596,23 +596,19 @@ test.describe("V53.2 Shared Component ROI Guards", () => {
   });
 });
 
-test.describe("V53.2 Visual Consistency Guards", () => {
+test.describe("V53.2 Visual Consistency Guards (Updated for V54.2)", () => {
   // Helper to get comprehensive layout metrics for visual parity
+  // V54.2: Back button removed, now single full-width CTA
   async function getLayoutMetrics(page: Page) {
     return page.evaluate(() => {
       const ctaRail = document.querySelector('[data-roi="recovery-phrase-cta"]');
       const primaryBtn = document.querySelector('[data-roi="cta-primary"]');
-      const backBtn = document.querySelector('[data-roi="cta-back"]');
       const container = document.querySelector('[data-roi="recovery-phrase-display"]');
 
       if (!ctaRail || !primaryBtn || !container) return null;
 
       const railBox = ctaRail.getBoundingClientRect();
       const primaryBox = primaryBtn.getBoundingClientRect();
-      const leftSlotBox = backBtn?.getBoundingClientRect();
-
-      // V53.2: Check if back button is in ghost state via CSS class
-      const isGhostState = backBtn?.classList.contains('cta-rail__back--ghost') ?? false;
 
       // Get computed styles for padding verification
       const containerStyle = getComputedStyle(container);
@@ -625,12 +621,8 @@ test.describe("V53.2 Visual Consistency Guards", () => {
         primaryWidth: Math.round(primaryBox.width),
         primaryHeight: Math.round(primaryBox.height),
         primaryLeft: Math.round(primaryBox.left - railBox.left),
-        // Left slot metrics (Back button - always present in V53.2)
-        leftSlotWidth: leftSlotBox ? Math.round(leftSlotBox.width) : 0,
-        leftSlotHeight: leftSlotBox ? Math.round(leftSlotBox.height) : 0,
-        // V53.2: State flags - ghost vs active determined by CSS class
-        hasBackButton: !!backBtn && !isGhostState,
-        hasGhostButton: !!backBtn && isGhostState,
+        // V54.2: Primary CTA is full-width ratio
+        primaryWidthRatio: primaryBox.width / railBox.width,
         // Container padding
         containerPaddingTop: containerStyle.paddingTop,
         containerPaddingBottom: containerStyle.paddingBottom,
@@ -676,7 +668,7 @@ test.describe("V53.2 Visual Consistency Guards", () => {
       }
     });
 
-    test("V53.2: Left slot width must be identical in both flows", async ({ page }) => {
+    test("V54.2: Primary CTA should be full-width in both flows", async ({ page }) => {
       // Get StartView metrics
       await page.goto("/#/start");
       await clearWalletState(page);
@@ -703,11 +695,11 @@ test.describe("V53.2 Visual Consistency Guards", () => {
         addWalletMetrics = await getLayoutMetrics(page);
       }
 
-      // V53.2: 0-1px tolerance
+      // V54.2: Both should be full-width (>95% of rail width)
       if (startMetrics && addWalletMetrics) {
-        const widthDiff = Math.abs(startMetrics.leftSlotWidth - addWalletMetrics.leftSlotWidth);
-        expect(widthDiff, `Left slot width diff: ${widthDiff}px`).toBeLessThanOrEqual(1);
-        console.log(`[V53.2 Parity] Left slot width - Start: ${startMetrics.leftSlotWidth}px, Add: ${addWalletMetrics.leftSlotWidth}px (diff: ${widthDiff}px)`);
+        expect(startMetrics.primaryWidthRatio).toBeGreaterThan(0.95);
+        expect(addWalletMetrics.primaryWidthRatio).toBeGreaterThan(0.95);
+        console.log(`[V54.2 Full-Width] Start: ${(startMetrics.primaryWidthRatio * 100).toFixed(1)}%, Add: ${(addWalletMetrics.primaryWidthRatio * 100).toFixed(1)}%`);
       }
     });
 
@@ -746,7 +738,7 @@ test.describe("V53.2 Visual Consistency Guards", () => {
       }
     });
 
-    test("V53.2: StartView should have ghost button (disabled, low opacity)", async ({ page }) => {
+    test("V54.2: StartView should have no bottom back button", async ({ page }) => {
       await page.goto("/#/start");
       await clearWalletState(page);
       await page.reload();
@@ -757,26 +749,20 @@ test.describe("V53.2 Visual Consistency Guards", () => {
         await createBtn.click();
         await page.waitForTimeout(500);
 
+        // V54.2: No back button should exist (header back handles navigation)
+        const backBtn = await page.$('[data-roi="cta-back"]');
+        expect(backBtn, "Bottom back button should not exist").toBeNull();
+
+        // V54.2: Verify single full-width CTA
         const metrics = await getLayoutMetrics(page);
         if (metrics) {
-          // V53.2: StartView has ghost button (not active Back)
-          expect(metrics.hasBackButton).toBe(false);
-          expect(metrics.hasGhostButton).toBe(true);
-          console.log(`[V53.2 StartView] hasGhostButton: ${metrics.hasGhostButton}, leftSlotWidth: ${metrics.leftSlotWidth}px`);
-        }
-
-        // V53.2: Verify ghost button has low opacity (via CSS class)
-        const ghostBtn = await page.$('[data-roi="cta-back"].cta-rail__back--ghost');
-        if (ghostBtn) {
-          const opacity = await ghostBtn.evaluate((el) => getComputedStyle(el).opacity);
-          const opacityValue = parseFloat(opacity);
-          expect(opacityValue).toBeLessThan(0.3);
-          console.log(`[V53.2 StartView] Ghost button opacity: ${opacity}`);
+          expect(metrics.primaryWidthRatio).toBeGreaterThan(0.95);
+          console.log(`[V54.2 StartView] Primary CTA width ratio: ${(metrics.primaryWidthRatio * 100).toFixed(1)}%`);
         }
       }
     });
 
-    test("V53.2: AddWalletView should have active Back button", async ({ page }) => {
+    test("V54.2: AddWalletView should have no bottom back button", async ({ page }) => {
       await page.goto("/#/add-wallet");
       await page.waitForTimeout(500);
 
@@ -785,12 +771,15 @@ test.describe("V53.2 Visual Consistency Guards", () => {
         await createBtn.click();
         await page.waitForTimeout(500);
 
+        // V54.2: No back button should exist (header back handles navigation)
+        const backBtn = await page.$('[data-roi="cta-back"]');
+        expect(backBtn, "Bottom back button should not exist").toBeNull();
+
+        // V54.2: Verify single full-width CTA
         const metrics = await getLayoutMetrics(page);
         if (metrics) {
-          // V53.2: AddWalletView has active Back button
-          expect(metrics.hasBackButton).toBe(true);
-          expect(metrics.hasGhostButton).toBe(false);
-          console.log(`[V53.2 AddWalletView] hasBackButton: ${metrics.hasBackButton}, leftSlotWidth: ${metrics.leftSlotWidth}px`);
+          expect(metrics.primaryWidthRatio).toBeGreaterThan(0.95);
+          console.log(`[V54.2 AddWalletView] Primary CTA width ratio: ${(metrics.primaryWidthRatio * 100).toFixed(1)}%`);
         }
       }
     });
@@ -813,7 +802,7 @@ test.describe("V53.2 Visual Consistency Guards", () => {
       }
     });
 
-    test("V53.4: CTA rail must be fully visible (no vertical clipping)", async ({ page }) => {
+    test("V54.2: CTA rail must be fully visible (no vertical clipping)", async ({ page }) => {
       await page.goto("/#/start");
       await clearWalletState(page);
       await page.reload();
@@ -824,35 +813,164 @@ test.describe("V53.2 Visual Consistency Guards", () => {
         await createBtn.click();
         await page.waitForTimeout(500);
 
-        // V53.4: Verify CTA rail is within viewport bounds
+        // V54.2: Verify CTA rail is within viewport bounds (single button only)
         const ctaClipping = await page.evaluate(() => {
           const ctaRail = document.querySelector('[data-roi="recovery-phrase-cta"]');
           const ctaPrimary = document.querySelector('[data-roi="cta-primary"]');
-          const ctaBack = document.querySelector('[data-roi="cta-back"]');
 
-          if (!ctaRail || !ctaPrimary || !ctaBack) return null;
+          if (!ctaRail || !ctaPrimary) return null;
 
           const viewportHeight = window.innerHeight;
           const railBox = ctaRail.getBoundingClientRect();
           const primaryBox = ctaPrimary.getBoundingClientRect();
-          const backBox = ctaBack.getBoundingClientRect();
 
           return {
             viewportHeight,
             railBottom: Math.round(railBox.bottom),
             primaryBottom: Math.round(primaryBox.bottom),
-            backBottom: Math.round(backBox.bottom),
             isRailClipped: railBox.bottom > viewportHeight,
             isPrimaryClipped: primaryBox.bottom > viewportHeight,
-            isBackClipped: backBox.bottom > viewportHeight,
           };
         });
 
         if (ctaClipping) {
-          console.log(`[V53.4 No Clipping] viewport: ${ctaClipping.viewportHeight}px, rail bottom: ${ctaClipping.railBottom}px`);
+          console.log(`[V54.2 No Clipping] viewport: ${ctaClipping.viewportHeight}px, rail bottom: ${ctaClipping.railBottom}px`);
           expect(ctaClipping.isRailClipped, "CTA rail should not be clipped below viewport").toBe(false);
           expect(ctaClipping.isPrimaryClipped, "Primary CTA should not be clipped").toBe(false);
-          expect(ctaClipping.isBackClipped, "Back CTA should not be clipped").toBe(false);
+        }
+      }
+    });
+  });
+});
+
+test.describe("V54.2 Zero-Shift Layout Guards", () => {
+  // Helper to get element position for shift detection
+  async function getElementPositions(page: Page) {
+    return page.evaluate(() => {
+      const actionPanel = document.querySelector('[data-roi="mnemonic-actions"]');
+      const phraseHero = document.querySelector('[data-roi="phrase-hero"]');
+      const mnemonicGrid = document.querySelector('[data-roi="mnemonic-grid"]');
+      const ctaRail = document.querySelector('[data-roi="recovery-phrase-cta"]');
+
+      const getTop = (el: Element | null) => el?.getBoundingClientRect().top ?? -1;
+
+      return {
+        actionPanelTop: Math.round(getTop(actionPanel)),
+        phraseHeroTop: Math.round(getTop(phraseHero)),
+        mnemonicGridTop: Math.round(getTop(mnemonicGrid)),
+        ctaRailTop: Math.round(getTop(ctaRail)),
+      };
+    });
+  }
+
+  test.describe("No Layout Shift on Reveal/Hide Toggle", () => {
+    test("V54.2: Element positions should not shift after reveal then hide", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // Get initial positions (hidden state)
+        const positionsBefore = await getElementPositions(page);
+
+        // Click reveal button to show phrase
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+
+          // Click hide button to return to hidden state
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+
+          // Get final positions (hidden state again)
+          const positionsAfter = await getElementPositions(page);
+
+          // V54.2: Zero shift tolerance (0-1px)
+          const tolerance = 1;
+          const actionPanelShift = Math.abs(positionsBefore.actionPanelTop - positionsAfter.actionPanelTop);
+          const phraseHeroShift = Math.abs(positionsBefore.phraseHeroTop - positionsAfter.phraseHeroTop);
+          const ctaRailShift = Math.abs(positionsBefore.ctaRailTop - positionsAfter.ctaRailTop);
+
+          expect(actionPanelShift, `Action panel shifted ${actionPanelShift}px`).toBeLessThanOrEqual(tolerance);
+          expect(phraseHeroShift, `Phrase hero shifted ${phraseHeroShift}px`).toBeLessThanOrEqual(tolerance);
+          expect(ctaRailShift, `CTA rail shifted ${ctaRailShift}px`).toBeLessThanOrEqual(tolerance);
+
+          console.log(`[V54.2 Zero-Shift] Action panel: ${actionPanelShift}px, Hero: ${phraseHeroShift}px, CTA: ${ctaRailShift}px`);
+        }
+      }
+    });
+
+    test("V54.2: Caption slot should reserve height when hidden", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // Get action panel height when caption is visible
+        const actionPanel = await page.$('[data-roi="mnemonic-actions"]');
+        const heightBefore = await actionPanel?.evaluate((el) => el.getBoundingClientRect().height) ?? 0;
+
+        // Reveal phrase (caption should become invisible but reserve space)
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+
+          // Get action panel height when caption is hidden
+          const heightAfter = await actionPanel?.evaluate((el) => el.getBoundingClientRect().height) ?? 0;
+
+          // V54.2: Height should remain the same (zero shift)
+          const heightDiff = Math.abs(heightBefore - heightAfter);
+          expect(heightDiff, `Action panel height changed by ${heightDiff}px`).toBeLessThanOrEqual(1);
+
+          console.log(`[V54.2 Caption Reserve] Height before: ${heightBefore}px, after: ${heightAfter}px (diff: ${heightDiff}px)`);
+        }
+      }
+    });
+
+    test("V54.2: CTA rail should be single full-width button", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // V54.2: No back button should exist
+        const backBtn = await page.$('[data-roi="cta-back"]');
+        expect(backBtn, "Bottom back button should not exist in V54.2").toBeNull();
+
+        // V54.2: Primary CTA should exist
+        const primaryBtn = await page.$('[data-roi="cta-primary"]');
+        expect(primaryBtn, "Primary CTA should exist").toBeTruthy();
+
+        // V54.2: Primary CTA should be full-width (check parent rail width)
+        if (primaryBtn) {
+          const btnWidth = await primaryBtn.evaluate((el) => el.getBoundingClientRect().width);
+          const railWidth = await page.evaluate(() => {
+            const rail = document.querySelector('[data-roi="recovery-phrase-cta"]');
+            return rail?.getBoundingClientRect().width ?? 0;
+          });
+
+          // Button should take full width of rail (with small margin for rounding)
+          const widthRatio = btnWidth / railWidth;
+          expect(widthRatio).toBeGreaterThan(0.95);
+
+          console.log(`[V54.2 Full-Width] Button: ${btnWidth}px, Rail: ${railWidth}px (ratio: ${widthRatio.toFixed(2)})`);
         }
       }
     });

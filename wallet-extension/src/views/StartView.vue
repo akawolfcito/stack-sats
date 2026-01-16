@@ -1,14 +1,14 @@
 <script setup lang="ts">
 /**
- * StartView - V53 Entry Flow Premium Parity
+ * StartView - V53.2 Unified Recovery Phrase Flow
  *
- * Wallet onboarding flow: create/import → mnemonic → PIN setup
+ * Wallet onboarding flow: create/import → mnemonic → verify → PIN setup
  * Uses ScreenShell + AppHeader for consistent scaffold.
  *
- * V53 Changes:
- * - Migrated to ScreenShell + AppHeader pattern
- * - Ambient glow properly clipped (no overflow)
- * - data-roi targets for e2e testing
+ * V53.2 Changes:
+ * - Uses shared RecoveryPhraseDisplay component
+ * - Uses shared VerifyPhraseStep component
+ * - Same recovery phrase UX as AddWalletView
  * - Premium typography and surfaces
  */
 import { onBeforeMount, ref, nextTick, computed } from "vue";
@@ -18,6 +18,8 @@ import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import PinInput from "@/components/PinInput.vue";
 import ImportMnemonicModal from "@/components/ImportMnemonicModal.vue";
+import RecoveryPhraseDisplay from "@/components/RecoveryPhraseDisplay.vue";
+import VerifyPhraseStep from "@/components/VerifyPhraseStep.vue";
 import { Button } from "@/components/ui";
 import { encryptWithPIN, isValidPIN } from "@/utils/security";
 import { sessionManager } from "@/utils/security/session";
@@ -55,86 +57,34 @@ const isLoading = ref(false);
 const importError = ref("");
 const showImportModal = ref(false);
 
-// V53.1: Reveal/Hide toggle for mnemonic grid (default hidden for security)
-const isRevealed = ref(false);
-const showCopyConfirm = ref(false);
-const copyToastVisible = ref(false);
-
-// V53.1: Verification step state (2-word check)
+// V53.2: Verification state - indices generated when entering verify step
 const verifyWord1Index = ref(0);
 const verifyWord2Index = ref(0);
-const verifyWord1Input = ref("");
-const verifyWord2Input = ref("");
-const verifyError = ref("");
 
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
 
-// V53.1: Generate random word indices for verification (1-indexed for display)
+// V53.2: Generate random word indices for verification
 function generateVerifyIndices() {
   const words = mnemonic.value.split(" ");
   const wordCount = words.length;
 
-  // Pick 2 random different indices
   const idx1 = Math.floor(Math.random() * wordCount);
   let idx2 = Math.floor(Math.random() * wordCount);
   while (idx2 === idx1) {
     idx2 = Math.floor(Math.random() * wordCount);
   }
 
-  // Sort so lower index comes first
   const [first, second] = [idx1, idx2].sort((a, b) => a - b);
   verifyWord1Index.value = first;
   verifyWord2Index.value = second;
 }
 
-// V53.1: Handle verification submission
-function handleVerify() {
-  const words = mnemonic.value.split(" ");
-  const expected1 = words[verifyWord1Index.value].toLowerCase();
-  const expected2 = words[verifyWord2Index.value].toLowerCase();
-  const input1 = verifyWord1Input.value.trim().toLowerCase();
-  const input2 = verifyWord2Input.value.trim().toLowerCase();
-
-  if (input1 !== expected1 || input2 !== expected2) {
-    verifyError.value = "Words don't match. Please check and try again.";
-    return;
-  }
-
-  verifyError.value = "";
+// V53.2: Handle verified - proceed to PIN step
+function handleVerified() {
   currentStep.value = "pin-create";
   nextTick(() => {
     pinInputRef.value?.focus();
   });
-}
-
-// V53.1: Toggle reveal state
-function toggleReveal() {
-  isRevealed.value = !isRevealed.value;
-}
-
-// V53.1: Show copy confirmation dialog
-function handleCopyClick() {
-  showCopyConfirm.value = true;
-}
-
-// V53.1: Confirm copy and show toast
-async function confirmCopy() {
-  showCopyConfirm.value = false;
-  try {
-    await navigator.clipboard.writeText(mnemonic.value);
-    copyToastVisible.value = true;
-    setTimeout(() => {
-      copyToastVisible.value = false;
-    }, 2000);
-  } catch {
-    // Clipboard API may fail in some contexts
-    secureLog("Clipboard copy failed");
-  }
-}
-
-// V53.1: Cancel copy
-function cancelCopy() {
-  showCopyConfirm.value = false;
 }
 
 // Generate random mnemonic seed phrase
@@ -159,14 +109,11 @@ const handleImportConfirm = (seedPhrase: string) => {
   currentStep.value = "mnemonic";
 };
 
-// V53.1: Proceed to verification step (was: handleContinueToPin)
-const handleContinueToVerify = () => {
+// V53.2: Proceed to verification step
+function handleContinueToVerify() {
   generateVerifyIndices();
-  verifyWord1Input.value = "";
-  verifyWord2Input.value = "";
-  verifyError.value = "";
   currentStep.value = "verify";
-};
+}
 
 // Handle PIN creation
 const handlePinCreate = (enteredPin: string) => {
@@ -223,19 +170,15 @@ const handlePinConfirm = async (enteredPin: string) => {
 };
 
 // Go back to previous step
-const handleBack = () => {
+function handleBack() {
   pinError.value = "";
-  verifyError.value = "";
 
   switch (currentStep.value) {
     case "mnemonic":
       mnemonic.value = "";
-      isRevealed.value = false;
       currentStep.value = "start";
       break;
     case "verify":
-      verifyWord1Input.value = "";
-      verifyWord2Input.value = "";
       currentStep.value = "mnemonic";
       break;
     case "pin-create":
@@ -251,15 +194,6 @@ const handleBack = () => {
       });
       break;
   }
-};
-
-// V53.1: Font autoscale for long mnemonic words (no ellipsis, no line-wrap)
-// Tiers: normal (<=8), long (9-10), xlong (>=11)
-function getWordSizeClass(word: string): string {
-  const len = word.length;
-  if (len >= 11) return 'word-text--xlong';  // xlong: 11+ chars
-  if (len >= 9) return 'word-text--long';    // long: 9-10 chars
-  return '';                                  // normal: <=8 chars
 }
 
 onBeforeMount(() => {
@@ -343,158 +277,23 @@ onBeforeMount(() => {
         </div>
       </div>
 
-      <!-- Step 2: Show Mnemonic -->
+      <!-- V54.2: Step 2: Show Mnemonic (header back handles navigation) -->
       <div v-else-if="currentStep === 'mnemonic'" class="mnemonic-content" data-roi="mnemonic-step">
-        <!-- Warning -->
-        <div class="warning-box">
-          <div class="warning-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <div class="warning-text">
-            <strong>Save your recovery phrase</strong>
-            <p>Store it securely. Anyone with this phrase can access your wallet.</p>
-          </div>
-        </div>
-
-        <!-- V53.1: Action bar with Reveal/Hide toggle and Copy button -->
-        <div class="mnemonic-actions" data-roi="mnemonic-actions">
-          <button
-            class="action-btn"
-            data-roi="mnemonic-reveal-toggle"
-            @click="toggleReveal"
-          >
-            <svg v-if="isRevealed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
-            </svg>
-            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            {{ isRevealed ? 'Hide' : 'Reveal' }}
-          </button>
-          <button
-            class="action-btn"
-            data-roi="mnemonic-copy-btn"
-            @click="handleCopyClick"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-            Copy
-          </button>
-        </div>
-
-        <!-- V53.1: Mnemonic Grid - blurred by default -->
-        <div
-          class="mnemonic-grid"
-          :class="{ 'mnemonic-grid--hidden': !isRevealed }"
-          data-roi="mnemonic-grid"
-        >
-          <div
-            v-for="(word, index) in mnemonic.split(' ')"
-            :key="index"
-            class="mnemonic-word"
-          >
-            <span class="word-index">{{ index + 1 }}</span>
-            <span
-              class="word-text"
-              :class="getWordSizeClass(word)"
-            >{{ word }}</span>
-          </div>
-        </div>
-
-        <!-- Continue Button -->
-        <div class="cta-wrapper">
-          <Button variant="primary" size="lg" full-width @click="handleContinueToVerify">
-            I saved it securely
-          </Button>
-        </div>
-
-        <!-- V53.1: Copy Confirmation Dialog -->
-        <div v-if="showCopyConfirm" class="copy-confirm-overlay" data-roi="copy-confirm-dialog">
-          <div class="copy-confirm-dialog">
-            <div class="copy-confirm-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-            </div>
-            <h3 class="copy-confirm-title">Copy Recovery Phrase?</h3>
-            <p class="copy-confirm-text">
-              Your clipboard may be accessible to other apps. Only copy if you're sure it's safe.
-            </p>
-            <div class="copy-confirm-actions">
-              <Button variant="secondary" @click="cancelCopy">Cancel</Button>
-              <Button variant="primary" @click="confirmCopy">Copy</Button>
-            </div>
-          </div>
-        </div>
-
-        <!-- V53.1: Copied Toast -->
-        <Transition name="toast">
-          <div v-if="copyToastVisible" class="copy-toast" data-roi="copy-toast">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Copied to clipboard
-          </div>
-        </Transition>
+        <RecoveryPhraseDisplay
+          :mnemonic="mnemonic"
+          @continue="handleContinueToVerify"
+        />
       </div>
 
-      <!-- V53.1: Step 3: Verification (2-word check) -->
+      <!-- V53.2: Step 3: Verification (unified component) -->
       <div v-else-if="currentStep === 'verify'" class="verify-content" data-roi="verify-step">
-        <p class="verify-subtitle">
-          Confirm you saved your recovery phrase by entering the words at positions:
-        </p>
-
-        <div class="verify-inputs">
-          <div class="verify-field">
-            <label class="verify-label">Word #{{ verifyWord1Index + 1 }}</label>
-            <input
-              v-model="verifyWord1Input"
-              type="text"
-              class="verify-input"
-              placeholder="Enter word"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-            />
-          </div>
-
-          <div class="verify-field">
-            <label class="verify-label">Word #{{ verifyWord2Index + 1 }}</label>
-            <input
-              v-model="verifyWord2Input"
-              type="text"
-              class="verify-input"
-              placeholder="Enter word"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-            />
-          </div>
-        </div>
-
-        <!-- V53.1: Error slot with reserved height -->
-        <div class="error-slot" aria-live="polite">
-          <p v-if="verifyError" class="error-text">{{ verifyError }}</p>
-        </div>
-
-        <div class="cta-wrapper">
-          <Button variant="primary" size="lg" full-width @click="handleVerify">
-            Verify & Continue
-          </Button>
-        </div>
+        <VerifyPhraseStep
+          :mnemonic="mnemonic"
+          :word1-index="verifyWord1Index"
+          :word2-index="verifyWord2Index"
+          @verified="handleVerified"
+          @back="handleBack"
+        />
       </div>
 
       <!-- Step 4 & 5: PIN -->
@@ -678,216 +477,24 @@ onBeforeMount(() => {
   margin: 0;
 }
 
-/* Mnemonic Content - V53: uses AppHeader, no extra top padding */
+/* V53.2: Mnemonic Content - container for shared component */
 .mnemonic-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   padding: var(--space-lg);
-  gap: var(--space-lg);
   position: relative;
   z-index: 1;
 }
 
-/* V53: Warning Box - using warning tokens */
-.warning-box {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: var(--color-warning-muted);
-  border: 1px solid rgba(234, 179, 8, 0.2);
-  border-radius: var(--radius-md);
-}
-
-.warning-icon {
-  flex-shrink: 0;
-  color: var(--color-warning);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.warning-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.warning-text strong {
-  color: var(--color-warning);
-  font-size: var(--font-size-sm);
-}
-
-.warning-text p {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* V53.1: Action bar - Reveal/Copy buttons */
-.mnemonic-actions {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-md);
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-chip);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: var(--color-text-primary);
-}
-
-.action-btn:active {
-  transform: scale(0.98);
-}
-
-/* V45: Mnemonic Grid - Premium word list with V43 card */
-.mnemonic-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  padding: var(--space-md);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-card);
-  transition: filter var(--transition-normal);
-}
-
-/* V53.1: Hidden/blurred state for mnemonic grid */
-.mnemonic-grid--hidden {
-  filter: blur(8px);
-  user-select: none;
-  pointer-events: none;
-}
-
-/* V54: Word cell - fixed height for consistency */
-.mnemonic-word {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: 4px var(--space-sm);
-  min-height: 32px; /* V54: Fixed height for all cells */
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-sm);
-  transition: background var(--transition-fast);
-  min-width: 0; /* Prevent grid blowout */
-}
-
-.mnemonic-word:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* V45: Index - muted numeric badge */
-.word-index {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
-  min-width: 14px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-/* V53.1: Word text - no ellipsis, no line-wrap, font autoscale */
-.word-text {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  letter-spacing: 0.01em;
-  /* V53.1: Single line only - no wrapping, no ellipsis */
-  white-space: nowrap;
-  overflow: visible;
-  /* NO text-overflow: ellipsis - word must be fully readable */
-}
-
-/* V53.1: Font autoscale tiers for long words */
-.word-text--long {
-  font-size: var(--font-size-xs);  /* 9-10 char words */
-}
-
-.word-text--xlong {
-  font-size: 10px;  /* 11+ char words - smallest readable */
-}
-
-/* V53.1: Verify Content - 2-word verification step */
+/* V53.2: Verify Content - container for shared component */
 .verify-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   padding: var(--space-lg);
-  gap: var(--space-lg);
   position: relative;
   z-index: 1;
-}
-
-.verify-subtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  text-align: center;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.verify-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.verify-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.verify-label {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.verify-input {
-  width: 100%;
-  padding: var(--space-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--color-text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-base);
-  box-sizing: border-box;
-}
-
-.verify-input:focus {
-  outline: none;
-  border-color: var(--color-accent-primary);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.verify-input::placeholder {
-  color: var(--color-text-muted);
-  font-family: var(--font-family);
 }
 
 /* V53: PIN Content - uses AppHeader, centered layout */
@@ -906,86 +513,5 @@ onBeforeMount(() => {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   margin-top: var(--space-lg);
-}
-
-/* V53.1: Copy Confirmation Dialog */
-.copy-confirm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: var(--space-lg);
-}
-
-.copy-confirm-dialog {
-  background: var(--color-bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-card);
-  padding: var(--space-xl);
-  max-width: 320px;
-  text-align: center;
-  box-shadow: var(--shadow-elev-3);
-}
-
-.copy-confirm-icon {
-  color: var(--color-warning);
-  margin-bottom: var(--space-md);
-}
-
-.copy-confirm-title {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  margin: 0 0 var(--space-sm);
-}
-
-.copy-confirm-text {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  margin: 0 0 var(--space-lg);
-}
-
-.copy-confirm-actions {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.copy-confirm-actions :deep(.btn) {
-  flex: 1;
-}
-
-/* V53.1: Copied Toast */
-.copy-toast {
-  position: fixed;
-  bottom: var(--space-xl);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-lg);
-  background: var(--color-success);
-  color: var(--color-bg-base);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  border-radius: var(--radius-chip);
-  box-shadow: var(--shadow-elev-2);
-  z-index: 101;
-}
-
-/* Toast transition */
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.3s ease;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(20px);
 }
 </style>

@@ -1,9 +1,20 @@
 <script setup lang="ts">
+/**
+ * AddWalletView - V53.2 Unified Recovery Phrase Flow
+ *
+ * Add wallet flow from Settings. Uses shared components:
+ * - RecoveryPhraseDisplay: Mnemonic grid with reveal/hide, copy
+ * - VerifyPhraseStep: 2-word verification
+ *
+ * Flow: start → mnemonic → verify → name → pin-create → pin-confirm → done
+ */
 import { ref, nextTick, computed } from "vue";
 import { randomSeedPhrase } from "@stacks/wallet-sdk";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
 import ImportMnemonicModal from "@/components/ImportMnemonicModal.vue";
+import RecoveryPhraseDisplay from "@/components/RecoveryPhraseDisplay.vue";
+import VerifyPhraseStep from "@/components/VerifyPhraseStep.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import { Button } from "@/components/ui";
@@ -14,11 +25,16 @@ import { getWalletCount } from "@/utils/wallets";
 
 const router = useRouter();
 
+// V53.2: Steps now include 'verify' before 'name'
+type Step = "start" | "mnemonic" | "verify" | "name" | "pin-create" | "pin-confirm";
+const currentStep = ref<Step>("start");
+
 // Dynamic header title based on step
 const headerTitle = computed(() => {
   switch (currentStep.value) {
     case "start": return "Add Wallet";
     case "mnemonic": return "Recovery Phrase";
+    case "verify": return "Verify Phrase";
     case "name": return "Name Wallet";
     case "pin-create": return "Create PIN";
     case "pin-confirm": return "Confirm PIN";
@@ -29,9 +45,6 @@ const headerTitle = computed(() => {
 // Show back button only on steps after start
 const showStepBack = computed(() => currentStep.value !== "start");
 
-type Step = "start" | "mnemonic" | "name" | "pin-create" | "pin-confirm";
-const currentStep = ref<Step>("start");
-
 const mnemonic = ref("");
 const walletName = ref("");
 const pin = ref("");
@@ -40,7 +53,27 @@ const isLoading = ref(false);
 const importError = ref("");
 const showImportModal = ref(false);
 
+// V53.2: Verification state
+const verifyWord1Index = ref(0);
+const verifyWord2Index = ref(0);
+
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
+
+// V53.2: Generate random word indices for verification
+function generateVerifyIndices() {
+  const words = mnemonic.value.split(" ");
+  const wordCount = words.length;
+
+  const idx1 = Math.floor(Math.random() * wordCount);
+  let idx2 = Math.floor(Math.random() * wordCount);
+  while (idx2 === idx1) {
+    idx2 = Math.floor(Math.random() * wordCount);
+  }
+
+  const [first, second] = [idx1, idx2].sort((a, b) => a - b);
+  verifyWord1Index.value = first;
+  verifyWord2Index.value = second;
+}
 
 function handleBack() {
   router.push({ path: "/usermenu" });
@@ -65,7 +98,14 @@ function handleImportConfirm(seedPhrase: string) {
   currentStep.value = "mnemonic";
 }
 
-function handleContinueToName() {
+// V53.2: Continue from mnemonic to verify step
+function handleContinueToVerify() {
+  generateVerifyIndices();
+  currentStep.value = "verify";
+}
+
+// V53.2: Handle verified - proceed to name step
+function handleVerified() {
   const walletNumber = getWalletCount() + 1;
   walletName.value = `Wallet ${walletNumber}`;
   currentStep.value = "name";
@@ -139,8 +179,11 @@ function handleStepBack() {
       mnemonic.value = "";
       currentStep.value = "start";
       break;
-    case "name":
+    case "verify":
       currentStep.value = "mnemonic";
+      break;
+    case "name":
+      currentStep.value = "verify";
       break;
     case "pin-create":
       pin.value = "";
@@ -154,15 +197,6 @@ function handleStepBack() {
       });
       break;
   }
-}
-
-// V53.1: Font autoscale for long mnemonic words (no ellipsis, no line-wrap)
-// Tiers: normal (<=8), long (9-10), xlong (>=11)
-function getWordSizeClass(word: string): string {
-  const len = word.length;
-  if (len >= 11) return 'word-text--xlong';  // xlong: 11+ chars
-  if (len >= 9) return 'word-text--long';    // long: 9-10 chars
-  return '';                                  // normal: <=8 chars
 }
 </script>
 
@@ -193,48 +227,26 @@ function getWordSizeClass(word: string): string {
         </div>
       </div>
 
-      <!-- Step 2: Show Mnemonic -->
+      <!-- V54.2: Step 2: Show Mnemonic (header back handles navigation) -->
       <div v-else-if="currentStep === 'mnemonic'" class="step-container" data-roi="add-wallet-mnemonic">
-        <!-- V53: Warning box using tokens -->
-        <div class="mnemonic-warning">
-          <div class="warning-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <div class="warning-text">
-            <strong>Save your recovery phrase</strong>
-            <p>Anyone with this phrase can access your wallet.</p>
-          </div>
-        </div>
-
-        <!-- V53: Mnemonic grid - V43 card pattern -->
-        <!-- V54: Font autoscale for long words (no ellipsis truncation) -->
-        <div class="mnemonic-display" data-roi="add-wallet-mnemonic-grid">
-          <div
-            v-for="(word, index) in mnemonic.split(' ')"
-            :key="index"
-            class="mnemonic-word"
-          >
-            <span class="word-number">{{ index + 1 }}</span>
-            <span
-              class="word-text"
-              :class="getWordSizeClass(word)"
-            >{{ word }}</span>
-          </div>
-        </div>
-
-        <div class="button-group" data-roi="add-wallet-mnemonic-cta">
-          <Button variant="secondary" @click="handleStepBack">Back</Button>
-          <Button variant="primary" @click="handleContinueToName">
-            I saved it
-          </Button>
-        </div>
+        <RecoveryPhraseDisplay
+          :mnemonic="mnemonic"
+          @continue="handleContinueToVerify"
+        />
       </div>
 
-      <!-- Step 3: Name wallet -->
+      <!-- V53.2: Step 3: Verify Phrase (2-word check) -->
+      <div v-else-if="currentStep === 'verify'" class="step-container" data-roi="add-wallet-verify">
+        <VerifyPhraseStep
+          :mnemonic="mnemonic"
+          :word1-index="verifyWord1Index"
+          :word2-index="verifyWord2Index"
+          @verified="handleVerified"
+          @back="handleStepBack"
+        />
+      </div>
+
+      <!-- Step 4: Name wallet -->
       <div v-else-if="currentStep === 'name'" class="step-container">
         <label class="input-label">Wallet name (optional)</label>
         <input
@@ -253,7 +265,7 @@ function getWordSizeClass(word: string): string {
         </div>
       </div>
 
-      <!-- Step 4: Create PIN (V47: hide-label - subtitle provides context) -->
+      <!-- Step 5: Create PIN -->
       <div v-else-if="currentStep === 'pin-create'" class="step-container">
         <p class="subtitle">Create a 6-digit PIN</p>
         <PinInput
@@ -272,7 +284,7 @@ function getWordSizeClass(word: string): string {
         </div>
       </div>
 
-      <!-- Step 5: Confirm PIN (V47: hide-label - subtitle provides context) -->
+      <!-- Step 6: Confirm PIN -->
       <div v-else-if="currentStep === 'pin-confirm'" class="step-container">
         <p class="subtitle">Confirm your PIN</p>
         <PinInput
@@ -304,9 +316,10 @@ function getWordSizeClass(word: string): string {
 </template>
 
 <style scoped>
+/* V53.2: Same padding as StartView for visual parity */
 .page-content {
   flex: 1;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-lg);
   overflow-y: auto;
 }
 
@@ -314,6 +327,7 @@ function getWordSizeClass(word: string): string {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+  min-height: 100%;
 }
 
 .subtitle {
@@ -350,103 +364,6 @@ function getWordSizeClass(word: string): string {
   font-size: var(--font-size-sm);
   text-align: center;
   margin: 0;
-}
-
-/* V53: Warning box - flex layout with icon */
-.mnemonic-warning {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: var(--color-warning-muted);
-  border: 1px solid rgba(234, 179, 8, 0.2);
-  border-radius: var(--radius-md);
-}
-
-.warning-icon {
-  flex-shrink: 0;
-  color: var(--color-warning);
-  display: flex;
-  align-items: flex-start;
-  padding-top: 2px;
-}
-
-.warning-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.warning-text strong {
-  color: var(--color-warning);
-  font-size: var(--font-size-sm);
-}
-
-.warning-text p {
-  margin: 0;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  line-height: 1.5;
-}
-
-/* V53: Mnemonic display - V43 card pattern */
-.mnemonic-display {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  padding: var(--space-md);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-card);
-}
-
-/* V54: Word row - fixed height for consistency */
-.mnemonic-word {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 6px var(--space-sm);
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-sm);
-  transition: background var(--transition-fast);
-  min-width: 0;
-  height: 36px; /* V54: Fixed height for all cells */
-}
-
-.mnemonic-word:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* V53: Index - muted numeric badge */
-.word-number {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
-  min-width: 16px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-/* V53.1: Word text - no ellipsis, no line-wrap, font autoscale */
-.word-text {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  letter-spacing: 0.01em;
-  /* V53.1: Single line only - no wrapping, no ellipsis */
-  white-space: nowrap;
-  overflow: visible;
-  /* NO text-overflow: ellipsis - word must be fully readable */
-}
-
-/* V53.1: Font autoscale tiers for long words */
-.word-text--long {
-  font-size: var(--font-size-xs);  /* 9-10 char words */
-}
-
-.word-text--xlong {
-  font-size: 10px;  /* 11+ char words - smallest readable */
 }
 
 .input-label {
