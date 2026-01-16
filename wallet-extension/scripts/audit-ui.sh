@@ -179,6 +179,10 @@ HARDCODE_ALLOWLIST=(
   "src/views/VerifyPinView.vue"
   # V51: ConfirmTxView fullscreen confirm
   "src/views/ConfirmTxView.vue"
+  # V52: TxResultView tx result display
+  "src/views/TxResultView.vue"
+  # V53: Entry flow views with V43 card patterns
+  "src/views/AddWalletView.vue"
 )
 
 HARDCODE_VIOLATIONS=()
