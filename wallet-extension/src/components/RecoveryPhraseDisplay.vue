@@ -333,6 +333,15 @@ function handleBack() {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
+/* V53.3: Focus-visible - keyboard accessibility */
+.action-btn:focus-visible {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  box-shadow:
+    0 0 0 2px var(--color-bg-primary),
+    0 0 0 4px var(--color-accent-primary);
+}
+
 /* V53.3: Reveal active state - accent border when revealed */
 .action-btn--active {
   border-color: var(--color-accent-primary);
