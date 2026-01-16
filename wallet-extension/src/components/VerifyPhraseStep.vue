@@ -114,16 +114,16 @@ function handleBack() {
 </template>
 
 <style scoped>
-/* V53.6: Main container */
+/* V54.0: Main container - premium layout */
 .verify-step {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-lg);
   flex: 1;
   min-height: 0;
 }
 
-/* V53.6: Subtitle - left-aligned, secondary text */
+/* V54.0: Subtitle - compact, clear instruction */
 .verify-subtitle {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
@@ -132,11 +132,15 @@ function handleBack() {
   line-height: 1.5;
 }
 
-/* V53.6: Input container */
+/* V54.0: Input container - elevated surface for hero treatment */
 .verify-inputs {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-card);
 }
 
 .verify-field {
@@ -145,20 +149,22 @@ function handleBack() {
   gap: var(--space-xs);
 }
 
-/* V53.6: Label - sentence case, no uppercase transform */
+/* V54.0: Label - compact, clear hierarchy */
 .verify-label {
   color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-/* V53.6: Input surface */
+/* V54.0: Input surface - premium material */
 .verify-input {
   width: 100%;
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
   color: var(--color-text-primary);
   font-family: var(--font-mono);
   font-size: var(--font-size-base);
@@ -182,7 +188,7 @@ function handleBack() {
   font-family: var(--font-family);
 }
 
-/* V53.6: Error slot - reserved height, clean typography */
+/* V54.0: Error slot - reserved height, clean typography */
 .error-slot {
   min-height: 20px;
   display: flex;
@@ -196,7 +202,7 @@ function handleBack() {
   margin: 0;
 }
 
-/* V53.6: CTA Rail */
+/* V54.0: CTA Rail */
 .cta-rail {
   display: flex;
   gap: var(--space-md);
