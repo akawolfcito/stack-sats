@@ -1,4 +1,13 @@
 <script setup lang="ts">
+/**
+ * PinInput - V52.3 No Layout Shift
+ *
+ * V52.3 Changes:
+ * - Fixed error slot with constant min-height (no layout shift)
+ * - Error show/hide via opacity + transform (no reflow)
+ * - aria-live="polite" for accessibility
+ * - ROI target for E2E keypad position guard
+ */
 import { ref, watch, computed } from "vue";
 
 const props = defineProps<{
@@ -6,6 +15,7 @@ const props = defineProps<{
   error?: string;
   disabled?: boolean;
   showBiometric?: boolean;
+  hideLabel?: boolean; // V46: Hide label when used in modal with its own title
 }>();
 
 const emit = defineEmits<{
@@ -120,8 +130,8 @@ const modeLabels = {
   >
     <!-- Top Section: Label + Dots + Error -->
     <div class="pin-top">
-      <!-- Label -->
-      <div class="pin-label">
+      <!-- Label (V46: can be hidden when modal provides context) -->
+      <div class="pin-label" :class="{ 'sr-only': hideLabel }">
         <p>{{ modeLabels[mode] }}</p>
       </div>
 
@@ -140,8 +150,18 @@ const modeLabels = {
         ></div>
       </div>
 
-      <!-- Error Message -->
-      <p v-if="error" class="error-message">{{ error }}</p>
+      <!-- V52.3: Error Slot - Fixed height, no layout shift -->
+      <!-- Always rendered with constant height; error visibility via opacity/transform -->
+      <div
+        class="error-slot"
+        :class="{ 'error-slot--visible': !!error }"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-roi="pin-error-slot"
+      >
+        <p class="error-message">{{ error || '&nbsp;' }}</p>
+      </div>
     </div>
 
     <!-- Bottom Section: Slot + Keypad -->
@@ -149,8 +169,8 @@ const modeLabels = {
       <!-- Slot for Forgot PIN link -->
       <slot name="above-keypad"></slot>
 
-      <!-- Numeric Keypad -->
-      <div class="keypad">
+      <!-- Numeric Keypad - V52.3: ROI target for position guard test -->
+      <div class="keypad" data-roi="pin-keypad">
         <template v-for="(row, rowIndex) in keypadRows" :key="rowIndex">
           <button
             v-for="key in row"
@@ -241,6 +261,19 @@ const modeLabels = {
   margin: 0;
 }
 
+/* V46: Screen reader only - hide visually but keep accessible */
+.pin-label.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* PIN Dots Container */
 .pin-dots {
   display: flex;
@@ -292,13 +325,36 @@ const modeLabels = {
   }
 }
 
-/* Error Message */
+/* V52.3: Error Slot - Fixed height, no layout shift */
+.error-slot {
+  /* Fixed height reservation - prevents layout shift */
+  min-height: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Hidden by default via opacity/transform (no reflow) */
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  /* Prevent interaction when hidden */
+  pointer-events: none;
+}
+
+.error-slot--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Error Message text inside slot */
 .error-message {
   color: var(--color-error);
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   margin: 0;
-  min-height: 20px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* Shake animation */
@@ -312,7 +368,7 @@ const modeLabels = {
   animation: shake 0.5s ease-in-out;
 }
 
-/* Keypad - Minimalist style */
+/* V45: Keypad - Minimalist style with token-based states */
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -335,24 +391,26 @@ const modeLabels = {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
 }
 
+/* V45: Using surface tokens for consistent interaction states */
 .keypad-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
 }
 
 .keypad-btn:active:not(:disabled) {
   transform: scale(0.92);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-pressed);
 }
 
 .keypad-btn:disabled {
-  opacity: 0.5;
+  opacity: var(--state-disabled-opacity);
   cursor: not-allowed;
 }
 
+/* V46: Action buttons (biometric/backspace) - ensure icons always visible */
 .keypad-btn--action {
   color: var(--color-text-secondary);
 }
@@ -361,17 +419,25 @@ const modeLabels = {
   color: var(--color-text-primary);
 }
 
+/* V46: Fix compact icon visibility - explicit size + no shrink */
 .keypad-btn--action svg {
   width: 24px;
   height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  flex-shrink: 0;
 }
 
 .keypad-btn--biometric {
   color: var(--color-text-secondary);
 }
 
+/* V46: Biometric icon - explicit size + no shrink */
 .keypad-btn--biometric svg {
   width: 28px;
   height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  flex-shrink: 0;
 }
 </style>
