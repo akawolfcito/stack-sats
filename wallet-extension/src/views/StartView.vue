@@ -1,11 +1,16 @@
 <script setup lang="ts">
 /**
- * StartView - V55.0 PIN Screens Premium Finalization
+ * StartView - V55.1 Shell Header Scale + Rhythm Unification
  *
  * Wallet onboarding flow: create/import → mnemonic → verify → PIN setup
  * Uses ScreenShell + AppHeader for non-PIN steps, PinScreenShell for PIN steps.
  *
- * V55.0 Changes:
+ * V55.1 Changes:
+ * - Hero logo scaled to 72px (was 96px) for visual harmony with flow screens
+ * - Scale rules: Hero = 72px, Flow (PIN) = 44px
+ * - data-roi="start-hero-logo" for E2E guards
+ *
+ * V55.0 Changes (preserved):
  * - Standardized microcopy across all PIN screens
  * - Consistent helper text: "Don't reuse a PIN you use elsewhere."
  *
@@ -280,8 +285,8 @@ onBeforeMount(() => {
 
       <!-- Step 1: Start (Hero landing) -->
       <div v-if="currentStep === 'start'" class="start-content" data-roi="start-hero">
-        <!-- Logo -->
-        <div class="logo-container">
+        <!-- V55.1: Hero logo (72px scale) -->
+        <div class="logo-container" data-roi="start-hero-logo">
           <div class="logo-glow"></div>
           <div class="logo-box">
             <img src="/denvault-i.png" alt="DenVault" class="logo-image" />
@@ -409,17 +414,18 @@ onBeforeMount(() => {
   z-index: 10;
 }
 
-/* Logo */
+/* V55.1: Hero Logo - 72px scale (was 96px) */
 .logo-container {
   position: relative;
 }
 
 .logo-glow {
   position: absolute;
-  inset: -16px;
+  /* V55.1: Proportional glow for 72px logo */
+  inset: -12px;
   background: var(--color-accent-primary);
   opacity: 0.2;
-  filter: blur(32px);
+  filter: blur(28px);
   border-radius: 50%;
   transition: opacity 0.5s ease;
 }
@@ -430,9 +436,10 @@ onBeforeMount(() => {
 
 .logo-box {
   position: relative;
-  width: 96px;
-  height: 96px;
-  border-radius: 24px;
+  /* V55.1: 72px hero (was 96px) */
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #2a2d15, #1a1c0d);
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: var(--shadow-elev-2);
@@ -443,9 +450,10 @@ onBeforeMount(() => {
 }
 
 .logo-image {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
+  /* V55.1: 56px image (was 72px) */
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   object-fit: cover;
 }
 
