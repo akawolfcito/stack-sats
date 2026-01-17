@@ -1,4 +1,14 @@
 <script setup lang="ts">
+/**
+ * ReceiveModal - V56 Perceived Cohesion Sprint
+ *
+ * Decision Log:
+ * - Container: Sheet variant="bottom" (Rule 2 - contextual overlay, dismissible)
+ * - Close strategy: Sheet showClose=true (single source, Guardrail A)
+ * - CTA strategy: Horizontal V55 Buttons (Copy/Explorer, no StickyCTA needed)
+ * - Scroll ownership: Internal to Sheet (Guardrail C)
+ * - ROI: receive-* prefix for E2E anchors
+ */
 import { ref, watch, onMounted, computed } from "vue";
 import QRCode from "qrcode";
 import { useUiMode } from "../composables/useUiMode";
@@ -157,85 +167,70 @@ function toggleFullAddress() {
   <Sheet
     :is-open="visible"
     variant="bottom"
-    :show-close="false"
+    title="Receive"
+    :show-close="true"
     data-roi="receive-sheet"
     @close="handleClose"
   >
-    <template #header>
-      <div
-        class="receive-sheet"
-        :class="{
-          'receive-sheet--btc': activeTab === 'btc',
-          'receive-sheet--popup': isPopup
-        }"
-      >
-        <!-- Ambient Glow -->
-        <div class="ambient-glow" :class="{ 'ambient-glow--btc': activeTab === 'btc' }"></div>
-
-        <!-- Header -->
-        <div class="modal-header" data-roi="receive-header">
-          <div class="header-title">
-            <div class="asset-icon" :class="{ 'asset-icon--btc': activeTab === 'btc' }">
-              <svg v-if="activeTab === 'stx'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
-                <path d="M4 4l16 16M4 20L20 4M4 12h16"/>
-              </svg>
-              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
-              </svg>
-            </div>
-            <h2>Receive</h2>
-          </div>
-          <Button variant="icon" @click="handleClose">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </Button>
-        </div>
-
-        <!-- Asset Tabs -->
-        <div class="asset-tabs">
-          <button
-            class="tab-btn"
-            :class="{ 'tab-btn--active': activeTab === 'stx' }"
-            @click="setTab('stx')"
-          >
-            STX
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ 'tab-btn--active': activeTab === 'btc', 'tab-btn--btc': activeTab === 'btc' }"
-            @click="setTab('btc')"
-          >
-            BTC
-          </button>
-        </div>
-
-        <!-- BTC Address Type Selector -->
-        <div v-if="activeTab === 'btc'" class="btc-type-selector">
-          <button
-            class="type-btn"
-            :class="{ 'type-btn--active': btcAddressType === 'taproot' }"
-            @click="setBtcType('taproot')"
-          >
-            Taproot
-          </button>
-          <button
-            class="type-btn"
-            :class="{ 'type-btn--active': btcAddressType === 'legacy' }"
-            @click="setBtcType('legacy')"
-          >
-            Legacy
-          </button>
-        </div>
-      </div>
+    <template #icon>
+      <svg v-if="activeTab === 'stx'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M4 4l16 16M4 20L20 4M4 12h16"/>
+      </svg>
+      <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
+      </svg>
     </template>
 
     <!-- Modal Content -->
     <div
       class="receive-content"
       :class="{ 'receive-content--btc': activeTab === 'btc' }"
+      data-roi="receive-content"
     >
+      <!-- V56: Asset Tabs using V55 Button secondary toggle -->
+      <div class="asset-tabs" data-roi="receive-tabs">
+        <Button
+          :variant="activeTab === 'stx' ? 'primary' : 'secondary'"
+          size="sm"
+          class="tab-btn"
+          :class="{ 'tab-btn--active': activeTab === 'stx' }"
+          @click="setTab('stx')"
+        >
+          STX
+        </Button>
+        <Button
+          :variant="activeTab === 'btc' ? 'primary' : 'secondary'"
+          size="sm"
+          class="tab-btn"
+          :class="{ 'tab-btn--btc': activeTab === 'btc' }"
+          @click="setTab('btc')"
+        >
+          BTC
+        </Button>
+      </div>
+
+      <!-- BTC Address Type Selector -->
+      <div v-if="activeTab === 'btc'" class="btc-type-selector">
+        <Button
+          :variant="btcAddressType === 'taproot' ? 'secondary' : 'ghost'"
+          size="sm"
+          class="type-btn"
+          :class="{ 'type-btn--active': btcAddressType === 'taproot' }"
+          @click="setBtcType('taproot')"
+        >
+          Taproot
+        </Button>
+        <Button
+          :variant="btcAddressType === 'legacy' ? 'secondary' : 'ghost'"
+          size="sm"
+          class="type-btn"
+          :class="{ 'type-btn--active': btcAddressType === 'legacy' }"
+          @click="setBtcType('legacy')"
+        >
+          Legacy
+        </Button>
+      </div>
+
       <!-- QR Code Container -->
       <div class="qr-wrapper" data-roi="receive-qr">
         <div class="qr-container" :class="{ 'qr-container--btc': activeTab === 'btc' }">
@@ -301,210 +296,67 @@ function toggleFullAddress() {
 </template>
 
 <style scoped>
-/* Receive Sheet theming */
-.receive-sheet {
-  position: relative;
-  background: #1a1c0d;
-}
-
-.receive-sheet--btc {
-  background: #1a1510;
-}
-
-/* Popup mode: compact layout */
-.receive-sheet--popup .tab-btn {
-  height: 36px;
-  font-size: var(--font-size-sm);
-}
-
-.receive-sheet--popup .type-btn {
-  height: 32px;
-}
+/**
+ * V56 ReceiveModal Styles
+ * - Removed legacy header styles (now using Sheet's built-in header)
+ * - Using V55 Button for tabs
+ * - Normalized to V55 tokens
+ */
 
 /* Content theming */
 .receive-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-/* Ambient Glow - v19: neutral */
-.ambient-glow {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 320px;
-  height: 150px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 50%;
-  filter: blur(80px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.ambient-glow--btc {
-  background: rgba(255, 255, 255, 0.04); /* v19: same neutral for both */
-}
-
-/* Header */
-.modal-header {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--card-pad) var(--card-pad-x) var(--space-md);
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
   gap: var(--space-md);
 }
 
-.asset-icon {
-  width: var(--icon-btn-size);
-  height: var(--icon-btn-size);
-  border-radius: 50%;
-  background: rgba(124, 58, 237, 0.15); /* v18: branded purple for STX */
-  border: 1px solid rgba(124, 58, 237, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #7c3aed; /* v18: branded purple for STX */
-  box-shadow: 0 0 12px rgba(124, 58, 237, 0.15);
-}
-
-.asset-icon--btc {
-  background: rgba(247, 147, 26, 0.1);
-  border-color: rgba(247, 147, 26, 0.2);
-  color: #F7931A;
-  box-shadow: 0 0 12px rgba(247, 147, 26, 0.15);
-}
-
-.header-title h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-/* Close button now uses Button variant="icon" */
-
-/* Asset Tabs */
+/* V56: Asset Tabs using V55 Button toggle */
 .asset-tabs {
-  position: relative;
-  z-index: 10;
   display: flex;
   gap: var(--space-sm);
-  padding: 0 var(--card-pad-x);
-  margin-bottom: var(--space-md);
+  width: 100%;
 }
 
-.tab-btn {
+.asset-tabs :deep(.btn) {
   flex: 1;
-  height: var(--control-h);
-  border-radius: var(--radius-control);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: #6b7280;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.tab-btn:hover {
-  color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.tab-btn--active {
-  background: var(--color-accent-primary);
-  color: #0a0a0a;
-  border-color: transparent;
-  box-shadow: none; /* v19: no glow */
-}
-
-.tab-btn--btc.tab-btn--active {
+/* BTC theme for active tab */
+.tab-btn--btc :deep(.btn--primary) {
   background: #F7931A;
-  box-shadow: none; /* v19: no glow */
 }
 
 /* BTC Address Type Selector */
 .btc-type-selector {
-  position: relative;
-  z-index: 10;
   display: flex;
   gap: var(--space-sm);
-  padding: 0 var(--card-pad-x);
-  margin-bottom: var(--space-md);
+  width: 100%;
 }
 
-.type-btn {
+.btc-type-selector :deep(.btn) {
   flex: 1;
-  height: var(--row-h);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #6b7280;
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.type-btn:hover {
-  color: var(--color-text-primary);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.type-btn--active {
+/* Active state for BTC type */
+.type-btn--active :deep(.btn) {
   background: rgba(247, 147, 26, 0.15);
   color: #F7931A;
   border-color: rgba(247, 147, 26, 0.3);
 }
 
-/* QR Code */
+/* V56: QR Code - normalized to V55 tokens */
 .qr-wrapper {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--space-md);
 }
 
 .qr-container {
   position: relative;
   padding: var(--space-md);
-  border-radius: var(--radius-card);
-  background: #26281b;
-  box-shadow:
-    4px 4px 8px #1a1c13,
-    -4px -4px 8px #323423;
-}
-
-.receive-content--btc .qr-container {
-  background: #26201a;
-  box-shadow:
-    4px 4px 8px #1a1510,
-    -4px -4px 8px #322a20;
-}
-
-.qr-container::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1); /* v19: neutral */
-  box-shadow: none; /* v19: no glow */
-  pointer-events: none;
-}
-
-.qr-container--btc::before {
-  border-color: rgba(255, 255, 255, 0.1); /* v19: neutral */
-  box-shadow: none; /* v19: no glow */
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border);
 }
 
 .qr-inner {
@@ -518,77 +370,69 @@ function toggleFullAddress() {
 }
 
 .qr-inner canvas {
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   display: block;
 }
 
-/* Address Card */
+/* V56: Address Card - normalized to V55 tokens */
 .address-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-control);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
   padding: var(--card-pad-y) var(--card-pad-x);
-  margin-bottom: var(--space-sm);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background var(--transition-fast);
 }
 
 .address-card:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
 }
 
 .address-card--expanded {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
 }
 
 .address-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-xs);
 }
 
 .address-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: #6b7280;
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .expand-btn :deep(.btn) {
-  color: var(--color-text-secondary); /* v18: neutral */
   font-size: var(--font-size-xs);
-  font-weight: 600;
   padding: var(--space-xs) var(--space-sm);
   height: auto;
   min-height: 0;
 }
 
-.expand-btn :deep(.btn:hover) {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--color-text-primary);
-}
-
 .address-text {
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   word-break: break-all;
   line-height: 1.5;
   margin: 0;
 }
 
-/* Warning Text */
+/* V56: Warning Text - V55 tokens */
 .warning-text {
   font-size: var(--font-size-xs);
-  color: #666;
+  color: var(--color-text-muted);
   text-align: center;
-  margin: 0 0 var(--space-md);
+  margin: 0;
 }
 
-/* Action Buttons - Horizontal layout */
+/* V56: Action Buttons - Horizontal layout */
 .action-buttons {
   display: flex;
   flex-direction: row;
@@ -597,22 +441,20 @@ function toggleFullAddress() {
 }
 
 /* BTC theme for primary button */
-.btn--btc:deep(.btn) {
+.btn--btc :deep(.btn--primary) {
   background: #F7931A;
-  box-shadow: 0 0 16px rgba(247, 147, 26, 0.25);
 }
 
-.btn--copied:deep(.btn) {
+.btn--copied :deep(.btn--primary) {
   background: var(--color-success);
-  box-shadow: 0 0 16px rgba(34, 197, 94, 0.25);
 }
 
-/* Home Indicator */
+/* Home Indicator (panel mode) */
 .home-indicator {
   width: 100px;
   height: 4px;
   background: rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-pill);
-  margin: var(--space-md) auto;
+  margin: var(--space-md) auto 0;
 }
 </style>

@@ -694,7 +694,9 @@ const CHECKS: Check[] = [
     description: 'AddressQrModal has data-roi="qr-address"',
   },
 
-  // ReceiveModal.vue
+  // ═══════════════════════════════════════════════════════════
+  // V56: ReceiveModal.vue — Updated ROI Contracts
+  // ═══════════════════════════════════════════════════════════
   {
     id: "RECV-1",
     file: "src/components/ReceiveModal.vue",
@@ -706,8 +708,8 @@ const CHECKS: Check[] = [
     id: "RECV-2",
     file: "src/components/ReceiveModal.vue",
     scope: "template",
-    pattern: /\bdata-roi\s*=\s*["']receive-header["']/,
-    description: 'ReceiveModal has data-roi="receive-header"',
+    pattern: /\bdata-roi\s*=\s*["']receive-tabs["']/,
+    description: 'ReceiveModal has data-roi="receive-tabs" (V56: asset selector)',
   },
   {
     id: "RECV-3",
@@ -723,21 +725,104 @@ const CHECKS: Check[] = [
     pattern: /\bdata-roi\s*=\s*["']receive-cta["']/,
     description: 'ReceiveModal has data-roi="receive-cta"',
   },
-
-  // AccountSwitcher.vue
   {
-    id: "ACCT-SW-1",
-    file: "src/components/account/AccountSwitcher.vue",
+    id: "RECV-5",
+    file: "src/components/ReceiveModal.vue",
     scope: "template",
-    pattern: /\bdata-roi\s*=\s*["']account-dropdown["']/,
-    description: 'AccountSwitcher has data-roi="account-dropdown"',
+    pattern: /\bdata-roi\s*=\s*["']receive-content["']/,
+    description: 'ReceiveModal has data-roi="receive-content" (V56)',
   },
   {
-    id: "ACCT-SW-2",
+    id: "RECV-6",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']bottom["']/,
+    description: 'ReceiveModal uses Sheet variant="bottom" (V56 Decision: contextual overlay)',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V56: AccountSwitcher.vue — Updated ROI Contracts
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "ACCTSW-1",
     file: "src/components/account/AccountSwitcher.vue",
     scope: "template",
-    pattern: /\bdata-roi\s*=\s*["']account-list["']/,
-    description: 'AccountSwitcher has data-roi="account-list"',
+    pattern: /\bdata-roi\s*=\s*["']acctsw-sheet["']/,
+    description: 'AccountSwitcher has data-roi="acctsw-sheet" (V56)',
+  },
+  {
+    id: "ACCTSW-2",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']acctsw-list["']/,
+    description: 'AccountSwitcher has data-roi="acctsw-list" (V56)',
+  },
+  {
+    id: "ACCTSW-3",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']acctsw-trigger["']/,
+    description: 'AccountSwitcher has data-roi="acctsw-trigger" (V56)',
+  },
+  {
+    id: "ACCTSW-4",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']acctsw-add["']/,
+    description: 'AccountSwitcher has data-roi="acctsw-add" (V56)',
+  },
+  {
+    id: "ACCTSW-5",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']dropdown["']/,
+    description: 'AccountSwitcher uses Sheet variant="dropdown" (V56 Decision: picker)',
+  },
+  {
+    id: "ACCTSW-6",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /<ListGroup\b/,
+    description: 'AccountSwitcher uses ListGroup (V56 primitive)',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V56: ImportMnemonicModal.vue — New ROI Contracts
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "IMPORT-1",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /<Sheet\b[\s\S]*?\bdata-roi\s*=\s*["']import-sheet["']/,
+    description: 'ImportMnemonicModal uses Sheet with data-roi="import-sheet"',
+  },
+  {
+    id: "IMPORT-2",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']import-content["']/,
+    description: 'ImportMnemonicModal has data-roi="import-content"',
+  },
+  {
+    id: "IMPORT-3",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /<StickyCTA\b[\s\S]*?\broi-prefix\s*=\s*["']import["']/,
+    description: 'ImportMnemonicModal uses StickyCTA with roi-prefix="import"',
+  },
+  {
+    id: "IMPORT-4",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /\bprimary-text\s*=\s*["']Import Wallet["']/,
+    description: 'ImportMnemonicModal StickyCTA has primary-text="Import Wallet"',
+  },
+  {
+    id: "IMPORT-5",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /min-height:\s*20px/,
+    description: 'ImportMnemonicModal has error slot with min-height (anti-layout-shift)',
   },
 
   // ═══════════════════════════════════════════════════════════
