@@ -369,17 +369,18 @@ async function handlePinComplete(pin: string) {
 </script>
 
 <template>
-  <ScreenShell :padded="false">
+  <ScreenShell :padded="false" data-roi="send-screen">
     <template #header>
       <AppHeader
         :title="headerTitle"
         :left="showBackButton ? 'back' : 'none'"
+        data-roi="send-title"
         @left-click="handleBack"
       />
     </template>
 
     <!-- Step: Form -->
-    <div v-if="currentStep === 'form'" class="content">
+    <div v-if="currentStep === 'form'" class="content" data-roi="send-form">
       <!-- From Account Card -->
       <div class="from-card">
         <div class="from-card-glow"></div>
@@ -423,7 +424,7 @@ async function handlePinComplete(pin: string) {
             <InlineAction label="Paste" variant="ghost" data-roi="send-pill-paste" @click="handlePaste" />
           </template>
         </TextField>
-        <p v-if="recipientError" class="form-error">{{ recipientError }}</p>
+        <p v-if="recipientError" class="form-error" data-roi="send-error-recipient">{{ recipientError }}</p>
       </div>
 
       <!-- V49.3: Amount Input - MAX matches PASTE with ghost variant for pill parity -->
@@ -441,7 +442,7 @@ async function handlePinComplete(pin: string) {
           </template>
         </TextField>
         <div class="input-hint-row">
-          <p v-if="amountError" class="form-error">{{ amountError }}</p>
+          <p v-if="amountError" class="form-error" data-roi="send-error-amount">{{ amountError }}</p>
           <span v-else class="input-hint">Available: {{ formattedBalance }} STX</span>
         </div>
       </div>
@@ -463,7 +464,7 @@ async function handlePinComplete(pin: string) {
     </div>
 
     <!-- Sticky Footer (form step only) -->
-    <div v-if="currentStep === 'form'" class="sticky-footer">
+    <div v-if="currentStep === 'form'" class="sticky-footer" data-roi="send-cta">
       <!-- Fee Card -->
       <div class="fee-card">
         <div class="fee-left">

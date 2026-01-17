@@ -36,6 +36,7 @@
  * - showLogo: Whether to show compact brand mark (default: true)
  * - showAmbient: Whether to show ambient glow (default: true)
  * - showBack: Whether to show back button (for onboarding flows)
+ * - screenRoi: Optional screen-specific ROI identifier (e.g., "unlock", "verify-pin")
  */
 const props = defineProps<{
   title: string;
@@ -44,6 +45,8 @@ const props = defineProps<{
   showLogo?: boolean;
   showAmbient?: boolean;
   showBack?: boolean;
+  /** V55.3: Screen-specific ROI prefix for E2E testing */
+  screenRoi?: string;
 }>();
 
 const emit = defineEmits<{
@@ -56,7 +59,11 @@ function handleBack() {
 </script>
 
 <template>
-  <section class="pin-screen-shell" data-roi="pin-screen-shell">
+  <section
+    class="pin-screen-shell"
+    data-roi="pin-screen-shell"
+    :data-screen="screenRoi"
+  >
     <!-- V54.9: Back button for onboarding flows -->
     <button
       v-if="showBack"

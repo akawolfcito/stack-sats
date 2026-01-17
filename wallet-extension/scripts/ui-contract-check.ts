@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * UI Contract Check - V55.2 Shell Migration
+ * UI Contract Check - V55.3 ROI Coverage Sprint
  *
  * Static validation of UI component contracts with proper scoping.
  *
@@ -380,6 +380,82 @@ const CHECKS: Check[] = [
     pattern: /v-(?:else-)?if\s*=\s*["']left\s*===\s*['"]close['"]['"]/,
     description: "AppHeader renders close icon conditionally",
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // SendView.vue — V55.3 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "SEND-1",
+    file: "src/views/SendView.vue",
+    scope: "template",
+    pattern: /<ScreenShell\b[^>]*\bdata-roi\s*=\s*["']send-screen["']/,
+    description: 'SendView uses ScreenShell with data-roi="send-screen"',
+  },
+  {
+    id: "SEND-2",
+    file: "src/views/SendView.vue",
+    scope: "template",
+    pattern: /<AppHeader\b[^>]*\bdata-roi\s*=\s*["']send-title["']/,
+    description: 'SendView uses AppHeader with data-roi="send-title"',
+  },
+  {
+    id: "SEND-3",
+    file: "src/views/SendView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']send-form["']/,
+    description: 'SendView has data-roi="send-form"',
+  },
+  {
+    id: "SEND-4",
+    file: "src/views/SendView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']send-cta["']/,
+    description: 'SendView has data-roi="send-cta"',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // UnlockView.vue — V55.3 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "UNLOCK-1",
+    file: "src/views/UnlockView.vue",
+    scope: "template",
+    // Match: screen-roi="unlock" on PinScreenShell
+    pattern: /<PinScreenShell\b[\s\S]*?\bscreen-roi\s*=\s*["']unlock["']/,
+    description: 'UnlockView uses PinScreenShell with screen-roi="unlock"',
+  },
+  {
+    id: "UNLOCK-2",
+    file: "src/views/UnlockView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']forgot-pin-link["']/,
+    description: 'UnlockView has data-roi="forgot-pin-link"',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // ConfirmTxView.vue — V55.3 ROI Coverage Contract (Formalize)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "CONFIRMTX-1",
+    file: "src/views/ConfirmTxView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']confirm-view-root["']/,
+    description: 'ConfirmTxView has data-roi="confirm-view-root"',
+  },
+  {
+    id: "CONFIRMTX-2",
+    file: "src/views/ConfirmTxView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']confirm-summary["']/,
+    description: 'ConfirmTxView has data-roi="confirm-summary"',
+  },
+  {
+    id: "CONFIRMTX-3",
+    file: "src/views/ConfirmTxView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']confirm-cta-rail["']/,
+    description: 'ConfirmTxView has data-roi="confirm-cta-rail"',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -391,7 +467,7 @@ function runChecks(root: string, checks: Check[]): void {
   const failures: string[] = [];
   const passed: string[] = [];
 
-  console.log("\n🔍 V55.2 UI Contract Check\n");
+  console.log("\n🔍 V55.3 UI Contract Check\n");
   console.log("=".repeat(60));
   console.log(`Root: ${root}`);
   console.log("=".repeat(60));
