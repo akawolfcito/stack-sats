@@ -1,17 +1,23 @@
 <script setup lang="ts">
 /**
- * PinScreenShell - V54.8 PIN Premium Cohesion Pass
+ * PinScreenShell - V54.9 Create PIN Shell Unification
  *
- * Shared layout shell for all PIN screens (Unlock, Create, Verify).
+ * Shared layout shell for ALL PIN screens (Unlock, Create, Confirm, Verify).
  * Enforces consistent structure and spacing aligned with Recovery/Verify system.
  *
- * V54.8 Changes:
+ * V54.9 Changes:
+ * - Added showBack + onBack props for onboarding flow back navigation
+ * - Consistent across Unlock, Create PIN, Confirm PIN, Verify PIN
+ * - Step indicator support via eyebrow prop
+ *
+ * V54.8 Changes (preserved):
  * - Unified max-width (280px) for tight visual anchor
  * - Consistent padding-inline and gap rhythm
  * - Subtle glass container for content zone (depth without weight)
  *
  * Structure:
- * - Compact title + optional subtitle
+ * - Optional back button (for onboarding flows)
+ * - Compact logo + title + optional subtitle/eyebrow
  * - PIN dots capsule (the single premium surface)
  * - Optional helper text
  * - Keypad (ghost-premium)
@@ -20,24 +26,53 @@
  * Props:
  * - title: Screen title (e.g., "Welcome Back", "Create PIN")
  * - subtitle: Optional one-line subtitle
- * - showLogo: Whether to show compact brand mark (default: true for Unlock)
+ * - eyebrow: Optional step indicator (e.g., "FINAL STEP")
+ * - showLogo: Whether to show compact brand mark (default: true)
  * - showAmbient: Whether to show ambient glow (default: true)
+ * - showBack: Whether to show back button (for onboarding flows)
  */
-defineProps<{
+const props = defineProps<{
   title: string;
   subtitle?: string;
+  eyebrow?: string;
   showLogo?: boolean;
   showAmbient?: boolean;
+  showBack?: boolean;
 }>();
+
+const emit = defineEmits<{
+  (e: "back"): void;
+}>();
+
+function handleBack() {
+  emit("back");
+}
 </script>
 
 <template>
   <section class="pin-screen-shell" data-roi="pin-screen-shell">
-    <!-- V54.7: Ambient glow - subtle, optional -->
+    <!-- V54.9: Back button for onboarding flows -->
+    <button
+      v-if="showBack"
+      type="button"
+      class="back-button"
+      aria-label="Go back"
+      data-roi="pin-shell-back"
+      @click="handleBack"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </button>
+
+    <!-- V54.8: Ambient glow - subtle, optional -->
     <div v-if="showAmbient !== false" class="ambient-glow"></div>
 
-    <!-- V54.7: Compact header -->
+    <!-- V54.9: Compact header -->
     <header class="pin-header" data-roi="pin-header">
+      <!-- V54.9: Optional eyebrow (step indicator) -->
+      <span v-if="eyebrow" class="pin-eyebrow" data-roi="pin-eyebrow">{{ eyebrow }}</span>
+
       <!-- Optional compact logo -->
       <div v-if="showLogo" class="logo-container">
         <div class="logo-glow"></div>
@@ -53,12 +88,12 @@ defineProps<{
       <p v-if="subtitle" class="pin-subtitle">{{ subtitle }}</p>
     </header>
 
-    <!-- V54.7: Main content slot (PinInput goes here) -->
+    <!-- V54.8: Main content slot (PinInput goes here) -->
     <main class="pin-main">
       <slot></slot>
     </main>
 
-    <!-- V54.7: Secondary actions slot (Forgot PIN, Cancel, etc.) -->
+    <!-- V54.8: Secondary actions slot (Forgot PIN, Cancel, etc.) -->
     <footer v-if="$slots.actions" class="pin-actions" data-roi="pin-actions">
       <slot name="actions"></slot>
     </footer>
@@ -69,7 +104,7 @@ defineProps<{
 </template>
 
 <style scoped>
-/* V54.8: Shell container - full viewport, flex column */
+/* V54.9: Shell container - full viewport, flex column */
 .pin-screen-shell {
   display: flex;
   flex-direction: column;
@@ -80,6 +115,39 @@ defineProps<{
   overflow: hidden;
   /* V54.8: Consistent padding for visual anchor */
   padding: 0 var(--space-lg);
+}
+
+/* V54.9: Back button - positioned top-left */
+.back-button {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+  z-index: 20;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-primary);
+}
+
+.back-button:active {
+  transform: scale(0.95);
+}
+
+.back-button:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
 }
 
 /* V54.8: Ambient glow - subtle accent, perceptible */
@@ -146,6 +214,16 @@ defineProps<{
   height: 28px;
   border-radius: 8px;
   object-fit: cover;
+}
+
+/* V54.9: Eyebrow - step indicator */
+.pin-eyebrow {
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-xs);
 }
 
 /* V54.8: Title - prominent but not oversized */
