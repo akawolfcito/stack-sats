@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * UI Contract Check - V55.3 ROI Coverage Sprint
+ * UI Contract Check - V55.3.1 ROI Coverage Backlog
  *
  * Static validation of UI component contracts with proper scoping.
  *
@@ -456,6 +456,116 @@ const CHECKS: Check[] = [
     pattern: /\bdata-roi\s*=\s*["']confirm-cta-rail["']/,
     description: 'ConfirmTxView has data-roi="confirm-cta-rail"',
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // VerifyPinView.vue — V55.3.1 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "VERIFY-1",
+    file: "src/views/VerifyPinView.vue",
+    scope: "template",
+    pattern: /<PinScreenShell\b[\s\S]*?\bscreen-roi\s*=\s*["']verify-pin["']/,
+    description: 'VerifyPinView uses PinScreenShell with screen-roi="verify-pin"',
+  },
+  {
+    id: "VERIFY-2",
+    file: "src/views/VerifyPinView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']cancel-link["']/,
+    description: 'VerifyPinView has data-roi="cancel-link"',
+  },
+  {
+    id: "VERIFY-3",
+    file: "src/components/pin/PinScreenShell.vue",
+    scope: "script",
+    pattern: /screenRoi\?\s*:\s*string/,
+    description: "PinScreenShell has optional screenRoi prop",
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // TxResultView.vue — V55.3.1 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "TXR-1",
+    file: "src/views/TxResultView.vue",
+    scope: "template",
+    pattern: /<ScreenShell\b[^>]*\bdata-roi\s*=\s*["']tx-result-screen["']/,
+    description: 'TxResultView uses ScreenShell with data-roi="tx-result-screen"',
+  },
+  {
+    id: "TXR-2",
+    file: "src/views/TxResultView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']tx-result-status["']/,
+    description: 'TxResultView has data-roi="tx-result-status"',
+  },
+  {
+    id: "TXR-3",
+    file: "src/views/TxResultView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']tx-result-summary["']/,
+    description: 'TxResultView has data-roi="tx-result-summary"',
+  },
+  {
+    id: "TXR-4",
+    file: "src/views/TxResultView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']tx-result-cta-rail["']/,
+    description: 'TxResultView has data-roi="tx-result-cta-rail"',
+  },
+  {
+    id: "TXR-5",
+    file: "src/views/TxResultView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']tx-result-txid["']/,
+    description: 'TxResultView has data-roi="tx-result-txid"',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // UserMenu.vue — V55.3.1 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "MENU-1",
+    file: "src/views/UserMenu.vue",
+    scope: "template",
+    pattern: /<ScreenShell\b[^>]*\bdata-roi\s*=\s*["']menu-screen["']/,
+    description: 'UserMenu uses ScreenShell with data-roi="menu-screen"',
+  },
+  {
+    id: "MENU-2",
+    file: "src/views/UserMenu.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']menu-section-wallet["']/,
+    description: 'UserMenu has data-roi="menu-section-wallet"',
+  },
+  {
+    id: "MENU-3",
+    file: "src/views/UserMenu.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']menu-section-security["']/,
+    description: 'UserMenu has data-roi="menu-section-security"',
+  },
+  {
+    id: "MENU-4",
+    file: "src/views/UserMenu.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']menu-action-export["']/,
+    description: 'UserMenu has data-roi="menu-action-export" (high-risk action)',
+  },
+  {
+    id: "MENU-5",
+    file: "src/views/UserMenu.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']menu-action-delete["']/,
+    description: 'UserMenu has data-roi="menu-action-delete" (high-risk action)',
+  },
+  {
+    id: "MENU-6",
+    file: "src/views/UserMenu.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']menu-section-danger["']/,
+    description: 'UserMenu has data-roi="menu-section-danger"',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -467,7 +577,7 @@ function runChecks(root: string, checks: Check[]): void {
   const failures: string[] = [];
   const passed: string[] = [];
 
-  console.log("\n🔍 V55.3 UI Contract Check\n");
+  console.log("\n🔍 V55.3.1 UI Contract Check\n");
   console.log("=".repeat(60));
   console.log(`Root: ${root}`);
   console.log("=".repeat(60));

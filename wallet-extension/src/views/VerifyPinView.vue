@@ -115,6 +115,7 @@ onMounted(() => {
     :subtitle="currentCopy.subtitle"
     :show-logo="true"
     :show-ambient="true"
+    screen-roi="verify-pin"
   >
     <!-- V55.0: PIN Input - PIN-only policy (no biometrics for verify actions) -->
     <PinInput

@@ -313,11 +313,12 @@ function cancelImport() {
 </script>
 
 <template>
-  <ScreenShell :padded="false" class="settings-view">
+  <ScreenShell :padded="false" class="settings-view" data-roi="menu-screen">
     <template #header>
       <AppHeader
         title="Settings"
         left="back"
+        data-roi="menu-title"
         @left-click="handleUserHome"
       />
     </template>
@@ -328,7 +329,7 @@ function cancelImport() {
     <!-- Main Content -->
     <div v-if="!showDeleteConfirm" class="page-content">
       <!-- Your Wallets Section -->
-      <ListGroup title="Your Wallets">
+      <ListGroup title="Your Wallets" data-roi="menu-section-wallet">
         <template #headerAction>
           <Button variant="ghost" size="sm" @click="toggleManageWallets">
             {{ isManagingWallets ? 'Done' : 'Manage' }}
@@ -372,11 +373,12 @@ function cancelImport() {
       </ListGroup>
 
       <!-- Security & Backup Section -->
-      <ListGroup title="Security & Backup">
+      <ListGroup title="Security & Backup" data-roi="menu-section-security">
         <ListRow
           label="Export Secret Key"
           subtitle="Download encrypted backup"
           chevron
+          data-roi="menu-action-export"
           @click="handleExportBackup"
         >
           <template #icon>
@@ -465,11 +467,12 @@ function cancelImport() {
       </ListGroup>
 
       <!-- Danger Zone -->
-      <ListGroup title="Danger Zone" variant="danger">
+      <ListGroup title="Danger Zone" variant="danger" data-roi="menu-section-danger">
         <ListRow
           label="Delete All Wallets"
           subtitle="Removes wallets from this device only"
           variant="danger"
+          data-roi="menu-action-delete"
           @click="initiateDelete()"
         >
           <template #icon>
