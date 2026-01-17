@@ -496,12 +496,12 @@ onBeforeMount(() => {
   z-index: 1;
 }
 
-/* V54.6: PIN Content - full height for PinInput premium layout */
+/* V54.7: PIN Content - compact padding for extension viewport */
 .pin-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
   position: relative;
   z-index: 1;
   min-height: 0;
@@ -510,6 +510,7 @@ onBeforeMount(() => {
 .loading-text {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
-  margin-top: var(--space-lg);
+  text-align: center;
+  margin: var(--space-sm) 0 0;
 }
 </style>
