@@ -114,6 +114,7 @@ onMounted(() => {
     title="Welcome Back"
     :show-logo="true"
     :show-ambient="true"
+    screen-roi="unlock"
   >
     <!-- V55.0: PIN Input - biometrics conditional on support + user config -->
     <PinInput
