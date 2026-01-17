@@ -1184,6 +1184,336 @@ test.describe("V54.2 Zero-Shift Layout Guards", () => {
   });
 });
 
+test.describe("V54.4 BIP39 Typeahead Guards", () => {
+  // Helper to navigate to verify step
+  async function navigateToVerifyStep(page: Page) {
+    await page.goto("/#/start");
+    await clearWalletState(page);
+    await page.reload();
+    await page.waitForTimeout(500);
+
+    const createBtn = await page.$('[data-roi="start-primary-cta"]');
+    if (createBtn) {
+      await createBtn.click();
+      await page.waitForTimeout(500);
+
+      // Reveal phrase first
+      const revealBtn = await page.$('[data-roi="reveal-btn"]');
+      if (revealBtn) {
+        await revealBtn.click();
+        await page.waitForTimeout(300);
+      }
+
+      // Continue to verify step
+      const continueBtn = await page.$('[data-roi="cta-primary"]');
+      if (continueBtn) {
+        await continueBtn.click();
+        await page.waitForTimeout(500);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  test.describe("Typeahead Dropdown Behavior", () => {
+    test("V54.4: Dropdown should appear when typing BIP39 prefix", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) {
+        console.log("Could not navigate to verify step");
+        return;
+      }
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        // Type a BIP39 prefix
+        await input1.fill("ab");
+        await page.waitForTimeout(200);
+
+        // Dropdown should appear with suggestions
+        const dropdown = await page.$('.typeahead__dropdown');
+        expect(dropdown, "Typeahead dropdown should appear after typing").toBeTruthy();
+
+        // Should have suggestion options
+        const options = await page.$$('.typeahead__option');
+        expect(options.length, "Should have at least one suggestion").toBeGreaterThan(0);
+
+        console.log(`[V54.4 Typeahead] Dropdown appeared with ${options.length} suggestions for "ab"`);
+      }
+    });
+
+    test("V54.4: Dropdown should show filtered BIP39 words only", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        // Type prefix that matches multiple BIP39 words
+        await input1.fill("aban");
+        await page.waitForTimeout(200);
+
+        // Get suggestion text
+        const suggestions = await page.$$eval('.typeahead__option', (els) =>
+          els.map(el => el.textContent?.trim())
+        );
+
+        // Should include "abandon" and all suggestions should start with "aban"
+        expect(suggestions.some(s => s?.includes("abandon")), "Should include 'abandon'").toBe(true);
+        suggestions.forEach(s => {
+          expect(s?.toLowerCase().startsWith("aban"), `Suggestion '${s}' should start with 'aban'`).toBe(true);
+        });
+
+        console.log(`[V54.4 Filter] Suggestions for "aban": ${suggestions.join(", ")}`);
+      }
+    });
+
+    test("V54.4: Dropdown should close on Escape", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        await input1.fill("ab");
+        await page.waitForTimeout(200);
+
+        // Verify dropdown is open
+        let dropdown = await page.$('.typeahead__dropdown');
+        expect(dropdown, "Dropdown should be open").toBeTruthy();
+
+        // Press Escape
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(100);
+
+        // Dropdown should be closed
+        dropdown = await page.$('.typeahead__dropdown');
+        expect(dropdown, "Dropdown should close on Escape").toBeNull();
+
+        console.log("[V54.4 Escape] Dropdown closed on Escape key");
+      }
+    });
+
+    test("V54.4: Dropdown should not show for non-BIP39 text", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        // Type something that doesn't match any BIP39 word
+        await input1.fill("xyz123");
+        await page.waitForTimeout(200);
+
+        // Dropdown should not appear (no matching words)
+        const dropdown = await page.$('.typeahead__dropdown');
+        expect(dropdown, "Dropdown should not appear for non-BIP39 text").toBeNull();
+
+        console.log("[V54.4 No Match] No dropdown for non-BIP39 text 'xyz123'");
+      }
+    });
+  });
+
+  test.describe("Keyboard Navigation", () => {
+    test("V54.4: Arrow Down should highlight next suggestion", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        await input1.fill("ab");
+        await page.waitForTimeout(200);
+
+        // Press ArrowDown to highlight first item
+        await page.keyboard.press("ArrowDown");
+        await page.waitForTimeout(50);
+
+        // First option should be highlighted
+        const highlighted = await page.$('.typeahead__option--highlighted');
+        expect(highlighted, "An option should be highlighted after ArrowDown").toBeTruthy();
+
+        console.log("[V54.4 Arrow] ArrowDown highlights suggestion");
+      }
+    });
+
+    test("V54.4: Enter should select highlighted suggestion", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        await input1.fill("ab");
+        await page.waitForTimeout(200);
+
+        // Get first suggestion text before selecting
+        const firstSuggestion = await page.$eval('.typeahead__option', (el) =>
+          el.textContent?.trim()
+        );
+
+        // Navigate and select
+        await page.keyboard.press("ArrowDown");
+        await page.keyboard.press("Enter");
+        await page.waitForTimeout(100);
+
+        // Input should now contain the selected word
+        const inputValue = await input1.inputValue();
+        expect(inputValue, "Input should contain selected suggestion").toBe(firstSuggestion);
+
+        // Dropdown should be closed
+        const dropdown = await page.$('.typeahead__dropdown');
+        expect(dropdown, "Dropdown should close after selection").toBeNull();
+
+        console.log(`[V54.4 Select] Selected '${inputValue}' via Enter key`);
+      }
+    });
+
+    test("V54.4: Mouse click should select suggestion", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        await input1.fill("ab");
+        await page.waitForTimeout(200);
+
+        // Get first suggestion text
+        const firstOption = await page.$('.typeahead__option');
+        const suggestionText = await firstOption?.textContent();
+
+        // Click to select
+        await firstOption?.click();
+        await page.waitForTimeout(100);
+
+        // Input should contain the selected word
+        const inputValue = await input1.inputValue();
+        expect(inputValue?.trim(), "Input should contain clicked suggestion").toBe(suggestionText?.trim());
+
+        console.log(`[V54.4 Click] Selected '${inputValue}' via mouse click`);
+      }
+    });
+  });
+
+  test.describe("Security Attributes", () => {
+    test("V54.4: Input should have autocomplete=off", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        const autocomplete = await input1.getAttribute("autocomplete");
+        expect(autocomplete, "Input should have autocomplete=off").toBe("off");
+        console.log("[V54.4 Security] autocomplete=off verified");
+      }
+    });
+
+    test("V54.4: Input should have spellcheck=false", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        const spellcheck = await input1.getAttribute("spellcheck");
+        expect(spellcheck, "Input should have spellcheck=false").toBe("false");
+        console.log("[V54.4 Security] spellcheck=false verified");
+      }
+    });
+
+    test("V54.4: Input should have autocapitalize=none", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        const autocapitalize = await input1.getAttribute("autocapitalize");
+        expect(autocapitalize, "Input should have autocapitalize=none").toBe("none");
+        console.log("[V54.4 Security] autocapitalize=none verified");
+      }
+    });
+  });
+
+  test.describe("Accessibility", () => {
+    test("V54.4: Input should have combobox role", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        const role = await input1.getAttribute("role");
+        expect(role, "Input should have role=combobox").toBe("combobox");
+        console.log("[V54.4 A11y] role=combobox verified");
+      }
+    });
+
+    test("V54.4: Dropdown should have listbox role", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        await input1.fill("ab");
+        await page.waitForTimeout(200);
+
+        const dropdown = await page.$('.typeahead__dropdown');
+        if (dropdown) {
+          const role = await dropdown.getAttribute("role");
+          expect(role, "Dropdown should have role=listbox").toBe("listbox");
+          console.log("[V54.4 A11y] role=listbox verified");
+        }
+      }
+    });
+
+    test("V54.4: Options should have option role", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        await input1.fill("ab");
+        await page.waitForTimeout(200);
+
+        const option = await page.$('.typeahead__option');
+        if (option) {
+          const role = await option.getAttribute("role");
+          expect(role, "Option should have role=option").toBe("option");
+          console.log("[V54.4 A11y] role=option verified");
+        }
+      }
+    });
+
+    test("V54.4: aria-expanded should update with dropdown state", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const input1 = await page.$('[data-roi="verify-word-1-input"]');
+      if (input1) {
+        // Initially closed
+        let ariaExpanded = await input1.getAttribute("aria-expanded");
+        expect(ariaExpanded, "aria-expanded should be false when closed").toBe("false");
+
+        // Type to open dropdown
+        await input1.fill("ab");
+        await page.waitForTimeout(200);
+
+        ariaExpanded = await input1.getAttribute("aria-expanded");
+        expect(ariaExpanded, "aria-expanded should be true when open").toBe("true");
+
+        console.log("[V54.4 A11y] aria-expanded updates correctly");
+      }
+    });
+  });
+
+  test.describe("Helper Text Update", () => {
+    test("V54.4: Helper text should mention BIP39 suggestions", async ({ page }) => {
+      const navigated = await navigateToVerifyStep(page);
+      if (!navigated) return;
+
+      const helper = await page.$('.verify-helper');
+      if (helper) {
+        const text = await helper.textContent();
+        expect(text?.toLowerCase()).toContain("bip39");
+        expect(text?.toLowerCase()).toContain("suggestion");
+        console.log(`[V54.4 Helper] Helper text: ${text}`);
+      }
+    });
+  });
+});
+
 test.describe("V54.1 Single-CTA Reveal Interaction Guards", () => {
   test.describe("Clickable Hero Overlay", () => {
     test("V54.1: Phrase veil should be a clickable button", async ({ page }) => {

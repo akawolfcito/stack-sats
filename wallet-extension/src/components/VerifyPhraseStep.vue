@@ -1,15 +1,19 @@
 <script setup lang="ts">
 /**
- * VerifyPhraseStep - V54.3 Premium Verification Component
+ * VerifyPhraseStep - V54.4 BIP39 Typeahead Verification
  *
  * 2-word verification step to confirm user saved their recovery phrase.
  * Used by both StartView and AddWalletView.
  *
- * V54.3 Premium Pass:
+ * V54.4 Changes:
+ * - TypeaheadInput with BIP39 wordlist suggestions
+ * - Keyboard flow: Arrow nav in dropdown, Enter selects or moves focus
+ * - Security: autocomplete=off, no storage, BIP39 list only
+ *
+ * V54.3 Premium Pass (preserved):
  * - Extension-first layout (no wasted vertical space)
  * - Single full-width CTA (header back exists in parent)
  * - Disabled CTA until both inputs filled
- * - Keyboard flow: Enter moves focus, submits on second
  * - Reserved error slot (no layout shift)
  * - Premium visual cohesion with RecoveryPhraseDisplay
  *
@@ -20,6 +24,7 @@
  */
 import { ref, computed, onMounted } from 'vue';
 import { Button } from '@/components/ui';
+import TypeaheadInput from '@/components/ui/TypeaheadInput.vue';
 
 const props = defineProps<{
   mnemonic: string;
@@ -36,9 +41,9 @@ const word2Input = ref('');
 const error = ref('');
 const isVerifying = ref(false);
 
-// V54.3: Input refs for keyboard navigation
-const input1Ref = ref<HTMLInputElement | null>(null);
-const input2Ref = ref<HTMLInputElement | null>(null);
+// V54.4: TypeaheadInput refs for keyboard navigation
+const input1Ref = ref<InstanceType<typeof TypeaheadInput> | null>(null);
+const input2Ref = ref<InstanceType<typeof TypeaheadInput> | null>(null);
 
 // Get expected words
 const words = computed(() => props.mnemonic.split(' '));
@@ -55,19 +60,26 @@ onMounted(() => {
   input1Ref.value?.focus();
 });
 
-// V54.3: Keyboard handler for first input (Enter → focus second)
+// V54.4: Keyboard handler for first input (Enter → focus second)
 function handleInput1Keydown(event: KeyboardEvent) {
+  // On Enter, move to second input after typeahead processes
+  // setTimeout allows typeahead to select suggestion first if applicable
   if (event.key === 'Enter') {
-    event.preventDefault();
-    input2Ref.value?.focus();
+    setTimeout(() => {
+      input2Ref.value?.focus();
+    }, 10);
   }
 }
 
-// V54.3: Keyboard handler for second input (Enter → verify)
+// V54.4: Keyboard handler for second input (Enter → verify)
 function handleInput2Keydown(event: KeyboardEvent) {
-  if (event.key === 'Enter' && canVerify.value) {
-    event.preventDefault();
-    handleVerify();
+  // On Enter, verify after typeahead processes
+  if (event.key === 'Enter') {
+    setTimeout(() => {
+      if (canVerify.value) {
+        handleVerify();
+      }
+    }, 10);
   }
 }
 
@@ -99,39 +111,27 @@ function handleVerify() {
       </p>
     </div>
 
-    <!-- V54.3: Input card - premium surface, compact spacing -->
+    <!-- V54.4: Input card - premium surface with typeahead -->
     <div class="verify-card" data-roi="verify-inputs-card">
-      <div class="verify-field">
-        <label class="verify-label" :for="`word-${word1Index + 1}`">Word #{{ word1Index + 1 }}</label>
-        <input
+      <div class="verify-field" data-roi="verify-word-1-field">
+        <TypeaheadInput
           :id="`word-${word1Index + 1}`"
           ref="input1Ref"
           v-model="word1Input"
-          type="text"
-          class="verify-input"
+          :label="`Word #${word1Index + 1}`"
           :placeholder="`Type word #${word1Index + 1}`"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
           data-roi="verify-word-1-input"
           @keydown="handleInput1Keydown"
         />
       </div>
 
-      <div class="verify-field">
-        <label class="verify-label" :for="`word-${word2Index + 1}`">Word #{{ word2Index + 1 }}</label>
-        <input
+      <div class="verify-field" data-roi="verify-word-2-field">
+        <TypeaheadInput
           :id="`word-${word2Index + 1}`"
           ref="input2Ref"
           v-model="word2Input"
-          type="text"
-          class="verify-input"
+          :label="`Word #${word2Index + 1}`"
           :placeholder="`Type word #${word2Index + 1}`"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
           data-roi="verify-word-2-input"
           @keydown="handleInput2Keydown"
         />
@@ -139,7 +139,7 @@ function handleVerify() {
 
       <!-- V54.3: Helper text inside card -->
       <p class="verify-helper">
-        Use your saved recovery phrase to find these words.
+        Start typing to see BIP39 word suggestions.
       </p>
     </div>
 
@@ -211,49 +211,9 @@ function handleVerify() {
   border-radius: var(--radius-card);
 }
 
+/* V54.4: Field container - TypeaheadInput handles its own layout */
 .verify-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* V54.3: Label - sentence case, clean hierarchy */
-.verify-label {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-}
-
-/* V54.3: Input surface - premium material, compact */
-.verify-input {
-  width: 100%;
-  height: 40px;
-  padding: 0 var(--space-md);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--color-text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  box-sizing: border-box;
-  transition: all var(--transition-fast);
-}
-
-.verify-input:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.verify-input:focus {
-  outline: none;
-  border-color: var(--color-accent-primary);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.verify-input::placeholder {
-  color: var(--color-text-muted);
-  font-family: var(--font-family);
-  font-size: var(--font-size-xs);
+  /* No additional styles needed - TypeaheadInput is self-contained */
 }
 
 /* V54.3: Helper text - subtle guidance inside card */
