@@ -1,11 +1,15 @@
 <script setup lang="ts">
 /**
- * VerifyPinView - V54.8 PIN Premium Cohesion Pass
+ * VerifyPinView - V55.0 PIN Screens Premium Finalization
  *
  * Uses PinScreenShell for cohesive PIN layout.
  * Contextual subtitle based on action.
  *
- * V54.8 Changes:
+ * V55.0 Changes:
+ * - PIN-only policy: biometrics disabled for security-sensitive verify actions
+ * - Ensures user explicitly enters PIN for backup/delete operations
+ *
+ * V54.8 Changes (preserved):
  * - "Cancel" styled as subtle secondary action (matching Forgot PIN)
  * - Unified visual hierarchy with UnlockView
  * - Consistent title/subtitle typography
@@ -112,13 +116,12 @@ onMounted(() => {
     :show-logo="true"
     :show-ambient="true"
   >
-    <!-- PIN Input -->
+    <!-- V55.0: PIN Input - PIN-only policy (no biometrics for verify actions) -->
     <PinInput
       ref="pinInputRef"
       mode="unlock"
       :error="pinError"
       :disabled="isLoading"
-      :show-biometric="true"
       hide-label
       @complete="handleVerify"
     >

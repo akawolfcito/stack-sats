@@ -1,10 +1,15 @@
 <script setup lang="ts">
 /**
- * PinInput - V54.8 PIN Premium Cohesion Pass
+ * PinInput - V55.0 PIN Screens Premium Finalization
  *
  * Streamlined PIN input aligned with Recovery/Verify visual system.
  *
- * V54.8 Changes:
+ * V55.0 Changes:
+ * - Enhanced error feedback: dots rail shake animation
+ * - Clear loading/disabled visual distinction
+ * - Consistent with premium state handling spec
+ *
+ * V54.8 Changes (preserved):
  * - Keypad: Subtle border + inner highlight for premium depth
  * - Refined hover/active states (perceptible but not heavy)
  * - Improved rhythm and spacing alignment
@@ -40,6 +45,8 @@ const emit = defineEmits<{
 const PIN_LENGTH = 6;
 const digits = ref<string[]>(Array(PIN_LENGTH).fill(""));
 const isFocused = ref(false);
+// V55.0: Track error shake animation
+const isShaking = ref(false);
 
 // Keypad layout
 const keypadRows = [
@@ -114,6 +121,11 @@ watch(
   (newError) => {
     if (newError) {
       clear();
+      // V55.0: Trigger shake animation on error
+      isShaking.value = true;
+      setTimeout(() => {
+        isShaking.value = false;
+      }, 400);
     }
   }
 );
@@ -143,8 +155,8 @@ const modeLabels = {
         <p>{{ modeLabels[mode] }}</p>
       </div>
 
-      <!-- V54.7: PIN Dots Capsule - the primary premium surface -->
-      <div class="pin-dots-rail" data-roi="pin-dots-rail">
+      <!-- V55.0: PIN Dots Capsule - the primary premium surface, shakes on error -->
+      <div class="pin-dots-rail" :class="{ 'pin-dots-rail--shake': isShaking }" data-roi="pin-dots-rail">
         <div
           v-for="(digit, index) in PIN_LENGTH"
           :key="index"
@@ -296,6 +308,19 @@ const modeLabels = {
     0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* V55.0: Error shake animation for dots rail */
+.pin-dots-rail--shake {
+  animation: error-shake 0.4s ease;
+}
+
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
 /* V54.7: PIN Dots - premium states */
 .pin-dot {
   width: 12px;
@@ -352,7 +377,8 @@ const modeLabels = {
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .pin-dot--active,
-  .pin-dot--error {
+  .pin-dot--error,
+  .pin-dots-rail--shake {
     animation: none;
   }
   .pin-dot,
