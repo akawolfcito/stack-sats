@@ -1,4 +1,18 @@
 <script setup lang="ts">
+/**
+ * Confirmation.vue - V55.2 Shell Migration
+ *
+ * dApp approval screen migrated to V55 shell system.
+ *
+ * V55.2 Changes:
+ * - Migrated to ScreenShell + AppHeader + StickyCTA pattern
+ * - Added data-roi attributes for E2E testing
+ * - Reserved error slot height (anti-layout-shift)
+ * - Normalized header to V55 contract (close button left)
+ * - Primary CTA always visible in sticky footer
+ *
+ * Trust-critical flow: Users approve dApp requests here.
+ */
 import { onBeforeMount, ref, computed } from "vue";
 import {
   handleSignMessage,
@@ -7,6 +21,9 @@ import {
   handleTransferStx,
 } from "../utils/stxmethods";
 import type { JsonRpcRequest, Result } from "@/utils/types";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
+import AppHeader from "@/components/layout/AppHeader.vue";
+import StickyCTA from "@/components/layout/StickyCTA.vue";
 import PinInput from "@/components/PinInput.vue";
 import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
@@ -277,126 +294,115 @@ function handleReject(reason?: string) {
 </script>
 
 <template>
-  <section class="confirmation-page">
-    <!-- Header -->
-    <div class="confirmation-header">
-      <Button variant="icon" @click="handleReject()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </Button>
-      <h2>CONFIRM ACTION</h2>
-      <div class="header-spacer"></div>
-    </div>
+  <ScreenShell :padded="false" data-roi="confirm-screen">
+    <!-- V55.2: Normalized header with close button -->
+    <template #header>
+      <AppHeader
+        title="Confirm Action"
+        left="close"
+        data-roi="confirm-title"
+        @left-click="handleReject()"
+      />
+    </template>
 
-    <!-- Origin badge -->
-    <div class="origin-badge">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
-      <span>Requested by: <strong>{{ displayOrigin }}</strong></span>
-    </div>
-
-    <!-- Method icon and description -->
-    <div class="method-section">
-      <div class="method-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M9 12l2 2 4-4"/>
+    <!-- Main Content -->
+    <main class="confirm-content">
+      <!-- Origin badge -->
+      <div class="origin-badge" data-roi="confirm-origin">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
+        <span>From: <strong>{{ displayOrigin }}</strong></span>
       </div>
-      <h3 class="method-title">{{ methodDescription }}</h3>
-      <p class="method-subtitle">This action will allow the app to view your balances and activity.</p>
-    </div>
 
-    <!-- Transaction details -->
-    <div v-if="formattedParams" class="params-section">
-      <div class="params-list">
-        <div v-for="(value, key) in formattedParams" :key="key" class="param-row">
-          <span class="param-key">{{ key }}</span>
-          <span class="param-value">{{ value }}</span>
+      <!-- Method icon and description -->
+      <div class="method-section" data-roi="confirm-summary">
+        <div class="method-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <h3 class="method-title">{{ methodDescription }}</h3>
+        <p class="method-subtitle">This action will allow the app to view your balances and activity.</p>
+      </div>
+
+      <!-- Transaction details / params -->
+      <div v-if="formattedParams" class="params-section" data-roi="confirm-account">
+        <div class="params-list">
+          <div v-for="(value, key) in formattedParams" :key="key" class="param-row">
+            <span class="param-key">{{ key }}</span>
+            <span class="param-value">{{ value }}</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Raw payload (collapsible) -->
-    <details class="raw-details">
-      <summary>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-        </svg>
-        <span>View full data</span>
-        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </summary>
-      <pre class="raw-payload">{{ JSON.stringify(props.payload, null, 2) }}</pre>
-    </details>
+      <!-- Raw payload (collapsible) -->
+      <details class="raw-details" data-roi="confirm-details-toggle">
+        <summary>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span>View full data</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </summary>
+        <pre class="raw-payload" data-roi="confirm-details-panel">{{ JSON.stringify(props.payload, null, 2) }}</pre>
+      </details>
 
-    <!-- PIN input if not unlocked -->
-    <div v-if="!isUnlocked" class="pin-section">
-      <p class="pin-required">ENTER YOUR PIN TO CONFIRM</p>
-      <PinInput mode="unlock" @complete="handlePinComplete" />
-      <p v-if="pinError" class="error-text">{{ pinError }}</p>
-    </div>
+      <!-- PIN input if not unlocked -->
+      <div v-if="!isUnlocked" class="pin-section">
+        <p class="pin-required">Enter PIN to confirm</p>
+        <PinInput mode="unlock" @complete="handlePinComplete" />
+      </div>
 
-    <!-- Action buttons -->
-    <div class="action-buttons">
-      <Button variant="secondary" size="lg" @click="handleReject()" :disabled="isProcessing">
-        Reject
-      </Button>
-      <Button
-        variant="primary"
-        size="lg"
-        @click="handleConfirm"
-        :disabled="!isUnlocked || isProcessing"
-        :loading="isProcessing"
+      <!-- V55.2: Reserved error slot (anti-layout-shift) -->
+      <div class="error-slot" data-roi="confirm-error-slot" aria-live="polite">
+        <p v-if="pinError" class="error-text">{{ pinError }}</p>
+      </div>
+    </main>
+
+    <!-- V55.2: Sticky CTA footer with Deny/Approve -->
+    <template #footer>
+      <StickyCTA
+        primary-text="Approve"
+        :primary-disabled="!isUnlocked || isProcessing"
+        secondary-text="Deny"
+        :show-arrow="false"
+        roi-prefix="confirm"
+        data-roi="confirm-cta-rail"
+        @primary="handleConfirm"
+        @secondary="handleReject()"
       >
-        {{ isProcessing ? "Processing..." : "Confirm" }}
-      </Button>
-    </div>
-  </section>
+        <!-- V55.2: Processing indicator in CTA slot -->
+        <p v-if="isProcessing" class="processing-hint">Processing request...</p>
+      </StickyCTA>
+    </template>
+  </ScreenShell>
 </template>
 
 <style scoped>
-.confirmation-page {
-  padding: var(--space-lg);
-  max-width: 360px;
-  margin: 0 auto;
+/* V55.2: Main content area with proper padding */
+.confirm-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  min-height: 100vh;
-  box-sizing: border-box;
+  padding: var(--space-md) var(--space-lg);
+  padding-bottom: 140px; /* Space for sticky CTA */
+  overflow-y: auto;
 }
 
-.confirmation-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header-spacer {
-  width: var(--icon-btn-size);
-}
-
-.confirmation-header h2 {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: 1px;
-  color: var(--color-text-primary);
-}
-
+/* V55.2: Origin badge - pill style */
 .origin-badge {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
@@ -405,13 +411,15 @@ function handleReject(reason?: string) {
 }
 
 .origin-badge svg {
-  stroke: var(--color-text-muted); /* v18: neutral */
+  stroke: var(--color-text-muted);
+  flex-shrink: 0;
 }
 
 .origin-badge strong {
   color: var(--color-text-primary);
 }
 
+/* Method section - centered hero */
 .method-section {
   display: flex;
   flex-direction: column;
@@ -421,8 +429,8 @@ function handleReject(reason?: string) {
 }
 
 .method-icon {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   background: var(--color-accent-primary);
   border-radius: var(--radius-lg);
   display: flex;
@@ -435,25 +443,25 @@ function handleReject(reason?: string) {
 }
 
 .method-title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0;
-  font-style: italic;
 }
 
 .method-subtitle {
   margin: 0;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   line-height: 1.5;
 }
 
+/* Params section - card style */
 .params-section {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-lg);
+  border-radius: var(--radius-xl);
+  padding: var(--space-md);
 }
 
 .params-list {
@@ -474,8 +482,11 @@ function handleReject(reason?: string) {
 }
 
 .param-key {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .param-value {
@@ -486,10 +497,11 @@ function handleReject(reason?: string) {
   max-width: 60%;
 }
 
+/* Raw details - collapsible card */
 .raw-details {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-xl);
   overflow: hidden;
 }
 
@@ -497,7 +509,7 @@ function handleReject(reason?: string) {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md);
   cursor: pointer;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
@@ -518,7 +530,7 @@ function handleReject(reason?: string) {
 
 .raw-payload {
   margin: 0;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md);
   font-size: var(--font-size-xs);
   font-family: var(--font-mono);
   overflow-x: auto;
@@ -528,26 +540,44 @@ function handleReject(reason?: string) {
   border-top: 1px solid var(--color-border);
 }
 
+/* PIN section */
 .pin-section {
   text-align: center;
+  padding: var(--space-md) 0;
 }
 
 .pin-required {
-  margin: 0 0 var(--space-lg) 0;
+  margin: 0 0 var(--space-md) 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
-  letter-spacing: 1px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
-.action-buttons {
+/* V55.2: Reserved error slot (anti-layout-shift) */
+.error-slot {
+  min-height: 24px;
   display: flex;
-  gap: var(--space-md);
-  margin-top: auto;
-  padding-top: var(--space-lg);
+  align-items: center;
+  justify-content: center;
 }
 
-/* Ensure buttons stretch equally */
-.action-buttons :deep(.btn) {
-  flex: 1;
+.error-text {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  margin: 0;
+}
+
+/* V55.2: Processing hint in CTA */
+.processing-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0 0 var(--space-sm) 0;
+}
+
+/* V55.2: Ensure StickyCTA data-roi is applied */
+:deep([data-roi="confirm-cta-rail"]) .sticky-cta {
+  /* StickyCTA styles preserved */
 }
 </style>
