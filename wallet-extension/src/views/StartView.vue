@@ -295,14 +295,14 @@ onBeforeMount(() => {
         />
       </div>
 
-      <!-- Step 4 & 5: PIN -->
+      <!-- V54.6: Step 4 & 5: PIN (header back handles navigation) -->
       <div v-else class="pin-content" data-roi="pin-step">
         <PinInput
           ref="pinInputRef"
           :mode="currentStep === 'pin-create' ? 'create' : 'confirm'"
-          hide-label
           :error="pinError"
           :disabled="isLoading"
+          :helper-text="currentStep === 'pin-create' ? 'Use a PIN you don\'t use elsewhere.' : undefined"
           @complete="currentStep === 'pin-create' ? handlePinCreate($event) : handlePinConfirm($event)"
         />
 
@@ -496,16 +496,15 @@ onBeforeMount(() => {
   z-index: 1;
 }
 
-/* V53: PIN Content - uses AppHeader, centered layout */
+/* V54.6: PIN Content - full height for PinInput premium layout */
 .pin-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   padding: var(--space-lg);
   position: relative;
   z-index: 1;
+  min-height: 0;
 }
 
 .loading-text {
