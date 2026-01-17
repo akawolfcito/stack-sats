@@ -1,6 +1,19 @@
 <script setup lang="ts">
+/**
+ * UnlockView - V54.7 PIN Premium Rebalance
+ *
+ * Uses PinScreenShell for cohesive PIN layout across app.
+ * Compact header with optional logo, reduced visual weight.
+ *
+ * V54.7 Changes:
+ * - Uses PinScreenShell layout
+ * - Compact logo (40px) and title
+ * - Ghost-premium keypad via PinInput
+ * - Reduced ambient glow
+ */
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import PinScreenShell from "@/components/pin/PinScreenShell.vue";
 import PinInput from "@/components/PinInput.vue";
 import { Button, TextField } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
@@ -80,163 +93,162 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="unlock-view">
-    <!-- Ambient Glow -->
-    <div class="ambient-glow" :class="{ 'ambient-glow--danger': showDeleteConfirm }"></div>
-
-    <!-- Normal unlock view -->
-    <template v-if="!showDeleteConfirm">
-      <div class="unlock-content">
-        <!-- Header: Logo + Title -->
-        <div class="unlock-header">
-          <div class="logo-container">
-            <div class="logo-glow"></div>
-            <div class="logo-box">
-              <img src="/denvault-i.png" alt="DenVault" class="logo-image" />
-            </div>
-          </div>
-          <h1 class="title">Welcome Back</h1>
-        </div>
-
-        <!-- PIN Input (with keypad at bottom) -->
-        <PinInput
-          ref="pinInputRef"
-          mode="unlock"
-          :error="pinError"
-          :disabled="isLoading || attemptsRemaining <= 0"
-          :show-biometric="true"
-          @complete="handleUnlock"
+  <!-- V54.7: Normal unlock using PinScreenShell -->
+  <PinScreenShell
+    v-if="!showDeleteConfirm"
+    title="Welcome Back"
+    :show-logo="true"
+    :show-ambient="true"
+  >
+    <!-- PIN Input -->
+    <PinInput
+      ref="pinInputRef"
+      mode="unlock"
+      :error="pinError"
+      :disabled="isLoading || attemptsRemaining <= 0"
+      :show-biometric="true"
+      hide-label
+      @complete="handleUnlock"
+    >
+      <!-- Forgot PIN link above keypad -->
+      <template #above-keypad>
+        <Button
+          variant="ghost"
+          size="sm"
+          :disabled="isLoading"
+          @click="handleForgotPin"
         >
-          <!-- Slot: Forgot PIN link above keypad -->
-          <template #above-keypad>
-            <Button
-              variant="ghost"
-              size="sm"
-              :disabled="isLoading"
-              @click="handleForgotPin"
-            >
-              Forgot PIN?
-            </Button>
-          </template>
-        </PinInput>
+          Forgot PIN?
+        </Button>
+      </template>
+    </PinInput>
 
-        <p v-if="isLoading" class="loading-text">Unlocking...</p>
-      </div>
+    <!-- Loading indicator -->
+    <template #loading>
+      <p v-if="isLoading" class="loading-text">Unlocking...</p>
     </template>
+  </PinScreenShell>
 
-    <!-- Reset Wallet Confirmation -->
-    <template v-else>
-      <div class="reset-content">
-        <!-- Header -->
-        <header class="reset-header">
-          <Button variant="icon" @click="handleCancelDelete">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-          </Button>
-          <h1>Reset Wallet</h1>
-          <div class="header-spacer"></div>
-        </header>
+  <!-- Reset Wallet Confirmation (separate flow) -->
+  <section v-else class="reset-view">
+    <!-- Danger ambient glow -->
+    <div class="ambient-glow ambient-glow--danger"></div>
 
-        <!-- Main Content -->
-        <main class="reset-main">
-          <!-- Danger Zone Card -->
-          <div class="danger-card">
-            <!-- Inner Glow -->
-            <div class="danger-card-glow"></div>
+    <div class="reset-content">
+      <!-- Header -->
+      <header class="reset-header">
+        <Button variant="icon" @click="handleCancelDelete">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </Button>
+        <h1>Reset Wallet</h1>
+        <div class="header-spacer"></div>
+      </header>
 
-            <!-- Content -->
-            <div class="danger-card-content">
-              <!-- Warning Icon -->
-              <div class="warning-icon-wrapper">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              </div>
+      <!-- Main Content -->
+      <main class="reset-main">
+        <!-- Danger Zone Card -->
+        <div class="danger-card">
+          <div class="danger-card-glow"></div>
 
-              <!-- Headline -->
-              <h2 class="danger-headline">Danger Zone</h2>
+          <div class="danger-card-content">
+            <!-- Warning Icon -->
+            <div class="warning-icon-wrapper">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
 
-              <!-- Warning Text -->
-              <p class="danger-text">
-                This action is <span class="text-danger">irreversible</span>. It will permanently delete all your wallets, keys, and transaction history from this device.
-              </p>
+            <h2 class="danger-headline">Danger Zone</h2>
 
-              <!-- Input Section -->
-              <div class="input-section">
-                <label class="input-label" for="delete-input">
-                  Type 'DELETE' to confirm
-                </label>
-                <div class="input-wrapper">
-                  <input
-                    id="delete-input"
-                    v-model="deleteConfirmText"
-                    type="text"
-                    placeholder="DELETE"
-                    class="delete-input"
-                    autocomplete="off"
-                  />
-                  <div class="input-icon" :class="{ 'input-icon--valid': canDelete }">
-                    <svg v-if="canDelete" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                  </div>
+            <p class="danger-text">
+              This action is <span class="text-danger">irreversible</span>. It will permanently delete all your wallets, keys, and transaction history from this device.
+            </p>
+
+            <!-- Input Section -->
+            <div class="input-section">
+              <label class="input-label" for="delete-input">
+                Type 'DELETE' to confirm
+              </label>
+              <div class="input-wrapper">
+                <input
+                  id="delete-input"
+                  v-model="deleteConfirmText"
+                  type="text"
+                  placeholder="DELETE"
+                  class="delete-input"
+                  autocomplete="off"
+                />
+                <div class="input-icon" :class="{ 'input-icon--valid': canDelete }">
+                  <svg v-if="canDelete" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
                 </div>
               </div>
             </div>
-
-            <!-- Bottom Stripe -->
-            <div class="danger-stripe"></div>
           </div>
 
-          <!-- Spacer -->
-          <div class="flex-spacer"></div>
+          <div class="danger-stripe"></div>
+        </div>
 
-          <!-- Info Note -->
-          <div class="info-note">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
+        <div class="flex-spacer"></div>
+
+        <!-- Info Note -->
+        <div class="info-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <p>
+            Make sure you have backed up your Secret Recovery Phrase. Without it, you will lose access to your funds forever.
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <Button variant="secondary" full-width @click="handleCancelDelete">
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            full-width
+            :disabled="!canDelete"
+            @click="handleConfirmDelete"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
             </svg>
-            <p>
-              Make sure you have backed up your Secret Recovery Phrase. Without it, you will lose access to your funds forever.
-            </p>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="action-buttons">
-            <Button variant="secondary" full-width @click="handleCancelDelete">
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              full-width
-              :disabled="!canDelete"
-              @click="handleConfirmDelete"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                <line x1="10" y1="11" x2="10" y2="17"/>
-                <line x1="14" y1="11" x2="14" y2="17"/>
-              </svg>
-              Reset Wallet
-            </Button>
-          </div>
-        </main>
-      </div>
-    </template>
+            Reset Wallet
+          </Button>
+        </div>
+      </main>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.unlock-view {
+/* V54.7: Loading text */
+.loading-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  margin: 0;
+  padding: var(--space-sm);
+}
+
+/* ========== RESET WALLET FLOW ========== */
+
+.reset-view {
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -265,75 +277,6 @@ onMounted(() => {
   background: #ef4444;
   opacity: 0.08;
 }
-
-/* Unlock Content */
-.unlock-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  z-index: 10;
-}
-
-/* Unlock Header */
-.unlock-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48px 16px 16px;
-  gap: 12px;
-}
-
-/* Logo */
-.logo-container {
-  position: relative;
-}
-
-.logo-glow {
-  position: absolute;
-  inset: -12px;
-  background: var(--color-accent-primary);
-  opacity: 0.2;
-  filter: blur(24px);
-  border-radius: 50%;
-}
-
-.logo-box {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #2a2d15, #1a1c0d);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: var(--shadow-elev-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.logo-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.loading-text {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-/* ========== RESET WALLET FLOW ========== */
 
 .reset-content {
   flex: 1;
