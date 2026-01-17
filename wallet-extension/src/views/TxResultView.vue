@@ -194,11 +194,12 @@ function handleTryAgain() {
 </script>
 
 <template>
-  <ScreenShell :padded="false">
+  <ScreenShell :padded="false" data-roi="tx-result-screen">
     <template #header>
       <AppHeader
         :title="headerTitle"
         left="none"
+        data-roi="tx-result-title"
       />
     </template>
 
