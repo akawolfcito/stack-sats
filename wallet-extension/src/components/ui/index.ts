@@ -22,3 +22,5 @@ export { default as InlineAction } from './InlineAction.vue';
 
 export { default as Badge } from './Badge.vue';
 export type { BadgeVariant } from './Badge.vue';
+
+export { default as Toast } from './Toast.vue';
