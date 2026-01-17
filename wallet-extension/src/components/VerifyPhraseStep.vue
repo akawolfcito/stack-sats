@@ -1,11 +1,16 @@
 <script setup lang="ts">
 /**
- * VerifyPhraseStep - V54.4 BIP39 Typeahead Verification
+ * VerifyPhraseStep - V54.5 Microcopy Clarity
  *
  * 2-word verification step to confirm user saved their recovery phrase.
  * Used by both StartView and AddWalletView.
  *
- * V54.4 Changes:
+ * V54.5 Changes:
+ * - Human-friendly ordinal numbers (6th, 23rd) instead of #6, #23
+ * - Clear helper text without technical jargon (no "BIP39")
+ * - Aligned error copy
+ *
+ * V54.4 Changes (preserved):
  * - TypeaheadInput with BIP39 wordlist suggestions
  * - Keyboard flow: Arrow nav in dropdown, Enter selects or moves focus
  * - Security: autocomplete=off, no storage, BIP39 list only
@@ -25,6 +30,13 @@
 import { ref, computed, onMounted } from 'vue';
 import { Button } from '@/components/ui';
 import TypeaheadInput from '@/components/ui/TypeaheadInput.vue';
+
+// V54.5: Convert number to ordinal string (1 → 1st, 2 → 2nd, etc.)
+function toOrdinal(n: number): string {
+  const suffixes = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
+}
 
 const props = defineProps<{
   mnemonic: string;
@@ -49,6 +61,10 @@ const input2Ref = ref<InstanceType<typeof TypeaheadInput> | null>(null);
 const words = computed(() => props.mnemonic.split(' '));
 const expectedWord1 = computed(() => words.value[props.word1Index]?.toLowerCase() || '');
 const expectedWord2 = computed(() => words.value[props.word2Index]?.toLowerCase() || '');
+
+// V54.5: Ordinal labels for human-friendly display
+const word1Ordinal = computed(() => toOrdinal(props.word1Index + 1));
+const word2Ordinal = computed(() => toOrdinal(props.word2Index + 1));
 
 // V54.3: CTA disabled until both inputs filled (trimmed)
 const canVerify = computed(() => {
@@ -91,7 +107,8 @@ function handleVerify() {
   const input2 = word2Input.value.trim().toLowerCase();
 
   if (input1 !== expectedWord1.value || input2 !== expectedWord2.value) {
-    error.value = "Words don't match. Check your positions and try again.";
+    // V54.5: Aligned error copy
+    error.value = "That doesn't match. Check the word position and try again.";
     return;
   }
 
@@ -103,11 +120,11 @@ function handleVerify() {
 
 <template>
   <div class="verify-step" data-roi="verify-phrase-step">
-    <!-- V54.3: Step indicator + compact subtitle -->
+    <!-- V54.5: Step indicator + human-friendly subtitle with ordinals -->
     <div class="verify-header">
       <span class="step-indicator">Final step</span>
-      <p class="verify-subtitle">
-        Enter words #{{ word1Index + 1 }} and #{{ word2Index + 1 }} to continue.
+      <p class="verify-subtitle" data-roi="verify-subtitle">
+        Enter the {{ word1Ordinal }} and {{ word2Ordinal }} words to continue.
       </p>
     </div>
 
@@ -118,8 +135,8 @@ function handleVerify() {
           :id="`word-${word1Index + 1}`"
           ref="input1Ref"
           v-model="word1Input"
-          :label="`Word #${word1Index + 1}`"
-          :placeholder="`Type word #${word1Index + 1}`"
+          :label="`${word1Ordinal} word`"
+          :placeholder="`Type the ${word1Ordinal} word`"
           data-roi="verify-word-1-input"
           @keydown="handleInput1Keydown"
         />
@@ -130,16 +147,16 @@ function handleVerify() {
           :id="`word-${word2Index + 1}`"
           ref="input2Ref"
           v-model="word2Input"
-          :label="`Word #${word2Index + 1}`"
-          :placeholder="`Type word #${word2Index + 1}`"
+          :label="`${word2Ordinal} word`"
+          :placeholder="`Type the ${word2Ordinal} word`"
           data-roi="verify-word-2-input"
           @keydown="handleInput2Keydown"
         />
       </div>
 
-      <!-- V54.3: Helper text inside card -->
-      <p class="verify-helper">
-        Start typing to see BIP39 word suggestions.
+      <!-- V54.5: Helper text - clear, no jargon -->
+      <p class="verify-helper" data-roi="verify-helper">
+        Start typing — we'll suggest valid words.
       </p>
     </div>
 
