@@ -1,11 +1,14 @@
 <script setup lang="ts">
 /**
- * VerifyPinView - V48 Fullscreen PIN Verification
+ * VerifyPinView - V54.7 PIN Premium Rebalance
  *
- * Reuses UnlockView scaffold for visual parity:
- * - Logo + ambient glow
- * - Headline + subtitle
- * - PinInput with full keypad
+ * Uses PinScreenShell for cohesive PIN layout.
+ * Contextual subtitle based on action.
+ *
+ * V54.7 Changes:
+ * - Uses PinScreenShell layout with subtitle
+ * - Compact title and logo
+ * - Ghost-premium keypad via PinInput
  *
  * Query params:
  * - action: 'backup' | 'delete' | etc. (what to do after success)
@@ -13,6 +16,7 @@
  */
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import PinScreenShell from "@/components/pin/PinScreenShell.vue";
 import PinInput from "@/components/PinInput.vue";
 import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
@@ -98,149 +102,48 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="verify-pin-view">
-    <!-- Ambient Glow (same as UnlockView) -->
-    <div class="ambient-glow"></div>
+  <PinScreenShell
+    :title="currentCopy.title"
+    :subtitle="currentCopy.subtitle"
+    :show-logo="true"
+    :show-ambient="true"
+  >
+    <!-- PIN Input -->
+    <PinInput
+      ref="pinInputRef"
+      mode="unlock"
+      :error="pinError"
+      :disabled="isLoading"
+      :show-biometric="true"
+      hide-label
+      @complete="handleVerify"
+    >
+      <!-- Cancel link above keypad -->
+      <template #above-keypad>
+        <Button
+          variant="ghost"
+          size="sm"
+          :disabled="isLoading"
+          @click="handleCancel"
+        >
+          Cancel
+        </Button>
+      </template>
+    </PinInput>
 
-    <div class="verify-content">
-      <!-- Header: Logo + Title (same as UnlockView) -->
-      <div class="verify-header">
-        <div class="logo-container">
-          <div class="logo-glow"></div>
-          <div class="logo-box">
-            <img src="/denvault-i.png" alt="DenVault" class="logo-image" />
-          </div>
-        </div>
-        <h1 class="title">{{ currentCopy.title }}</h1>
-      </div>
-
-      <!-- PIN Input (with keypad at bottom) - V48: show-biometric for parity with Unlock -->
-      <PinInput
-        ref="pinInputRef"
-        mode="unlock"
-        :error="pinError"
-        :disabled="isLoading"
-        :show-biometric="true"
-        @complete="handleVerify"
-      >
-        <!-- Slot: Cancel link above keypad (instead of Forgot PIN) -->
-        <template #above-keypad>
-          <p class="subtitle">{{ currentCopy.subtitle }}</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            :disabled="isLoading"
-            @click="handleCancel"
-          >
-            Cancel
-          </Button>
-        </template>
-      </PinInput>
-
+    <!-- Loading indicator -->
+    <template #loading>
       <p v-if="isLoading" class="loading-text">Verifying...</p>
-    </div>
-  </section>
+    </template>
+  </PinScreenShell>
 </template>
 
 <style scoped>
-/* V48: Same styles as UnlockView for visual parity */
-.verify-pin-view {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  background: var(--color-bg-primary);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Ambient Glow */
-.ambient-glow {
-  position: absolute;
-  top: -20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 150%;
-  height: 50%;
-  background: var(--color-accent-primary);
-  opacity: 0.05;
-  filter: blur(100px);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-/* Content */
-.verify-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  z-index: 10;
-}
-
-/* Header */
-.verify-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48px 16px 16px;
-  gap: 12px;
-}
-
-/* Logo */
-.logo-container {
-  position: relative;
-}
-
-.logo-glow {
-  position: absolute;
-  inset: -12px;
-  background: var(--color-accent-primary);
-  opacity: 0.2;
-  filter: blur(24px);
-  border-radius: 50%;
-}
-
-.logo-box {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #2a2d15, #1a1c0d);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: var(--shadow-elev-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.logo-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-/* Subtitle in slot */
-.subtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  text-align: center;
-  margin: 0 0 var(--space-sm);
-}
-
 .loading-text {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   text-align: center;
   margin: 0;
+  padding: var(--space-sm);
 }
 </style>
