@@ -1,15 +1,18 @@
 <script setup lang="ts">
 /**
- * PinInput - V54.7 PIN Premium Rebalance
+ * PinInput - V54.8 PIN Premium Cohesion Pass
  *
  * Streamlined PIN input aligned with Recovery/Verify visual system.
  *
- * V54.7 Changes:
- * - Removed oversized panel wrapper - dots capsule is the only premium surface
+ * V54.8 Changes:
+ * - Keypad: Subtle border + inner highlight for premium depth
+ * - Refined hover/active states (perceptible but not heavy)
+ * - Improved rhythm and spacing alignment
+ * - "Above keypad" slot for consistent secondary action placement
+ *
+ * V54.7 Changes (preserved):
+ * - Dots capsule as the only premium surface
  * - Ghost-premium keypad (minimal fill, hover brighten, active scale)
- * - Reduced visual weight for extension viewport
- * - Compact layout with consistent spacing
- * - prefers-reduced-motion safe animations preserved
  *
  * V52.3 Changes (preserved):
  * - Fixed error slot with constant min-height (no layout shift)
@@ -172,12 +175,14 @@ const modeLabels = {
       </div>
     </div>
 
-    <!-- V54.7: Keypad Section - ghost-premium -->
+    <!-- V54.8: Keypad Section - ghost-premium -->
     <div class="pin-keypad-section">
-      <!-- Slot for custom content above keypad (Forgot PIN, etc.) -->
-      <slot name="above-keypad"></slot>
+      <!-- V54.8: Secondary actions zone - consistent positioning -->
+      <div v-if="$slots['above-keypad']" class="secondary-actions-zone" data-roi="pin-secondary-actions">
+        <slot name="above-keypad"></slot>
+      </div>
 
-      <!-- V54.7: Ghost-Premium Keypad -->
+      <!-- V54.8: Premium Keypad -->
       <div class="keypad" data-roi="pin-keypad">
         <template v-for="(row, rowIndex) in keypadRows" :key="rowIndex">
           <button
@@ -239,16 +244,16 @@ const modeLabels = {
   outline: none;
 }
 
-/* V54.7: Dots section - replaces oversized panel */
+/* V54.8: Dots section - visual anchor */
 .pin-dots-section {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-sm) 0;
+  padding: var(--space-xs) 0 var(--space-sm);
 }
 
-/* V54.7: Label - compact uppercase */
+/* V54.8: Label - compact uppercase */
 .pin-label {
   text-align: center;
 }
@@ -258,7 +263,7 @@ const modeLabels = {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin: 0;
 }
 
@@ -275,17 +280,20 @@ const modeLabels = {
   border: 0;
 }
 
-/* V54.7: PIN Dots Rail - the primary premium surface */
+/* V54.8: PIN Dots Rail - the primary premium surface */
 .pin-dots-rail {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-lg);
-  /* Glass capsule - matches Recovery/Verify tokens */
+  gap: 12px;
+  padding: 14px var(--space-xl);
+  /* V54.8: Enhanced glass capsule - perceptible depth */
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-pill);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* V54.7: PIN Dots - premium states */
@@ -390,7 +398,7 @@ const modeLabels = {
   white-space: nowrap;
 }
 
-/* V54.7: Keypad Section */
+/* V54.8: Keypad Section */
 .pin-keypad-section {
   flex: 1;
   display: flex;
@@ -398,28 +406,41 @@ const modeLabels = {
   align-items: center;
   justify-content: flex-start;
   gap: var(--space-sm);
+  padding-top: var(--space-xs);
 }
 
-/* V54.7: Ghost-Premium Keypad */
+/* V54.8: Secondary actions zone - "Forgot PIN?", "Cancel", etc. */
+.secondary-actions-zone {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 32px;
+  width: 100%;
+}
+
+/* V54.8: Premium Keypad Grid */
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  max-width: 220px;
+  max-width: 240px;
 }
 
-/* V54.7: Ghost-Premium Button */
+/* V54.8: Premium Button - visible but not heavy */
 .keypad-btn {
   /* Consistent hit area - min 44px for accessibility */
-  width: 64px;
+  width: 72px;
   height: 48px;
   min-width: 44px;
   min-height: 44px;
-  /* Ghost: minimal fill */
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-md);
+  /* V54.8: Subtle glass with inner highlight */
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.2);
   /* Layout */
   display: flex;
   align-items: center;
@@ -427,31 +448,40 @@ const modeLabels = {
   justify-self: center;
   /* Typography */
   font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-normal);
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.01em;
   color: var(--color-text-primary);
   /* Interaction */
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Hover: brighten */
+/* V54.8: Hover - perceptible lift */
 .keypad-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
 }
 
-/* Active: scale down */
+/* V54.8: Active - press effect */
 .keypad-btn:active:not(:disabled) {
-  transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.04);
+  transform: scale(0.97) translateY(0);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 0 rgba(0, 0, 0, 0);
 }
 
 /* Focus-visible: accent ring */
 .keypad-btn:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--color-accent-primary);
+  box-shadow:
+    inset 0 0 0 2px var(--color-accent-primary),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Disabled */
@@ -460,15 +490,24 @@ const modeLabels = {
   cursor: not-allowed;
 }
 
-/* V54.7: Action buttons (biometric/backspace) */
+/* V54.8: Action buttons (biometric/backspace) - more subtle */
 .keypad-btn--action {
   color: var(--color-text-secondary);
+  background: transparent;
   border-color: transparent;
+  box-shadow: none;
 }
 
 .keypad-btn--action:hover:not(:disabled) {
   color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+.keypad-btn--action:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.02);
+  transform: scale(0.95);
 }
 
 /* Icon sizing */
