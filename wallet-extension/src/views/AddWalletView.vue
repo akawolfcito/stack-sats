@@ -1,10 +1,16 @@
 <script setup lang="ts">
 /**
- * AddWalletView - V53.2 Unified Recovery Phrase Flow
+ * AddWalletView - V54.9 Create PIN Shell Unification
  *
  * Add wallet flow from Settings. Uses shared components:
  * - RecoveryPhraseDisplay: Mnemonic grid with reveal/hide, copy
  * - VerifyPhraseStep: 2-word verification
+ * - PinScreenShell: Unified PIN screens (Create/Confirm)
+ *
+ * V54.9 Changes:
+ * - PIN steps now use PinScreenShell (same as Unlock/Verify)
+ * - Consistent logo, title, ambient glow across all PIN screens
+ * - Step indicator eyebrow for Create/Confirm PIN
  *
  * Flow: start → mnemonic → verify → name → pin-create → pin-confirm → done
  */
@@ -12,6 +18,7 @@ import { ref, nextTick, computed } from "vue";
 import { randomSeedPhrase } from "@stacks/wallet-sdk";
 import { useRouter } from "vue-router";
 import PinInput from "@/components/PinInput.vue";
+import PinScreenShell from "@/components/pin/PinScreenShell.vue";
 import ImportMnemonicModal from "@/components/ImportMnemonicModal.vue";
 import RecoveryPhraseDisplay from "@/components/RecoveryPhraseDisplay.vue";
 import VerifyPhraseStep from "@/components/VerifyPhraseStep.vue";
@@ -29,15 +36,37 @@ const router = useRouter();
 type Step = "start" | "mnemonic" | "verify" | "name" | "pin-create" | "pin-confirm";
 const currentStep = ref<Step>("start");
 
-// Dynamic header title based on step
+// V54.9: Check if current step is a PIN step (uses PinScreenShell)
+const isPinStep = computed(() =>
+  currentStep.value === "pin-create" || currentStep.value === "pin-confirm"
+);
+
+// V54.9: PIN screen config for PinScreenShell
+const pinScreenConfig = computed(() => {
+  if (currentStep.value === "pin-create") {
+    return {
+      title: "Create a 6-digit PIN",
+      eyebrow: "FINAL STEP",
+      subtitle: undefined,
+    };
+  }
+  if (currentStep.value === "pin-confirm") {
+    return {
+      title: "Confirm your PIN",
+      eyebrow: undefined,
+      subtitle: "Re-enter to verify",
+    };
+  }
+  return { title: "", eyebrow: undefined, subtitle: undefined };
+});
+
+// Dynamic header title based on step (for non-PIN steps)
 const headerTitle = computed(() => {
   switch (currentStep.value) {
     case "start": return "Add Wallet";
     case "mnemonic": return "Recovery Phrase";
     case "verify": return "Verify Phrase";
     case "name": return "Name Wallet";
-    case "pin-create": return "Create PIN";
-    case "pin-confirm": return "Confirm PIN";
     default: return "Add Wallet";
   }
 });
@@ -201,7 +230,35 @@ function handleStepBack() {
 </script>
 
 <template>
-  <ScreenShell :padded="false">
+  <!-- V54.9: PIN steps use PinScreenShell for cohesion -->
+  <PinScreenShell
+    v-if="isPinStep"
+    :title="pinScreenConfig.title"
+    :subtitle="pinScreenConfig.subtitle"
+    :eyebrow="pinScreenConfig.eyebrow"
+    :show-logo="true"
+    :show-ambient="true"
+    :show-back="true"
+    data-roi="add-wallet-pin-shell"
+    @back="handleStepBack"
+  >
+    <PinInput
+      ref="pinInputRef"
+      :mode="currentStep === 'pin-create' ? 'create' : 'confirm'"
+      :error="pinError"
+      :disabled="isLoading"
+      :helper-text="currentStep === 'pin-create' ? 'Use a PIN you don\'t use elsewhere.' : undefined"
+      hide-label
+      @complete="currentStep === 'pin-create' ? handlePinCreate($event) : handlePinConfirm($event)"
+    />
+
+    <template #loading>
+      <p v-if="isLoading" class="loading-text">Creating wallet...</p>
+    </template>
+  </PinScreenShell>
+
+  <!-- Non-PIN steps use ScreenShell + AppHeader -->
+  <ScreenShell v-else :padded="false">
     <template #header>
       <AppHeader
         :title="headerTitle"
@@ -262,30 +319,6 @@ function handleStepBack() {
             Continue
           </Button>
         </div>
-      </div>
-
-      <!-- V54.6: Step 5: Create PIN (header back handles navigation) -->
-      <div v-else-if="currentStep === 'pin-create'" class="pin-step-container" data-roi="pin-create-step">
-        <PinInput
-          ref="pinInputRef"
-          mode="create"
-          :error="pinError"
-          :disabled="isLoading"
-          helper-text="Use a PIN you don't use elsewhere."
-          @complete="handlePinCreate"
-        />
-      </div>
-
-      <!-- V54.6: Step 6: Confirm PIN (header back handles navigation) -->
-      <div v-else-if="currentStep === 'pin-confirm'" class="pin-step-container" data-roi="pin-confirm-step">
-        <PinInput
-          ref="pinInputRef"
-          mode="confirm"
-          :error="pinError"
-          :disabled="isLoading"
-          @complete="handlePinConfirm"
-        />
-        <p v-if="isLoading" class="loading-text">Creating wallet...</p>
       </div>
     </div>
 
@@ -371,19 +404,12 @@ function handleStepBack() {
   border-color: var(--color-accent-primary);
 }
 
+/* V54.9: Loading text for PIN shell */
 .loading-text {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   text-align: center;
   margin: 0;
-}
-
-/* V54.7: PIN step container - compact layout for extension viewport */
-.pin-step-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  padding-top: var(--space-sm);
+  padding: var(--space-sm);
 }
 </style>
