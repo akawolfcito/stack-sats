@@ -1,12 +1,17 @@
 <script setup lang="ts">
 /**
- * RecoveryPhraseDisplay - V54.2 Zero-Shift Layout Component
+ * RecoveryPhraseDisplay - V54.5 Premium Toast Update
  *
  * Shared component for displaying recovery phrase in both:
  * - StartView (onboarding / first wallet)
  * - AddWalletView (settings / add wallet)
  *
- * V54.2 Zero-Shift Layout:
+ * V54.5 Changes:
+ * - Premium Toast component (backdrop blur, elevated surface)
+ * - Positioned to never overlap CTA
+ * - Smooth fade + translate animation
+ *
+ * V54.2 Zero-Shift Layout (preserved):
  * - ZERO layout shift across states (hidden → revealed → hidden)
  * - Caption slot reserves fixed height even when invisible
  * - Bottom Back button REMOVED (header back exists in parent)
@@ -27,7 +32,7 @@
  * - mnemonic: The recovery phrase string
  */
 import { ref, computed } from 'vue';
-import { Button } from '@/components/ui';
+import { Button, Toast } from '@/components/ui';
 import { secureLog } from '@/utils/security/logger';
 
 const props = defineProps<{
@@ -68,18 +73,20 @@ function handleCopyClick() {
   showCopyConfirm.value = true;
 }
 
-// Confirm copy and show toast
+// V54.5: Confirm copy and show toast (Toast handles auto-hide)
 async function confirmCopy() {
   showCopyConfirm.value = false;
   try {
     await navigator.clipboard.writeText(props.mnemonic);
     copyToastVisible.value = true;
-    setTimeout(() => {
-      copyToastVisible.value = false;
-    }, 2000);
   } catch {
     secureLog('Clipboard copy failed');
   }
+}
+
+// V54.5: Hide toast handler
+function hideToast() {
+  copyToastVisible.value = false;
 }
 
 // Cancel copy
@@ -223,15 +230,14 @@ function handleContinue() {
       </div>
     </div>
 
-    <!-- Copied Toast -->
-    <Transition name="toast">
-      <div v-if="copyToastVisible" class="copy-toast" data-roi="copy-toast">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        Copied to clipboard
-      </div>
-    </Transition>
+    <!-- V54.5: Premium Toast Component -->
+    <Toast
+      :visible="copyToastVisible"
+      message="Copied to clipboard"
+      icon="check"
+      :duration="1800"
+      @hide="hideToast"
+    />
   </div>
 </template>
 
@@ -601,34 +607,5 @@ function handleContinue() {
   flex: 1;
 }
 
-/* Copied Toast */
-.copy-toast {
-  position: fixed;
-  bottom: var(--space-xl);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-lg);
-  background: var(--color-success);
-  color: var(--color-bg-base);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  border-radius: var(--radius-chip);
-  box-shadow: var(--shadow-elev-2);
-  z-index: 101;
-}
-
-/* Toast transition */
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.3s ease;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(20px);
-}
+/* V54.5: Toast styles moved to reusable Toast component */
 </style>

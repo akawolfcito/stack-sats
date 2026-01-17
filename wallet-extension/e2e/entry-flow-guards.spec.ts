@@ -1184,6 +1184,213 @@ test.describe("V54.2 Zero-Shift Layout Guards", () => {
   });
 });
 
+test.describe("V54.5 Microcopy & Toast Guards", () => {
+  test.describe("Verify Phrase Microcopy Clarity", () => {
+    test("V54.5: Subtitle should use ordinal numbers (6th, 23rd)", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const continueBtn = await page.$('[data-roi="cta-primary"]');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(500);
+
+          // Check subtitle uses ordinal format
+          const subtitle = await page.$('[data-roi="verify-subtitle"]');
+          if (subtitle) {
+            const text = await subtitle.textContent();
+            // Should contain ordinal patterns like "6th", "23rd", etc.
+            expect(text, "Subtitle should use ordinal format").toMatch(/\d+(st|nd|rd|th)/);
+            // Should NOT contain "#" format
+            expect(text, "Subtitle should not use # format").not.toContain("#");
+            console.log(`[V54.5 Microcopy] Subtitle: ${text}`);
+          }
+        }
+      }
+    });
+
+    test("V54.5: Helper text should be clear without BIP39 jargon", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const continueBtn = await page.$('[data-roi="cta-primary"]');
+        if (continueBtn) {
+          await continueBtn.click();
+          await page.waitForTimeout(500);
+
+          const helper = await page.$('[data-roi="verify-helper"]');
+          if (helper) {
+            const text = await helper.textContent();
+            // Should NOT mention "BIP39"
+            expect(text?.toLowerCase(), "Helper should not mention BIP39").not.toContain("bip39");
+            // Should mention suggestions in a friendly way
+            expect(text?.toLowerCase(), "Helper should mention suggestions").toContain("suggest");
+            console.log(`[V54.5 Microcopy] Helper: ${text}`);
+          }
+        }
+      }
+    });
+  });
+
+  test.describe("Premium Toast Behavior", () => {
+    test("V54.5: Toast should appear after copy confirmation", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        // Reveal first
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        // Click copy
+        const copyBtn = await page.$('[data-roi="copy-btn"]');
+        if (copyBtn) {
+          await copyBtn.click();
+          await page.waitForTimeout(300);
+
+          // Confirm copy
+          const confirmBtn = await page.$('.copy-confirm-actions .btn--primary');
+          if (confirmBtn) {
+            await confirmBtn.click();
+            await page.waitForTimeout(200);
+
+            // Toast should be visible
+            const toast = await page.$('[data-roi="toast"]');
+            expect(toast, "Toast should appear after copy confirmation").toBeTruthy();
+
+            if (toast) {
+              const text = await toast.textContent();
+              expect(text, "Toast should show clipboard message").toContain("Copied to clipboard");
+              console.log(`[V54.5 Toast] Message: ${text}`);
+            }
+          }
+        }
+      }
+    });
+
+    test("V54.5: Toast should auto-hide after duration", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const copyBtn = await page.$('[data-roi="copy-btn"]');
+        if (copyBtn) {
+          await copyBtn.click();
+          await page.waitForTimeout(300);
+
+          const confirmBtn = await page.$('.copy-confirm-actions .btn--primary');
+          if (confirmBtn) {
+            await confirmBtn.click();
+            await page.waitForTimeout(200);
+
+            // Toast should be visible initially
+            let toast = await page.$('[data-roi="toast"]');
+            expect(toast, "Toast should be visible initially").toBeTruthy();
+
+            // Wait for auto-hide (1800ms + buffer)
+            await page.waitForTimeout(2200);
+
+            // Toast should be hidden now
+            toast = await page.$('[data-roi="toast"]');
+            expect(toast, "Toast should auto-hide after duration").toBeNull();
+            console.log("[V54.5 Toast] Auto-hide verified");
+          }
+        }
+      }
+    });
+
+    test("V54.5: Toast should have accessibility attributes", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(500);
+
+      const createBtn = await page.$('[data-roi="start-primary-cta"]');
+      if (createBtn) {
+        await createBtn.click();
+        await page.waitForTimeout(500);
+
+        const revealBtn = await page.$('[data-roi="reveal-btn"]');
+        if (revealBtn) {
+          await revealBtn.click();
+          await page.waitForTimeout(300);
+        }
+
+        const copyBtn = await page.$('[data-roi="copy-btn"]');
+        if (copyBtn) {
+          await copyBtn.click();
+          await page.waitForTimeout(300);
+
+          const confirmBtn = await page.$('.copy-confirm-actions .btn--primary');
+          if (confirmBtn) {
+            await confirmBtn.click();
+            await page.waitForTimeout(200);
+
+            const toast = await page.$('[data-roi="toast"]');
+            if (toast) {
+              const role = await toast.getAttribute("role");
+              const ariaLive = await toast.getAttribute("aria-live");
+              const ariaAtomic = await toast.getAttribute("aria-atomic");
+
+              expect(role, "Toast should have role=status").toBe("status");
+              expect(ariaLive, "Toast should have aria-live=polite").toBe("polite");
+              expect(ariaAtomic, "Toast should have aria-atomic=true").toBe("true");
+              console.log("[V54.5 Toast A11y] Accessibility attributes verified");
+            }
+          }
+        }
+      }
+    });
+  });
+});
+
 test.describe("V54.4 BIP39 Typeahead Guards", () => {
   // Helper to navigate to verify step
   async function navigateToVerifyStep(page: Page) {
@@ -1499,16 +1706,18 @@ test.describe("V54.4 BIP39 Typeahead Guards", () => {
   });
 
   test.describe("Helper Text Update", () => {
-    test("V54.4: Helper text should mention BIP39 suggestions", async ({ page }) => {
+    test("V54.5: Helper text should mention valid word suggestions (no BIP39 jargon)", async ({ page }) => {
       const navigated = await navigateToVerifyStep(page);
       if (!navigated) return;
 
       const helper = await page.$('.verify-helper');
       if (helper) {
         const text = await helper.textContent();
-        expect(text?.toLowerCase()).toContain("bip39");
-        expect(text?.toLowerCase()).toContain("suggestion");
-        console.log(`[V54.4 Helper] Helper text: ${text}`);
+        // V54.5: Should NOT mention "BIP39" - use plain language
+        expect(text?.toLowerCase()).not.toContain("bip39");
+        // Should still mention suggestions
+        expect(text?.toLowerCase()).toContain("suggest");
+        console.log(`[V54.5 Helper] Helper text: ${text}`);
       }
     });
   });
