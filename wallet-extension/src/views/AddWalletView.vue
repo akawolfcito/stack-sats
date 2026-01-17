@@ -378,11 +378,12 @@ function handleStepBack() {
   margin: 0;
 }
 
-/* V54.6: PIN step container - full height for PinInput */
+/* V54.7: PIN step container - compact layout for extension viewport */
 .pin-step-container {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  padding-top: var(--space-sm);
 }
 </style>
