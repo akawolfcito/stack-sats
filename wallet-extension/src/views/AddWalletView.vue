@@ -264,43 +264,27 @@ function handleStepBack() {
         </div>
       </div>
 
-      <!-- Step 5: Create PIN -->
-      <div v-else-if="currentStep === 'pin-create'" class="step-container">
-        <p class="subtitle">Create a 6-digit PIN</p>
+      <!-- V54.6: Step 5: Create PIN (header back handles navigation) -->
+      <div v-else-if="currentStep === 'pin-create'" class="pin-step-container" data-roi="pin-create-step">
         <PinInput
           ref="pinInputRef"
           mode="create"
-          hide-label
           :error="pinError"
           :disabled="isLoading"
+          helper-text="Use a PIN you don't use elsewhere."
           @complete="handlePinCreate"
         />
-
-        <div class="button-group">
-          <Button variant="secondary" :disabled="isLoading" @click="handleStepBack">
-            Back
-          </Button>
-        </div>
       </div>
 
-      <!-- Step 6: Confirm PIN -->
-      <div v-else-if="currentStep === 'pin-confirm'" class="step-container">
-        <p class="subtitle">Confirm your PIN</p>
+      <!-- V54.6: Step 6: Confirm PIN (header back handles navigation) -->
+      <div v-else-if="currentStep === 'pin-confirm'" class="pin-step-container" data-roi="pin-confirm-step">
         <PinInput
           ref="pinInputRef"
           mode="confirm"
-          hide-label
           :error="pinError"
           :disabled="isLoading"
           @complete="handlePinConfirm"
         />
-
-        <div class="button-group">
-          <Button variant="secondary" :disabled="isLoading" @click="handleStepBack">
-            Back
-          </Button>
-        </div>
-
         <p v-if="isLoading" class="loading-text">Creating wallet...</p>
       </div>
     </div>
@@ -392,5 +376,13 @@ function handleStepBack() {
   font-size: var(--font-size-sm);
   text-align: center;
   margin: 0;
+}
+
+/* V54.6: PIN step container - full height for PinInput */
+.pin-step-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 </style>
