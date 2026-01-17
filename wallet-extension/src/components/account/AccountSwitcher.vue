@@ -70,6 +70,15 @@ const handleAddAccount = () => {
  * Check if account is active (current)
  */
 const isActive = (account: AccountItem) => account.label === props.currentLabel
+
+/**
+ * V57: Expose open method for snapshot/testing
+ */
+const open = () => {
+  isOpen.value = true
+}
+
+defineExpose({ open, close, toggle })
 </script>
 
 <template>
