@@ -569,6 +569,10 @@ const truncateAddress = (address: string) => {
 // Receive modal state
 const showReceiveModal = ref(false);
 
+// V57: Component refs for snapshot hooks
+const accountSwitcherRef = ref<InstanceType<typeof AccountSwitcher> | null>(null);
+const networkChipRef = ref<InstanceType<typeof NetworkChip> | null>(null);
+
 // Handle network selection from NetworkChip
 const handleNetworkSelect = (network: NetworkName) => {
   selectedNetwork.value = network;
@@ -582,7 +586,7 @@ const closeReceiveModal = () => {
   showReceiveModal.value = false;
 };
 
-// V35: Expose snapshot hooks for UI testing
+// V35/V57: Expose snapshot hooks for UI testing
 // Only available when __UI_SNAPSHOT_MODE__ is set
 if (typeof window !== 'undefined' && localStorage.getItem('__UI_SNAPSHOT_MODE__')) {
   (window as any).__UI_SNAPSHOT__ = {
@@ -591,6 +595,19 @@ if (typeof window !== 'undefined' && localStorage.getItem('__UI_SNAPSHOT_MODE__'
     },
     closeReceiveModal: () => {
       showReceiveModal.value = false;
+    },
+    // V57: Dropdown snapshot hooks
+    openAccountSwitcher: () => {
+      accountSwitcherRef.value?.open();
+    },
+    closeAccountSwitcher: () => {
+      accountSwitcherRef.value?.close();
+    },
+    openNetworkChip: () => {
+      networkChipRef.value?.open();
+    },
+    closeNetworkChip: () => {
+      networkChipRef.value?.close();
     },
   };
 }
@@ -631,6 +648,7 @@ const handleManageTokens = () => {
 
             <!-- Account Switcher -->
             <AccountSwitcher
+              ref="accountSwitcherRef"
               :current-label="currentAccountName"
               :current-address-short="currentAccountAddressShort"
               :accounts="accountItems"
@@ -643,6 +661,7 @@ const handleManageTokens = () => {
             <div class="header-actions">
               <!-- Network Chip -->
               <NetworkChip
+                ref="networkChipRef"
                 :network="selectedNetwork"
                 :label="NETWORKS[selectedNetwork].name"
                 @select="handleNetworkSelect"

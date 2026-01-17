@@ -65,6 +65,15 @@ const isActive = (key: NetworkName) => key === props.network
  * Get dot color class for network
  */
 const getDotClass = (key: NetworkName) => `network-dot--${key}`
+
+/**
+ * V57: Expose open method for snapshot/testing
+ */
+const open = () => {
+  isOpen.value = true
+}
+
+defineExpose({ open, close, toggle })
 </script>
 
 <template>

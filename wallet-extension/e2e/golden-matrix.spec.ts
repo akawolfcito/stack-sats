@@ -28,7 +28,7 @@ const __dirname = path.dirname(__filename);
 // V38: Configuration - current screenshots go to artifacts/, golden stays versioned
 const ARTIFACTS_DIR = path.join(__dirname, '../artifacts/ui');
 const CURRENT_DIR = path.join(ARTIFACTS_DIR, 'current');
-const EXPECTED_COUNT = 24; // 2 viewports × 2 densities × 6 routes
+const EXPECTED_COUNT = 32; // 2 viewports × 2 densities × 8 routes (V57: +2 dropdown routes)
 
 const VIEWPORTS = [
   { name: 'popup', width: 400, height: 600 },
@@ -56,6 +56,9 @@ const ROUTES: RouteConfig[] = [
   { path: '/usermenu', name: 'usermenu', setup: setupUnlockedWallet },
   // V35: ReceiveModal - opens modal via snapshot hook after navigating to /user
   { path: '/user', name: 'receive-modal', setup: setupUnlockedWallet, afterNav: openReceiveModal },
+  // V57: Dropdown snapshots - opens dropdowns via snapshot hooks
+  { path: '/user', name: 'acct-switcher-open', setup: setupUnlockedWallet, afterNav: openAccountSwitcher },
+  { path: '/user', name: 'network-chip-open', setup: setupUnlockedWallet, afterNav: openNetworkChip },
 ];
 
 // Helper: Clear wallet state for clean start screen
@@ -122,6 +125,34 @@ async function openReceiveModal(page: Page) {
     }
   });
   await page.waitForTimeout(300); // Wait for modal animation
+}
+
+// V57: Helper to open AccountSwitcher dropdown via snapshot hook
+async function openAccountSwitcher(page: Page) {
+  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
+  await page.evaluate(() => {
+    const hook = (window as any).__UI_SNAPSHOT__;
+    if (hook?.openAccountSwitcher) {
+      hook.openAccountSwitcher();
+    } else {
+      console.warn('Snapshot hook not available for AccountSwitcher');
+    }
+  });
+  await page.waitForTimeout(300); // Wait for dropdown animation
+}
+
+// V57: Helper to open NetworkChip dropdown via snapshot hook
+async function openNetworkChip(page: Page) {
+  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
+  await page.evaluate(() => {
+    const hook = (window as any).__UI_SNAPSHOT__;
+    if (hook?.openNetworkChip) {
+      hook.openNetworkChip();
+    } else {
+      console.warn('Snapshot hook not available for NetworkChip');
+    }
+  });
+  await page.waitForTimeout(300); // Wait for dropdown animation
 }
 
 // Helper: Set density mode
