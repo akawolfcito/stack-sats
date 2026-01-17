@@ -1,8 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+/**
+ * NetworkChip - V56.3 Sheet Primitive Migration
+ *
+ * Decision Log:
+ * - Container: Sheet variant="dropdown" (Rule 3 - picker/list, short-lived)
+ * - Close strategy: Primitive-level (Sheet dropdown overlay captures outside clicks)
+ * - Visual: Trailing checkmark for active network (V56.2 pattern)
+ * - ROI: network-* prefix for E2E anchors
+ *
+ * V56.3 Changes:
+ * - Removed custom absolute dropdown (.network-menu)
+ * - Removed manual click-outside listeners (primitive handles it)
+ * - Now uses Sheet variant="dropdown" + ListGroup + ListRow
+ * - Consistent with AccountSwitcher pattern
+ *
+ * V55 Primitives: Sheet, ListGroup, ListRow
+ */
+import { ref } from 'vue'
 import type { NetworkName } from '@/utils/network'
+import { Sheet } from '@/components/ui'
+import ListGroup from '@/components/list/ListGroup.vue'
+import ListRow from '@/components/list/ListRow.vue'
 
-defineProps<{
+const props = defineProps<{
   network: NetworkName
   label?: string
 }>()
@@ -12,7 +32,6 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(false)
-const wrapperRef = ref<HTMLElement | null>(null)
 
 const networks: { key: NetworkName; label: string }[] = [
   { key: 'mainnet', label: 'Mainnet' },
@@ -20,8 +39,16 @@ const networks: { key: NetworkName; label: string }[] = [
   { key: 'devnet', label: 'Devnet' },
 ]
 
+/**
+ * Toggle dropdown. Sheet.vue handles outside click detection
+ * at the primitive level, so no manual listeners needed.
+ */
 const toggle = () => {
   isOpen.value = !isOpen.value
+}
+
+const close = () => {
+  isOpen.value = false
 }
 
 const selectNetwork = (key: NetworkName) => {
@@ -29,24 +56,20 @@ const selectNetwork = (key: NetworkName) => {
   isOpen.value = false
 }
 
-// Handle click outside to close menu
-const handleClickOutside = (event: MouseEvent) => {
-  if (wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
-    isOpen.value = false
-  }
-}
+/**
+ * Check if network is active (current)
+ */
+const isActive = (key: NetworkName) => key === props.network
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+/**
+ * Get dot color class for network
+ */
+const getDotClass = (key: NetworkName) => `network-dot--${key}`
 </script>
 
 <template>
-  <div ref="wrapperRef" class="network-chip-wrapper">
+  <div class="network-chip-wrapper">
+    <!-- Trigger Chip -->
     <button
       class="network-chip"
       :class="{
@@ -54,47 +77,64 @@ onUnmounted(() => {
         'network-chip--testnet': network === 'testnet',
         'network-chip--devnet': network === 'devnet',
       }"
+      data-roi="network-trigger"
       @click="toggle"
     >
       <span class="network-chip__dot"></span>
       <span class="network-chip__label">{{ label || network }}</span>
-      <svg class="network-chip__arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg class="network-chip__arrow" :class="{ 'network-chip__arrow--open': isOpen }" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="6 9 12 15 18 9"/>
       </svg>
     </button>
 
-    <!-- Network Menu -->
-    <Transition name="menu-fade">
-      <div v-if="isOpen" class="network-menu">
-        <button
+    <!-- V56.3: Sheet dropdown (primitive-level close) -->
+    <Sheet
+      :is-open="isOpen"
+      variant="dropdown"
+      :show-close="false"
+      data-roi="network-sheet"
+      @close="close"
+    >
+      <!-- V56.3: Compact header (empty) -->
+      <template #header>
+        <span></span>
+      </template>
+
+      <!-- V56.3: ListGroup + ListRow for networks -->
+      <ListGroup data-roi="network-list">
+        <ListRow
           v-for="net in networks"
           :key="net.key"
-          class="network-menu__item"
-          :class="{ 'network-menu__item--active': net.key === network }"
+          :label="net.label"
+          :data-roi="`network-item-${net.key}`"
           @click="selectNetwork(net.key)"
         >
-          <span
-            class="network-menu__dot"
-            :class="{
-              'network-menu__dot--mainnet': net.key === 'mainnet',
-              'network-menu__dot--testnet': net.key === 'testnet',
-              'network-menu__dot--devnet': net.key === 'devnet',
-            }"
-          ></span>
-          <span class="network-menu__label">{{ net.label }}</span>
-          <span v-if="net.key === network" class="network-menu__check">&#10003;</span>
-        </button>
-      </div>
-    </Transition>
+          <template #icon>
+            <span class="network-dot" :class="getDotClass(net.key)" />
+          </template>
+          <!-- V56.3: Trailing checkmark for active network -->
+          <template v-if="isActive(net.key)" #right>
+            <span class="network-check">&#10003;</span>
+          </template>
+        </ListRow>
+      </ListGroup>
+    </Sheet>
   </div>
 </template>
 
 <style scoped>
+/**
+ * V56.3 NetworkChip Styles
+ * - Removed custom .network-menu (now using Sheet dropdown)
+ * - Removed menu-fade transition (Sheet handles animation)
+ * - Kept trigger chip styles unchanged
+ */
+
 .network-chip-wrapper {
   position: relative;
 }
 
-/* V28: Premium network chip - minimal border, surface states */
+/* Trigger Chip - V55 tokens */
 .network-chip {
   display: flex;
   align-items: center;
@@ -102,7 +142,7 @@ onUnmounted(() => {
   height: var(--control-h);
   padding: 0 var(--space-sm);
   background: transparent;
-  border: none; /* V28: Remove border for cleaner look */
+  border: none;
   border-radius: var(--radius-control);
   cursor: pointer;
   transition: background var(--transition-fast);
@@ -125,7 +165,7 @@ onUnmounted(() => {
   outline-offset: var(--focus-ring-offset);
 }
 
-/* Dot indicator - V28: slightly larger */
+/* Trigger dot indicator */
 .network-chip__dot {
   width: 6px;
   height: 6px;
@@ -145,12 +185,6 @@ onUnmounted(() => {
   background: #f59e0b;
 }
 
-/* V28: Testnet/Devnet - use dot color only, no border highlight */
-.network-chip--testnet,
-.network-chip--devnet {
-  /* No special border - keep it clean */
-}
-
 .network-chip__label {
   text-transform: capitalize;
   white-space: nowrap;
@@ -158,92 +192,41 @@ onUnmounted(() => {
 
 .network-chip__arrow {
   opacity: 0.5;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .network-chip:hover .network-chip__arrow {
   opacity: 1;
 }
 
-/* Network Menu */
-.network-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 140px;
-  background: var(--color-bg-elevated, #1a1a1a);
-  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  z-index: 100;
+.network-chip__arrow--open {
+  transform: rotate(180deg);
 }
 
-.network-menu__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 14px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  transition: background 0.1s ease;
-  text-align: left;
-}
-
-.network-menu__item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.network-menu__item--active {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.network-menu__item:not(:last-child) {
-  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.05));
-}
-
-.network-menu__dot {
+/* V56.3: Network dot for ListRow icon slot */
+.network-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
+  background: var(--color-text-muted);
 }
 
-.network-menu__dot--mainnet {
-  background: var(--color-success); /* v16.1: green for mainnet (live), not lime */
+.network-dot--mainnet {
+  background: var(--color-success);
 }
 
-.network-menu__dot--testnet {
+.network-dot--testnet {
   background: #60a5fa;
 }
 
-.network-menu__dot--devnet {
+.network-dot--devnet {
   background: #f59e0b;
 }
 
-.network-menu__label {
-  flex: 1;
-}
-
-.network-menu__check {
-  color: var(--color-success); /* v16.1: green for checkmark, not lime */
+/* V56.3: Trailing checkmark */
+.network-check {
+  color: var(--color-success);
   font-size: 12px;
-}
-
-/* Menu transition */
-.menu-fade-enter-active,
-.menu-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.menu-fade-enter-from,
-.menu-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
+  flex-shrink: 0;
 }
 </style>

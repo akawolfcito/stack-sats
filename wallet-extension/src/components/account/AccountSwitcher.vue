@@ -1,18 +1,26 @@
 <script setup lang="ts">
 /**
- * AccountSwitcher - V56 Perceived Cohesion Sprint
+ * AccountSwitcher - V56.2 Network Dropdown Alignment
  *
  * Decision Log:
  * - Container: Sheet variant="dropdown" (Rule 3 - picker/list, short-lived)
- * - Close strategy: click-outside + ESC (Sheet built-in, Guardrail A)
- * - CTA strategy: Row selection + footer Button secondary (Guardrail B)
- * - Scroll ownership: Internal to Sheet (Guardrail C)
+ * - Close strategy: Primitive-level (Sheet dropdown overlay captures outside clicks)
+ * - CTA strategy: Row selection (no footer button)
+ * - Visual: Trailing checkmark for active account (like NetworkChip)
+ * - Add account: ListRow variant="add" (inline, not footer button)
  * - ROI: acctsw-* prefix for E2E anchors
  *
- * V55 Primitives: Sheet, ListGroup, ListRow, Button
+ * V56.2 Changes:
+ * - Removed manual document listeners (Sheet.vue now handles outside clicks)
+ * - Removed stopPropagation (no longer needed)
+ * - Removed Sheet header/title (compact dropdown)
+ * - Active state: trailing checkmark instead of badge
+ * - "Add account" moved to ListRow with variant="add"
+ *
+ * V55 Primitives: Sheet, ListGroup, ListRow
  */
 import { ref } from 'vue'
-import { Sheet, Button } from '@/components/ui'
+import { Sheet } from '@/components/ui'
 import ListGroup from '@/components/list/ListGroup.vue'
 import ListRow from '@/components/list/ListRow.vue'
 
@@ -36,6 +44,10 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 
+/**
+ * Toggle dropdown. Sheet.vue now handles outside click detection
+ * at the primitive level, so no stopPropagation needed.
+ */
 const toggle = () => {
   isOpen.value = !isOpen.value
 }
@@ -53,6 +65,11 @@ const handleAddAccount = () => {
   emit('add-account')
   isOpen.value = false
 }
+
+/**
+ * Check if account is active (current)
+ */
+const isActive = (account: AccountItem) => account.label === props.currentLabel
 </script>
 
 <template>
@@ -69,53 +86,59 @@ const handleAddAccount = () => {
       </svg>
     </button>
 
-    <!-- V56: Sheet dropdown (no visible close button, click-outside+ESC) -->
+    <!-- V56.2: Sheet dropdown (no header, primitive-level close) -->
     <Sheet
       :is-open="isOpen"
       variant="dropdown"
-      title="Switch Account"
       :show-close="false"
       data-roi="acctsw-sheet"
       @close="close"
     >
-      <!-- V56: ListGroup + ListRow for accounts -->
+      <!-- V56.2: Custom compact header slot (empty) -->
+      <template #header>
+        <span></span>
+      </template>
+
+      <!-- V56.2: ListGroup + ListRow for accounts -->
       <ListGroup data-roi="acctsw-list">
         <ListRow
           v-for="account in accounts"
           :key="account.index"
           :label="account.label"
           :subtitle="account.addressShort"
-          :badge="account.label === currentLabel ? 'Active' : undefined"
           @click="selectAccount(account.index)"
         >
           <template #icon>
             <span
               class="account-dot"
-              :class="{ 'account-dot--active': account.label === currentLabel }"
+              :class="{ 'account-dot--active': isActive(account) }"
             />
           </template>
+          <!-- V56.2: Trailing checkmark for active account (like NetworkChip) -->
+          <template v-if="isActive(account)" #right>
+            <span class="account-check">&#10003;</span>
+          </template>
         </ListRow>
-      </ListGroup>
 
-      <template v-if="canAddAccount" #footer>
-        <Button
-          variant="secondary"
-          full-width
+        <!-- V56.2: Add account as ListRow variant="add" (inline, not footer) -->
+        <ListRow
+          v-if="canAddAccount"
+          label="Add Account"
+          variant="add"
           data-roi="acctsw-add"
           @click="handleAddAccount"
-        >
-          + Add Account
-        </Button>
-      </template>
+        />
+      </ListGroup>
     </Sheet>
   </div>
 </template>
 
 <style scoped>
 /**
- * V56 AccountSwitcher Styles
- * - Removed legacy overlay styles (now using Sheet dropdown)
- * - Kept trigger pill and account dot styles
+ * V56.2 AccountSwitcher Styles
+ * - Compact dropdown (no header)
+ * - Trailing checkmark for active account
+ * - Trigger pill unchanged
  */
 
 .account-switcher {
@@ -194,7 +217,7 @@ const handleAddAccount = () => {
   transform: rotate(180deg);
 }
 
-/* V56: Account dot for ListRow icon slot */
+/* V56.2: Account dot for ListRow icon slot */
 .account-dot {
   width: 8px;
   height: 8px;
@@ -204,5 +227,12 @@ const handleAddAccount = () => {
 
 .account-dot--active {
   background: var(--color-success);
+}
+
+/* V56.2: Trailing checkmark (like NetworkChip) */
+.account-check {
+  color: var(--color-success);
+  font-size: 12px;
+  flex-shrink: 0;
 }
 </style>

@@ -3,11 +3,14 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 /**
- * V55.5 Primitives Unification E2E Tests
+ * V55/V56 Primitives E2E Tests
  *
- * Tests the V55 primitives migration:
+ * Tests the V55 primitives migration and V56 overlay cohesion:
  * 1. Send flow uses data-roi selectors for E2E targeting
- * 2. AccountSwitcher overlay uses ListRow and data-roi selectors
+ * 2. AccountSwitcher dropdown uses Sheet primitive + ListRow
+ * 3. NetworkChip dropdown uses Sheet primitive + ListRow
+ * 4. ReceiveModal uses Sheet + StickyCTA
+ * 5. V56 Dropdown close behavior (primitive-level)
  *
  * Run with: pnpm test:e2e -- v55-primitives.spec.ts
  */
@@ -20,6 +23,16 @@ function sourceContains(filePath: string, token: string): boolean {
   }
   const content = fs.readFileSync(fullPath, "utf-8");
   return content.includes(token);
+}
+
+// Helper to check for regex pattern in source file
+function sourceMatches(filePath: string, pattern: RegExp): boolean {
+  const fullPath = path.resolve(process.cwd(), filePath);
+  if (!fs.existsSync(fullPath)) {
+    return false;
+  }
+  const content = fs.readFileSync(fullPath, "utf-8");
+  return pattern.test(content);
 }
 
 // Helper to check for horizontal overflow
@@ -35,7 +48,10 @@ async function hasHorizontalOverflow(page: Page): Promise<boolean> {
 
 const SEND_VIEW_FILE = "src/views/SendView.vue";
 const ACCOUNT_SWITCHER_FILE = "src/components/account/AccountSwitcher.vue";
+const NETWORK_CHIP_FILE = "src/components/network/NetworkChip.vue";
 const RECEIVE_MODAL_FILE = "src/components/ReceiveModal.vue";
+const IMPORT_MODAL_FILE = "src/components/ImportMnemonicModal.vue";
+const SHEET_FILE = "src/components/ui/Sheet.vue";
 
 test.describe("V55.5 Send Flow ROI Guards", () => {
   /**
@@ -71,9 +87,9 @@ test.describe("V55.5 Send Flow ROI Guards", () => {
   });
 });
 
-test.describe("V55.5 AccountSwitcher Overlay Guards", () => {
+test.describe("V56 AccountSwitcher Dropdown Guards", () => {
   /**
-   * Static contract checks for AccountSwitcher V55 migration.
+   * Static contract checks for AccountSwitcher V56 migration.
    */
 
   test("Guard 1: AccountSwitcher imports ListRow primitive", () => {
@@ -83,31 +99,65 @@ test.describe("V55.5 AccountSwitcher Overlay Guards", () => {
     ).toBe(true);
   });
 
-  test("Guard 2: AccountSwitcher uses ListRow component", () => {
+  test("Guard 2: AccountSwitcher uses Sheet dropdown", () => {
     expect(
-      sourceContains(ACCOUNT_SWITCHER_FILE, "<ListRow"),
-      "AccountSwitcher must use <ListRow> component"
+      sourceMatches(ACCOUNT_SWITCHER_FILE, /variant\s*=\s*["']dropdown["']/),
+      "AccountSwitcher must use Sheet variant='dropdown'"
     ).toBe(true);
   });
 
-  test("Guard 3: AccountSwitcher has dropdown data-roi", () => {
+  test("Guard 3: AccountSwitcher has sheet data-roi", () => {
     expect(
-      sourceContains(ACCOUNT_SWITCHER_FILE, 'data-roi="account-dropdown"'),
-      "AccountSwitcher must have data-roi='account-dropdown'"
+      sourceContains(ACCOUNT_SWITCHER_FILE, 'data-roi="acctsw-sheet"'),
+      "AccountSwitcher must have data-roi='acctsw-sheet'"
     ).toBe(true);
   });
 
   test("Guard 4: AccountSwitcher has list data-roi", () => {
     expect(
-      sourceContains(ACCOUNT_SWITCHER_FILE, 'data-roi="account-list"'),
-      "AccountSwitcher must have data-roi='account-list'"
+      sourceContains(ACCOUNT_SWITCHER_FILE, 'data-roi="acctsw-list"'),
+      "AccountSwitcher must have data-roi='acctsw-list'"
     ).toBe(true);
   });
 });
 
-test.describe("V55.5 ReceiveModal Overlay Guards", () => {
+test.describe("V56 NetworkChip Dropdown Guards", () => {
   /**
-   * Static contract checks for ReceiveModal data-roi attributes.
+   * Static contract checks for NetworkChip V56 migration.
+   */
+
+  test("Guard 1: NetworkChip imports ListRow primitive", () => {
+    expect(
+      sourceContains(NETWORK_CHIP_FILE, "import ListRow from"),
+      "NetworkChip must import ListRow primitive"
+    ).toBe(true);
+  });
+
+  test("Guard 2: NetworkChip uses Sheet dropdown", () => {
+    expect(
+      sourceMatches(NETWORK_CHIP_FILE, /variant\s*=\s*["']dropdown["']/),
+      "NetworkChip must use Sheet variant='dropdown'"
+    ).toBe(true);
+  });
+
+  test("Guard 3: NetworkChip has sheet data-roi", () => {
+    expect(
+      sourceContains(NETWORK_CHIP_FILE, 'data-roi="network-sheet"'),
+      "NetworkChip must have data-roi='network-sheet'"
+    ).toBe(true);
+  });
+
+  test("Guard 4: NetworkChip has list data-roi", () => {
+    expect(
+      sourceContains(NETWORK_CHIP_FILE, 'data-roi="network-list"'),
+      "NetworkChip must have data-roi='network-list'"
+    ).toBe(true);
+  });
+});
+
+test.describe("V56 ReceiveModal Overlay Guards", () => {
+  /**
+   * Static contract checks for ReceiveModal V56 DoD.
    */
 
   test("Guard 1: ReceiveModal has sheet data-roi", () => {
@@ -117,10 +167,10 @@ test.describe("V55.5 ReceiveModal Overlay Guards", () => {
     ).toBe(true);
   });
 
-  test("Guard 2: ReceiveModal has header data-roi", () => {
+  test("Guard 2: ReceiveModal uses StickyCTA", () => {
     expect(
-      sourceContains(RECEIVE_MODAL_FILE, 'data-roi="receive-header"'),
-      "ReceiveModal must have data-roi='receive-header'"
+      sourceContains(RECEIVE_MODAL_FILE, "<StickyCTA"),
+      "ReceiveModal must use StickyCTA component"
     ).toBe(true);
   });
 
@@ -131,10 +181,59 @@ test.describe("V55.5 ReceiveModal Overlay Guards", () => {
     ).toBe(true);
   });
 
-  test("Guard 4: ReceiveModal has CTA data-roi", () => {
+  test("Guard 4: ReceiveModal has error-slot", () => {
     expect(
-      sourceContains(RECEIVE_MODAL_FILE, 'data-roi="receive-cta"'),
-      "ReceiveModal must have data-roi='receive-cta'"
+      sourceContains(RECEIVE_MODAL_FILE, 'data-roi="receive-error"'),
+      "ReceiveModal must have data-roi='receive-error' (error slot)"
+    ).toBe(true);
+  });
+});
+
+test.describe("V56 Dropdown Close Behavior (Primitive-Level)", () => {
+  /**
+   * V56 Exit Criteria: Sheet dropdown must handle close at primitive level.
+   * These guards verify the fix is in Sheet.vue, not per-component hacks.
+   */
+
+  test("Guard 1: Sheet.vue dropdown overlay has pointer-events: auto", () => {
+    expect(
+      sourceMatches(SHEET_FILE, /\.sheet-overlay--dropdown[\s\S]*?pointer-events:\s*auto/),
+      "Sheet.vue dropdown overlay must have pointer-events: auto for outside-click"
+    ).toBe(true);
+  });
+
+  test("Guard 2: Sheet.vue has overlay click handler", () => {
+    expect(
+      sourceContains(SHEET_FILE, "handleOverlayClick"),
+      "Sheet.vue must have handleOverlayClick function"
+    ).toBe(true);
+  });
+
+  test("Guard 3: Sheet.vue has ESC key handler", () => {
+    expect(
+      sourceContains(SHEET_FILE, "handleEscapeKey"),
+      "Sheet.vue must have handleEscapeKey function"
+    ).toBe(true);
+  });
+
+  test("Guard 4: AccountSwitcher has NO manual click-outside listener", () => {
+    expect(
+      sourceContains(ACCOUNT_SWITCHER_FILE, "document.addEventListener"),
+      "AccountSwitcher must NOT have manual document.addEventListener (primitive handles it)"
+    ).toBe(false);
+  });
+
+  test("Guard 5: NetworkChip has NO manual click-outside listener", () => {
+    expect(
+      sourceContains(NETWORK_CHIP_FILE, "document.addEventListener"),
+      "NetworkChip must NOT have manual document.addEventListener (primitive handles it)"
+    ).toBe(false);
+  });
+
+  test("Guard 6: ImportMnemonicModal uses StickyCTA with error-slot", () => {
+    expect(
+      sourceMatches(IMPORT_MODAL_FILE, /\.error-slot[\s\S]*?min-height/),
+      "ImportMnemonicModal must have error-slot with min-height (anti-layout-shift)"
     ).toBe(true);
   });
 });
