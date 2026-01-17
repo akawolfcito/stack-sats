@@ -1,15 +1,18 @@
 <script setup lang="ts">
 /**
- * UnlockView - V54.7 PIN Premium Rebalance
+ * UnlockView - V54.8 PIN Premium Cohesion Pass
  *
  * Uses PinScreenShell for cohesive PIN layout across app.
- * Compact header with optional logo, reduced visual weight.
  *
- * V54.7 Changes:
+ * V54.8 Changes:
+ * - "Forgot PIN?" styled as premium text link
+ * - Unified visual hierarchy with VerifyPinView
+ * - Consistent title typography
+ *
+ * V54.7 Changes (preserved):
  * - Uses PinScreenShell layout
  * - Compact logo (40px) and title
  * - Ghost-premium keypad via PinInput
- * - Reduced ambient glow
  */
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
@@ -110,16 +113,17 @@ onMounted(() => {
       hide-label
       @complete="handleUnlock"
     >
-      <!-- Forgot PIN link above keypad -->
+      <!-- V54.8: Forgot PIN as premium text link -->
       <template #above-keypad>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
+          type="button"
+          class="forgot-pin-link"
           :disabled="isLoading"
+          data-roi="forgot-pin-link"
           @click="handleForgotPin"
         >
           Forgot PIN?
-        </Button>
+        </button>
       </template>
     </PinInput>
 
@@ -237,6 +241,58 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* V54.8: Forgot PIN premium text link */
+.forgot-pin-link {
+  background: none;
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  /* V54.8: Subtle underline on hover */
+  text-decoration: none;
+  position: relative;
+}
+
+.forgot-pin-link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: var(--space-sm);
+  right: var(--space-sm);
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.8);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.forgot-pin-link:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.forgot-pin-link:hover:not(:disabled)::after {
+  opacity: 0.4;
+  transform: scaleX(1);
+}
+
+.forgot-pin-link:active:not(:disabled) {
+  color: var(--color-accent-primary);
+}
+
+.forgot-pin-link:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.forgot-pin-link:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 /* V54.7: Loading text */
 .loading-text {
   color: var(--color-text-muted);

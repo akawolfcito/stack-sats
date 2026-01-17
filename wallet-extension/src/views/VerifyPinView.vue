@@ -1,11 +1,16 @@
 <script setup lang="ts">
 /**
- * VerifyPinView - V54.7 PIN Premium Rebalance
+ * VerifyPinView - V54.8 PIN Premium Cohesion Pass
  *
  * Uses PinScreenShell for cohesive PIN layout.
  * Contextual subtitle based on action.
  *
- * V54.7 Changes:
+ * V54.8 Changes:
+ * - "Cancel" styled as subtle secondary action (matching Forgot PIN)
+ * - Unified visual hierarchy with UnlockView
+ * - Consistent title/subtitle typography
+ *
+ * V54.7 Changes (preserved):
  * - Uses PinScreenShell layout with subtitle
  * - Compact title and logo
  * - Ghost-premium keypad via PinInput
@@ -18,7 +23,6 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import PinScreenShell from "@/components/pin/PinScreenShell.vue";
 import PinInput from "@/components/PinInput.vue";
-import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 
@@ -118,16 +122,17 @@ onMounted(() => {
       hide-label
       @complete="handleVerify"
     >
-      <!-- Cancel link above keypad -->
+      <!-- V54.8: Cancel as subtle secondary action -->
       <template #above-keypad>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
+          type="button"
+          class="cancel-link"
           :disabled="isLoading"
+          data-roi="cancel-link"
           @click="handleCancel"
         >
           Cancel
-        </Button>
+        </button>
       </template>
     </PinInput>
 
@@ -139,6 +144,57 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* V54.8: Cancel as subtle secondary action */
+.cancel-link {
+  background: none;
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  text-decoration: none;
+  position: relative;
+}
+
+.cancel-link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: var(--space-sm);
+  right: var(--space-sm);
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.8);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.cancel-link:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.cancel-link:hover:not(:disabled)::after {
+  opacity: 0.4;
+  transform: scaleX(1);
+}
+
+.cancel-link:active:not(:disabled) {
+  color: var(--color-accent-primary);
+}
+
+.cancel-link:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cancel-link:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .loading-text {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);

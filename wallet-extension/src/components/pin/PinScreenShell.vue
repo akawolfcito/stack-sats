@@ -1,9 +1,14 @@
 <script setup lang="ts">
 /**
- * PinScreenShell - V54.7 PIN Premium Rebalance
+ * PinScreenShell - V54.8 PIN Premium Cohesion Pass
  *
  * Shared layout shell for all PIN screens (Unlock, Create, Verify).
  * Enforces consistent structure and spacing aligned with Recovery/Verify system.
+ *
+ * V54.8 Changes:
+ * - Unified max-width (280px) for tight visual anchor
+ * - Consistent padding-inline and gap rhythm
+ * - Subtle glass container for content zone (depth without weight)
  *
  * Structure:
  * - Compact title + optional subtitle
@@ -64,53 +69,59 @@ defineProps<{
 </template>
 
 <style scoped>
-/* V54.7: Shell container - full viewport, flex column */
+/* V54.8: Shell container - full viewport, flex column */
 .pin-screen-shell {
   display: flex;
   flex-direction: column;
+  align-items: center;
   min-height: 100%;
   background: var(--color-bg-primary);
   position: relative;
   overflow: hidden;
+  /* V54.8: Consistent padding for visual anchor */
+  padding: 0 var(--space-lg);
 }
 
-/* V54.7: Ambient glow - subtle accent */
+/* V54.8: Ambient glow - subtle accent, perceptible */
 .ambient-glow {
   position: absolute;
-  top: -30%;
+  top: -25%;
   left: 50%;
   transform: translateX(-50%);
-  width: 150%;
+  width: 140%;
   height: 50%;
   background: var(--color-accent-primary);
-  opacity: 0.04;
-  filter: blur(100px);
+  opacity: 0.06;
+  filter: blur(80px);
   border-radius: 50%;
   pointer-events: none;
 }
 
-/* V54.7: Compact header - reduced vertical weight */
+/* V54.8: Compact header - centered, constrained width */
 .pin-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-xl) var(--space-md) var(--space-md);
-  gap: var(--space-sm);
+  padding: var(--space-lg) 0 var(--space-md);
+  gap: var(--space-xs);
   position: relative;
   z-index: 10;
+  width: 100%;
+  max-width: 280px;
 }
 
-/* V54.7: Compact logo - 40px instead of 64px */
+/* V54.8: Compact logo - 40px, refined glow */
 .logo-container {
   position: relative;
+  margin-bottom: var(--space-xs);
 }
 
 .logo-glow {
   position: absolute;
-  inset: -8px;
+  inset: -10px;
   background: var(--color-accent-primary);
-  opacity: 0.15;
-  filter: blur(16px);
+  opacity: 0.2;
+  filter: blur(20px);
   border-radius: 50%;
 }
 
@@ -120,8 +131,10 @@ defineProps<{
   height: 40px;
   border-radius: 12px;
   background: linear-gradient(135deg, #2a2d15, #1a1c0d);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: var(--shadow-elev-1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,42 +148,45 @@ defineProps<{
   object-fit: cover;
 }
 
-/* V54.7: Title - compact, aligned with Recovery system */
+/* V54.8: Title - prominent but not oversized */
 .pin-title {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   margin: 0;
   text-align: center;
 }
 
-/* V54.7: Subtitle - secondary text, one line max */
+/* V54.8: Subtitle - secondary text, one line max */
 .pin-subtitle {
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   margin: 0;
   text-align: center;
   line-height: 1.4;
 }
 
-/* V54.7: Main content area - flexible, contains PIN input */
+/* V54.8: Main content area - constrained width for rhythm */
 .pin-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 var(--space-md);
+  width: 100%;
+  max-width: 280px;
   position: relative;
   z-index: 10;
   min-height: 0;
 }
 
-/* V54.7: Actions footer - secondary links/buttons */
+/* V54.8: Actions footer - secondary links/buttons */
 .pin-actions {
   display: flex;
   justify-content: center;
-  padding: var(--space-sm) var(--space-md) var(--space-lg);
+  padding: var(--space-sm) 0 var(--space-lg);
   position: relative;
   z-index: 10;
+  width: 100%;
+  max-width: 280px;
 }
 </style>
