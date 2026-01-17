@@ -1,4 +1,19 @@
 <script setup lang="ts">
+/**
+ * UserHomeView - V55.2 Shell Migration
+ *
+ * Dashboard/home screen migrated to V55 shell system.
+ *
+ * V55.2 Changes:
+ * - Wrapped in ScreenShell for consistent layout
+ * - Added data-roi attributes for E2E testing
+ * - Preserved fixed header + scrollable body pattern
+ * - Ambient glow contained within shell
+ *
+ * Structure:
+ * - Fixed header zone (menu, account switcher, network, balance, actions, tabs)
+ * - Scrollable body (assets, tokens, activity)
+ */
 import { useRouter } from "vue-router";
 import { onBeforeMount, ref, watch, computed } from "vue";
 import { generateInitialAccounts } from "../utils/accounts";
@@ -43,6 +58,7 @@ import {
   type Transaction,
   type TransactionStatus,
 } from "../utils/transactions";
+import ScreenShell from "@/components/layout/ScreenShell.vue";
 import ReceiveModal from "../components/ReceiveModal.vue";
 import SegmentedTabs from "../components/SegmentedTabs.vue";
 import { Button, ActionBar, SectionHeader } from "@/components/ui";
@@ -591,211 +607,215 @@ const handleManageTokens = () => {
 </script>
 
 <template>
-  <section class="user-home-view" :class="{ 'user-home-view--popup': isPopup }">
-    <!-- Ambient Glow -->
-    <div class="ambient-glow"></div>
+  <ScreenShell :padded="false" :scroll="false" data-roi="home-screen">
+    <!-- V55.2: Custom home layout within shell -->
+    <section class="user-home-view" :class="{ 'user-home-view--popup': isPopup }">
+      <!-- Ambient Glow -->
+      <div class="ambient-glow"></div>
 
-    <div v-if="isLoading" class="loading-state">Loading accounts...</div>
+      <div v-if="isLoading" class="loading-state">Loading accounts...</div>
 
-    <template v-else>
-      <!-- Fixed Header Section (no scroll) -->
-      <div class="home-header">
-        <!-- Header - V28: Premium controls -->
-        <header class="header">
-        <!-- Menu Button -->
-        <Button variant="icon" @click="handleOpenUserMenu" title="Menu">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
-        </Button>
+      <template v-else>
+        <!-- Fixed Header Section (no scroll) -->
+        <div class="home-header">
+          <!-- Header - V28: Premium controls -->
+          <header class="header">
+            <!-- Menu Button -->
+            <Button variant="icon" @click="handleOpenUserMenu" title="Menu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </Button>
 
-        <!-- Account Switcher -->
-        <AccountSwitcher
-          :current-label="currentAccountName"
-          :current-address-short="currentAccountAddressShort"
-          :accounts="accountItems"
-          :can-add-account="accountCount < 100"
-          @select="handleAccountSelect"
-          @add-account="handleAddAccount"
-        />
+            <!-- Account Switcher -->
+            <AccountSwitcher
+              :current-label="currentAccountName"
+              :current-address-short="currentAccountAddressShort"
+              :accounts="accountItems"
+              :can-add-account="accountCount < 100"
+              @select="handleAccountSelect"
+              @add-account="handleAddAccount"
+            />
 
-        <!-- Header Right Actions -->
-        <div class="header-actions">
-          <!-- Network Chip -->
-          <NetworkChip
-            :network="selectedNetwork"
-            :label="NETWORKS[selectedNetwork].name"
-            @select="handleNetworkSelect"
+            <!-- Header Right Actions -->
+            <div class="header-actions">
+              <!-- Network Chip -->
+              <NetworkChip
+                :network="selectedNetwork"
+                :label="NETWORKS[selectedNetwork].name"
+                @select="handleNetworkSelect"
+              />
+
+              <!-- Fullpage Button (V28) -->
+              <Button variant="icon" @click="openFullPage" title="Open in full page">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"/>
+                  <polyline points="9 21 3 21 3 15"/>
+                  <line x1="21" y1="3" x2="14" y2="10"/>
+                  <line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+              </Button>
+            </div>
+          </header>
+
+          <!-- V55.2: Balance Card with data-roi -->
+          <BalanceHeader
+            :amount-text="isLoadingBalance ? '...' : shortBalance"
+            symbol="STX"
+            :usd-text="`${totalValueUsd || '$0.00'} USD`"
+            :is-hidden="!showBalance"
+            data-roi="home-balance-card"
+            @toggle-hidden="toggleBalanceVisibility"
+            @refresh="refreshBalance"
           />
 
-          <!-- Fullpage Button (V28) -->
-          <Button variant="icon" @click="openFullPage" title="Open in full page">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 3 21 3 21 9"/>
-              <polyline points="9 21 3 21 3 15"/>
-              <line x1="21" y1="3" x2="14" y2="10"/>
-              <line x1="3" y1="21" x2="10" y2="14"/>
-            </svg>
-          </Button>
-        </div>
-      </header>
+          <!-- V55.2: Quick Actions with data-roi -->
+          <section class="actions" data-roi="home-quick-actions">
+            <ActionBar :items="actionItems" @action="handleActionClick">
+              <template #icon-send>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="19" x2="12" y2="5"/>
+                  <polyline points="5 12 12 5 19 12"/>
+                </svg>
+              </template>
+              <template #icon-receive>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <polyline points="19 12 12 19 5 12"/>
+                </svg>
+              </template>
+            </ActionBar>
+          </section>
 
-      <!-- Compact Balance Section -->
-      <BalanceHeader
-        :amount-text="isLoadingBalance ? '...' : shortBalance"
-        symbol="STX"
-        :usd-text="`${totalValueUsd || '$0.00'} USD`"
-        :is-hidden="!showBalance"
-        @toggle-hidden="toggleBalanceVisibility"
-        @refresh="refreshBalance"
+          <!-- Segmented Tabs (both modes - unified navigation) -->
+          <div class="tabs-container">
+            <SegmentedTabs
+              v-model="activeTab"
+              :items="tabItems"
+            />
+          </div>
+        </div>
+
+        <!-- Scrollable Body Section -->
+        <div class="home-body">
+          <!-- V55.2: Assets Section with data-roi -->
+          <section v-if="activeTab === 'assets'" class="assets-section" data-roi="home-assets-list">
+            <SectionHeader title="Assets">
+              <template #actions>
+                <Button variant="ghost" size="sm" @click="handleManageTokens">
+                  Manage
+                </Button>
+                <Button
+                  variant="icon"
+                  :disabled="isLoadingBalance"
+                  title="Refresh"
+                  @click="refreshBalance"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
+                    <path d="M23 4v6h-6M1 20v-6h6"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                </Button>
+              </template>
+            </SectionHeader>
+            <ListGroup>
+              <!-- Asset rows rendered inside card -->
+              <AssetList
+                :items="assetItems"
+                @item-click="handleAssetClick"
+              />
+            </ListGroup>
+          </section>
+
+          <!-- SIP-010 Tokens Section (show when assets tab is active) -->
+          <section v-if="activeTab === 'assets' && (tokens.length > 0 || isLoadingTokens)" class="tokens-section">
+            <SectionHeader title="Tokens" :subtitle="`(${tokens.length})`">
+              <template #actions>
+                <Button variant="ghost" size="sm" @click="showTokens = !showTokens">
+                  {{ showTokens ? 'Hide' : 'Show' }}
+                </Button>
+              </template>
+            </SectionHeader>
+
+            <ListGroup v-if="showTokens">
+              <template v-if="true">
+                <div v-if="isLoadingTokens" class="empty-state">Loading tokens...</div>
+
+                <template v-else-if="tokens.length === 0">
+                  <div class="empty-state">No tokens found</div>
+                </template>
+
+                <template v-else>
+                  <!-- v18: Token rows now use ListRow for Settings-grade consistency -->
+                  <ListRow
+                    v-for="token in tokens"
+                    :key="token.contractId"
+                    :label="token.symbol"
+                    :subtitle="token.name"
+                    :value="token.formattedBalance"
+                    chevron
+                    :title="token.contractId"
+                    @click="handleTokenClick(token)"
+                  >
+                    <template #icon>
+                      <img
+                        v-if="token.imageUri"
+                        :src="token.imageUri"
+                        :alt="token.symbol"
+                        class="token-img"
+                        @error="($event.target as HTMLImageElement).style.display = 'none'"
+                      />
+                      <span v-else class="token-initial">{{ token.symbol.charAt(0) }}</span>
+                    </template>
+                  </ListRow>
+                </template>
+              </template>
+            </ListGroup>
+          </section>
+
+          <!-- V55.2: Activity Section with data-roi -->
+          <section v-if="activeTab === 'activity'" class="activity-section" data-roi="home-activity-preview">
+            <SectionHeader title="Recent Activity">
+              <template #actions>
+                <Button
+                  variant="icon"
+                  :disabled="isLoadingTx"
+                  title="Refresh"
+                  @click="loadTransactions"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingTx }">
+                    <path d="M23 4v6h-6M1 20v-6h6"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                </Button>
+              </template>
+            </SectionHeader>
+            <ListGroup>
+              <ActivityList
+                :items="activityItems"
+                :loading="isLoadingTx"
+                @item-click="handleActivityClick"
+              />
+            </ListGroup>
+          </section>
+        </div>
+      </template>
+
+      <!-- Receive Modal -->
+      <ReceiveModal
+        :visible="showReceiveModal"
+        :stx-address="userAccounts[accountIndexToDisplay]?.stxAddress || ''"
+        :btc-p2-p-k-h-address="userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || ''"
+        :btc-p2-t-r-address="userAccounts[accountIndexToDisplay]?.btcP2TRAddress || ''"
+        @close="closeReceiveModal"
       />
 
-      <!-- Action Bar (Send/Receive) -->
-      <section class="actions">
-        <ActionBar :items="actionItems" @action="handleActionClick">
-          <template #icon-send>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="19" x2="12" y2="5"/>
-              <polyline points="5 12 12 5 19 12"/>
-            </svg>
-          </template>
-          <template #icon-receive>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <polyline points="19 12 12 19 5 12"/>
-            </svg>
-          </template>
-        </ActionBar>
-      </section>
-
-      <!-- Segmented Tabs (both modes - unified navigation) -->
-      <div class="tabs-container">
-        <SegmentedTabs
-          v-model="activeTab"
-          :items="tabItems"
-        />
-      </div>
-      </div>
-
-      <!-- Scrollable Body Section -->
-      <div class="home-body">
-        <!-- Assets Section (show when assets tab is active) -->
-      <section v-if="activeTab === 'assets'" class="assets-section">
-        <SectionHeader title="Assets">
-          <template #actions>
-            <Button variant="ghost" size="sm" @click="handleManageTokens">
-              Manage
-            </Button>
-            <Button
-              variant="icon"
-              :disabled="isLoadingBalance"
-              title="Refresh"
-              @click="refreshBalance"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingBalance }">
-                <path d="M23 4v6h-6M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-              </svg>
-            </Button>
-          </template>
-        </SectionHeader>
-        <ListGroup>
-          <!-- Asset rows rendered inside card -->
-          <AssetList
-            :items="assetItems"
-            @item-click="handleAssetClick"
-          />
-        </ListGroup>
-      </section>
-
-      <!-- SIP-010 Tokens Section (show when assets tab is active) -->
-      <section v-if="activeTab === 'assets' && (tokens.length > 0 || isLoadingTokens)" class="tokens-section">
-        <SectionHeader title="Tokens" :subtitle="`(${tokens.length})`">
-          <template #actions>
-            <Button variant="ghost" size="sm" @click="showTokens = !showTokens">
-              {{ showTokens ? 'Hide' : 'Show' }}
-            </Button>
-          </template>
-        </SectionHeader>
-
-        <ListGroup v-if="showTokens">
-          <template v-if="true">
-            <div v-if="isLoadingTokens" class="empty-state">Loading tokens...</div>
-
-            <template v-else-if="tokens.length === 0">
-              <div class="empty-state">No tokens found</div>
-            </template>
-
-            <template v-else>
-              <!-- v18: Token rows now use ListRow for Settings-grade consistency -->
-              <ListRow
-                v-for="token in tokens"
-                :key="token.contractId"
-                :label="token.symbol"
-                :subtitle="token.name"
-                :value="token.formattedBalance"
-                chevron
-                :title="token.contractId"
-                @click="handleTokenClick(token)"
-              >
-                <template #icon>
-                  <img
-                    v-if="token.imageUri"
-                    :src="token.imageUri"
-                    :alt="token.symbol"
-                    class="token-img"
-                    @error="($event.target as HTMLImageElement).style.display = 'none'"
-                  />
-                  <span v-else class="token-initial">{{ token.symbol.charAt(0) }}</span>
-                </template>
-              </ListRow>
-            </template>
-          </template>
-        </ListGroup>
-      </section>
-
-      <!-- Activity (show when activity tab is active) -->
-      <section v-if="activeTab === 'activity'" class="activity-section">
-        <SectionHeader title="Recent Activity">
-          <template #actions>
-            <Button
-              variant="icon"
-              :disabled="isLoadingTx"
-              title="Refresh"
-              @click="loadTransactions"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'animate-spin': isLoadingTx }">
-                <path d="M23 4v6h-6M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-              </svg>
-            </Button>
-          </template>
-        </SectionHeader>
-        <ListGroup>
-          <ActivityList
-            :items="activityItems"
-            :loading="isLoadingTx"
-            @item-click="handleActivityClick"
-          />
-        </ListGroup>
-      </section>
-      </div>
-    </template>
-
-    <!-- Receive Modal -->
-    <ReceiveModal
-      :visible="showReceiveModal"
-      :stx-address="userAccounts[accountIndexToDisplay]?.stxAddress || ''"
-      :btc-p2-p-k-h-address="userAccounts[accountIndexToDisplay]?.btcP2PKHAddress || ''"
-      :btc-p2-t-r-address="userAccounts[accountIndexToDisplay]?.btcP2TRAddress || ''"
-      @close="closeReceiveModal"
-    />
-
-    <!-- Bottom Navigation disabled - using SegmentedTabs in both modes -->
-    <!-- <BottomNav @open-receive="openReceiveModal" /> -->
-  </section>
+      <!-- Bottom Navigation disabled - using SegmentedTabs in both modes -->
+      <!-- <BottomNav @open-receive="openReceiveModal" /> -->
+    </section>
+  </ScreenShell>
 </template>
 
 <style scoped>

@@ -1,17 +1,36 @@
 <script setup lang="ts">
+/**
+ * StickyCTA - V55.2 Update
+ *
+ * V55.2 Changes:
+ * - Added data-roi attributes for E2E contract testing
+ * - Optional roiPrefix for screen-specific targeting (e.g., "confirm" → "confirm-cta-primary")
+ * - Default: "sticky-cta-primary" / "sticky-cta-secondary"
+ */
+import { computed } from "vue";
 import { Button } from "@/components/ui";
 
-defineProps<{
+const props = defineProps<{
   primaryText: string;
   primaryDisabled?: boolean;
   secondaryText?: string;
   showArrow?: boolean;
+  /** Optional prefix for data-roi (e.g., "confirm" → "confirm-cta-primary") */
+  roiPrefix?: string;
 }>();
 
 const emit = defineEmits<{
   primary: [];
   secondary: [];
 }>();
+
+// Compute data-roi values with optional prefix
+const roiPrimary = computed(() =>
+  props.roiPrefix ? `${props.roiPrefix}-cta-primary` : "sticky-cta-primary"
+);
+const roiSecondary = computed(() =>
+  props.roiPrefix ? `${props.roiPrefix}-cta-secondary` : "sticky-cta-secondary"
+);
 </script>
 
 <template>
@@ -24,6 +43,7 @@ const emit = defineEmits<{
       v-if="secondaryText"
       variant="secondary"
       full-width
+      :data-roi="roiSecondary"
       @click="emit('secondary')"
     >
       {{ secondaryText }}
@@ -34,6 +54,7 @@ const emit = defineEmits<{
       variant="primary"
       full-width
       :disabled="primaryDisabled"
+      :data-roi="roiPrimary"
       @click="emit('primary')"
     >
       <span>{{ primaryText }}</span>

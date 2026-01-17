@@ -1,9 +1,16 @@
 <script setup lang="ts">
+/**
+ * AppHeader - V55.2 Update
+ *
+ * V55.2 Changes:
+ * - Added "close" option for left button (X icon)
+ * - Used in dApp confirmation screen
+ */
 defineProps<{
   /** Page title */
   title: string;
   /** Left button type */
-  left?: "back" | "menu" | "none";
+  left?: "back" | "menu" | "close" | "none";
   /** Header style variant */
   variant?: "default" | "modal";
 }>();
@@ -43,6 +50,21 @@ function handleLeftClick() {
         stroke-linejoin="round"
       >
         <path d="M19 12H5M12 19l-7-7 7-7" />
+      </svg>
+      <!-- Close Icon (V55.2) -->
+      <svg
+        v-else-if="left === 'close'"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
       </svg>
       <!-- Menu Icon -->
       <svg

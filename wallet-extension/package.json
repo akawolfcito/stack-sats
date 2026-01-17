@@ -27,7 +27,8 @@
     "ui:guard": "bash scripts/ui-commit-guard.sh",
     "ui:probe": "bash scripts/ui-style-probe.sh",
     "audit:accent": "bash scripts/audit-accent.sh",
-    "audit:ui": "bash scripts/audit-ui.sh"
+    "audit:ui": "bash scripts/audit-ui.sh",
+    "contract:check": "npx tsx scripts/ui-contract-check.ts"
   },
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.2.0",
