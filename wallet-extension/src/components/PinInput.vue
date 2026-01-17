@@ -1,15 +1,15 @@
 <script setup lang="ts">
 /**
- * PinInput - V54.6 Premium Cohesion Pass
+ * PinInput - V54.7 PIN Premium Rebalance
  *
- * Premium PIN input component aligned with Recovery/Verify visual system.
+ * Streamlined PIN input aligned with Recovery/Verify visual system.
  *
- * V54.6 Changes:
- * - Premium panel surface (glass effect, subtle border)
- * - Dots in capsule/rail with upgraded states
- * - Keypad with system identity styling
- * - Helper text slot inside panel
- * - prefers-reduced-motion safe animations
+ * V54.7 Changes:
+ * - Removed oversized panel wrapper - dots capsule is the only premium surface
+ * - Ghost-premium keypad (minimal fill, hover brighten, active scale)
+ * - Reduced visual weight for extension viewport
+ * - Compact layout with consistent spacing
+ * - prefers-reduced-motion safe animations preserved
  *
  * V52.3 Changes (preserved):
  * - Fixed error slot with constant min-height (no layout shift)
@@ -24,8 +24,8 @@ const props = defineProps<{
   error?: string;
   disabled?: boolean;
   showBiometric?: boolean;
-  hideLabel?: boolean; // V46: Hide label when used in modal with its own title
-  helperText?: string; // V54.6: Optional helper text below dots
+  hideLabel?: boolean;
+  helperText?: string;
 }>();
 
 const emit = defineEmits<{
@@ -64,15 +64,12 @@ const handleKeyPress = (key: string) => {
     return;
   }
 
-  // Add digit if there's room
   const index = currentIndex.value;
   if (index < PIN_LENGTH) {
     digits.value[index] = key;
-
     const fullPin = digits.value.join("");
     emit("change", fullPin);
 
-    // Check if complete
     if (index === PIN_LENGTH - 1) {
       emit("complete", fullPin);
     }
@@ -87,7 +84,6 @@ const handleBackspace = () => {
   }
 };
 
-// Handle physical keyboard input
 const handleKeydown = (event: KeyboardEvent) => {
   if (props.disabled) return;
 
@@ -104,14 +100,12 @@ const clear = () => {
 };
 
 const focus = () => {
-  // Focus the container for keyboard events
   const container = document.querySelector(".pin-input-container");
   if (container instanceof HTMLElement) {
     container.focus();
   }
 };
 
-// Watch for error to clear
 watch(
   () => props.error,
   (newError) => {
@@ -139,14 +133,14 @@ const modeLabels = {
     @focus="isFocused = true"
     @blur="isFocused = false"
   >
-    <!-- V54.6: Premium PIN Panel - cohesive with Recovery/Verify -->
-    <div class="pin-panel" data-roi="pin-panel">
-      <!-- Label (V46: can be hidden when modal provides context) -->
+    <!-- V54.7: Dots section - the only premium surface -->
+    <div class="pin-dots-section" data-roi="pin-dots-section">
+      <!-- V54.7: Label - compact, uppercase -->
       <div class="pin-label" :class="{ 'sr-only': hideLabel }">
         <p>{{ modeLabels[mode] }}</p>
       </div>
 
-      <!-- V54.6: PIN Dots in capsule/rail -->
+      <!-- V54.7: PIN Dots Capsule - the primary premium surface -->
       <div class="pin-dots-rail" data-roi="pin-dots-rail">
         <div
           v-for="(digit, index) in PIN_LENGTH"
@@ -160,12 +154,12 @@ const modeLabels = {
         ></div>
       </div>
 
-      <!-- V54.6: Helper text - subtle guidance inside panel -->
+      <!-- V54.7: Helper text - subtle, below dots -->
       <p v-if="helperText && !error" class="pin-helper" data-roi="pin-helper">
         {{ helperText }}
       </p>
 
-      <!-- V52.3: Error Slot - Fixed height, no layout shift -->
+      <!-- Error Slot - Fixed height, no layout shift -->
       <div
         class="error-slot"
         :class="{ 'error-slot--visible': !!error }"
@@ -178,12 +172,12 @@ const modeLabels = {
       </div>
     </div>
 
-    <!-- V54.6: Keypad Section - premium styling -->
+    <!-- V54.7: Keypad Section - ghost-premium -->
     <div class="pin-keypad-section">
-      <!-- Slot for Forgot PIN link -->
+      <!-- Slot for custom content above keypad (Forgot PIN, etc.) -->
       <slot name="above-keypad"></slot>
 
-      <!-- Numeric Keypad -->
+      <!-- V54.7: Ghost-Premium Keypad -->
       <div class="keypad" data-roi="pin-keypad">
         <template v-for="(row, rowIndex) in keypadRows" :key="rowIndex">
           <button
@@ -201,7 +195,7 @@ const modeLabels = {
             @mousedown.prevent
             @click="handleKeyPress(key)"
           >
-            <!-- Biometric Icon (Face ID style) -->
+            <!-- Biometric Icon -->
             <template v-if="key === 'biometric'">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                 <path d="M7 3H5a2 2 0 0 0-2 2v2"/>
@@ -217,7 +211,9 @@ const modeLabels = {
             <!-- Backspace Icon -->
             <template v-else-if="key === 'backspace'">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                <line x1="18" y1="9" x2="12" y2="15"/>
+                <line x1="12" y1="9" x2="18" y2="15"/>
               </svg>
             </template>
 
@@ -233,30 +229,26 @@ const modeLabels = {
 </template>
 
 <style scoped>
-/* V54.6: Container - Full height flex layout */
+/* V54.7: Container - flex column, full height */
 .pin-input-container {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   outline: none;
 }
 
-/* V54.6: Premium PIN Panel - cohesive with Recovery/Verify surfaces */
-.pin-panel {
+/* V54.7: Dots section - replaces oversized panel */
+.pin-dots-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-lg) var(--space-md);
-  /* Glass surface - matches phrase-hero/verify-card */
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-card);
+  gap: var(--space-xs);
+  padding: var(--space-sm) 0;
 }
 
-/* Label */
+/* V54.7: Label - compact uppercase */
 .pin-label {
   text-align: center;
 }
@@ -266,11 +258,11 @@ const modeLabels = {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   margin: 0;
 }
 
-/* V46: Screen reader only - hide visually but keep accessible */
+/* Screen reader only */
 .pin-label.sr-only {
   position: absolute;
   width: 1px;
@@ -283,74 +275,73 @@ const modeLabels = {
   border: 0;
 }
 
-/* V54.6: PIN Dots Rail - capsule container */
+/* V54.7: PIN Dots Rail - the primary premium surface */
 .pin-dots-rail {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   padding: var(--space-sm) var(--space-lg);
-  /* Subtle capsule border */
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  /* Glass capsule - matches Recovery/Verify tokens */
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-pill);
 }
 
-/* V54.6: PIN Dots - premium states */
+/* V54.7: PIN Dots - premium states */
 .pin-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  /* Empty state: muted */
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Empty state */
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.15s ease;
 }
 
-/* Filled state: solid/bright */
+/* Filled state */
 .pin-dot--filled {
   background: var(--color-text-primary);
   border-color: transparent;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 }
 
-/* Error state: warning ring */
+/* Error state */
 .pin-dot--error {
   border-color: var(--color-error);
   background: rgba(239, 68, 68, 0.2);
-  animation: error-pulse 0.5s ease;
+  animation: error-pulse 0.4s ease;
 }
 
 .pin-dot--error.pin-dot--filled {
   background: var(--color-error);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }
 
-/* Active cursor (blinking) */
+/* Active cursor */
 .pin-dot--active {
-  background: rgba(255, 255, 255, 0.35);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.2);
   animation: blink 1s ease-in-out infinite;
 }
 
 @keyframes blink {
   0%, 100% {
-    background: rgba(255, 255, 255, 0.35);
-    box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
   }
   50% {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
     box-shadow: none;
   }
 }
 
-/* V54.6: Error pulse animation */
 @keyframes error-pulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  50% { transform: scale(1.08); }
 }
 
-/* V54.6: prefers-reduced-motion - disable animations */
+/* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .pin-dot--active,
   .pin-dot--error {
@@ -362,7 +353,7 @@ const modeLabels = {
   }
 }
 
-/* V54.6: Helper text - subtle guidance */
+/* V54.7: Helper text */
 .pin-helper {
   color: var(--color-text-muted);
   font-size: var(--font-size-2xs);
@@ -371,14 +362,13 @@ const modeLabels = {
   line-height: 1.4;
 }
 
-/* V52.3: Error Slot - Fixed height, no layout shift */
+/* Error Slot - Fixed height */
 .error-slot {
-  min-height: 20px;
-  height: 20px;
+  min-height: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Hidden by default via opacity/transform (no reflow) */
   opacity: 0;
   transform: translateY(-2px);
   transition: opacity 0.15s ease, transform 0.15s ease;
@@ -400,7 +390,7 @@ const modeLabels = {
   white-space: nowrap;
 }
 
-/* V54.6: Keypad Section */
+/* V54.7: Keypad Section */
 .pin-keypad-section {
   flex: 1;
   display: flex;
@@ -408,88 +398,83 @@ const modeLabels = {
   align-items: center;
   justify-content: flex-start;
   gap: var(--space-sm);
-  padding-top: var(--space-sm);
 }
 
-/* V54.6: Keypad - premium grid with consistent hit targets */
+/* V54.7: Ghost-Premium Keypad */
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-xs);
+  gap: 6px;
   width: 100%;
-  max-width: 240px;
+  max-width: 220px;
 }
 
-/* V54.6: Keypad button - premium surface + consistent sizing */
+/* V54.7: Ghost-Premium Button */
 .keypad-btn {
-  /* Fixed hit area - min 44px for accessibility */
-  width: 56px;
+  /* Consistent hit area - min 44px for accessibility */
+  width: 64px;
   height: 48px;
   min-width: 44px;
   min-height: 44px;
-  /* Premium surface */
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Ghost: minimal fill */
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-md);
   /* Layout */
   display: flex;
   align-items: center;
   justify-content: center;
   justify-self: center;
-  /* Typography - aligned to system */
+  /* Typography */
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-normal);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: var(--color-text-primary);
   /* Interaction */
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.12s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Hover state - matches app controls */
+/* Hover: brighten */
 .keypad-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-/* Active/pressed state */
-.keypad-btn:active:not(:disabled) {
-  transform: scale(0.95);
   background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Focus-visible for keyboard nav */
+/* Active: scale down */
+.keypad-btn:active:not(:disabled) {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Focus-visible: accent ring */
 .keypad-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-accent-primary);
+  box-shadow: inset 0 0 0 2px var(--color-accent-primary);
 }
 
-/* Disabled state */
+/* Disabled */
 .keypad-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-/* V54.6: Action buttons (biometric/backspace) - same size as number keys */
+/* V54.7: Action buttons (biometric/backspace) */
 .keypad-btn--action {
   color: var(--color-text-secondary);
-  background: transparent;
   border-color: transparent;
 }
 
 .keypad-btn--action:hover:not(:disabled) {
   color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
 
-/* Icon sizing - consistent 22px */
+/* Icon sizing */
 .keypad-btn--action svg {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  min-height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
@@ -498,11 +483,8 @@ const modeLabels = {
 }
 
 .keypad-btn--biometric svg {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
-  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
 }
 
 /* Utility: invisible but maintains grid space */
