@@ -1,12 +1,19 @@
 <script setup lang="ts">
 /**
- * AccountSwitcher - V55.5 Primitives Unification
+ * AccountSwitcher - V56 Perceived Cohesion Sprint
  *
- * Dropdown for switching between wallet accounts.
- * Uses V55 primitives: Button, ListRow.
+ * Decision Log:
+ * - Container: Sheet variant="dropdown" (Rule 3 - picker/list, short-lived)
+ * - Close strategy: click-outside + ESC (Sheet built-in, Guardrail A)
+ * - CTA strategy: Row selection + footer Button secondary (Guardrail B)
+ * - Scroll ownership: Internal to Sheet (Guardrail C)
+ * - ROI: acctsw-* prefix for E2E anchors
+ *
+ * V55 Primitives: Sheet, ListGroup, ListRow, Button
  */
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Button } from '@/components/ui'
+import { ref } from 'vue'
+import { Sheet, Button } from '@/components/ui'
+import ListGroup from '@/components/list/ListGroup.vue'
 import ListRow from '@/components/list/ListRow.vue'
 
 export interface AccountItem {
@@ -28,7 +35,6 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(false)
-const wrapperRef = ref<HTMLElement | null>(null)
 
 const toggle = () => {
   isOpen.value = !isOpen.value
@@ -47,36 +53,12 @@ const handleAddAccount = () => {
   emit('add-account')
   isOpen.value = false
 }
-
-// Handle click outside to close overlay
-const handleClickOutside = (event: MouseEvent) => {
-  if (wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
-    isOpen.value = false
-  }
-}
-
-// Handle escape key to close
-const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && isOpen.value) {
-    isOpen.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-  document.removeEventListener('keydown', handleKeydown)
-})
 </script>
 
 <template>
-  <div ref="wrapperRef" class="account-switcher">
+  <div class="account-switcher">
     <!-- Trigger Pill -->
-    <button class="account-pill" @click="toggle">
+    <button class="account-pill" data-roi="acctsw-trigger" @click="toggle">
       <span class="account-pill__dot"></span>
       <span class="account-pill__info">
         <span class="account-pill__label">{{ currentLabel }}</span>
@@ -87,53 +69,60 @@ onUnmounted(() => {
       </svg>
     </button>
 
-    <!-- Overlay -->
-    <Transition name="overlay-fade">
-      <div v-if="isOpen" class="account-overlay" data-roi="account-dropdown">
-        <div class="account-overlay__header">
-          <h3 class="account-overlay__title">Switch Account</h3>
-          <Button variant="icon" @click="close">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </Button>
-        </div>
+    <!-- V56: Sheet dropdown (no visible close button, click-outside+ESC) -->
+    <Sheet
+      :is-open="isOpen"
+      variant="dropdown"
+      title="Switch Account"
+      :show-close="false"
+      data-roi="acctsw-sheet"
+      @close="close"
+    >
+      <!-- V56: ListGroup + ListRow for accounts -->
+      <ListGroup data-roi="acctsw-list">
+        <ListRow
+          v-for="account in accounts"
+          :key="account.index"
+          :label="account.label"
+          :subtitle="account.addressShort"
+          :badge="account.label === currentLabel ? 'Active' : undefined"
+          @click="selectAccount(account.index)"
+        >
+          <template #icon>
+            <span
+              class="account-dot"
+              :class="{ 'account-dot--active': account.label === currentLabel }"
+            />
+          </template>
+        </ListRow>
+      </ListGroup>
 
-        <div class="account-overlay__list" data-roi="account-list">
-          <ListRow
-            v-for="account in accounts"
-            :key="account.index"
-            :label="account.label"
-            :subtitle="account.addressShort"
-            :badge="account.label === currentLabel ? 'Active' : undefined"
-            @click="selectAccount(account.index)"
-          >
-            <template #icon>
-              <span
-                class="account-dot"
-                :class="{ 'account-dot--active': account.label === currentLabel }"
-              />
-            </template>
-          </ListRow>
-        </div>
-
-        <div v-if="canAddAccount" class="account-overlay__footer">
-          <Button variant="ghost" full-width class="account-add-btn" @click="handleAddAccount">
-            + Add Account
-          </Button>
-        </div>
-      </div>
-    </Transition>
+      <template v-if="canAddAccount" #footer>
+        <Button
+          variant="secondary"
+          full-width
+          data-roi="acctsw-add"
+          @click="handleAddAccount"
+        >
+          + Add Account
+        </Button>
+      </template>
+    </Sheet>
   </div>
 </template>
 
 <style scoped>
+/**
+ * V56 AccountSwitcher Styles
+ * - Removed legacy overlay styles (now using Sheet dropdown)
+ * - Kept trigger pill and account dot styles
+ */
+
 .account-switcher {
   position: relative;
 }
 
-/* Trigger Pill - V28: Premium, minimal border, hierarchy emphasis */
+/* Trigger Pill - V55 tokens */
 .account-pill {
   display: flex;
   align-items: center;
@@ -141,7 +130,7 @@ onUnmounted(() => {
   height: var(--control-h);
   padding: 0 var(--space-sm);
   background: transparent;
-  border: none; /* V28: Remove border for cleaner look */
+  border: none;
   border-radius: var(--radius-control);
   cursor: pointer;
   transition: background var(--transition-fast);
@@ -161,7 +150,7 @@ onUnmounted(() => {
 }
 
 .account-pill__dot {
-  width: 8px; /* V28: Slightly larger for visibility */
+  width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--color-success);
@@ -177,22 +166,22 @@ onUnmounted(() => {
 }
 
 .account-pill__label {
-  font-size: var(--font-size-2xs); /* V28: Tokenized */
+  font-size: var(--font-size-2xs);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary); /* V28: Primary for account name */
+  color: var(--color-text-primary);
   letter-spacing: 0.01em;
 }
 
 .account-pill__address {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-regular);
-  color: var(--color-text-muted); /* V28: Muted for address */
+  color: var(--color-text-muted);
   font-family: var(--font-mono);
 }
 
 .account-pill__arrow {
   color: var(--color-text-muted);
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-fast);
   flex-shrink: 0;
   opacity: 0.6;
 }
@@ -205,47 +194,7 @@ onUnmounted(() => {
   transform: rotate(180deg);
 }
 
-/* Overlay */
-.account-overlay {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 280px;
-  max-height: 60vh;
-  background: var(--color-bg-elevated, #1a1a1a);
-  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-elev-3);
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.account-overlay__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--card-pad-y) var(--card-pad-x);
-  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
-  flex-shrink: 0;
-}
-
-.account-overlay__title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.account-overlay__list {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* V55.5: Account dot for ListRow icon slot */
+/* V56: Account dot for ListRow icon slot */
 .account-dot {
   width: 8px;
   height: 8px;
@@ -255,39 +204,5 @@ onUnmounted(() => {
 
 .account-dot--active {
   background: var(--color-success);
-}
-
-/* Footer */
-.account-overlay__footer {
-  padding: var(--space-sm);
-  border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
-  flex-shrink: 0;
-}
-
-.account-add-btn :deep(.btn) {
-  min-height: var(--row-h);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-}
-
-.account-add-btn :deep(.btn:hover) {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--color-text-secondary);
-  color: var(--color-text-primary); /* v16.1: neutral hover, lime reserved for CTAs */
-}
-
-/* Transition */
-.overlay-fade-enter-active,
-.overlay-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.overlay-fade-enter-from,
-.overlay-fade-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(-8px);
 }
 </style>

@@ -1,9 +1,14 @@
 <script setup lang="ts">
 /**
- * ImportMnemonicModal - Secure in-app seed phrase import
+ * ImportMnemonicModal - V56 Perceived Cohesion Sprint
  *
- * Replaces native prompt() with a premium, secure experience.
- * Uses Sheet component for consistent modal behavior.
+ * Decision Log:
+ * - Container: Sheet variant="bottom" (Rule 2 - contextual overlay with must-complete)
+ * - Close strategy: Sheet showClose=true (single source, Guardrail A)
+ * - CTA strategy: StickyCTA roiPrefix="import" (must-complete, Guardrail B)
+ * - Scroll ownership: Internal to Sheet (Guardrail C)
+ * - Anti-layout-shift: Error slot with min-height (Guardrail D)
+ * - ROI: import-* prefix for E2E anchors
  *
  * Security features:
  * - No autocomplete, autocorrect, spellcheck, autocapitalize
@@ -13,6 +18,7 @@
  */
 import { ref, computed, watch, nextTick } from 'vue';
 import { Sheet, Button } from '@/components/ui';
+import StickyCTA from '@/components/layout/StickyCTA.vue';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -114,6 +120,7 @@ watch(() => props.isOpen, (isOpen) => {
     :is-open="isOpen"
     variant="bottom"
     title="Import Recovery Phrase"
+    data-roi="import-sheet"
     @close="handleClose"
   >
     <template #icon>
@@ -122,7 +129,7 @@ watch(() => props.isOpen, (isOpen) => {
       </svg>
     </template>
 
-    <div class="import-modal" data-roi="import-mnemonic-modal">
+    <div class="import-modal" data-roi="import-content">
       <!-- Security Notice -->
       <div class="security-notice">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -183,19 +190,15 @@ watch(() => props.isOpen, (isOpen) => {
     </div>
 
     <template #footer>
-      <div class="footer-actions" data-roi="import-mnemonic-cta">
-        <Button variant="secondary" @click="handleClose">
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          :disabled="!canSubmit"
-          data-roi="import-mnemonic-submit"
-          @click="handleConfirm"
-        >
-          Import Wallet
-        </Button>
-      </div>
+      <!-- V56: StickyCTA with roiPrefix for E2E anchors -->
+      <StickyCTA
+        primary-text="Import Wallet"
+        secondary-text="Cancel"
+        :primary-disabled="!canSubmit"
+        roi-prefix="import"
+        @primary="handleConfirm"
+        @secondary="handleClose"
+      />
     </template>
   </Sheet>
 </template>
@@ -402,13 +405,5 @@ watch(() => props.isOpen, (isOpen) => {
   text-align: center;
 }
 
-/* Footer Actions */
-.footer-actions {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.footer-actions :deep(.btn) {
-  flex: 1;
-}
+/* V56: Footer now uses StickyCTA - removed legacy .footer-actions */
 </style>
