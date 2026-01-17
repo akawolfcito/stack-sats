@@ -142,11 +142,12 @@ function handleClose() {
 </script>
 
 <template>
-  <ScreenShell :padded="false">
+  <ScreenShell :padded="false" data-roi="account-screen">
     <template #header>
       <AppHeader
         title="Account Details"
         left="back"
+        data-roi="account-title"
         @left-click="handleBack"
       />
     </template>
@@ -160,7 +161,7 @@ function handleClose() {
     <!-- Content -->
     <main v-else-if="account" class="content">
       <!-- Profile Section -->
-      <div class="profile-section">
+      <div class="profile-section" data-roi="account-section-profile">
         <!-- Avatar -->
         <div class="avatar-wrapper">
           <div class="avatar">
@@ -187,7 +188,7 @@ function handleClose() {
       </div>
 
       <!-- Addresses Section -->
-      <div class="section">
+      <div class="section" data-roi="account-section-addresses">
         <h3 class="section-title">Addresses</h3>
         <div class="addresses-list">
           <!-- STX Address -->
@@ -225,7 +226,7 @@ function handleClose() {
       </div>
 
       <!-- Security Section -->
-      <div class="section">
+      <div class="section" data-roi="account-section-security">
         <h3 class="section-title">Security</h3>
         <div class="card">
           <!-- View Private Key -->
@@ -257,7 +258,7 @@ function handleClose() {
       </div>
 
       <!-- Preferences Section -->
-      <div class="section">
+      <div class="section" data-roi="account-section-prefs">
         <h3 class="section-title">Preferences</h3>
         <div class="card">
           <div class="preference-row">
