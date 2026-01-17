@@ -1,13 +1,17 @@
 <script setup lang="ts">
 /**
- * AddWalletView - V55.0 PIN Screens Premium Finalization
+ * AddWalletView - V55.1 Shell Header Scale + Rhythm Unification
  *
  * Add wallet flow from Settings. Uses shared components:
  * - RecoveryPhraseDisplay: Mnemonic grid with reveal/hide, copy
  * - VerifyPhraseStep: 2-word verification
  * - PinScreenShell: Unified PIN screens (Create/Confirm)
  *
- * V55.0 Changes:
+ * V55.1 Changes:
+ * - Uses PinScreenShell with updated Top Cluster (48px padding, 44px logo)
+ * - Consistent title baseline with Unlock/Verify screens
+ *
+ * V55.0 Changes (preserved):
  * - Standardized microcopy across all PIN screens
  * - Consistent helper text: "Don't reuse a PIN you use elsewhere."
  *

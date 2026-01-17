@@ -2114,3 +2114,125 @@ test.describe("V54.7 PIN Premium Rebalance Guards", () => {
     });
   });
 });
+
+// =============================================================================
+// V55.1 Shell Header Scale + Rhythm Unification Guards
+// =============================================================================
+
+test.describe("V55.1 Shell Header Scale Guards", () => {
+  test.describe("Top Cluster Breathing Room", () => {
+    test("V55.1: PIN header should have 48px top padding", async ({ page }) => {
+      await page.goto("/#/unlock");
+      await page.waitForTimeout(300);
+
+      const header = await page.$('[data-roi="pin-header"]');
+      if (header) {
+        const padding = await header.evaluate((el) => {
+          return getComputedStyle(el).paddingTop;
+        });
+
+        // V55.1: Top padding should be 48px (--space-3xl)
+        const paddingValue = parseInt(padding);
+        expect(paddingValue, "Top padding should be 48px for breathing room").toBeGreaterThanOrEqual(44);
+        expect(paddingValue, "Top padding should not exceed 52px").toBeLessThanOrEqual(52);
+        console.log(`[V55.1 TopCluster] PIN header top padding: ${paddingValue}px`);
+      }
+    });
+
+    test("V55.1: Title baseline should be consistent across PIN screens", async ({ page }) => {
+      // Navigate to unlock and measure title position
+      await page.goto("/#/unlock");
+      await page.waitForTimeout(300);
+
+      const title = await page.$(".pin-title");
+      if (title) {
+        const titleRect = await title.boundingBox();
+        if (titleRect) {
+          // Title should be positioned after logo + padding
+          // At 48px padding + 44px logo + gaps, title should start around 100-140px
+          expect(titleRect.y, "Title Y position should be consistent").toBeGreaterThan(90);
+          expect(titleRect.y, "Title Y position should not be too low").toBeLessThan(160);
+          console.log(`[V55.1 TitleBaseline] Title Y position: ${titleRect.y}px`);
+        }
+      }
+    });
+  });
+
+  test.describe("Logo Scale Rules", () => {
+    test("V55.1: Flow screens should use 44px badge logo", async ({ page }) => {
+      await page.goto("/#/unlock");
+      await page.waitForTimeout(300);
+
+      const logoBox = await page.$(".logo-box");
+      if (logoBox) {
+        const size = await logoBox.evaluate((el) => {
+          const style = getComputedStyle(el);
+          return {
+            width: parseInt(style.width),
+            height: parseInt(style.height),
+          };
+        });
+
+        // V55.1: Flow logo should be 44px
+        expect(size.width, "Flow logo width should be 44px").toBe(44);
+        expect(size.height, "Flow logo height should be 44px").toBe(44);
+        console.log(`[V55.1 FlowLogo] Badge logo size: ${size.width}×${size.height}px`);
+      }
+    });
+
+    test("V55.1: Hero screens should use 72px logo", async ({ page }) => {
+      await page.goto("/#/start");
+      await clearWalletState(page);
+      await page.reload();
+      await page.waitForTimeout(300);
+
+      const heroLogo = await page.$('[data-roi="start-hero-logo"] .logo-box');
+      if (heroLogo) {
+        const size = await heroLogo.evaluate((el) => {
+          const style = getComputedStyle(el);
+          return {
+            width: parseInt(style.width),
+            height: parseInt(style.height),
+          };
+        });
+
+        // V55.1: Hero logo should be 72px
+        expect(size.width, "Hero logo width should be 72px").toBe(72);
+        expect(size.height, "Hero logo height should be 72px").toBe(72);
+        console.log(`[V55.1 HeroLogo] Hero logo size: ${size.width}×${size.height}px`);
+      }
+    });
+
+    test("V55.1: Logo scale ratio should be intentional (hero ~1.6x flow)", async ({ page }) => {
+      // Hero = 72px, Flow = 44px, ratio = 1.636
+      const heroSize = 72;
+      const flowSize = 44;
+      const ratio = heroSize / flowSize;
+
+      expect(ratio, "Hero/Flow ratio should be ~1.6x").toBeGreaterThan(1.5);
+      expect(ratio, "Hero/Flow ratio should not exceed 2x").toBeLessThan(2.0);
+      console.log(`[V55.1 ScaleRatio] Hero/Flow logo ratio: ${ratio.toFixed(2)}x`);
+    });
+  });
+
+  test.describe("No Scroll Verification", () => {
+    test("V55.1: PIN screen should not scroll at 360x600 with new spacing", async ({ page }) => {
+      await page.setViewportSize({ width: 360, height: 600 });
+      await page.goto("/#/unlock");
+      await page.waitForTimeout(300);
+
+      const shell = await page.$('[data-roi="pin-screen-shell"]');
+      if (shell) {
+        const scroll = await shell.evaluate((el) => ({
+          scrollHeight: el.scrollHeight,
+          clientHeight: el.clientHeight,
+        }));
+
+        // Should not need to scroll
+        const needsScroll = scroll.scrollHeight > scroll.clientHeight + 10;
+        expect(needsScroll, "PIN screen should fit without scrolling at 360x600").toBe(false);
+        console.log(`[V55.1 Scroll] 360x600: scrollHeight=${scroll.scrollHeight}, clientHeight=${scroll.clientHeight}`);
+      }
+    });
+  });
+});

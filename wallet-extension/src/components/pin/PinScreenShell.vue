@@ -1,29 +1,31 @@
 <script setup lang="ts">
 /**
- * PinScreenShell - V55.0 PIN Screens Premium Finalization
+ * PinScreenShell - V55.1 Shell Header Scale + Rhythm Unification
  *
  * Shared layout shell for ALL PIN screens (Unlock, Create, Confirm, Verify).
  * Enforces consistent structure and spacing aligned with Recovery/Verify system.
  *
- * V55.0 Changes:
- * - Finalized layout rhythm and spacing for all PIN screens
- * - Consistent microcopy support through title/subtitle/eyebrow props
+ * V55.1 Changes:
+ * - "Top Cluster" with increased breathing room (48px top padding)
+ * - Badge-scale logo: 44px box, 32px image (vs hero 72px)
+ * - Consistent title baseline across all PIN screens
+ * - data-roi="pin-top-cluster" for E2E height guards
+ *
+ * Scale Rules (V55.1):
+ * - Hero screens: logo 72px (StartView)
+ * - Flow screens: logo 44px (PIN, verify, recovery)
+ *
+ * V55.0 Changes (preserved):
+ * - Biometrics visibility matrix
+ * - Premium error shake animation
  *
  * V54.9 Changes (preserved):
- * - Added showBack + onBack props for onboarding flow back navigation
- * - Consistent across Unlock, Create PIN, Confirm PIN, Verify PIN
- * - Step indicator support via eyebrow prop
- *
- * V54.8 Changes (preserved):
- * - Unified max-width (280px) for tight visual anchor
- * - Consistent padding-inline and gap rhythm
- * - Subtle glass container for content zone (depth without weight)
+ * - Back button for onboarding flows
+ * - Step indicator via eyebrow prop
  *
  * Structure:
- * - Optional back button (for onboarding flows)
- * - Compact logo + title + optional subtitle/eyebrow
- * - PIN dots capsule (the single premium surface)
- * - Optional helper text
+ * - Top Cluster (fixed height zone for logo + title)
+ * - PIN dots capsule (premium surface)
  * - Keypad (ghost-premium)
  * - Secondary actions row
  *
@@ -72,8 +74,8 @@ function handleBack() {
     <!-- V54.8: Ambient glow - subtle, optional -->
     <div v-if="showAmbient !== false" class="ambient-glow"></div>
 
-    <!-- V54.9: Compact header -->
-    <header class="pin-header" data-roi="pin-header">
+    <!-- V55.1: Top Cluster - consistent breathing room and title baseline -->
+    <header class="pin-header" data-roi="pin-header" data-roi-cluster="pin-top-cluster">
       <!-- V54.9: Optional eyebrow (step indicator) -->
       <span v-if="eyebrow" class="pin-eyebrow" data-roi="pin-eyebrow">{{ eyebrow }}</span>
 
@@ -169,20 +171,21 @@ function handleBack() {
   pointer-events: none;
 }
 
-/* V54.8: Compact header - centered, constrained width */
+/* V55.1: Top Cluster - increased breathing room for premium feel */
 .pin-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-lg) 0 var(--space-md);
-  gap: var(--space-xs);
+  /* V55.1: 48px top padding (was 16px) for breathing room */
+  padding: var(--space-3xl) 0 var(--space-md);
+  gap: var(--space-sm);
   position: relative;
   z-index: 10;
   width: 100%;
   max-width: 280px;
 }
 
-/* V54.8: Compact logo - 40px, refined glow */
+/* V55.1: Badge-scale logo - 44px box (flow screens) */
 .logo-container {
   position: relative;
   margin-bottom: var(--space-xs);
@@ -190,17 +193,19 @@ function handleBack() {
 
 .logo-glow {
   position: absolute;
-  inset: -10px;
+  /* V55.1: Proportional glow for 44px logo */
+  inset: -8px;
   background: var(--color-accent-primary);
   opacity: 0.2;
-  filter: blur(20px);
+  filter: blur(16px);
   border-radius: 50%;
 }
 
 .logo-box {
   position: relative;
-  width: 40px;
-  height: 40px;
+  /* V55.1: 44px badge (was 40px) */
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   background: linear-gradient(135deg, #2a2d15, #1a1c0d);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -214,8 +219,9 @@ function handleBack() {
 }
 
 .logo-image {
-  width: 28px;
-  height: 28px;
+  /* V55.1: 32px image (was 28px) */
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   object-fit: cover;
 }
