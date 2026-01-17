@@ -1000,6 +1000,25 @@ const CHECKS: Check[] = [
     pattern: /#right[\s\S]*?network-check/,
     description: 'NetworkChip uses trailing checkmark for active (V56.3)',
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // V57: Dropdown Trigger Geometry Standard (Regression Guard)
+  // Reference: AccountSwitcher (8px dot, 12x12 chevron)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "GEOM-1",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "style",
+    pattern: /\.network-chip__dot[\s\S]*?width:\s*8px[\s\S]*?height:\s*8px/,
+    description: 'V57 Geometry: NetworkChip trigger dot is 8px (matches AccountSwitcher)',
+  },
+  {
+    id: "GEOM-2",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "template",
+    pattern: /network-chip__arrow[\s\S]*?width\s*=\s*["']12["'][\s\S]*?height\s*=\s*["']12["']/,
+    description: 'V57 Geometry: NetworkChip chevron is 12x12 (matches AccountSwitcher)',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
