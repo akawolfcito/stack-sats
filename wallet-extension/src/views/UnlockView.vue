@@ -1,10 +1,14 @@
 <script setup lang="ts">
 /**
- * UnlockView - V54.8 PIN Premium Cohesion Pass
+ * UnlockView - V55.0 PIN Screens Premium Finalization
  *
  * Uses PinScreenShell for cohesive PIN layout across app.
  *
- * V54.8 Changes:
+ * V55.0 Changes:
+ * - Biometrics visibility: conditional (show only if supported + enabled)
+ * - Currently defaults to false until biometrics config is implemented
+ *
+ * V54.8 Changes (preserved):
  * - "Forgot PIN?" styled as premium text link
  * - Unified visual hierarchy with VerifyPinView
  * - Consistent title typography
@@ -34,6 +38,14 @@ const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
 const attemptsRemaining = computed(() => sessionManager.attemptsRemaining);
 
 const canDelete = computed(() => deleteConfirmText.value.toUpperCase() === "DELETE");
+
+// V55.0: Biometrics visibility - show only if supported AND enabled by user
+// Currently defaults to false until biometrics configuration is implemented
+const showBiometricOption = computed(() => {
+  // TODO: Check for WebAuthn/biometric support and user preference
+  // return isBiometricSupported && userPreferences.biometricsEnabled;
+  return false;
+});
 
 const handleUnlock = async (pin: string) => {
   pinError.value = "";
@@ -103,13 +115,13 @@ onMounted(() => {
     :show-logo="true"
     :show-ambient="true"
   >
-    <!-- PIN Input -->
+    <!-- V55.0: PIN Input - biometrics conditional on support + user config -->
     <PinInput
       ref="pinInputRef"
       mode="unlock"
       :error="pinError"
       :disabled="isLoading || attemptsRemaining <= 0"
-      :show-biometric="true"
+      :show-biometric="showBiometricOption"
       hide-label
       @complete="handleUnlock"
     >

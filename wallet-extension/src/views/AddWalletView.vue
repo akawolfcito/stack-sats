@@ -1,13 +1,17 @@
 <script setup lang="ts">
 /**
- * AddWalletView - V54.9 Create PIN Shell Unification
+ * AddWalletView - V55.0 PIN Screens Premium Finalization
  *
  * Add wallet flow from Settings. Uses shared components:
  * - RecoveryPhraseDisplay: Mnemonic grid with reveal/hide, copy
  * - VerifyPhraseStep: 2-word verification
  * - PinScreenShell: Unified PIN screens (Create/Confirm)
  *
- * V54.9 Changes:
+ * V55.0 Changes:
+ * - Standardized microcopy across all PIN screens
+ * - Consistent helper text: "Don't reuse a PIN you use elsewhere."
+ *
+ * V54.9 Changes (preserved):
  * - PIN steps now use PinScreenShell (same as Unlock/Verify)
  * - Consistent logo, title, ambient glow across all PIN screens
  * - Step indicator eyebrow for Create/Confirm PIN
@@ -247,7 +251,7 @@ function handleStepBack() {
       :mode="currentStep === 'pin-create' ? 'create' : 'confirm'"
       :error="pinError"
       :disabled="isLoading"
-      :helper-text="currentStep === 'pin-create' ? 'Use a PIN you don\'t use elsewhere.' : undefined"
+      :helper-text="currentStep === 'pin-create' ? 'Don\'t reuse a PIN you use elsewhere.' : undefined"
       hide-label
       @complete="currentStep === 'pin-create' ? handlePinCreate($event) : handlePinConfirm($event)"
     />

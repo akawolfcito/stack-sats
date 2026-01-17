@@ -1,11 +1,15 @@
 <script setup lang="ts">
 /**
- * PinScreenShell - V54.9 Create PIN Shell Unification
+ * PinScreenShell - V55.0 PIN Screens Premium Finalization
  *
  * Shared layout shell for ALL PIN screens (Unlock, Create, Confirm, Verify).
  * Enforces consistent structure and spacing aligned with Recovery/Verify system.
  *
- * V54.9 Changes:
+ * V55.0 Changes:
+ * - Finalized layout rhythm and spacing for all PIN screens
+ * - Consistent microcopy support through title/subtitle/eyebrow props
+ *
+ * V54.9 Changes (preserved):
  * - Added showBack + onBack props for onboarding flow back navigation
  * - Consistent across Unlock, Create PIN, Confirm PIN, Verify PIN
  * - Step indicator support via eyebrow prop
