@@ -695,49 +695,78 @@ const CHECKS: Check[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // V56: ReceiveModal.vue — Updated ROI Contracts
+  // V56 DoD: ReceiveModal.vue — 6-Point Definition of Done
   // ═══════════════════════════════════════════════════════════
   {
-    id: "RECV-1",
+    id: "RECV-DOD-1",
     file: "src/components/ReceiveModal.vue",
     scope: "template",
-    pattern: /<Sheet\b[\s\S]*?\bdata-roi\s*=\s*["']receive-sheet["']/,
-    description: 'ReceiveModal uses Sheet with data-roi="receive-sheet"',
+    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']bottom["']/,
+    description: 'DoD#1: ReceiveModal uses Sheet primitive (variant="bottom")',
   },
   {
-    id: "RECV-2",
+    id: "RECV-DOD-2",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /:show-close\s*=\s*["']?true["']?/,
+    description: 'DoD#2: ReceiveModal single close affordance (Sheet showClose)',
+  },
+  {
+    id: "RECV-DOD-3",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /\btitle\s*=\s*["']Receive["']/,
+    description: 'DoD#3: ReceiveModal uses Sheet built-in header',
+  },
+  {
+    id: "RECV-DOD-4",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /<StickyCTA\b[\s\S]*?\broi-prefix\s*=\s*["']receive["']/,
+    description: 'DoD#4: ReceiveModal uses StickyCTA roiPrefix="receive"',
+  },
+  {
+    id: "RECV-DOD-5",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /<SegmentedTabs\b/,
+    description: 'DoD#5: ReceiveModal uses SegmentedTabs primitive',
+  },
+  {
+    id: "RECV-DOD-6",
+    file: "src/components/ReceiveModal.vue",
+    scope: "style",
+    pattern: /\.error-slot[\s\S]*?min-height/,
+    description: 'DoD#6: ReceiveModal has error-slot with min-height (anti-layout-shift)',
+  },
+  // ROI anchors
+  {
+    id: "RECV-ROI-1",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']receive-sheet["']/,
+    description: 'ReceiveModal has data-roi="receive-sheet"',
+  },
+  {
+    id: "RECV-ROI-2",
     file: "src/components/ReceiveModal.vue",
     scope: "template",
     pattern: /\bdata-roi\s*=\s*["']receive-tabs["']/,
-    description: 'ReceiveModal has data-roi="receive-tabs" (V56: asset selector)',
+    description: 'ReceiveModal has data-roi="receive-tabs"',
   },
   {
-    id: "RECV-3",
+    id: "RECV-ROI-3",
     file: "src/components/ReceiveModal.vue",
     scope: "template",
     pattern: /\bdata-roi\s*=\s*["']receive-qr["']/,
     description: 'ReceiveModal has data-roi="receive-qr"',
   },
   {
-    id: "RECV-4",
+    id: "RECV-ROI-4",
     file: "src/components/ReceiveModal.vue",
     scope: "template",
-    pattern: /\bdata-roi\s*=\s*["']receive-cta["']/,
-    description: 'ReceiveModal has data-roi="receive-cta"',
-  },
-  {
-    id: "RECV-5",
-    file: "src/components/ReceiveModal.vue",
-    scope: "template",
-    pattern: /\bdata-roi\s*=\s*["']receive-content["']/,
-    description: 'ReceiveModal has data-roi="receive-content" (V56)',
-  },
-  {
-    id: "RECV-6",
-    file: "src/components/ReceiveModal.vue",
-    scope: "template",
-    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']bottom["']/,
-    description: 'ReceiveModal uses Sheet variant="bottom" (V56 Decision: contextual overlay)',
+    pattern: /\bdata-roi\s*=\s*["']receive-error["']/,
+    description: 'ReceiveModal has data-roi="receive-error" (error slot)',
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -787,42 +816,125 @@ const CHECKS: Check[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // V56: ImportMnemonicModal.vue — New ROI Contracts
+  // V56 DoD: ImportMnemonicModal.vue — 6-Point Definition of Done
   // ═══════════════════════════════════════════════════════════
   {
-    id: "IMPORT-1",
+    id: "IMPORT-DOD-1",
     file: "src/components/ImportMnemonicModal.vue",
     scope: "template",
-    pattern: /<Sheet\b[\s\S]*?\bdata-roi\s*=\s*["']import-sheet["']/,
-    description: 'ImportMnemonicModal uses Sheet with data-roi="import-sheet"',
+    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']bottom["']/,
+    description: 'DoD#1: ImportMnemonicModal uses Sheet primitive (variant="bottom")',
   },
   {
-    id: "IMPORT-2",
+    id: "IMPORT-DOD-2",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /@close\s*=\s*["']handleClose["']/,
+    description: 'DoD#2: ImportMnemonicModal single close affordance (Sheet @close)',
+  },
+  {
+    id: "IMPORT-DOD-3",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /\btitle\s*=\s*["']Import Recovery Phrase["']/,
+    description: 'DoD#3: ImportMnemonicModal uses Sheet built-in header',
+  },
+  {
+    id: "IMPORT-DOD-4",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /<StickyCTA\b[\s\S]*?\broi-prefix\s*=\s*["']import["']/,
+    description: 'DoD#4: ImportMnemonicModal uses StickyCTA roiPrefix="import"',
+  },
+  {
+    id: "IMPORT-DOD-5",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /<textarea\b/,
+    description: 'DoD#5: ImportMnemonicModal uses textarea for mnemonic input',
+  },
+  {
+    id: "IMPORT-DOD-6",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /\.error-slot[\s\S]*?min-height/,
+    description: 'DoD#6: ImportMnemonicModal has error-slot with min-height (anti-layout-shift)',
+  },
+  // ROI anchors
+  {
+    id: "IMPORT-ROI-1",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']import-sheet["']/,
+    description: 'ImportMnemonicModal has data-roi="import-sheet"',
+  },
+  {
+    id: "IMPORT-ROI-2",
     file: "src/components/ImportMnemonicModal.vue",
     scope: "template",
     pattern: /\bdata-roi\s*=\s*["']import-content["']/,
     description: 'ImportMnemonicModal has data-roi="import-content"',
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // V56.2: Primitive-Level Dropdown Close (Sheet.vue fix)
+  // ═══════════════════════════════════════════════════════════
   {
-    id: "IMPORT-3",
-    file: "src/components/ImportMnemonicModal.vue",
-    scope: "template",
-    pattern: /<StickyCTA\b[\s\S]*?\broi-prefix\s*=\s*["']import["']/,
-    description: 'ImportMnemonicModal uses StickyCTA with roi-prefix="import"',
-  },
-  {
-    id: "IMPORT-4",
-    file: "src/components/ImportMnemonicModal.vue",
-    scope: "template",
-    pattern: /\bprimary-text\s*=\s*["']Import Wallet["']/,
-    description: 'ImportMnemonicModal StickyCTA has primary-text="Import Wallet"',
-  },
-  {
-    id: "IMPORT-5",
-    file: "src/components/ImportMnemonicModal.vue",
+    id: "SHEET-DROPDOWN-1",
+    file: "src/components/ui/Sheet.vue",
     scope: "style",
-    pattern: /min-height:\s*20px/,
-    description: 'ImportMnemonicModal has error slot with min-height (anti-layout-shift)',
+    pattern: /\.sheet-overlay--dropdown[\s\S]*?pointer-events:\s*auto/,
+    description: 'Sheet dropdown overlay has pointer-events: auto (V56.2 primitive fix)',
+  },
+  {
+    id: "SHEET-DROPDOWN-2",
+    file: "src/components/ui/Sheet.vue",
+    scope: "script",
+    pattern: /handleOverlayClick[\s\S]*?closeOnOverlay[\s\S]*?emit\(['"]close['"]\)/,
+    description: 'Sheet.vue has overlay click handler that emits close',
+  },
+  {
+    id: "SHEET-DROPDOWN-3",
+    file: "src/components/ui/Sheet.vue",
+    scope: "script",
+    pattern: /handleEscapeKey[\s\S]*?closeOnEscape[\s\S]*?emit\(['"]close['"]\)/,
+    description: 'Sheet.vue has ESC key handler that emits close',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V56.2: AccountSwitcher Checkmark Pattern
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "ACCTSW-7",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /#right[\s\S]*?account-check/,
+    description: 'AccountSwitcher uses trailing checkmark for active (V56.2 NetworkChip pattern)',
+  },
+  {
+    id: "ACCTSW-8",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /<ListRow[\s\S]*?variant\s*=\s*["']add["']/,
+    description: 'AccountSwitcher "Add Account" uses ListRow variant="add" (V56.2)',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V56.2: Other Modal Close Contracts (unchanged)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "CLOSE-4",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /:show-close\s*=\s*["']?true["']?/,
+    description: 'ReceiveModal has Sheet showClose=true (single close affordance)',
+  },
+  {
+    id: "CLOSE-5",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /<Sheet\b[\s\S]*?@close\s*=\s*["']handleClose["']/,
+    description: 'ImportMnemonicModal has @close handler (Sheet default showClose)',
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -841,6 +953,52 @@ const CHECKS: Check[] = [
     scope: "template",
     pattern: /<ListRow\b/,
     description: 'AccountSwitcher uses <ListRow> component',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V56.3: NetworkChip Sheet Primitive Migration
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "NET-1",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "template",
+    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']dropdown["']/,
+    description: 'NetworkChip uses Sheet variant="dropdown" (V56.3 primitive migration)',
+  },
+  {
+    id: "NET-2",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']network-trigger["']/,
+    description: 'NetworkChip has data-roi="network-trigger" (V56.3)',
+  },
+  {
+    id: "NET-3",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']network-sheet["']/,
+    description: 'NetworkChip has data-roi="network-sheet" (V56.3)',
+  },
+  {
+    id: "NET-4",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']network-list["']/,
+    description: 'NetworkChip has data-roi="network-list" (V56.3)',
+  },
+  {
+    id: "NET-5",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "template",
+    pattern: /<ListRow\b/,
+    description: 'NetworkChip uses ListRow primitive (V56.3)',
+  },
+  {
+    id: "NET-6",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "template",
+    pattern: /#right[\s\S]*?network-check/,
+    description: 'NetworkChip uses trailing checkmark for active (V56.3)',
   },
 ];
 

@@ -157,14 +157,11 @@ const hasFooter = computed(() => !!slots.footer);
   padding: var(--space-md);
 }
 
-/* Dropdown: no overlay styling (transparent) */
+/* Dropdown: transparent overlay but captures outside clicks (V56.2 fix) */
 .sheet-overlay--dropdown {
   background: transparent;
   backdrop-filter: none;
-  pointer-events: none;
-}
-
-.sheet-overlay--dropdown .sheet-container {
+  /* V56.2: pointer-events: auto allows overlay to capture outside clicks */
   pointer-events: auto;
 }
 

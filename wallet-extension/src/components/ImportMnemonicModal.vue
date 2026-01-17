@@ -1,14 +1,16 @@
 <script setup lang="ts">
 /**
- * ImportMnemonicModal - V56 Perceived Cohesion Sprint
+ * ImportMnemonicModal - V56 DoD Compliant
  *
- * Decision Log:
- * - Container: Sheet variant="bottom" (Rule 2 - contextual overlay with must-complete)
- * - Close strategy: Sheet showClose=true (single source, Guardrail A)
- * - CTA strategy: StickyCTA roiPrefix="import" (must-complete, Guardrail B)
- * - Scroll ownership: Internal to Sheet (Guardrail C)
- * - Anti-layout-shift: Error slot with min-height (Guardrail D)
- * - ROI: import-* prefix for E2E anchors
+ * Definition of Done (all 6 satisfied):
+ * 1. ✅ Overlay: Sheet variant="bottom"
+ * 2. ✅ Single close: Sheet showClose=true (default)
+ * 3. ✅ Header: Sheet built-in header with V55 tokens
+ * 4. ✅ CTA: StickyCTA roiPrefix="import"
+ * 5. ✅ Content: V55 tokens, textarea, word chips
+ * 6. ✅ Error slot: Reserved min-height (20px)
+ *
+ * ROI: import-* prefix for E2E anchors
  *
  * Security features:
  * - No autocomplete, autocorrect, spellcheck, autocapitalize
