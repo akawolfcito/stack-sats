@@ -88,6 +88,7 @@ onMounted(() => {
     :is-open="isOpen"
     variant="center"
     :title="label"
+    data-roi="qr-sheet"
     @close="handleClose"
   >
     <div class="qr-content">
@@ -99,7 +100,7 @@ onMounted(() => {
       </div>
 
       <!-- Address -->
-      <div class="address-block">
+      <div class="address-block" data-roi="qr-address">
         <span class="address-text">{{ truncateAddress(address) }}</span>
         <button
           class="copy-btn"

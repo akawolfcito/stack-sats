@@ -211,17 +211,18 @@ function handleBack() {
 </script>
 
 <template>
-  <ScreenShell :padded="false">
+  <ScreenShell :padded="false" data-roi="token-screen">
     <template #header>
       <AppHeader
         title="Add Token"
         left="back"
+        data-roi="token-title"
         @left-click="handleBack"
       />
     </template>
 
     <!-- Content -->
-    <div class="add-token-content">
+    <div class="add-token-content" data-roi="token-form">
       <!-- Network Indicator -->
       <div class="network-indicator">
         <span class="network-label">Adding to:</span>
@@ -300,7 +301,7 @@ function handleBack() {
       </div>
 
       <!-- Preview Card -->
-      <div class="preview-section">
+      <div class="preview-section" data-roi="token-preview">
         <h3 class="preview-title">Preview</h3>
         <div class="preview-card">
           <div class="preview-left">
@@ -337,6 +338,7 @@ function handleBack() {
       <StickyCTA
         :primary-text="isLoading ? 'Adding...' : 'Add Token'"
         :primary-disabled="!isFormValid || isLoading"
+        data-roi="token-cta"
         @primary="handleAddToken"
       />
     </template>

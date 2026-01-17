@@ -266,7 +266,7 @@ function handleStepBack() {
   </PinScreenShell>
 
   <!-- Non-PIN steps use ScreenShell + AppHeader -->
-  <ScreenShell v-else :padded="false">
+  <ScreenShell v-else :padded="false" data-roi="addwallet-screen">
     <template #header>
       <AppHeader
         :title="headerTitle"

@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * UI Contract Check - V55.3.1 ROI Coverage Backlog
+ * UI Contract Check - V55.3.2 ROI Coverage Remaining Backlog
  *
  * Static validation of UI component contracts with proper scoping.
  *
@@ -566,6 +566,197 @@ const CHECKS: Check[] = [
     pattern: /\bdata-roi\s*=\s*["']menu-section-danger["']/,
     description: 'UserMenu has data-roi="menu-section-danger"',
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // StartView.vue — V55.3.2 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "START-1",
+    file: "src/views/StartView.vue",
+    scope: "template",
+    pattern: /<ScreenShell\b[^>]*\bdata-roi\s*=\s*["']start-screen["']/,
+    description: 'StartView uses ScreenShell with data-roi="start-screen"',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // AddWalletView.vue — V55.3.2 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "ADDWALLET-1",
+    file: "src/views/AddWalletView.vue",
+    scope: "template",
+    pattern: /<ScreenShell\b[^>]*\bdata-roi\s*=\s*["']addwallet-screen["']/,
+    description: 'AddWalletView uses ScreenShell with data-roi="addwallet-screen"',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // AccountDetailsView.vue — V55.3.2 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "ACCT-1",
+    file: "src/views/AccountDetailsView.vue",
+    scope: "template",
+    pattern: /<ScreenShell\b[^>]*\bdata-roi\s*=\s*["']account-screen["']/,
+    description: 'AccountDetailsView uses ScreenShell with data-roi="account-screen"',
+  },
+  {
+    id: "ACCT-2",
+    file: "src/views/AccountDetailsView.vue",
+    scope: "template",
+    pattern: /<AppHeader\b[^>]*\bdata-roi\s*=\s*["']account-title["']/,
+    description: 'AccountDetailsView uses AppHeader with data-roi="account-title"',
+  },
+  {
+    id: "ACCT-3",
+    file: "src/views/AccountDetailsView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']account-section-profile["']/,
+    description: 'AccountDetailsView has data-roi="account-section-profile"',
+  },
+  {
+    id: "ACCT-4",
+    file: "src/views/AccountDetailsView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']account-section-addresses["']/,
+    description: 'AccountDetailsView has data-roi="account-section-addresses"',
+  },
+  {
+    id: "ACCT-5",
+    file: "src/views/AccountDetailsView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']account-section-security["']/,
+    description: 'AccountDetailsView has data-roi="account-section-security"',
+  },
+  {
+    id: "ACCT-6",
+    file: "src/views/AccountDetailsView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']account-section-prefs["']/,
+    description: 'AccountDetailsView has data-roi="account-section-prefs"',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // AddTokenView.vue — V55.3.2 ROI Coverage Contract
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "TOKEN-1",
+    file: "src/views/AddTokenView.vue",
+    scope: "template",
+    pattern: /<ScreenShell\b[^>]*\bdata-roi\s*=\s*["']token-screen["']/,
+    description: 'AddTokenView uses ScreenShell with data-roi="token-screen"',
+  },
+  {
+    id: "TOKEN-2",
+    file: "src/views/AddTokenView.vue",
+    scope: "template",
+    pattern: /<AppHeader\b[^>]*\bdata-roi\s*=\s*["']token-title["']/,
+    description: 'AddTokenView uses AppHeader with data-roi="token-title"',
+  },
+  {
+    id: "TOKEN-3",
+    file: "src/views/AddTokenView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']token-form["']/,
+    description: 'AddTokenView has data-roi="token-form"',
+  },
+  {
+    id: "TOKEN-4",
+    file: "src/views/AddTokenView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']token-preview["']/,
+    description: 'AddTokenView has data-roi="token-preview"',
+  },
+  {
+    id: "TOKEN-5",
+    file: "src/views/AddTokenView.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']token-cta["']/,
+    description: 'AddTokenView has data-roi="token-cta"',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V55.4 Overlay System — ROI Coverage Contracts
+  // ═══════════════════════════════════════════════════════════
+
+  // AddressQrModal.vue
+  {
+    id: "QR-1",
+    file: "src/components/account/AddressQrModal.vue",
+    scope: "template",
+    pattern: /<Sheet\b[\s\S]*?\bdata-roi\s*=\s*["']qr-sheet["']/,
+    description: 'AddressQrModal uses Sheet with data-roi="qr-sheet"',
+  },
+  {
+    id: "QR-2",
+    file: "src/components/account/AddressQrModal.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']qr-address["']/,
+    description: 'AddressQrModal has data-roi="qr-address"',
+  },
+
+  // ReceiveModal.vue
+  {
+    id: "RECV-1",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /<Sheet\b[\s\S]*?\bdata-roi\s*=\s*["']receive-sheet["']/,
+    description: 'ReceiveModal uses Sheet with data-roi="receive-sheet"',
+  },
+  {
+    id: "RECV-2",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']receive-header["']/,
+    description: 'ReceiveModal has data-roi="receive-header"',
+  },
+  {
+    id: "RECV-3",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']receive-qr["']/,
+    description: 'ReceiveModal has data-roi="receive-qr"',
+  },
+  {
+    id: "RECV-4",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']receive-cta["']/,
+    description: 'ReceiveModal has data-roi="receive-cta"',
+  },
+
+  // AccountSwitcher.vue
+  {
+    id: "ACCT-SW-1",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']account-dropdown["']/,
+    description: 'AccountSwitcher has data-roi="account-dropdown"',
+  },
+  {
+    id: "ACCT-SW-2",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /\bdata-roi\s*=\s*["']account-list["']/,
+    description: 'AccountSwitcher has data-roi="account-list"',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V55.5 Primitives Unification — ListRow Migration
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V55-1",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "script",
+    pattern: /import\s+ListRow\s+from/,
+    description: 'AccountSwitcher imports ListRow primitive',
+  },
+  {
+    id: "V55-2",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /<ListRow\b/,
+    description: 'AccountSwitcher uses <ListRow> component',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -577,7 +768,7 @@ function runChecks(root: string, checks: Check[]): void {
   const failures: string[] = [];
   const passed: string[] = [];
 
-  console.log("\n🔍 V55.3.1 UI Contract Check\n");
+  console.log("\n🔍 V55.5 UI Contract Check\n");
   console.log("=".repeat(60));
   console.log(`Root: ${root}`);
   console.log("=".repeat(60));

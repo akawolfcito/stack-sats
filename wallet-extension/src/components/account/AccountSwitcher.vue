@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+/**
+ * AccountSwitcher - V55.5 Primitives Unification
+ *
+ * Dropdown for switching between wallet accounts.
+ * Uses V55 primitives: Button, ListRow.
+ */
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Button } from '@/components/ui'
+import ListRow from '@/components/list/ListRow.vue'
 
 export interface AccountItem {
   index: number
@@ -82,7 +89,7 @@ onUnmounted(() => {
 
     <!-- Overlay -->
     <Transition name="overlay-fade">
-      <div v-if="isOpen" class="account-overlay">
+      <div v-if="isOpen" class="account-overlay" data-roi="account-dropdown">
         <div class="account-overlay__header">
           <h3 class="account-overlay__title">Switch Account</h3>
           <Button variant="icon" @click="close">
@@ -93,21 +100,22 @@ onUnmounted(() => {
           </Button>
         </div>
 
-        <div class="account-overlay__list">
-          <button
+        <div class="account-overlay__list" data-roi="account-list">
+          <ListRow
             v-for="account in accounts"
             :key="account.index"
-            class="account-item"
-            :class="{ 'account-item--active': account.label === currentLabel }"
+            :label="account.label"
+            :subtitle="account.addressShort"
+            :badge="account.label === currentLabel ? 'Active' : undefined"
             @click="selectAccount(account.index)"
           >
-            <span class="account-item__dot"></span>
-            <span class="account-item__info">
-              <span class="account-item__label">{{ account.label }}</span>
-              <span class="account-item__address">{{ account.addressShort }}</span>
-            </span>
-            <span v-if="account.label === currentLabel" class="account-item__check">&#10003;</span>
-          </button>
+            <template #icon>
+              <span
+                class="account-dot"
+                :class="{ 'account-dot--active': account.label === currentLabel }"
+              />
+            </template>
+          </ListRow>
         </div>
 
         <div v-if="canAddAccount" class="account-overlay__footer">
@@ -234,70 +242,19 @@ onUnmounted(() => {
 .account-overlay__list {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-sm);
   -webkit-overflow-scrolling: touch;
 }
 
-/* Account Item */
-.account-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  width: 100%;
-  min-height: var(--row-h);
-  padding: var(--space-md);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background 0.1s ease;
-  text-align: left;
-}
-
-.account-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.account-item--active {
-  background: rgba(255, 255, 255, 0.08); /* v19: neutral */
-}
-
-.account-item__dot {
+/* V55.5: Account dot for ListRow icon slot */
+.account-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--color-text-muted);
-  flex-shrink: 0;
 }
 
-.account-item--active .account-item__dot {
-  background: var(--color-success); /* v16.1: success for active, not lime */
-}
-
-.account-item__info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.account-item__label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.account-item__address {
-  font-size: 12px;
-  font-family: monospace;
-  color: var(--color-text-muted);
-}
-
-.account-item__check {
-  color: var(--color-success); /* v16.1: success for checkmark, not lime */
-  font-size: 14px;
-  flex-shrink: 0;
+.account-dot--active {
+  background: var(--color-success);
 }
 
 /* Footer */

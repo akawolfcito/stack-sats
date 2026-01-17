@@ -267,7 +267,7 @@ onBeforeMount(() => {
   </PinScreenShell>
 
   <!-- Non-PIN steps use ScreenShell + AppHeader -->
-  <ScreenShell v-else :padded="false">
+  <ScreenShell v-else :padded="false" data-roi="start-screen">
     <!-- V53: Header only shown on steps after 'start' -->
     <template v-if="headerConfig.showHeader" #header>
       <AppHeader

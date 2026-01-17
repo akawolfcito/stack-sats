@@ -158,6 +158,7 @@ function toggleFullAddress() {
     :is-open="visible"
     variant="bottom"
     :show-close="false"
+    data-roi="receive-sheet"
     @close="handleClose"
   >
     <template #header>
@@ -172,7 +173,7 @@ function toggleFullAddress() {
         <div class="ambient-glow" :class="{ 'ambient-glow--btc': activeTab === 'btc' }"></div>
 
         <!-- Header -->
-        <div class="modal-header">
+        <div class="modal-header" data-roi="receive-header">
           <div class="header-title">
             <div class="asset-icon" :class="{ 'asset-icon--btc': activeTab === 'btc' }">
               <svg v-if="activeTab === 'stx'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5">
@@ -236,7 +237,7 @@ function toggleFullAddress() {
       :class="{ 'receive-content--btc': activeTab === 'btc' }"
     >
       <!-- QR Code Container -->
-      <div class="qr-wrapper">
+      <div class="qr-wrapper" data-roi="receive-qr">
         <div class="qr-container" :class="{ 'qr-container--btc': activeTab === 'btc' }">
           <div class="qr-inner">
             <canvas ref="qrCanvas"></canvas>
@@ -266,7 +267,7 @@ function toggleFullAddress() {
       <p class="warning-text">{{ warningText }}</p>
 
       <!-- Action Buttons (horizontal layout) -->
-      <div class="action-buttons">
+      <div class="action-buttons" data-roi="receive-cta">
         <Button
           :variant="copied ? 'primary' : 'primary'"
           :class="{ 'btn--btc': activeTab === 'btc', 'btn--copied': copied }"
