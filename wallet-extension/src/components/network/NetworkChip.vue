@@ -82,7 +82,7 @@ const getDotClass = (key: NetworkName) => `network-dot--${key}`
     >
       <span class="network-chip__dot"></span>
       <span class="network-chip__label">{{ label || network }}</span>
-      <svg class="network-chip__arrow" :class="{ 'network-chip__arrow--open': isOpen }" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg class="network-chip__arrow" :class="{ 'network-chip__arrow--open': isOpen }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="6 9 12 15 18 9"/>
       </svg>
     </button>
@@ -165,10 +165,10 @@ const getDotClass = (key: NetworkName) => `network-dot--${key}`
   outline-offset: var(--focus-ring-offset);
 }
 
-/* Trigger dot indicator */
+/* Trigger dot indicator - V57: 8px matches AccountSwitcher */
 .network-chip__dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
