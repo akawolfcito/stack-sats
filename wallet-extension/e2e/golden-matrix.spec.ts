@@ -289,4 +289,25 @@ test.afterAll(async () => {
   // V38: Write count file for ui:guard validation
   const countFile = path.join(ARTIFACTS_DIR, 'current-count.json');
   fs.writeFileSync(countFile, JSON.stringify({ actual, expected, complete: actual === expected }, null, 2));
+
+  // V57: Verify dropdown-open screenshots exist (regression guard)
+  const V57_DROPDOWN_FILES = [
+    'popup-comfy-acct-switcher-open.png',
+    'popup-comfy-network-chip-open.png',
+    'popup-compact-acct-switcher-open.png',
+    'popup-compact-network-chip-open.png',
+    'sidepanel-comfy-acct-switcher-open.png',
+    'sidepanel-comfy-network-chip-open.png',
+    'sidepanel-compact-acct-switcher-open.png',
+    'sidepanel-compact-network-chip-open.png',
+  ];
+
+  const missingDropdowns = V57_DROPDOWN_FILES.filter(f => !files.includes(f));
+  if (missingDropdowns.length > 0) {
+    console.log('\n⚠️  V57 WARNING: Missing dropdown screenshots:');
+    missingDropdowns.forEach(f => console.log(`  - ${f}`));
+    console.log('Run may have failed to open dropdowns via snapshot hooks.\n');
+  } else {
+    console.log('\n✅ V57: All 8 dropdown-open screenshots present\n');
+  }
 });
