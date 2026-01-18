@@ -131,15 +131,18 @@ function handleClick() {
   color: var(--color-text-primary);
 }
 
+/* V64: Add variant - ghost button style (no dashed border) */
 .list-row--add .list-row-icon {
-  background: transparent;
-  border: 1.5px dashed var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
   color: var(--color-text-muted);
 }
 
 .list-row--add:hover .list-row-icon {
-  border-color: var(--color-text-secondary);
-  color: var(--color-text-primary); /* v16.1: neutral hover, lime reserved for CTAs */
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--color-text-primary);
 }
 
 .list-row--danger .list-row-icon {

@@ -1002,15 +1002,16 @@ const CHECKS: Check[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // V57: Dropdown Trigger Geometry Standard (Regression Guard)
+  // V57/V64: Dropdown Trigger Geometry Standard (Regression Guard)
   // Reference: AccountSwitcher (8px dot, 12x12 chevron)
+  // V64: Now uses var(--dot-size) token instead of literal 8px
   // ═══════════════════════════════════════════════════════════
   {
     id: "GEOM-1",
     file: "src/components/network/NetworkChip.vue",
     scope: "style",
-    pattern: /\.network-chip__dot[\s\S]*?width:\s*8px[\s\S]*?height:\s*8px/,
-    description: 'V57 Geometry: NetworkChip trigger dot is 8px (matches AccountSwitcher)',
+    pattern: /\.network-chip__dot[\s\S]*?width:\s*(?:8px|var\(--dot-size\))[\s\S]*?height:\s*(?:8px|var\(--dot-size\))/,
+    description: 'V57/V64 Geometry: NetworkChip trigger dot is 8px or var(--dot-size)',
   },
   {
     id: "GEOM-2",
