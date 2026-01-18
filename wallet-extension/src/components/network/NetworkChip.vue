@@ -143,11 +143,11 @@ defineExpose({ open, close, toggle })
   position: relative;
 }
 
-/* Trigger Chip - V55 tokens */
+/* Trigger Chip - V55 tokens, V58: gap matches AccountSwitcher */
 .network-chip {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   height: var(--control-h);
   padding: 0 var(--space-sm);
   background: transparent;
@@ -232,10 +232,10 @@ defineExpose({ open, close, toggle })
   background: #f59e0b;
 }
 
-/* V56.3: Trailing checkmark */
+/* V56.3: Trailing checkmark - V58: use token */
 .network-check {
   color: var(--color-success);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   flex-shrink: 0;
 }
 </style>

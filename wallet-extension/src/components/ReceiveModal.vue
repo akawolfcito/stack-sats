@@ -1,10 +1,17 @@
 <script setup lang="ts">
 /**
- * ReceiveModal - V56 DoD Compliant
+ * ReceiveModal - V63 Unified Overlay System
  *
- * Definition of Done (all 6 satisfied):
- * 1. ✅ Overlay: Sheet variant="bottom"
- * 2. ✅ Single close: Sheet showClose=true (no duplicate)
+ * V63 Changes:
+ * - variant="modal" (centered dialog, pro desktop style)
+ * - Modal sizing: clamp(320px, 92vw, 420px), max-height: 88vh
+ * - Header (fixed): Sheet built-in header with close button
+ * - Body (scroll): SegmentedTabs + QR + address (only body scrolls)
+ * - Footer (fixed): StickyCTA rail
+ *
+ * Definition of Done:
+ * 1. ✅ Overlay: Sheet variant="modal" (centered)
+ * 2. ✅ Single close: Sheet header close button only
  * 3. ✅ Header: Sheet built-in header with V55 tokens
  * 4. ✅ CTA: StickyCTA roiPrefix="receive" (scroll risk)
  * 5. ✅ Content: SegmentedTabs (V55 primitive), V55 tokens
@@ -172,9 +179,10 @@ function toggleFullAddress() {
 </script>
 
 <template>
+  <!-- V63: Centered modal variant (pro desktop style) -->
   <Sheet
     :is-open="visible"
-    variant="bottom"
+    variant="modal"
     title="Receive"
     :show-close="true"
     data-roi="receive-sheet"

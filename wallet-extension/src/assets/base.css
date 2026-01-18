@@ -39,6 +39,19 @@
   --surface-hover: rgba(255, 255, 255, 0.05);     /* Bumped from 0.04 */
   --surface-pressed: rgba(255, 255, 255, 0.10);   /* Bumped from 0.08 */
 
+  /* === V61/V62: Premium Surface Recipe (Home-Parity Panels) === */
+  /* Canonical recipe for dropdowns, modals, cards - glass + highlight + shadow */
+  --panel-bg: var(--surface-2);
+  --panel-bg-glass: rgba(29, 29, 28, 0.92);   /* V62: Semi-transparent for glass effect */
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --panel-shadow: 0 4px 16px rgba(0, 0, 0, 0.28), 0 2px 4px rgba(0, 0, 0, 0.16);
+  --panel-shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.36), 0 4px 8px rgba(0, 0, 0, 0.20);
+  --panel-divider: rgba(255, 255, 255, 0.08);
+  /* V62: Glass blur/saturate for elevated surfaces (dropdowns, modals) */
+  --panel-blur: 16px;
+  --panel-saturate: 1.2;
+
   /* === Button Secondary - V43 Visible Surface === */
   --btn-secondary-bg: rgba(255, 255, 255, 0.04); /* V43: Visible surface */
   --btn-secondary-border: rgba(255, 255, 255, 0.12); /* V43: Visible border */

@@ -46,14 +46,16 @@ defineProps<{
   color: var(--color-error);
 }
 
-/* V43: Card container - visible structure */
+/* V62: Premium Surface Recipe - glass-compatible transparent overlay */
 .list-group-items {
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.02); /* V43: Subtle card surface */
-  border-radius: var(--radius-md); /* V43: Rounded card */
-  border: 1px solid rgba(255, 255, 255, 0.06); /* V43: Visible boundary */
-  overflow: hidden; /* V43: Clip children to radius */
+  /* V62: Transparent overlay lets parent glass effect show through */
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-highlight);
+  overflow: hidden;
 }
 
 .list-group--danger .list-group-items {
@@ -75,7 +77,7 @@ defineProps<{
   left: calc(var(--card-pad-x) + var(--icon-btn-size) + var(--space-sm));
   right: var(--card-pad-x);
   height: 1px;
-  background: rgba(255, 255, 255, 0.10); /* V42: Slightly softer for premium feel */
+  background: var(--panel-divider); /* V61: Use token */
 }
 
 .list-group--danger .list-group-items > :deep(*:not(:last-child))::after {

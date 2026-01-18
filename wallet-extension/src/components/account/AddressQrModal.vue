@@ -84,9 +84,10 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- V63: Centered modal variant -->
   <Sheet
     :is-open="isOpen"
-    variant="center"
+    variant="modal"
     :title="label"
     data-roi="qr-sheet"
     @close="handleClose"
