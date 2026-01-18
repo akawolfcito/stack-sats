@@ -40,6 +40,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'select', accountIndex: number): void
   (e: 'add-account'): void
+  (e: 'manage'): void
 }>()
 
 const isOpen = ref(false)
@@ -63,6 +64,11 @@ const selectAccount = (index: number) => {
 
 const handleAddAccount = () => {
   emit('add-account')
+  isOpen.value = false
+}
+
+const handleManageAccounts = () => {
+  emit('manage')
   isOpen.value = false
 }
 
@@ -95,7 +101,7 @@ defineExpose({ open, close, toggle })
       </svg>
     </button>
 
-    <!-- V56.2: Sheet dropdown (no header, primitive-level close) -->
+    <!-- V68: Sheet dropdown with sticky footer for actions -->
     <Sheet
       :is-open="isOpen"
       variant="dropdown"
@@ -108,36 +114,58 @@ defineExpose({ open, close, toggle })
         <span></span>
       </template>
 
-      <!-- V56.2: ListGroup + ListRow for accounts -->
-      <ListGroup data-roi="acctsw-list">
-        <ListRow
-          v-for="account in accounts"
-          :key="account.index"
-          :label="account.label"
-          :subtitle="account.addressShort"
-          @click="selectAccount(account.index)"
-        >
-          <template #icon>
-            <span
-              class="account-dot"
-              :class="{ 'account-dot--active': isActive(account) }"
-            />
-          </template>
-          <!-- V56.2: Trailing checkmark for active account (like NetworkChip) -->
-          <template v-if="isActive(account)" #right>
-            <span class="account-check">&#10003;</span>
-          </template>
-        </ListRow>
+      <!-- V68: Scrollable account list with max-height -->
+      <div class="account-list" data-roi="acctsw-list">
+        <ListGroup>
+          <ListRow
+            v-for="account in accounts"
+            :key="account.index"
+            :label="account.label"
+            :subtitle="account.addressShort"
+            @click="selectAccount(account.index)"
+          >
+            <template #icon>
+              <span
+                class="account-dot"
+                :class="{ 'account-dot--active': isActive(account) }"
+              />
+            </template>
+            <!-- V56.2: Trailing checkmark for active account (like NetworkChip) -->
+            <template v-if="isActive(account)" #right>
+              <span class="account-check">&#10003;</span>
+            </template>
+          </ListRow>
+        </ListGroup>
+      </div>
 
-        <!-- V56.2: Add account as ListRow variant="add" (inline, not footer) -->
-        <ListRow
-          v-if="canAddAccount"
-          label="Add Account"
-          variant="add"
-          data-roi="acctsw-add"
-          @click="handleAddAccount"
-        />
-      </ListGroup>
+      <!-- V68: Sticky footer with actions -->
+      <template #footer>
+        <div class="switcher-footer" data-roi="acctsw-footer">
+          <button
+            v-if="canAddAccount"
+            class="footer-action"
+            data-roi="acctsw-add"
+            @click="handleAddAccount"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Add account</span>
+          </button>
+          <button
+            class="footer-action"
+            data-roi="acctsw-manage"
+            @click="handleManageAccounts"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span>Manage accounts</span>
+          </button>
+        </div>
+      </template>
     </Sheet>
   </div>
 </template>
@@ -247,5 +275,56 @@ defineExpose({ open, close, toggle })
   color: var(--color-success);
   font-size: var(--font-size-xs);
   flex-shrink: 0;
+}
+
+/* V68: Scrollable account list with max-height */
+.account-list {
+  max-height: calc(70vh - 120px); /* Account for header/footer */
+  overflow-y: auto;
+  margin: calc(-1 * var(--space-md)) calc(-1 * var(--page-pad-x));
+  padding: var(--space-md) var(--page-pad-x);
+}
+
+/* V68: Sticky footer with actions */
+.switcher-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.footer-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 100%;
+  text-align: left;
+}
+
+.footer-action:hover {
+  background: var(--surface-hover);
+  color: var(--color-text-primary);
+}
+
+.footer-action:active {
+  background: var(--surface-pressed);
+  transform: scale(0.985);
+}
+
+.footer-action svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.footer-action:hover svg {
+  opacity: 1;
 }
 </style>
