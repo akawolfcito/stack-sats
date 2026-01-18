@@ -214,18 +214,15 @@ watch(() => props.isOpen, (isOpen) => {
   gap: var(--space-md);
 }
 
-/* V64: Security Notice - left-accent style (premium, not solid yellow) */
+/* V65: Security Notice - minimal, just text with icon */
 .security-notice {
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm);
-  padding: var(--space-md);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 3px solid var(--color-warning);
-  border-radius: var(--radius-md);
+  padding: var(--space-sm) 0;
+  /* V65: No background, no border - just warning text */
   font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: 1.5;
 }
 
@@ -235,15 +232,12 @@ watch(() => props.isOpen, (isOpen) => {
   color: var(--color-warning);
 }
 
-/* V64: Input Area - glass-card recipe */
+/* V65: Input Area - transparent, subtle border */
 .input-area {
   position: relative;
-  background: var(--panel-bg-glass);
-  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
-  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-highlight);
-  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--panel-divider);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -348,34 +342,26 @@ watch(() => props.isOpen, (isOpen) => {
   color: var(--color-error);
 }
 
-/* V64: Word Preview Grid - glass-card recipe */
+/* V65: Word Preview Grid - transparent, just spacing */
 .word-preview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-xs);
-  padding: var(--space-sm);
-  background: var(--panel-bg-glass);
-  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
-  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-highlight);
-  border-radius: var(--radius-md);
+  padding: var(--space-sm) 0;
+  /* V65: No background - Sheet provides surface */
   max-height: 120px;
   overflow-y: auto;
 }
 
-/* V64: Word chip - inner highlight + subtle shadow */
+/* V65: Word chip - minimal styling */
 .word-chip {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px 6px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-sm);
   font-size: 10px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .word-chip--invalid {
