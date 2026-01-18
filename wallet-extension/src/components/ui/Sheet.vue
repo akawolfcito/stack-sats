@@ -393,23 +393,31 @@ const hasFooter = computed(() => !!slots.footer);
   margin: 0;
 }
 
+/* V70: Close button - visible against glass background */
 .sheet-header__close {
   display: flex;
   align-items: center;
   justify-content: center;
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
-  background: transparent;
-  border: none;
+  /* V70: Subtle glass background for visibility */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 50%;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .sheet-header__close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.16);
   color: var(--color-text-primary);
+}
+
+.sheet-header__close:active {
+  background: rgba(255, 255, 255, 0.10);
+  transform: scale(0.95);
 }
 
 /* V70: Dropdown header variant - compact, no close button */
