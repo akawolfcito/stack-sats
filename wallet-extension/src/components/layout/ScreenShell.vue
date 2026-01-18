@@ -38,11 +38,12 @@ defineProps<{
 </template>
 
 <style scoped>
+/* V70: Visual System Lock - ONE screen background */
 .screen-shell {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--color-bg-primary);
+  background: var(--screen-bg-base);
   position: relative;
   /* Note: overflow NOT hidden here to allow proper scroll in child */
 }
@@ -53,7 +54,7 @@ defineProps<{
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--color-bg-primary);
+  background: var(--screen-bg-base);
 }
 
 /* Content */

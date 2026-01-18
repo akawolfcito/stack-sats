@@ -270,18 +270,21 @@ watch(() => props.isOpen, (isOpen) => {
   font-family: var(--font-family);
 }
 
-/* V45: Paste Button - using InlineAction-style tokens */
+/* V70: Paste Button - fixed overlap, proper z-index and positioning */
 .paste-btn {
   position: absolute;
   top: var(--space-sm);
   right: var(--space-sm);
+  z-index: 2; /* V70: Above textarea to prevent overlap */
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   height: var(--control-h-inline);
   padding: 0 var(--space-sm);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* V70: Glass surface recipe for premium look */
+  background: var(--panel-bg-glass);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-highlight);
   border-radius: var(--radius-chip);
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);

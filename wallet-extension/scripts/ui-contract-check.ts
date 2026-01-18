@@ -1208,6 +1208,45 @@ const CHECKS: Check[] = [
     pattern: /path:\s*["']\/accounts["']/,
     description: 'V68: /accounts route is defined',
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // V70: Visual System Lock (Premium Parity)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V70-1",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--screen-bg-base:\s*var\(--color-bg-primary\)/,
+    description: 'V70: --screen-bg-base token exists and references --color-bg-primary',
+  },
+  {
+    id: "V70-2",
+    file: "src/components/layout/ScreenShell.vue",
+    scope: "style",
+    pattern: /background:\s*var\(--screen-bg-base\)/,
+    description: 'V70: ScreenShell uses --screen-bg-base',
+  },
+  {
+    id: "V70-3",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /title=["']Accounts["']/,
+    description: 'V70: AccountSwitcher dropdown has "Accounts" header title',
+  },
+  {
+    id: "V70-4",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "template",
+    pattern: /title=["']Network["']/,
+    description: 'V70: NetworkChip dropdown has "Network" header title',
+  },
+  {
+    id: "V70-5",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /\.paste-btn[\s\S]*?z-index:\s*\d+/,
+    description: 'V70: PASTE button has z-index to prevent overlap',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────

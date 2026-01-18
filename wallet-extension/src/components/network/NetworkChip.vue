@@ -96,20 +96,16 @@ defineExpose({ open, close, toggle })
       </svg>
     </button>
 
-    <!-- V56.3: Sheet dropdown (primitive-level close) -->
+    <!-- V70: Sheet dropdown with header title -->
     <Sheet
       :is-open="isOpen"
       variant="dropdown"
+      title="Network"
       :show-close="false"
       data-roi="network-sheet"
       @close="close"
     >
-      <!-- V56.3: Compact header (empty) -->
-      <template #header>
-        <span></span>
-      </template>
-
-      <!-- V56.3: ListGroup + ListRow for networks -->
+      <!-- V70: ListGroup + ListRow for networks -->
       <ListGroup data-roi="network-list">
         <ListRow
           v-for="net in networks"

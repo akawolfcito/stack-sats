@@ -101,18 +101,15 @@ defineExpose({ open, close, toggle })
       </svg>
     </button>
 
-    <!-- V68: Sheet dropdown with sticky footer for actions -->
+    <!-- V70: Sheet dropdown with header title + sticky footer -->
     <Sheet
       :is-open="isOpen"
       variant="dropdown"
+      title="Accounts"
       :show-close="false"
       data-roi="acctsw-sheet"
       @close="close"
     >
-      <!-- V56.2: Custom compact header slot (empty) -->
-      <template #header>
-        <span></span>
-      </template>
 
       <!-- V68: Scrollable account list with max-height -->
       <div class="account-list" data-roi="acctsw-list">
