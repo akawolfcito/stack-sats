@@ -36,8 +36,9 @@
   --surface-1: var(--color-bg-elevated);          /* Recessed controls (tabs container) */
   --surface-2: var(--color-bg-card);              /* Cards, containers, modals */
   --surface-3: #262625;                           /* Elevated controls on surface-2 */
-  --surface-hover: rgba(255, 255, 255, 0.05);     /* Bumped from 0.04 */
-  --surface-pressed: rgba(255, 255, 255, 0.10);   /* Bumped from 0.08 */
+  /* V66 G2: Increased hover for tactile feedback */
+  --surface-hover: rgba(255, 255, 255, 0.08);     /* V66: 5% → 8% for visibility */
+  --surface-pressed: rgba(255, 255, 255, 0.12);   /* V66: 10% → 12% proportionally */
 
   /* === V61/V62: Premium Surface Recipe (Home-Parity Panels) === */
   /* Canonical recipe for dropdowns, modals, cards - glass + highlight + shadow */
