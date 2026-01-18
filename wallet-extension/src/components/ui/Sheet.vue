@@ -271,21 +271,22 @@ const hasFooter = computed(() => !!slots.footer);
   z-index: 100;
 }
 
-/* V63: Modal overlay - dim + blur */
+/* V67: Modal overlay - dim + blur (uses scrim token, stronger for modals) */
 .sheet-overlay--modal {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-lg);
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.55); /* Slightly stronger than dropdown scrim */
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
 }
 
-/* V63: Dropdown overlay - transparent, captures outside clicks */
+/* V67: Dropdown overlay - visible scrim for premium focus separation */
 .sheet-overlay--dropdown {
-  background: transparent;
-  backdrop-filter: none;
+  background: var(--overlay-scrim);
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
   pointer-events: auto;
 }
 

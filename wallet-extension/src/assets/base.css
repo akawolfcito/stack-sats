@@ -53,6 +53,11 @@
   --panel-blur: 16px;
   --panel-saturate: 1.2;
 
+  /* === V67: Overlay Scrim Tokens === */
+  /* Premium focus separation - darkens background when overlays open */
+  --overlay-scrim: rgba(0, 0, 0, 0.40);         /* 40% - visible but not harsh */
+  --overlay-blur: 8px;                          /* Subtle depth blur on scrim */
+
   /* === V64: Status Dot Tokens === */
   /* Premium status indicators with glow effects */
   --dot-size: 8px;
