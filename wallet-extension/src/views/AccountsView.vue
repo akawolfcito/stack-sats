@@ -167,7 +167,7 @@ async function addAccount() {
 </script>
 
 <template>
-  <ScreenShell :padded="false" data-roi="accounts-management">
+  <ScreenShell :padded="false" data-roi="accounts-management" class="accounts-view">
     <template #header>
       <AppHeader
         title="Accounts"
@@ -176,6 +176,9 @@ async function addAccount() {
         @left-click="goBack"
       />
     </template>
+
+    <!-- V69: Ambient Glow (Home-parity) -->
+    <div class="ambient-glow"></div>
 
     <!-- Loading -->
     <div v-if="isLoading" class="loading-state">
@@ -251,6 +254,26 @@ async function addAccount() {
 </template>
 
 <style scoped>
+/* V69: Root view styling for premium parity */
+.accounts-view {
+  position: relative;
+}
+
+/* V69: Ambient Glow (Home-parity) */
+.ambient-glow {
+  position: absolute;
+  top: -10%;
+  left: -20%;
+  width: 60%;
+  height: 30%;
+  background: rgba(255, 255, 255, 0.3);
+  opacity: 0.02;
+  filter: blur(80px);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* Loading State */
 .loading-state {
   flex: 1;
@@ -260,6 +283,8 @@ async function addAccount() {
   justify-content: center;
   gap: var(--space-lg);
   color: var(--color-text-muted);
+  position: relative;
+  z-index: 1;
 }
 
 .spinner {
@@ -283,24 +308,29 @@ async function addAccount() {
   padding: var(--space-md) var(--page-pad-x) var(--space-lg);
   gap: var(--space-lg);
   overflow-y: auto;
+  position: relative;
+  z-index: 1;
 }
 
-/* Account Avatar */
+/* V69: Account Avatar - Premium glass surface */
 .account-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
+  /* V69: Glass surface recipe */
+  background: var(--panel-bg-glass);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-highlight);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   flex-shrink: 0;
 }
 
+/* V69: Active avatar - mainnet glow */
 .account-avatar--active {
   background: var(--dot-mainnet-color);
   border-color: var(--dot-mainnet-color);
@@ -311,6 +341,15 @@ async function addAccount() {
 /* Hidden account row styling */
 .account-hidden {
   opacity: 0.5;
+}
+
+/* V69: Premium "Active" badge override */
+:deep(.list-row-badge) {
+  /* Glass chip - tinted success */
+  background: rgba(153, 225, 142, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(153, 225, 142, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* Copy button */
@@ -334,7 +373,9 @@ async function addAccount() {
   color: var(--color-text-primary);
 }
 
+/* V69: Tactile press feedback (V66 parity) */
 .copy-btn:active {
+  background: var(--surface-pressed);
   transform: scale(0.92);
 }
 
