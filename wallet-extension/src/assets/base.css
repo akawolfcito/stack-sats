@@ -40,24 +40,25 @@
   --surface-hover: rgba(255, 255, 255, 0.08);     /* V66: 5% → 8% for visibility */
   --surface-pressed: rgba(255, 255, 255, 0.12);   /* V66: 10% → 12% proportionally */
 
-  /* === V61/V62: Premium Surface Recipe (Home-Parity Panels) === */
-  /* Canonical recipe for dropdowns, modals, cards - glass + highlight + shadow */
+  /* === V70: Premium Glass Surface Recipe (Home-Parity Overlays) === */
+  /* ONE recipe for ALL overlays - dropdowns, modals, cards */
   --panel-bg: var(--surface-2);
-  --panel-bg-glass: rgba(29, 29, 28, 0.92);   /* V62: Semi-transparent for glass effect */
-  --panel-border: rgba(255, 255, 255, 0.14);
-  --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --panel-shadow: 0 4px 16px rgba(0, 0, 0, 0.28), 0 2px 4px rgba(0, 0, 0, 0.16);
-  --panel-shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.36), 0 4px 8px rgba(0, 0, 0, 0.20);
+  --panel-bg-glass: rgba(10, 12, 16, 0.62);        /* V70: Deep dark glass */
+  --panel-bg-glass-strong: rgba(10, 12, 16, 0.74); /* V70: Stronger for large modals */
+  --panel-border: rgba(255, 255, 255, 0.10);       /* V70: Subtle edge */
+  --panel-highlight: rgba(255, 255, 255, 0.06);    /* V70: Top edge shine (for pseudo) */
+  --panel-shadow: 0 16px 48px rgba(0, 0, 0, 0.55); /* V70: Deep premium shadow */
+  --panel-shadow-elevated: 0 24px 64px rgba(0, 0, 0, 0.65);
   --panel-divider: rgba(255, 255, 255, 0.08);
-  /* V62: Glass blur/saturate for elevated surfaces (dropdowns, modals) */
+  /* V70: Glass blur/saturate for premium depth */
   --panel-blur: 16px;
   --panel-saturate: 1.2;
 
-  /* === V67: Scrim Tokens (Home-parity overlay separation) === */
-  /* Premium focus separation - dims background when overlays open */
-  --scrim-bg: rgba(0, 0, 0, 0.55);              /* 55% - clearly visible dim */
-  --scrim-blur: 2px;                            /* Subtle, optional blur */
-  --scrim-transition: 160ms;                    /* Smooth fade in/out */
+  /* === V70: Scrim Tokens (Premium overlay separation) === */
+  /* Increased opacity for better focus separation */
+  --scrim-bg: rgba(0, 0, 0, 0.62);              /* V70: 62% - stronger dim */
+  --scrim-blur: 2px;                            /* Subtle blur */
+  --scrim-transition: 160ms;                    /* Smooth fade */
 
   /* === V70: Screen Background Token (Visual System Lock) === */
   /* ONE background for ALL full-screen views (Home, Accounts, Settings) */

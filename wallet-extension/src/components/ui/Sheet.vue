@@ -305,37 +305,57 @@ const hasFooter = computed(() => !!slots.footer);
   z-index: 100;
 }
 
-/* === Container - V63 Unified Material Recipe === */
+/* === Container - V70 Premium Glass Recipe === */
 .sheet-container {
   position: relative;
   display: flex;
   flex-direction: column;
   /* V63: Container NEVER scrolls */
   overflow: hidden;
-  /* V62: Glass surface recipe */
+  /* V70: Premium glass surface - deep dark with blur */
   background: var(--panel-bg-glass);
   backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
   -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
   border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-shadow-elevated), var(--panel-highlight);
+  box-shadow: var(--panel-shadow);
 }
 
-/* V65: Modal container - centered, reduced border-radius */
+/* V70: Top highlight gradient - premium edge shine */
+.sheet-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--panel-highlight) 20%,
+    var(--panel-highlight) 80%,
+    transparent 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* V70: Modal container - stronger glass for large overlays */
 .sheet-container--modal {
   width: clamp(320px, 92vw, 420px);
   max-height: 88vh;
-  /* V65: Reduced from --radius-xl (24px) to --radius-lg (16px) */
   border-radius: var(--radius-lg);
+  /* V70: Stronger glass for modals */
+  background: var(--panel-bg-glass-strong);
+  box-shadow: var(--panel-shadow-elevated);
 }
 
-/* V65: Dropdown container - anchored popover, reduced border-radius */
+/* V70: Dropdown container - standard glass */
 .sheet-container--dropdown {
   position: absolute;
   width: 280px;
   max-height: 400px;
-  /* V65: Reduced from --radius-lg (16px) to --radius-md (12px) */
   border-radius: var(--radius-md);
-  /* V67: Panel above scrim overlay (overlay is z-index: 100) */
+  /* V70: Panel above scrim overlay (scrim z-index: 100) */
   z-index: 101;
 }
 
@@ -495,6 +515,13 @@ const hasFooter = computed(() => !!slots.footer);
   border: none;
   box-shadow: none;
   border-radius: 0;
+}
+
+/* V70: Badge inside overlays - glass styling instead of flat gray */
+.sheet-body :deep(.list-row-badge) {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 /* V65: Dividers still visible for separation */

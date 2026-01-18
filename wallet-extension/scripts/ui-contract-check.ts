@@ -1060,8 +1060,8 @@ const CHECKS: Check[] = [
     id: "V62-1",
     file: "src/assets/base.css",
     scope: "style",
-    pattern: /--panel-bg-glass:\s*rgba\(29,\s*29,\s*28/,
-    description: 'V62 Glass: Semi-transparent background token exists',
+    pattern: /--panel-bg-glass:\s*rgba\(10,\s*12,\s*16/,
+    description: 'V70 Glass: Premium dark glass token exists (V62 upgraded)',
   },
   {
     id: "V62-2",
@@ -1152,8 +1152,8 @@ const CHECKS: Check[] = [
     id: "V67-1",
     file: "src/assets/base.css",
     scope: "style",
-    pattern: /--scrim-bg:\s*rgba\(0,\s*0,\s*0,\s*0\.5/,
-    description: 'V67 Scrim: --scrim-bg token exists (>=0.50 opacity)',
+    pattern: /--scrim-bg:\s*rgba\(0,\s*0,\s*0,\s*0\.6/,
+    description: 'V70 Scrim: --scrim-bg token exists (>=0.60 opacity, V67 upgraded)',
   },
   {
     id: "V67-2",
@@ -1246,6 +1246,36 @@ const CHECKS: Check[] = [
     scope: "style",
     pattern: /\.paste-btn[\s\S]*?z-index:\s*\d+/,
     description: 'V70: PASTE button has z-index to prevent overlap',
+  },
+
+  // V70 Premium Glass Parity Contracts
+  {
+    id: "V70-6",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--panel-bg-glass:\s*rgba\(10,\s*12,\s*16,\s*0\.6[0-9]\)/,
+    description: 'V70: --panel-bg-glass uses dark glass (10,12,16 @ 0.6x alpha)',
+  },
+  {
+    id: "V70-7",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /backdrop-filter:\s*blur\(var\(--panel-blur\)\)/,
+    description: 'V70: Sheet uses backdrop-filter with glass blur',
+  },
+  {
+    id: "V70-8",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--scrim-bg:\s*rgba\(0,\s*0,\s*0,\s*0\.6[0-9]\)/,
+    description: 'V70: Scrim bg is >= 0.60 opacity',
+  },
+  {
+    id: "V70-9",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-container::before[\s\S]*?var\(--panel-highlight\)/,
+    description: 'V70: Sheet has top highlight pseudo-element',
   },
 ];
 
