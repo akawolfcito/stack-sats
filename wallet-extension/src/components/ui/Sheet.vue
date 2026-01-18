@@ -264,28 +264,33 @@ const hasFooter = computed(() => !!slots.footer);
  * One Scroll Model: Container overflow:hidden, .sheet-body overflow:auto
  */
 
-/* === Overlay === */
+/* === V67: Scrim Layer (Home-parity overlay separation) === */
+/* Unified scrim for ALL Sheet variants - dims background, captures outside clicks */
 .sheet-overlay {
   position: fixed;
   inset: 0;
   z-index: 100;
+  /* V67: Consistent scrim background */
+  background: var(--scrim-bg);
+  /* V67: Subtle blur (optional, degrades gracefully) */
+  backdrop-filter: blur(var(--scrim-blur));
+  -webkit-backdrop-filter: blur(var(--scrim-blur));
+  /* V67: Smooth transition */
+  transition: opacity var(--scrim-transition) ease-out;
+  pointer-events: auto;
 }
 
-/* V67: Modal overlay - dim + blur (uses scrim token, stronger for modals) */
+/* V67: Modal overlay - centered layout */
 .sheet-overlay--modal {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-lg);
-  background: rgba(0, 0, 0, 0.55); /* Slightly stronger than dropdown scrim */
-  backdrop-filter: blur(var(--overlay-blur));
-  -webkit-backdrop-filter: blur(var(--overlay-blur));
 }
 
-/* V67: Dropdown overlay - visible scrim for premium focus separation */
-/* NOTE: No blur on dropdown - it affects the panel due to stacking context */
+/* V67: Dropdown overlay - inherits scrim, explicit pointer-events for contract */
 .sheet-overlay--dropdown {
-  background: var(--overlay-scrim);
+  /* V56.2: Explicit pointer-events for outside click detection */
   pointer-events: auto;
 }
 
