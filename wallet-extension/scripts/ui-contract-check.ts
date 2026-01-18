@@ -1146,28 +1146,35 @@ const CHECKS: Check[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // V67: Overlay Scrim (premium focus separation)
+  // V67: Scrim Layer (Home-parity overlay separation)
   // ═══════════════════════════════════════════════════════════
   {
     id: "V67-1",
     file: "src/assets/base.css",
     scope: "style",
-    pattern: /--overlay-scrim:\s*rgba\(0,\s*0,\s*0,\s*0\.4/,
-    description: 'V67 Scrim: Overlay scrim token exists (>=0.35 opacity)',
+    pattern: /--scrim-bg:\s*rgba\(0,\s*0,\s*0,\s*0\.5/,
+    description: 'V67 Scrim: --scrim-bg token exists (>=0.50 opacity)',
   },
   {
     id: "V67-2",
     file: "src/components/ui/Sheet.vue",
     scope: "style",
-    pattern: /\.sheet-overlay--dropdown[\s\S]*?background:\s*var\(--overlay-scrim\)/,
-    description: 'V67 Scrim: Dropdown overlay uses scrim token',
+    pattern: /\.sheet-overlay[\s\S]*?background:\s*var\(--scrim-bg\)/,
+    description: 'V67 Scrim: Sheet overlay uses --scrim-bg token',
   },
   {
     id: "V67-3",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--scrim-transition:\s*\d+ms/,
+    description: 'V67 Scrim: --scrim-transition token exists',
+  },
+  {
+    id: "V67-4",
     file: "src/components/ui/Sheet.vue",
     scope: "style",
-    pattern: /\.sheet-overlay--modal[\s\S]*?backdrop-filter:\s*blur/,
-    description: 'V67 Scrim: Modal overlay has backdrop blur (dropdown scrim-only)',
+    pattern: /\.sheet-overlay[\s\S]*?transition:[\s\S]*?var\(--scrim-transition\)/,
+    description: 'V67 Scrim: Sheet overlay uses --scrim-transition',
   },
 ];
 
