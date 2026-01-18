@@ -701,8 +701,8 @@ const CHECKS: Check[] = [
     id: "RECV-DOD-1",
     file: "src/components/ReceiveModal.vue",
     scope: "template",
-    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']bottom["']/,
-    description: 'DoD#1: ReceiveModal uses Sheet primitive (variant="bottom")',
+    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']modal["']/,
+    description: 'DoD#1: ReceiveModal uses Sheet primitive (variant="modal" - V63)',
   },
   {
     id: "RECV-DOD-2",
@@ -822,8 +822,8 @@ const CHECKS: Check[] = [
     id: "IMPORT-DOD-1",
     file: "src/components/ImportMnemonicModal.vue",
     scope: "template",
-    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']bottom["']/,
-    description: 'DoD#1: ImportMnemonicModal uses Sheet primitive (variant="bottom")',
+    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']modal["']/,
+    description: 'DoD#1: ImportMnemonicModal uses Sheet primitive (variant="modal" - V63)',
   },
   {
     id: "IMPORT-DOD-2",
@@ -1018,6 +1018,130 @@ const CHECKS: Check[] = [
     scope: "template",
     pattern: /network-chip__arrow[\s\S]*?width\s*=\s*["']12["'][\s\S]*?height\s*=\s*["']12["']/,
     description: 'V57 Geometry: NetworkChip chevron is 12x12 (matches AccountSwitcher)',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V58: Home-Parity Contracts (Dropdown Triggers)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V58-1",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "style",
+    pattern: /\.network-chip\s*\{[\s\S]*?gap:\s*var\(--space-sm\)/,
+    description: 'V58 Home-Parity: NetworkChip trigger gap matches AccountSwitcher (space-sm)',
+  },
+  {
+    id: "V58-2",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "style",
+    pattern: /\.account-pill\s*\{[\s\S]*?gap:\s*var\(--space-sm\)/,
+    description: 'V58 Home-Parity: AccountSwitcher trigger gap uses token (space-sm)',
+  },
+  {
+    id: "V58-3",
+    file: "src/components/network/NetworkChip.vue",
+    scope: "style",
+    pattern: /\.network-check[\s\S]*?font-size:\s*var\(--font-size-xs\)/,
+    description: 'V58 Home-Parity: NetworkChip checkmark uses token (font-size-xs)',
+  },
+  {
+    id: "V58-4",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "style",
+    pattern: /\.account-check[\s\S]*?font-size:\s*var\(--font-size-xs\)/,
+    description: 'V58 Home-Parity: AccountSwitcher checkmark uses token (font-size-xs)',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V62: Premium Glass Surface Recipe (Home-Parity Panels)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V62-1",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--panel-bg-glass:\s*rgba\(29,\s*29,\s*28/,
+    description: 'V62 Glass: Semi-transparent background token exists',
+  },
+  {
+    id: "V62-2",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--panel-blur:\s*16px/,
+    description: 'V62 Glass: Blur token exists',
+  },
+  {
+    id: "V62-3",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--panel-saturate:\s*1\.2/,
+    description: 'V62 Glass: Saturate token exists',
+  },
+  {
+    id: "V62-4",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-container[\s\S]*?backdrop-filter:\s*blur/,
+    description: 'V62 Glass: Sheet container uses backdrop-filter blur (V63: unified)',
+  },
+  {
+    id: "V62-5",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-container[\s\S]*?background:\s*var\(--panel-bg-glass\)/,
+    description: 'V62 Glass: Sheet container uses glass background (V63: unified)',
+  },
+  {
+    id: "V62-6",
+    file: "src/components/list/ListGroup.vue",
+    scope: "style",
+    pattern: /\.list-group-items[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*0\.02\)/,
+    description: 'V62 Glass: ListGroup uses transparent overlay (lets glass through)',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V63: Unified Overlay System (dropdown + modal grammar)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V63-1",
+    file: "src/components/ui/Sheet.vue",
+    scope: "script",
+    pattern: /SheetVariant\s*=\s*['"]dropdown['"]\s*\|\s*['"]modal['"]/,
+    description: 'V63 Overlay: Sheet variants are dropdown | modal only',
+  },
+  {
+    id: "V63-2",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-container[\s\S]*?overflow:\s*hidden/,
+    description: 'V63 Scroll: Container never scrolls (overflow:hidden)',
+  },
+  {
+    id: "V63-3",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-body[\s\S]*?overflow-y:\s*auto/,
+    description: 'V63 Scroll: Only .sheet-body scrolls (overflow-y:auto)',
+  },
+  {
+    id: "V63-4",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /variant="modal"/,
+    description: 'V63 Overlay: ReceiveModal uses centered modal variant',
+  },
+  {
+    id: "V63-5",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-dropdown-anchor[\s\S]*?position:\s*absolute/,
+    description: 'V63 Anchor: Dropdown anchor is position:absolute',
+  },
+  {
+    id: "V63-6",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-container--modal[\s\S]*?width:\s*clamp\(320px/,
+    description: 'V63 Modal: Modal uses pro sizing with clamp()',
   },
 ];
 

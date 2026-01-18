@@ -1,7 +1,32 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue';
+/**
+ * Sheet - V63 Unified Overlay System
+ *
+ * Variants:
+ * - dropdown: Anchored popover (AccountSwitcher, NetworkChip)
+ *   - Positioned relative to trigger, no teleport
+ *   - Close on: outside click, ESC, selection
+ *   - No close button (showClose ignored)
+ *
+ * - modal: Centered dialog (Receive, confirmations)
+ *   - Teleported to body, centered in viewport
+ *   - Close on: ESC, overlay click (optional)
+ *   - Header close button via showClose prop
+ *
+ * One Material Recipe: All variants use --panel-* tokens (V62)
+ * One Scroll Model: Container NEVER scrolls, only .sheet-body scrolls
+ * One Close Model: Defined per variant type
+ */
+import { computed, onMounted, onUnmounted, watch, ref, nextTick } from 'vue';
 
-export type SheetVariant = 'bottom' | 'center' | 'dropdown';
+export type SheetVariant = 'dropdown' | 'modal';
+
+// V63: Anchoring config for dropdown variant
+export interface AnchorConfig {
+  offsetY?: number;
+  align?: 'left' | 'right';
+  viewportPadding?: number;
+}
 
 const props = withDefaults(
   defineProps<{
@@ -11,9 +36,11 @@ const props = withDefaults(
     showClose?: boolean;
     closeOnOverlay?: boolean;
     closeOnEscape?: boolean;
+    /** V63: Anchor config for dropdown positioning */
+    anchor?: AnchorConfig;
   }>(),
   {
-    variant: 'bottom',
+    variant: 'modal',
     showClose: true,
     closeOnOverlay: true,
     closeOnEscape: true,
@@ -23,6 +50,13 @@ const props = withDefaults(
 const emit = defineEmits<{
   close: [];
 }>();
+
+// V63: Dropdown positioning state
+const dropdownStyle = ref<Record<string, string>>({});
+const containerRef = ref<HTMLElement | null>(null);
+
+// V63: Determine if dropdown should render without teleport
+const isDropdown = computed(() => props.variant === 'dropdown');
 
 // Computed classes
 const overlayClasses = computed(() => [
@@ -49,6 +83,51 @@ function handleEscapeKey(e: KeyboardEvent) {
   }
 }
 
+// V63: Calculate dropdown position relative to trigger
+function calculateDropdownPosition() {
+  if (!isDropdown.value || !containerRef.value) return;
+
+  const container = containerRef.value;
+  const wrapper = container.closest('.sheet-dropdown-anchor');
+  if (!wrapper) return;
+
+  const trigger = wrapper.previousElementSibling as HTMLElement;
+  if (!trigger) return;
+
+  const triggerRect = trigger.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const padding = props.anchor?.viewportPadding ?? 8;
+  const offsetY = props.anchor?.offsetY ?? 8;
+
+  // Calculate initial position (below trigger, aligned left)
+  let top = offsetY;
+  let left = 0;
+
+  // Check for right overflow - align right edge to trigger right
+  const wouldOverflowRight = triggerRect.left + containerRect.width > viewportWidth - padding;
+  if (wouldOverflowRight) {
+    left = triggerRect.width - containerRect.width;
+  }
+
+  // Clamp left to viewport
+  const absoluteLeft = triggerRect.left + left;
+  if (absoluteLeft < padding) {
+    left = padding - triggerRect.left;
+  }
+
+  // Calculate max height (viewport - top position - padding)
+  const absoluteTop = triggerRect.bottom + offsetY;
+  const maxHeight = viewportHeight - absoluteTop - padding;
+
+  dropdownStyle.value = {
+    top: `${top}px`,
+    left: `${left}px`,
+    maxHeight: `${Math.max(200, maxHeight)}px`,
+  };
+}
+
 // Keyboard event listener
 onMounted(() => {
   document.addEventListener('keydown', handleEscapeKey);
@@ -58,14 +137,24 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscapeKey);
 });
 
-// Lock body scroll when open
+// V63: Recalculate dropdown position when opened
 watch(
   () => props.isOpen,
-  (isOpen) => {
+  async (isOpen) => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      // V63: Only lock body scroll for modal (not dropdown)
+      if (!isDropdown.value) {
+        document.body.style.overflow = 'hidden';
+      }
+      // Calculate dropdown position after render
+      if (isDropdown.value) {
+        await nextTick();
+        calculateDropdownPosition();
+      }
     } else {
-      document.body.style.overflow = '';
+      if (!isDropdown.value) {
+        document.body.style.overflow = '';
+      }
     }
   }
 );
@@ -84,40 +173,27 @@ const hasFooter = computed(() => !!slots.footer);
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="sheet">
+  <!-- V63: Dropdown variant - no teleport, anchored to trigger -->
+  <template v-if="isDropdown">
+    <Transition name="sheet-dropdown">
       <div
         v-if="isOpen"
-        :class="overlayClasses"
-        @click="handleOverlayClick"
+        class="sheet-dropdown-anchor"
       >
-        <div :class="containerClasses">
-          <!-- Default Header (can be overridden with #header slot) -->
-          <header v-if="!hasCustomHeader && (title || showClose)" class="sheet-header">
-            <div class="sheet-header__left">
-              <span v-if="hasIcon" class="sheet-header__icon">
-                <slot name="icon" />
-              </span>
-              <h2 v-if="title" class="sheet-header__title">{{ title }}</h2>
-            </div>
-            <button
-              v-if="showClose"
-              class="sheet-header__close"
-              aria-label="Close"
-              @click="emit('close')"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </header>
+        <!-- V63: Transparent overlay for outside click detection -->
+        <div class="sheet-overlay sheet-overlay--dropdown" @click="handleOverlayClick" />
 
-          <!-- Custom Header Slot -->
-          <slot v-else name="header" />
+        <!-- V63: Anchored container -->
+        <div
+          ref="containerRef"
+          :class="containerClasses"
+          :style="dropdownStyle"
+        >
+          <!-- V63: Dropdown has no default header (compact) -->
+          <slot name="header" />
 
-          <!-- Content -->
-          <div class="sheet-content">
+          <!-- V63: Body - ONLY element that scrolls -->
+          <div class="sheet-body">
             <slot />
           </div>
 
@@ -128,78 +204,128 @@ const hasFooter = computed(() => !!slots.footer);
         </div>
       </div>
     </Transition>
-  </Teleport>
+  </template>
+
+  <!-- V63: Modal variant - teleported, centered -->
+  <template v-else>
+    <Teleport to="body">
+      <Transition name="sheet-modal">
+        <div
+          v-if="isOpen"
+          :class="overlayClasses"
+          @click="handleOverlayClick"
+        >
+          <div :class="containerClasses">
+            <!-- Default Header (can be overridden with #header slot) -->
+            <header v-if="!hasCustomHeader && (title || showClose)" class="sheet-header">
+              <div class="sheet-header__left">
+                <span v-if="hasIcon" class="sheet-header__icon">
+                  <slot name="icon" />
+                </span>
+                <h2 v-if="title" class="sheet-header__title">{{ title }}</h2>
+              </div>
+              <button
+                v-if="showClose"
+                class="sheet-header__close"
+                aria-label="Close"
+                @click="emit('close')"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </header>
+
+            <!-- Custom Header Slot -->
+            <slot v-else name="header" />
+
+            <!-- V63: Body - ONLY element that scrolls -->
+            <div class="sheet-body">
+              <slot />
+            </div>
+
+            <!-- Footer (sticky) -->
+            <footer v-if="hasFooter" class="sheet-footer">
+              <slot name="footer" />
+            </footer>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+  </template>
 </template>
 
 <style scoped>
+/**
+ * V63 Unified Overlay System Styles
+ *
+ * One Material Recipe: --panel-* tokens (V62)
+ * One Scroll Model: Container overflow:hidden, .sheet-body overflow:auto
+ */
+
 /* === Overlay === */
 .sheet-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   z-index: 100;
 }
 
-/* Bottom sheet: align to bottom */
-.sheet-overlay--bottom {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-/* Center modal: center in viewport */
-.sheet-overlay--center {
+/* V63: Modal overlay - dim + blur */
+.sheet-overlay--modal {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-md);
+  padding: var(--space-lg);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-/* Dropdown: transparent overlay but captures outside clicks (V56.2 fix) */
+/* V63: Dropdown overlay - transparent, captures outside clicks */
 .sheet-overlay--dropdown {
   background: transparent;
   backdrop-filter: none;
-  /* V56.2: pointer-events: auto allows overlay to capture outside clicks */
   pointer-events: auto;
 }
 
-/* === Container === */
+/* === V63: Dropdown Anchor Wrapper === */
+.sheet-dropdown-anchor {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+}
+
+/* === Container - V63 Unified Material Recipe === */
 .sheet-container {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  /* V63: Container NEVER scrolls */
   overflow: hidden;
+  /* V62: Glass surface recipe */
+  background: var(--panel-bg-glass);
+  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow-elevated), var(--panel-highlight);
 }
 
-/* Bottom sheet container */
-.sheet-container--bottom {
-  width: 100%;
-  max-height: 90vh;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  border-bottom: none;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
-}
-
-/* Center modal container */
-.sheet-container--center {
-  width: 100%;
-  max-width: 360px;
-  max-height: 90vh;
+/* V63: Modal container - centered, pro sizing */
+.sheet-container--modal {
+  /* V63: Pro modal sizing */
+  width: clamp(320px, 92vw, 420px);
+  max-height: 88vh;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
 }
 
-/* Dropdown container */
+/* V63: Dropdown container - anchored popover */
 .sheet-container--dropdown {
   position: absolute;
   width: 280px;
   max-height: 400px;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
 }
 
 /* === Header === */
@@ -208,7 +334,7 @@ const hasFooter = computed(() => !!slots.footer);
   align-items: center;
   justify-content: space-between;
   padding: var(--card-pad-y) var(--card-pad-x);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--panel-divider);
   flex-shrink: 0;
 }
 
@@ -225,8 +351,8 @@ const hasFooter = computed(() => !!slots.footer);
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08); /* v18: neutral */
-  color: var(--color-text-secondary); /* v18: neutral */
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-secondary);
 }
 
 .sheet-header__title {
@@ -255,60 +381,83 @@ const hasFooter = computed(() => !!slots.footer);
   color: var(--color-text-primary);
 }
 
-/* === Content === */
-.sheet-content {
+/* === V63: Body - ONLY element that scrolls === */
+.sheet-body {
   flex: 1;
+  /* V63: Only body scrolls, not container */
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--card-pad-y) var(--card-pad-x);
+}
+
+/* V63: Hide scrollbar for cleaner look (still scrollable) */
+.sheet-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sheet-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sheet-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.sheet-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* === Footer === */
 .sheet-footer {
   padding: var(--card-pad-y) var(--card-pad-x);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--panel-divider);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
 }
 
-/* === Transitions === */
-.sheet-enter-active,
-.sheet-leave-active {
+/* === V63: Modal Transitions === */
+.sheet-modal-enter-active,
+.sheet-modal-leave-active {
   transition: opacity var(--transition-base);
 }
 
-.sheet-enter-active .sheet-container,
-.sheet-leave-active .sheet-container {
-  transition: transform var(--transition-base);
+.sheet-modal-enter-active .sheet-container,
+.sheet-modal-leave-active .sheet-container {
+  transition: transform var(--transition-base), opacity var(--transition-base);
 }
 
-.sheet-enter-from,
-.sheet-leave-to {
+.sheet-modal-enter-from,
+.sheet-modal-leave-to {
   opacity: 0;
 }
 
-/* Bottom sheet slides up */
-.sheet-overlay--bottom .sheet-enter-from .sheet-container,
-.sheet-overlay--bottom .sheet-leave-to .sheet-container,
-.sheet-enter-from .sheet-container--bottom,
-.sheet-leave-to .sheet-container--bottom {
-  transform: translateY(100%);
-}
-
-/* Center modal scales */
-.sheet-overlay--center .sheet-enter-from .sheet-container,
-.sheet-overlay--center .sheet-leave-to .sheet-container,
-.sheet-enter-from .sheet-container--center,
-.sheet-leave-to .sheet-container--center {
+.sheet-modal-enter-from .sheet-container,
+.sheet-modal-leave-to .sheet-container {
   transform: scale(0.95);
+  opacity: 0;
 }
 
-/* Dropdown fades and slides */
-.sheet-overlay--dropdown .sheet-enter-from .sheet-container,
-.sheet-overlay--dropdown .sheet-leave-to .sheet-container,
-.sheet-enter-from .sheet-container--dropdown,
-.sheet-leave-to .sheet-container--dropdown {
+/* === V63: Dropdown Transitions === */
+.sheet-dropdown-enter-active,
+.sheet-dropdown-leave-active {
+  transition: opacity var(--transition-fast);
+}
+
+.sheet-dropdown-enter-active .sheet-container,
+.sheet-dropdown-leave-active .sheet-container {
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.sheet-dropdown-enter-from,
+.sheet-dropdown-leave-to {
+  opacity: 0;
+}
+
+.sheet-dropdown-enter-from .sheet-container,
+.sheet-dropdown-leave-to .sheet-container {
   transform: translateY(-8px);
   opacity: 0;
 }

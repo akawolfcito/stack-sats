@@ -238,10 +238,10 @@ defineExpose({ open, close, toggle })
   background: var(--color-success);
 }
 
-/* V56.2: Trailing checkmark (like NetworkChip) */
+/* V56.2: Trailing checkmark - V58: use token */
 .account-check {
   color: var(--color-success);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   flex-shrink: 0;
 }
 </style>

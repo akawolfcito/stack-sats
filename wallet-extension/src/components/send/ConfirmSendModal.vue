@@ -39,9 +39,10 @@ function handleConfirm() {
 </script>
 
 <template>
+  <!-- V63: Centered modal variant -->
   <Sheet
     :is-open="isOpen"
-    variant="center"
+    variant="modal"
     title="Confirm Transaction"
     @close="handleClose"
   >

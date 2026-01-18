@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * ImportMnemonicModal - V56 DoD Compliant
+ * ImportMnemonicModal - V63 Unified Overlay System
  *
  * Definition of Done (all 6 satisfied):
- * 1. ✅ Overlay: Sheet variant="bottom"
+ * 1. ✅ Overlay: Sheet variant="modal" (V63 centered dialog)
  * 2. ✅ Single close: Sheet showClose=true (default)
  * 3. ✅ Header: Sheet built-in header with V55 tokens
  * 4. ✅ CTA: StickyCTA roiPrefix="import"
@@ -118,9 +118,10 @@ watch(() => props.isOpen, (isOpen) => {
 </script>
 
 <template>
+  <!-- V63: Centered modal variant -->
   <Sheet
     :is-open="isOpen"
-    variant="bottom"
+    variant="modal"
     title="Import Recovery Phrase"
     data-roi="import-sheet"
     @close="handleClose"
