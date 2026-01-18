@@ -59,6 +59,10 @@
   --scrim-blur: 2px;                            /* Subtle, optional blur */
   --scrim-transition: 160ms;                    /* Smooth fade in/out */
 
+  /* === V70: Screen Background Token (Visual System Lock) === */
+  /* ONE background for ALL full-screen views (Home, Accounts, Settings) */
+  --screen-bg-base: var(--color-bg-primary);    /* Deep black: #01070E */
+
   /* === V64: Status Dot Tokens === */
   /* Premium status indicators with glow effects */
   --dot-size: 8px;

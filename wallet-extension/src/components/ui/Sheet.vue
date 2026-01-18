@@ -189,8 +189,11 @@ const hasFooter = computed(() => !!slots.footer);
           :class="containerClasses"
           :style="dropdownStyle"
         >
-          <!-- V63: Dropdown has no default header (compact) -->
-          <slot name="header" />
+          <!-- V70: Dropdown header (title required per Visual System Lock) -->
+          <header v-if="!hasCustomHeader && title" class="sheet-header sheet-header--dropdown">
+            <h3 class="sheet-header__title sheet-header__title--dropdown">{{ title }}</h3>
+          </header>
+          <slot v-else name="header" />
 
           <!-- V63: Body - ONLY element that scrolls -->
           <div class="sheet-body">
@@ -387,6 +390,20 @@ const hasFooter = computed(() => !!slots.footer);
 .sheet-header__close:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--color-text-primary);
+}
+
+/* V70: Dropdown header variant - compact, no close button */
+.sheet-header--dropdown {
+  padding: var(--space-sm) var(--card-pad-x);
+  justify-content: flex-start;
+}
+
+.sheet-header__title--dropdown {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* === V66: Body - ONLY element that scrolls === */
