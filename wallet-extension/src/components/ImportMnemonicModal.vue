@@ -214,30 +214,35 @@ watch(() => props.isOpen, (isOpen) => {
   gap: var(--space-md);
 }
 
-/* V45: Security Notice - using warning muted token */
+/* V64: Security Notice - left-accent style (premium, not solid yellow) */
 .security-notice {
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm);
   padding: var(--space-md);
-  background: var(--color-warning-muted);
-  border: 1px solid rgba(251, 191, 36, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--color-warning);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
-  color: var(--color-warning);
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
 .security-notice svg {
   flex-shrink: 0;
   margin-top: 1px;
+  color: var(--color-warning);
 }
 
-/* V45: Input Area - V43 card pattern */
+/* V64: Input Area - glass-card recipe */
 .input-area {
   position: relative;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--panel-bg-glass);
+  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-highlight);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
@@ -343,20 +348,23 @@ watch(() => props.isOpen, (isOpen) => {
   color: var(--color-error);
 }
 
-/* V45: Word Preview Grid - V43 card pattern */
+/* V64: Word Preview Grid - glass-card recipe */
 .word-preview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-xs);
   padding: var(--space-sm);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--panel-bg-glass);
+  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-highlight);
   border-radius: var(--radius-md);
   max-height: 120px;
   overflow-y: auto;
 }
 
-/* V45: Word chip - premium hierarchy */
+/* V64: Word chip - inner highlight + subtle shadow */
 .word-chip {
   display: flex;
   align-items: center;
@@ -365,6 +373,9 @@ watch(() => props.isOpen, (isOpen) => {
   background: rgba(255, 255, 255, 0.04);
   border-radius: var(--radius-sm);
   font-size: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .word-chip--invalid {

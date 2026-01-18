@@ -174,24 +174,27 @@ defineExpose({ open, close, toggle })
   outline-offset: var(--focus-ring-offset);
 }
 
-/* Trigger dot indicator - V57: 8px matches AccountSwitcher */
+/* V64: Trigger dot indicator - semantic glow per network */
 .network-chip__dot {
-  width: 8px;
-  height: 8px;
+  width: var(--dot-size);
+  height: var(--dot-size);
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .network-chip--mainnet .network-chip__dot {
-  background: var(--color-success);
+  background: var(--dot-mainnet-color);
+  box-shadow: var(--dot-mainnet-glow), var(--dot-inner-shine);
 }
 
 .network-chip--testnet .network-chip__dot {
-  background: #60a5fa;
+  background: var(--dot-testnet-color);
+  box-shadow: var(--dot-testnet-glow), var(--dot-inner-shine);
 }
 
 .network-chip--devnet .network-chip__dot {
-  background: #f59e0b;
+  background: var(--dot-devnet-color);
+  box-shadow: var(--dot-devnet-glow), var(--dot-inner-shine);
 }
 
 .network-chip__label {
@@ -212,24 +215,28 @@ defineExpose({ open, close, toggle })
   transform: rotate(180deg);
 }
 
-/* V56.3: Network dot for ListRow icon slot */
+/* V64: Network dot for ListRow icon slot - semantic glow */
 .network-dot {
-  width: 8px;
-  height: 8px;
+  width: var(--dot-size);
+  height: var(--dot-size);
   border-radius: 50%;
-  background: var(--color-text-muted);
+  background: var(--dot-inactive-bg);
+  box-shadow: var(--dot-inactive-shine);
 }
 
 .network-dot--mainnet {
-  background: var(--color-success);
+  background: var(--dot-mainnet-color);
+  box-shadow: var(--dot-mainnet-glow), var(--dot-inner-shine);
 }
 
 .network-dot--testnet {
-  background: #60a5fa;
+  background: var(--dot-testnet-color);
+  box-shadow: var(--dot-testnet-glow), var(--dot-inner-shine);
 }
 
 .network-dot--devnet {
-  background: #f59e0b;
+  background: var(--dot-devnet-color);
+  box-shadow: var(--dot-devnet-glow), var(--dot-inner-shine);
 }
 
 /* V56.3: Trailing checkmark - V58: use token */

@@ -299,7 +299,7 @@ function toggleFullAddress() {
   width: 100%;
 }
 
-/* QR Code - V55 tokens */
+/* V64: QR Code - glass-card recipe */
 .qr-wrapper {
   display: flex;
   justify-content: center;
@@ -309,8 +309,11 @@ function toggleFullAddress() {
   position: relative;
   padding: var(--space-md);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--color-border);
+  background: var(--panel-bg-glass);
+  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-highlight), var(--panel-shadow);
 }
 
 .qr-inner {
@@ -328,23 +331,28 @@ function toggleFullAddress() {
   display: block;
 }
 
-/* Address Card - V55 tokens */
+/* V64: Address Card - glass-card recipe with hover elevation */
 .address-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--panel-bg-glass);
+  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
   border-radius: var(--radius-md);
   padding: var(--card-pad-y) var(--card-pad-x);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-highlight);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .address-card:hover {
   background: var(--surface-hover);
+  box-shadow: var(--panel-highlight), var(--panel-shadow);
 }
 
 .address-card--expanded {
   background: var(--surface-hover);
+  box-shadow: var(--panel-highlight), var(--panel-shadow);
 }
 
 .address-header {

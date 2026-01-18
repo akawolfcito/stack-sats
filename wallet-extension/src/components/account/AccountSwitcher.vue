@@ -181,11 +181,13 @@ defineExpose({ open, close, toggle })
   outline-offset: var(--focus-ring-offset);
 }
 
+/* V64: Trigger pill dot - premium glow */
 .account-pill__dot {
-  width: 8px;
-  height: 8px;
+  width: var(--dot-size);
+  height: var(--dot-size);
   border-radius: 50%;
-  background: var(--color-success);
+  background: var(--dot-mainnet-color);
+  box-shadow: var(--dot-mainnet-glow), var(--dot-inner-shine);
   flex-shrink: 0;
 }
 
@@ -226,16 +228,18 @@ defineExpose({ open, close, toggle })
   transform: rotate(180deg);
 }
 
-/* V56.2: Account dot for ListRow icon slot */
+/* V64: Account dot for ListRow icon slot - premium glow recipe */
 .account-dot {
-  width: 8px;
-  height: 8px;
+  width: var(--dot-size);
+  height: var(--dot-size);
   border-radius: 50%;
-  background: var(--color-text-muted);
+  background: var(--dot-inactive-bg);
+  box-shadow: var(--dot-inactive-shine);
 }
 
 .account-dot--active {
-  background: var(--color-success);
+  background: var(--dot-mainnet-color);
+  box-shadow: var(--dot-mainnet-glow), var(--dot-inner-shine);
 }
 
 /* V56.2: Trailing checkmark - V58: use token */
