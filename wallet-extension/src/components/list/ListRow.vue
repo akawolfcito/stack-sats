@@ -83,6 +83,7 @@ function handleClick() {
 </template>
 
 <style scoped>
+/* V66: Tactile Premium - enhanced feedback */
 .list-row {
   display: flex;
   align-items: center;
@@ -94,15 +95,20 @@ function handleClick() {
   border: none;
   cursor: pointer;
   text-align: left;
-  transition: background var(--transition-fast);
+  /* V66 G4: Smoother transition + transform */
+  transition:
+    background var(--transition-base),
+    transform var(--transition-fast);
 }
 
 .list-row:hover:not(.list-row--disabled) {
   background: var(--surface-hover);
 }
 
+/* V66 G3: Tactile press feedback */
 .list-row:active:not(.list-row--disabled) {
   background: var(--surface-pressed);
+  transform: scale(0.985);
 }
 
 .list-row:focus-visible {

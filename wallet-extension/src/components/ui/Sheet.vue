@@ -382,13 +382,14 @@ const hasFooter = computed(() => !!slots.footer);
   color: var(--color-text-primary);
 }
 
-/* === V63: Body - ONLY element that scrolls === */
+/* === V66: Body - ONLY element that scrolls === */
 .sheet-body {
   flex: 1;
   /* V63: Only body scrolls, not container */
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--card-pad-y) var(--card-pad-x);
+  /* V66 G1: Use page padding for breathing room (was card-pad) */
+  padding: var(--space-md) var(--page-pad-x);
 }
 
 /* V63: Hide scrollbar for cleaner look (still scrollable) */
