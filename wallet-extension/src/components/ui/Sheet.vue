@@ -312,20 +312,21 @@ const hasFooter = computed(() => !!slots.footer);
   box-shadow: var(--panel-shadow-elevated), var(--panel-highlight);
 }
 
-/* V63: Modal container - centered, pro sizing */
+/* V65: Modal container - centered, reduced border-radius */
 .sheet-container--modal {
-  /* V63: Pro modal sizing */
   width: clamp(320px, 92vw, 420px);
   max-height: 88vh;
-  border-radius: var(--radius-xl);
+  /* V65: Reduced from --radius-xl (24px) to --radius-lg (16px) */
+  border-radius: var(--radius-lg);
 }
 
-/* V63: Dropdown container - anchored popover */
+/* V65: Dropdown container - anchored popover, reduced border-radius */
 .sheet-container--dropdown {
   position: absolute;
   width: 280px;
   max-height: 400px;
-  border-radius: var(--radius-lg);
+  /* V65: Reduced from --radius-lg (16px) to --radius-md (12px) */
+  border-radius: var(--radius-md);
 }
 
 /* === Header === */
@@ -460,5 +461,20 @@ const hasFooter = computed(() => !!slots.footer);
 .sheet-dropdown-leave-to .sheet-container {
   transform: translateY(-8px);
   opacity: 0;
+}
+
+/* === V65: One Surface Rule === */
+/* ListGroup inside Sheet should be transparent - Sheet provides THE surface */
+.sheet-body :deep(.list-group-items) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* V65: Dividers still visible for separation */
+.sheet-body :deep(.list-group-items > *:not(:last-child)::after) {
+  left: var(--card-pad-x);
+  right: var(--card-pad-x);
 }
 </style>

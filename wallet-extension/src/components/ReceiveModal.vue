@@ -299,7 +299,7 @@ function toggleFullAddress() {
   width: 100%;
 }
 
-/* V64: QR Code - glass-card recipe */
+/* V65: QR Code - transparent container (Sheet provides surface) */
 .qr-wrapper {
   display: flex;
   justify-content: center;
@@ -307,13 +307,8 @@ function toggleFullAddress() {
 
 .qr-container {
   position: relative;
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  background: var(--panel-bg-glass);
-  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
-  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-highlight), var(--panel-shadow);
+  padding: var(--space-sm);
+  /* V65: No background/border - just hold the QR */
 }
 
 .qr-inner {
@@ -331,28 +326,24 @@ function toggleFullAddress() {
   display: block;
 }
 
-/* V64: Address Card - glass-card recipe with hover elevation */
+/* V65: Address Card - transparent, subtle divider only */
 .address-card {
   width: 100%;
-  background: var(--panel-bg-glass);
-  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
-  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
-  border-radius: var(--radius-md);
+  background: transparent;
+  border-radius: var(--radius-sm);
   padding: var(--card-pad-y) var(--card-pad-x);
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-highlight);
+  /* V65: Subtle top divider for separation */
+  border-top: 1px solid var(--panel-divider);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 .address-card:hover {
   background: var(--surface-hover);
-  box-shadow: var(--panel-highlight), var(--panel-shadow);
 }
 
 .address-card--expanded {
   background: var(--surface-hover);
-  box-shadow: var(--panel-highlight), var(--panel-shadow);
 }
 
 .address-header {
