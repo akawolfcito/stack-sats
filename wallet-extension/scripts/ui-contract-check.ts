@@ -1144,6 +1144,31 @@ const CHECKS: Check[] = [
     pattern: /\.sheet-container--modal[\s\S]*?width:\s*clamp\(320px/,
     description: 'V63 Modal: Modal uses pro sizing with clamp()',
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // V67: Overlay Scrim (premium focus separation)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V67-1",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--overlay-scrim:\s*rgba\(0,\s*0,\s*0,\s*0\.4/,
+    description: 'V67 Scrim: Overlay scrim token exists (>=0.35 opacity)',
+  },
+  {
+    id: "V67-2",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-overlay--dropdown[\s\S]*?background:\s*var\(--overlay-scrim\)/,
+    description: 'V67 Scrim: Dropdown overlay uses scrim token',
+  },
+  {
+    id: "V67-3",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-overlay--dropdown[\s\S]*?backdrop-filter:\s*blur/,
+    description: 'V67 Scrim: Dropdown overlay has backdrop blur',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
