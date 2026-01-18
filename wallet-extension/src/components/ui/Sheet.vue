@@ -283,10 +283,9 @@ const hasFooter = computed(() => !!slots.footer);
 }
 
 /* V67: Dropdown overlay - visible scrim for premium focus separation */
+/* NOTE: No blur on dropdown - it affects the panel due to stacking context */
 .sheet-overlay--dropdown {
   background: var(--overlay-scrim);
-  backdrop-filter: blur(var(--overlay-blur));
-  -webkit-backdrop-filter: blur(var(--overlay-blur));
   pointer-events: auto;
 }
 
