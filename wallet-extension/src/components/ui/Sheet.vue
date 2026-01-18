@@ -327,6 +327,8 @@ const hasFooter = computed(() => !!slots.footer);
   max-height: 400px;
   /* V65: Reduced from --radius-lg (16px) to --radius-md (12px) */
   border-radius: var(--radius-md);
+  /* V67: Panel above scrim overlay (overlay is z-index: 100) */
+  z-index: 101;
 }
 
 /* === Header === */
