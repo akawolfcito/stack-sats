@@ -1166,8 +1166,8 @@ const CHECKS: Check[] = [
     id: "V67-3",
     file: "src/components/ui/Sheet.vue",
     scope: "style",
-    pattern: /\.sheet-overlay--dropdown[\s\S]*?backdrop-filter:\s*blur/,
-    description: 'V67 Scrim: Dropdown overlay has backdrop blur',
+    pattern: /\.sheet-overlay--modal[\s\S]*?backdrop-filter:\s*blur/,
+    description: 'V67 Scrim: Modal overlay has backdrop blur (dropdown scrim-only)',
   },
 ];
 
