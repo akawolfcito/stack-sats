@@ -915,8 +915,8 @@ const CHECKS: Check[] = [
     id: "ACCTSW-8",
     file: "src/components/account/AccountSwitcher.vue",
     scope: "template",
-    pattern: /<ListRow[\s\S]*?variant\s*=\s*["']add["']/,
-    description: 'AccountSwitcher "Add Account" uses ListRow variant="add" (V56.2)',
+    pattern: /switcher-footer[\s\S]*?Add\s*account/i,
+    description: 'V68: AccountSwitcher "Add Account" is in sticky footer',
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -1175,6 +1175,38 @@ const CHECKS: Check[] = [
     scope: "style",
     pattern: /\.sheet-overlay[\s\S]*?transition:[\s\S]*?var\(--scrim-transition\)/,
     description: 'V67 Scrim: Sheet overlay uses --scrim-transition',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V68: Accounts Management System
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V68-1",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "template",
+    pattern: /Manage\s*accounts/i,
+    description: 'V68: AccountSwitcher has "Manage accounts" action',
+  },
+  {
+    id: "V68-2",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "style",
+    pattern: /max-height:[\s\S]*?calc\(70vh/,
+    description: 'V68: AccountSwitcher dropdown has max-height constraint',
+  },
+  {
+    id: "V68-3",
+    file: "src/views/AccountsView.vue",
+    scope: "template",
+    pattern: /<ListGroup/,
+    description: 'V68: Accounts management screen uses ListGroup',
+  },
+  {
+    id: "V68-4",
+    file: "src/router/index.ts",
+    scope: "script",
+    pattern: /path:\s*["']\/accounts["']/,
+    description: 'V68: /accounts route is defined',
   },
 ];
 

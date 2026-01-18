@@ -621,6 +621,11 @@ const handleTokenClick = (token: TokenInfo) => {
 const handleManageTokens = () => {
   router.push({ path: "/manage-tokens" });
 };
+
+// V68: Navigate to accounts management screen
+const handleManageAccounts = () => {
+  router.push({ path: "/accounts" });
+};
 </script>
 
 <template>
@@ -655,6 +660,7 @@ const handleManageTokens = () => {
               :can-add-account="accountCount < 100"
               @select="handleAccountSelect"
               @add-account="handleAddAccount"
+              @manage="handleManageAccounts"
             />
 
             <!-- Header Right Actions -->
