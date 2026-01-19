@@ -528,16 +528,13 @@ function cancelImport() {
   pointer-events: none;
 }
 
-/* Main Content */
+/* Main Content - V79: Let ScreenShell handle scroll */
 .page-content {
-  flex: 1;
-  min-height: 0; /* Enable proper flex scroll */
   display: flex;
   flex-direction: column;
   gap: var(--section-gap);
   padding: var(--space-sm) var(--card-pad-x) var(--section-gap);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  /* V79: Removed overflow-y: auto - ScreenShell handles scroll */
 }
 
 /* DEPRECATED: v17 neutral - ghost buttons use secondary text */

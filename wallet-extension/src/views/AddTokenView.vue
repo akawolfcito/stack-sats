@@ -346,14 +346,15 @@ function handleBack() {
 </template>
 
 <style scoped>
+/* V79: Let ScreenShell handle scroll */
 .add-token-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
   padding: var(--space-md) var(--space-lg);
-  padding-bottom: 120px;
-  overflow-y: auto;
+  padding-bottom: var(--space-lg);
+  /* V79: Removed overflow-y: auto - ScreenShell handles scroll */
+  /* V79: Removed excessive padding-bottom - StickyCTA in footer slot */
 }
 
 /* Network Indicator */

@@ -290,11 +290,10 @@ function handleAddToken() {
   to { transform: rotate(360deg); }
 }
 
-/* Content */
+/* Content - V79: Let ScreenShell handle scroll */
 .content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 var(--space-md) 72px;
+  padding: 0 var(--space-md) 72px; /* 72px for FAB clearance */
+  /* V79: Removed overflow-y: auto - ScreenShell handles scroll */
 }
 
 /* Section */
