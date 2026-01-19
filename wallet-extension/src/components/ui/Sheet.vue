@@ -394,70 +394,36 @@ const hasFooter = computed(() => !!slots.footer);
   margin: 0;
 }
 
-/* V74: Premium Glass Close Button */
+/* V75: Ghost Close Button - matches AppHeader back icon pattern */
 .sheet-header__close {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
   padding: 0;
-  /* V74: Subtle glass background */
-  background: rgba(255, 255, 255, 0.06);
-  /* V74: Soft border - barely visible at rest */
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  /* V75: Invisible at rest - just the icon */
+  background: transparent;
+  border: none;
   border-radius: 50%;
-  /* V74: Explicit color for SVG currentColor inheritance */
-  color: rgba(255, 255, 255, 0.85);
+  /* V75: Icon color */
+  color: var(--color-text-primary);
   cursor: pointer;
-  /* V74: Smooth transitions for all interactive properties */
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
+  transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
-/* V74: Inner highlight - premium edge shine */
-.sheet-header__close::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  /* V74: Top highlight gradient for depth */
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    transparent 50%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* V74: SVG above pseudo-elements */
-.sheet-header__close svg {
-  position: relative;
-  z-index: 1;
-}
-
-/* V74: Hover - elevated glass feel */
+/* V75: Hover - subtle background reveal */
 .sheet-header__close:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-}
-
-/* V74: Active - subtle press feedback */
-.sheet-header__close:active {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(1px);
 }
 
-/* V74: Focus-visible - accessible brand ring */
+/* V75: Active - tactile press */
+.sheet-header__close:active {
+  transform: scale(0.95);
+}
+
+/* V75: Focus-visible - accessible brand ring */
 .sheet-header__close:focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-ring-offset);

@@ -1315,15 +1315,15 @@ const CHECKS: Check[] = [
     id: "V71-1",
     file: "src/components/ui/Sheet.vue",
     scope: "style",
-    pattern: /\.sheet-header__close[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*0\.0[6-9]\)/,
-    description: 'V74: Close button has subtle glass background (0.06 alpha)',
+    pattern: /\.sheet-header__close[\s\S]*?background:\s*transparent/,
+    description: 'V75: Close button invisible at rest (matches back icon)',
   },
   {
     id: "V71-2",
     file: "src/components/ui/Sheet.vue",
     scope: "style",
-    pattern: /\.sheet-header__close::before[\s\S]*?linear-gradient/,
-    description: 'V74: Close button has inner highlight pseudo-element',
+    pattern: /\.sheet-header__close[\s\S]*?border:\s*none/,
+    description: 'V75: Close button has no border (matches back icon)',
   },
   {
     id: "V71-3",
@@ -1394,35 +1394,35 @@ const CHECKS: Check[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // V74: Premium Glass Close Button
+  // V75: Ghost Close Button (matches AppHeader back icon)
   // ═══════════════════════════════════════════════════════════
   {
-    id: "V74-1",
+    id: "V75-1",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-header__close:hover[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*0\.08\)/,
+    description: 'V75: Close button shows subtle bg on hover only',
+  },
+  {
+    id: "V75-2",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-header__close:active[\s\S]*?transform:\s*scale\(0\.95\)/,
+    description: 'V75: Close button has tactile scale press',
+  },
+  {
+    id: "V75-3",
     file: "src/components/ui/Sheet.vue",
     scope: "style",
     pattern: /\.sheet-header__close:focus-visible[\s\S]*?outline:\s*var\(--focus-ring\)/,
-    description: 'V74: Close button has accessible focus-visible ring',
+    description: 'V75: Close button has accessible focus-visible ring',
   },
   {
-    id: "V74-2",
-    file: "src/components/ui/Sheet.vue",
-    scope: "style",
-    pattern: /\.sheet-header__close\s+svg[\s\S]*?z-index:\s*1/,
-    description: 'V74: Close button SVG has z-index above pseudo-elements',
-  },
-  {
-    id: "V74-3",
-    file: "src/components/ui/Sheet.vue",
-    scope: "style",
-    pattern: /\.sheet-header__close:active[\s\S]*?translateY\(1px\)/,
-    description: 'V74: Close button has subtle press feedback',
-  },
-  {
-    id: "V74-4",
+    id: "V75-4",
     file: "src/components/ui/Sheet.vue",
     scope: "template",
     pattern: /<line[^>]*stroke="currentColor"/,
-    description: 'V74: Close button SVG uses currentColor for hover transitions',
+    description: 'V75: Close button SVG uses currentColor',
   },
 ];
 
