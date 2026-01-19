@@ -1,30 +1,25 @@
 <script setup lang="ts">
 /**
- * ReceiveModal - V63 Unified Overlay System
+ * ReceiveModal - V77 Premium CTA Hierarchy
  *
- * V63 Changes:
+ * V77 Changes:
+ * - "View in Explorer" downgraded to tertiary link (not competing with primary)
+ * - "Copy Address" is now the only strong primary CTA
+ * - Cleaner footer with single-action focus
+ *
+ * V63 Features (preserved):
  * - variant="modal" (centered dialog, pro desktop style)
  * - Modal sizing: clamp(320px, 92vw, 420px), max-height: 88vh
  * - Header (fixed): Sheet built-in header with close button
  * - Body (scroll): SegmentedTabs + QR + address (only body scrolls)
- * - Footer (fixed): StickyCTA rail
- *
- * Definition of Done:
- * 1. ✅ Overlay: Sheet variant="modal" (centered)
- * 2. ✅ Single close: Sheet header close button only
- * 3. ✅ Header: Sheet built-in header with V55 tokens
- * 4. ✅ CTA: StickyCTA roiPrefix="receive" (scroll risk)
- * 5. ✅ Content: SegmentedTabs (V55 primitive), V55 tokens
- * 6. ✅ Error slot: Reserved min-height for copy errors
  *
  * ROI: receive-* prefix for E2E anchors
  */
 import { ref, watch, onMounted, computed } from "vue";
 import QRCode from "qrcode";
 import { useUiMode } from "../composables/useUiMode";
-import { Sheet } from "@/components/ui";
+import { Sheet, Button } from "@/components/ui";
 import SegmentedTabs from "@/components/SegmentedTabs.vue";
-import StickyCTA from "@/components/layout/StickyCTA.vue";
 
 const props = defineProps<{
   visible: boolean;
@@ -247,15 +242,39 @@ function toggleFullAddress() {
       </div>
     </div>
 
-    <!-- V56 DoD #4: StickyCTA for scroll risk -->
+    <!-- V77: Single primary CTA + tertiary link (explorer doesn't compete) -->
     <template #footer>
-      <StickyCTA
-        :primary-text="copied ? 'Copied!' : 'Copy Address'"
-        secondary-text="View in Explorer"
-        roi-prefix="receive"
-        @primary="copyAddress"
-        @secondary="openExplorer"
-      />
+      <div class="receive-footer">
+        <Button
+          variant="primary"
+          full-width
+          data-roi="receive-cta-primary"
+          @click="copyAddress"
+        >
+          <span>{{ copied ? 'Copied!' : 'Copy Address' }}</span>
+          <svg v-if="!copied" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+        </Button>
+        <!-- V77: Explorer link - tertiary style, doesn't compete with primary -->
+        <button
+          class="explorer-link"
+          type="button"
+          data-roi="receive-cta-secondary"
+          @click="openExplorer"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15,3 21,3 21,9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          View in Explorer
+        </button>
+      </div>
     </template>
   </Sheet>
 </template>
@@ -392,5 +411,50 @@ function toggleFullAddress() {
   font-size: var(--font-size-sm);
   margin: 0;
   text-align: center;
+}
+
+/* V77: Custom footer with primary CTA + tertiary link */
+.receive-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+/* V77: Explorer link - tertiary/text style */
+.explorer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.explorer-link:hover {
+  color: var(--color-text-primary);
+  background: var(--surface-hover);
+}
+
+.explorer-link:active {
+  background: var(--surface-pressed);
+}
+
+.explorer-link svg {
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.explorer-link:hover svg {
+  opacity: 1;
 }
 </style>
