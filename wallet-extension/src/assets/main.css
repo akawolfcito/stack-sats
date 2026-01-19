@@ -348,3 +348,30 @@ hr {
   text-align: center;
   margin: 0;
 }
+
+/* ============================================
+   V80: Side Panel & Full Page Mode Adjustments
+   ============================================ */
+
+/* Side panel: slightly reduced spacing for narrow width */
+:root[data-view="sidepanel"] {
+  --card-pad-x: 14px;
+  --card-pad-y: 12px;
+}
+
+:root[data-view="sidepanel"] #app {
+  border-radius: 0;
+}
+
+/* Full page: expanded layout for browser tab */
+:root[data-view="fullpage"] {
+  --card-pad-x: 20px;
+  --card-pad-y: 18px;
+}
+
+:root[data-view="fullpage"] #app {
+  max-width: 420px;
+  margin: 0 auto;
+  height: 100vh;
+  border-radius: 0;
+}

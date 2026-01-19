@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
 import QRCode from "qrcode";
-import { Sheet, Button } from "@/components/ui";
+import { Sheet } from "@/components/ui";
 
 const props = defineProps<{
   isOpen: boolean;

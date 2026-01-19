@@ -35,12 +35,10 @@ import {
 import {
   fetchAllTokenInfo,
   type TokenInfo,
-  formatTokenBalance,
 } from "../utils/tokens";
 import {
   getCustomTokensForNetwork,
   getEnabledTokens,
-  type CustomToken,
 } from "../utils/tokens/custom";
 import {
   getAccountCount,
@@ -54,9 +52,7 @@ import {
   formatAmount,
   truncateAddress as truncateTxAddress,
   getTransactionTypeLabel,
-  getExplorerUrl,
   type Transaction,
-  type TransactionStatus,
 } from "../utils/transactions";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import ReceiveModal from "../components/ReceiveModal.vue";
@@ -117,7 +113,6 @@ const accountNames = ref<Record<number, string>>({});
 // Transaction history state
 const transactions = ref<Transaction[]>([]);
 const isLoadingTx = ref(false);
-const showAllTx = ref(false);
 
 // Token state (SIP-010)
 const tokens = ref<TokenInfo[]>([]);
@@ -308,11 +303,6 @@ const handleActivityClick = (txId: string) => {
   router.push({ path: `/transaction/${txId}` });
 };
 
-// Get display name for account in dropdown
-function getDisplayName(index: number): string {
-  return accountNames.value[index] || `Account ${index + 1}`;
-}
-
 // Load account names from settings
 async function loadAccountNames() {
   const names: Record<number, string> = {};
@@ -434,27 +424,6 @@ async function loadTokens() {
     tokens.value = [];
   }
   isLoadingTokens.value = false;
-}
-
-function getStatusClass(status: TransactionStatus): string {
-  switch (status) {
-    case "success": return "bg-success-muted text-success";
-    case "pending": return "bg-warning-muted text-warning";
-    default: return "bg-error-muted text-error";
-  }
-}
-
-function getStatusTextClass(status: TransactionStatus): string {
-  switch (status) {
-    case "success": return "text-success";
-    case "pending": return "text-warning";
-    default: return "text-error";
-  }
-}
-
-function openExplorer(txId: string) {
-  const url = getExplorerUrl(txId, selectedNetwork.value);
-  window.open(url, "_blank");
 }
 
 async function refreshBalance() {
@@ -589,7 +558,7 @@ const closeReceiveModal = () => {
 // V35/V57: Expose snapshot hooks for UI testing
 // Only available when __UI_SNAPSHOT_MODE__ is set
 if (typeof window !== 'undefined' && localStorage.getItem('__UI_SNAPSHOT_MODE__')) {
-  (window as any).__UI_SNAPSHOT__ = {
+  (window as unknown as Record<string, unknown>).__UI_SNAPSHOT__ = {
     openReceiveModal: () => {
       showReceiveModal.value = true;
     },

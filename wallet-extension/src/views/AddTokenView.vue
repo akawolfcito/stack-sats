@@ -197,7 +197,7 @@ async function handleAddToken() {
 
     // Navigate back to manage tokens
     router.push({ path: "/manage-tokens" });
-  } catch (err) {
+  } catch {
     submitError.value = "Failed to add token. Please try again.";
   } finally {
     isLoading.value = false;

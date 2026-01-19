@@ -18,6 +18,8 @@ defineProps<{
   variant?: 'default' | 'danger' | 'add';
   /** Disable interaction */
   disabled?: boolean;
+  /** V80: Static row - no hover/click affordance (display-only) */
+  static?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -30,16 +32,18 @@ function handleClick() {
 </script>
 
 <template>
-  <button
-    type="button"
+  <component
+    :is="static ? 'div' : 'button'"
+    :type="static ? undefined : 'button'"
     class="list-row"
     :class="{
       'list-row--danger': variant === 'danger',
       'list-row--add': variant === 'add',
       'list-row--disabled': disabled,
+      'list-row--static': static,
     }"
-    :disabled="disabled"
-    @click="handleClick"
+    :disabled="static ? undefined : disabled"
+    @click="static ? undefined : handleClick()"
   >
     <!-- Icon Slot or Default Icon -->
     <div class="list-row-icon" :style="iconColor ? { background: iconColor } : undefined">
@@ -68,7 +72,7 @@ function handleClick() {
 
     <!-- Chevron -->
     <svg
-      v-if="chevron"
+      v-if="chevron && !static"
       class="list-row-chevron"
       width="16"
       height="16"
@@ -79,7 +83,7 @@ function handleClick() {
     >
       <path d="M9 18l6-6-6-6" />
     </svg>
-  </button>
+  </component>
 </template>
 
 <style scoped>
@@ -246,5 +250,19 @@ function handleClick() {
   opacity: 0.5; /* V29: Subtle, consistent across app */
   width: 16px;
   height: 16px;
+}
+
+/* V80: Static row - display-only, no interaction */
+.list-row--static {
+  cursor: default;
+}
+
+.list-row--static:hover {
+  background: transparent;
+}
+
+.list-row--static:active {
+  transform: none;
+  background: transparent;
 }
 </style>

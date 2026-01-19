@@ -8,7 +8,7 @@
  * - --radius-chip for rounded look
  * - Subtle border, no glow
  */
-const props = withDefaults(
+withDefaults(
   defineProps<{
     /** Button label text */
     label: string;

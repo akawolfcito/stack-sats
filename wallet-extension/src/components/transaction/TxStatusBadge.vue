@@ -23,6 +23,7 @@ const statusConfig = computed(() => {
         class: "status-pending",
       };
     case "failed":
+    default:
       return {
         icon: "✕",
         label: "Failed",

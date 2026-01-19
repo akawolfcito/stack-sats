@@ -9,7 +9,7 @@
  * and relies on garbage collection. This is a best-effort approach.
  * For true security, consider using Uint8Array for sensitive data.
  */
-export function clearString(str: string): string {
+export function clearString(_str: string): string {
   // Return empty string - the original will be garbage collected
   // In a more secure implementation, we'd use typed arrays
   return "";

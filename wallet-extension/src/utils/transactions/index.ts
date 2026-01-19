@@ -77,20 +77,6 @@ export interface Transaction {
 }
 
 /**
- * FT transfer event from API
- */
-interface ApiFtTransferEvent {
-  event_type: "fungible_token_asset";
-  asset: {
-    asset_event_type: "transfer";
-    asset_id: string;
-    sender: string;
-    recipient: string;
-    amount: string;
-  };
-}
-
-/**
  * Raw transaction from API
  */
 interface ApiTransaction {

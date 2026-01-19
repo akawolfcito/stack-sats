@@ -99,7 +99,7 @@ async function handleTestConnection() {
       testResult.value = "error";
       error.value = `Connection failed: HTTP ${response.status}`;
     }
-  } catch (err) {
+  } catch {
     testResult.value = "error";
     error.value = "Failed to connect. Check the URL and try again.";
   } finally {
@@ -151,7 +151,7 @@ async function handleSaveNetwork() {
     setTimeout(() => {
       router.back();
     }, 1000);
-  } catch (err) {
+  } catch {
     error.value = "Failed to save network. Please try again.";
   } finally {
     isLoading.value = false;

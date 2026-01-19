@@ -7,11 +7,12 @@ type Account = {
   pubkey: string;
 };
 
+ 
 type JsonRpcRequest = {
   jsonrpc: string;
   id: string;
   method: string;
-  params: any;
+  params: unknown; // Dynamic params structure from dApp JSON-RPC (cast in handlers)
 };
 
 type Result = {

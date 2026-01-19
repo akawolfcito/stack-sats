@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "DenVault",
   "short_name": "DenVault",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DenVault - Your Bitcoin Layer 2 wallet for the Stacks ecosystem.",
   "action": {
     "default_title": "DenVault",
@@ -10,7 +10,7 @@
   },
   "permissions": ["storage", "tabs", "sidePanel", "clipboardRead"],
   "side_panel": {
-    "default_path": "index.html"
+    "default_path": "index.html?view=sidepanel"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none';"

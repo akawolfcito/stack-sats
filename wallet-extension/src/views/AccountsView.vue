@@ -18,7 +18,6 @@ import ListGroup from '@/components/list/ListGroup.vue'
 import ListRow from '@/components/list/ListRow.vue'
 import { Button } from '@/components/ui'
 import { generateInitialAccounts } from '@/utils/accounts'
-import { type Account } from '@/utils/types'
 import { sessionManager } from '@/utils/security/session'
 import { getSelectedNetwork, type NetworkName } from '@/utils/network'
 import {
