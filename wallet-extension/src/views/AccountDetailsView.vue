@@ -354,13 +354,12 @@ function handleClose() {
   to { transform: rotate(360deg); }
 }
 
-/* Content */
+/* Content - V79: Let ScreenShell handle scroll */
 .content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   padding: 0 var(--space-md) var(--space-lg);
-  overflow-y: auto;
+  /* V79: Removed overflow-y: auto - ScreenShell handles scroll */
   gap: var(--space-md);
 }
 

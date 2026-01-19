@@ -300,14 +300,13 @@ async function addAccount() {
   to { transform: rotate(360deg); }
 }
 
-/* Content */
+/* Content - V79: Let ScreenShell handle scroll */
 .accounts-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   padding: var(--space-md) var(--page-pad-x) var(--space-lg);
   gap: var(--space-lg);
-  overflow-y: auto;
+  /* V79: Removed overflow-y: auto - ScreenShell handles scroll */
   position: relative;
   z-index: 1;
 }
