@@ -50,6 +50,11 @@ const router = createRouter({
       component: () => import("../views/AccountsView.vue"),
     },
     {
+      path: "/manage-wallets",
+      name: "manage-wallets",
+      component: () => import("../views/ManageWalletsView.vue"),
+    },
+    {
       path: "/manage-tokens",
       name: "manage-tokens",
       component: () => import("../views/ManageTokensView.vue"),
