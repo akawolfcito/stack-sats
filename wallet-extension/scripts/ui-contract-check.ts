@@ -1315,15 +1315,15 @@ const CHECKS: Check[] = [
     id: "V71-1",
     file: "src/components/ui/Sheet.vue",
     scope: "style",
-    pattern: /\.sheet-header__close[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*0\.1[2-9]\)/,
-    description: 'V71: Close button has high contrast background (>=0.12 alpha)',
+    pattern: /\.sheet-header__close[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*0\.1[0-9]\)/,
+    description: 'V73: Close button has glass background (0.10+ alpha)',
   },
   {
     id: "V71-2",
     file: "src/components/ui/Sheet.vue",
-    scope: "style",
-    pattern: /\.sheet-header__close[\s\S]*?color:\s*var\(--color-text-primary\)/,
-    description: 'V71: Close button uses primary text color for visibility',
+    scope: "template",
+    pattern: /<line[^>]*stroke="#ffffff"/,
+    description: 'V73: Close button uses inline stroke on line elements',
   },
   {
     id: "V71-3",
@@ -1352,6 +1352,45 @@ const CHECKS: Check[] = [
     scope: "template",
     pattern: /<Sheet[\s\S]*?title="Receive"[\s\S]*?:show-close="true"[\s\S]*?>[\s\S]*?<div[\s\S]*?class="receive-content"/,
     description: 'V71: ReceiveModal has no #icon slot (title directly followed by content)',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V72: Import Recovery Phrase Premium Parity
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V72-1",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /\.paste-btn[\s\S]*?min-height:\s*40px/,
+    description: 'V72: Paste button has 40px minimum touch target',
+  },
+  {
+    id: "V72-2",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /\.word-preview[\s\S]*?\/\*\s*V72:.*nested scroll/i,
+    description: 'V72: Word preview has no nested scroll (modal body scrolls)',
+  },
+  {
+    id: "V72-3",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /\.word-chip[\s\S]*?background:\s*var\(--surface-hover\)/,
+    description: 'V72: Word chip uses --surface-hover token (no hardcoded rgba)',
+  },
+  {
+    id: "V72-4",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /\.input-actions[\s\S]*?background:\s*transparent/,
+    description: 'V72: Input actions row has transparent background',
+  },
+  {
+    id: "V72-5",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /\.paste-btn:active[\s\S]*?transform:\s*scale\(0\.985\)/,
+    description: 'V72: Paste button has V66 tactile feedback',
   },
 ];
 

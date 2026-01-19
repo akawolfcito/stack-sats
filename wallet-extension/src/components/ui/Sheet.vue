@@ -233,9 +233,10 @@ const hasFooter = computed(() => !!slots.footer);
                 aria-label="Close"
                 @click="emit('close')"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+                <!-- V73: Direct stroke on lines (bypasses CSS inheritance issues) -->
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
                 </svg>
               </button>
             </header>
@@ -393,35 +394,30 @@ const hasFooter = computed(() => !!slots.footer);
   margin: 0;
 }
 
-/* V71: Close button - HIGH CONTRAST visibility against glass background */
+/* V73: Close button - matches AppHeader pattern */
 .sheet-header__close {
   display: flex;
   align-items: center;
   justify-content: center;
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
-  /* V71: Higher contrast glass background for visibility */
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 0;
+  /* V73: Glass background */
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
-  /* V71: Primary text color for maximum visibility */
-  color: var(--color-text-primary);
   cursor: pointer;
   transition: all var(--transition-fast);
-  /* V71: Ensure button is always above content */
-  position: relative;
-  z-index: 2;
   flex-shrink: 0;
 }
 
 .sheet-header__close:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.16);
   border-color: rgba(255, 255, 255, 0.22);
-  color: var(--color-text-primary);
 }
 
 .sheet-header__close:active {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
   transform: scale(0.95);
 }
 
