@@ -1424,6 +1424,38 @@ const CHECKS: Check[] = [
     pattern: /<line[^>]*stroke="currentColor"/,
     description: 'V75: Close button SVG uses currentColor',
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // V76: Import Recovery Phrase Page (converted from modal)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V76-1",
+    file: "src/views/ImportRecoveryPhraseView.vue",
+    scope: "template",
+    pattern: /<ScreenShell/,
+    description: 'V76: Import page uses ScreenShell layout',
+  },
+  {
+    id: "V76-2",
+    file: "src/views/ImportRecoveryPhraseView.vue",
+    scope: "template",
+    pattern: /<AppHeader[^>]*title="Import Recovery Phrase"/,
+    description: 'V76: Import page has AppHeader with title',
+  },
+  {
+    id: "V76-3",
+    file: "src/views/ImportRecoveryPhraseView.vue",
+    scope: "script",
+    pattern: /onBeforeRouteLeave/,
+    description: 'V76: Import page has exit guard',
+  },
+  {
+    id: "V76-4",
+    file: "src/router/index.ts",
+    scope: "script",
+    pattern: /path:\s*["']\/import-recovery["']/,
+    description: 'V76: /import-recovery route exists',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
