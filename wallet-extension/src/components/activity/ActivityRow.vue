@@ -81,6 +81,7 @@ const getStatusLabel = (status: ActivityStatus) => {
 
 <style scoped>
 /* V27: Activity row - matches ListRow styling */
+/* V70: Row hover geometry parity with ListRow */
 .activity-row {
   display: flex;
   align-items: center;
@@ -91,16 +92,23 @@ const getStatusLabel = (status: ActivityStatus) => {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background var(--transition-fast);
   text-align: left;
+  /* V70: Row radius for proper hover geometry */
+  border-radius: var(--radius-row);
+  /* V66: Smoother transition + transform for tactile feedback */
+  transition:
+    background var(--transition-base),
+    transform var(--transition-fast);
 }
 
 .activity-row:hover {
   background: var(--surface-hover);
 }
 
+/* V66: Tactile press feedback */
 .activity-row:active {
   background: var(--surface-pressed);
+  transform: scale(0.985);
 }
 
 .activity-row:focus-visible {

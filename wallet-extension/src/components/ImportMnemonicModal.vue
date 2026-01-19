@@ -118,7 +118,7 @@ watch(() => props.isOpen, (isOpen) => {
 </script>
 
 <template>
-  <!-- V63: Centered modal variant -->
+  <!-- V71: Centered modal variant - NO decorative header icon (modal parity) -->
   <Sheet
     :is-open="isOpen"
     variant="modal"
@@ -126,11 +126,7 @@ watch(() => props.isOpen, (isOpen) => {
     data-roi="import-sheet"
     @close="handleClose"
   >
-    <template #icon>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    </template>
+    <!-- V71: No #icon slot - standard modal header pattern (title + close only) -->
 
     <div class="import-modal" data-roi="import-content">
       <!-- Security Notice -->
@@ -143,7 +139,7 @@ watch(() => props.isOpen, (isOpen) => {
         <span>Never share your recovery phrase. Anyone with it can access your funds.</span>
       </div>
 
-      <!-- Input Area -->
+      <!-- V71: Input Area - textarea with separate trailing action row -->
       <div class="input-area" data-roi="import-mnemonic-input">
         <textarea
           ref="textareaRef"
@@ -156,15 +152,16 @@ watch(() => props.isOpen, (isOpen) => {
           spellcheck="false"
           rows="4"
         />
-
-        <!-- Paste Button -->
-        <button class="paste-btn" type="button" data-roi="import-mnemonic-paste" @click="handlePaste">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-          Paste
-        </button>
+        <!-- V71: Paste action row - NO overlay, never covers input text -->
+        <div class="input-actions">
+          <button class="paste-btn" type="button" data-roi="import-mnemonic-paste" @click="handlePaste">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Paste from clipboard
+          </button>
+        </div>
       </div>
 
       <!-- Word Count Indicator -->
@@ -232,9 +229,10 @@ watch(() => props.isOpen, (isOpen) => {
   color: var(--color-warning);
 }
 
-/* V65: Input Area - transparent, subtle border */
+/* V71: Input Area - flex column with separate action row */
 .input-area {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   background: transparent;
   border: 1px solid var(--panel-divider);
   border-radius: var(--radius-sm);
@@ -245,7 +243,7 @@ watch(() => props.isOpen, (isOpen) => {
   width: 100%;
   min-height: 88px;
   padding: var(--space-md);
-  padding-right: 72px;
+  /* V71: No padding-right needed - paste button is separate row */
   background: transparent;
   border: none;
   color: var(--color-text-primary);
@@ -262,7 +260,7 @@ watch(() => props.isOpen, (isOpen) => {
 
 /* V45: Focus ring on container */
 .input-area:focus-within {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .phrase-input::placeholder {
@@ -270,45 +268,51 @@ watch(() => props.isOpen, (isOpen) => {
   font-family: var(--font-family);
 }
 
-/* V70: Paste Button - fixed overlap, proper z-index and positioning */
+/* V71: Input actions row - trailing actions below textarea */
+.input-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-xs) var(--space-sm);
+  border-top: 1px solid var(--panel-divider);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* V71: Paste Button - inline trailing action, NO overlay */
 .paste-btn {
-  position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
-  z-index: 2; /* V70: Above textarea to prevent overlap */
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   height: var(--control-h-inline);
   padding: 0 var(--space-sm);
-  /* V70: Glass surface recipe for premium look */
-  background: var(--panel-bg-glass);
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-highlight);
-  border-radius: var(--radius-chip);
-  color: var(--color-text-secondary);
+  /* V71: Transparent with hover state */
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-row);
+  color: var(--color-text-muted);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .paste-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--surface-hover);
   color: var(--color-text-primary);
 }
 
+/* V66: Tactile feedback */
 .paste-btn:active {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-pressed);
   transform: scale(0.98);
 }
 
 .paste-btn svg {
-  width: 14px;
-  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.paste-btn:hover svg {
+  opacity: 1;
 }
 
 /* Word Count */

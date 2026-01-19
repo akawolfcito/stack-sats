@@ -156,6 +156,7 @@
   --radius-control: var(--radius-md); /* 12px - reduced from 16px for less "pill" (v14) */
   --radius-card: 20px;                /* Reduced from 24px for tighter cards (v14) */
   --radius-chip: var(--radius-sm);    /* Inline actions, badges, chips */
+  --radius-row: 6px;                  /* V70: Row hover geometry - subtle, consistent */
 
   /* Typography */
   --font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

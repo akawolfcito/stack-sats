@@ -84,6 +84,7 @@ function handleClick() {
 
 <style scoped>
 /* V66: Tactile Premium - enhanced feedback */
+/* V70: Row hover geometry - consistent border-radius */
 .list-row {
   display: flex;
   align-items: center;
@@ -95,6 +96,8 @@ function handleClick() {
   border: none;
   cursor: pointer;
   text-align: left;
+  /* V70: Row radius for proper hover geometry */
+  border-radius: var(--radius-row);
   /* V66 G4: Smoother transition + transform */
   transition:
     background var(--transition-base),

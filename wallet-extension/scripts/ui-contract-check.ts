@@ -1244,8 +1244,8 @@ const CHECKS: Check[] = [
     id: "V70-5",
     file: "src/components/ImportMnemonicModal.vue",
     scope: "style",
-    pattern: /\.paste-btn[\s\S]*?z-index:\s*\d+/,
-    description: 'V70: PASTE button has z-index to prevent overlap',
+    pattern: /\.input-actions[\s\S]*?justify-content:\s*flex-end/,
+    description: 'V71: Input actions row with trailing paste button (replaces z-index overlay)',
   },
 
   // V70 Premium Glass Parity Contracts
@@ -1276,6 +1276,82 @@ const CHECKS: Check[] = [
     scope: "style",
     pattern: /\.sheet-container::before[\s\S]*?var\(--panel-highlight\)/,
     description: 'V70: Sheet has top highlight pseudo-element',
+  },
+
+  // V70 Row Hover Geometry Parity
+  {
+    id: "V70-10",
+    file: "src/assets/base.css",
+    scope: "style",
+    pattern: /--radius-row:\s*\d+px/,
+    description: 'V70: --radius-row token exists for consistent row hover geometry',
+  },
+  {
+    id: "V70-11",
+    file: "src/components/list/ListRow.vue",
+    scope: "style",
+    pattern: /\.list-row[\s\S]*?border-radius:\s*var\(--radius-row\)/,
+    description: 'V70: ListRow uses --radius-row for hover geometry',
+  },
+  {
+    id: "V70-12",
+    file: "src/components/account/AccountSwitcher.vue",
+    scope: "style",
+    pattern: /\.footer-action[\s\S]*?border-radius:\s*var\(--radius-row\)/,
+    description: 'V70: AccountSwitcher footer actions use --radius-row',
+  },
+  {
+    id: "V70-13",
+    file: "src/components/activity/ActivityRow.vue",
+    scope: "style",
+    pattern: /\.activity-row[\s\S]*?border-radius:\s*var\(--radius-row\)/,
+    description: 'V70: ActivityRow uses --radius-row for hover geometry parity',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V71: Modal Parity & Recovery Phrase Input Fixes
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V71-1",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-header__close[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*0\.1[2-9]\)/,
+    description: 'V71: Close button has high contrast background (>=0.12 alpha)',
+  },
+  {
+    id: "V71-2",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-header__close[\s\S]*?color:\s*var\(--color-text-primary\)/,
+    description: 'V71: Close button uses primary text color for visibility',
+  },
+  {
+    id: "V71-3",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /<Sheet[\s\S]*?title="Import Recovery Phrase"[\s\S]*?@close[\s\S]*?>[\s\S]*?<div\s+class="import-modal"/,
+    description: 'V71: ImportMnemonicModal has no #icon slot (title directly followed by content)',
+  },
+  {
+    id: "V71-4",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "style",
+    pattern: /\.input-actions[\s\S]*?border-top/,
+    description: 'V71: Paste button in separate action row (no overlay)',
+  },
+  {
+    id: "V71-5",
+    file: "src/components/ImportMnemonicModal.vue",
+    scope: "template",
+    pattern: /Paste\s+from\s+clipboard/,
+    description: 'V71: Paste button has clear label',
+  },
+  {
+    id: "V71-6",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /<Sheet[\s\S]*?title="Receive"[\s\S]*?:show-close="true"[\s\S]*?>[\s\S]*?<div[\s\S]*?class="receive-content"/,
+    description: 'V71: ReceiveModal has no #icon slot (title directly followed by content)',
   },
 ];
 
