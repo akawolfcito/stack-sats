@@ -296,7 +296,8 @@ defineExpose({ open, close, toggle })
   padding: var(--space-sm) var(--space-md);
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  /* V70: Consistent row radius across all interactive rows */
+  border-radius: var(--radius-row);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
