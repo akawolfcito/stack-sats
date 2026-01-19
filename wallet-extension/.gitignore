@@ -46,3 +46,8 @@ docs/ui/agents/
 docs/ui/roadmap/
 docs/ui/golden/
 docs/ui/rfcs/
+
+# Private release documentation (moved to ~/.claude/docs/)
+RELEASE_CHECKLIST.md
+NOTES_TO_REVIEWER.md
+PROGRESS.md

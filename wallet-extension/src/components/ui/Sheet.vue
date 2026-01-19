@@ -102,7 +102,7 @@ function calculateDropdownPosition() {
   const offsetY = props.anchor?.offsetY ?? 8;
 
   // Calculate initial position (below trigger, aligned left)
-  let top = offsetY;
+  const top = offsetY;
   let left = 0;
 
   // Check for right overflow - align right edge to trigger right

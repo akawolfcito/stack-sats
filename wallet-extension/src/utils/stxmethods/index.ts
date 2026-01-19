@@ -9,13 +9,11 @@ import {
   broadcastTransaction,
   type ClarityValue,
 } from "@stacks/transactions";
-import type { StacksNetwork } from "@stacks/network";
 import {
   buildNetworkWithClient,
   getSelectedNetwork,
   getAddressVersion,
   getNetworkConfig,
-  NETWORKS,
 } from "../network";
 import { c32ToB58 } from "c32check";
 import { generateP2TR, getPrivateKey } from "../accounts";
@@ -39,7 +37,7 @@ async function handleSignMessage(
   mnemonic: string,
   accountIndex: number
 ) {
-  const params: MethodParams<"stx_signMessage"> = payload.params;
+  const params = payload.params as MethodParams<"stx_signMessage">;
 
   // Get private key only when needed for signing
   let privateKey: string | null = null;
@@ -158,7 +156,7 @@ async function handleCallContract(
   mnemonic: string,
   accountIndex: number
 ) {
-  const params: MethodParams<"stx_callContract"> = payload.params;
+  const params = payload.params as MethodParams<"stx_callContract">;
 
   // Get private key only when needed for signing
   let privateKey: string | null = null;
@@ -260,7 +258,7 @@ async function handleTransferStx(
   mnemonic: string,
   accountIndex: number
 ) {
-  const params: MethodParams<"stx_transferStx"> = payload.params;
+  const params = payload.params as MethodParams<"stx_transferStx">;
 
   // Get private key only when needed for signing
   let privateKey: string | null = null;

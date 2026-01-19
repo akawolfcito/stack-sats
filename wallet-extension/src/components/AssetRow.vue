@@ -2,10 +2,11 @@
 /**
  * AssetRow - Unified asset row using ListRow as base
  *
+ * V80: Static display-only (no chevron, no click affordance)
+ *
  * Extends ListRow with:
  * - Consistent icon with gradient backgrounds
  * - Balance display (value + fiat)
- * - Chevron navigation indicator
  */
 import ListRow from './list/ListRow.vue';
 
@@ -16,10 +17,6 @@ defineProps<{
   fiatText?: string
   iconColor?: string
 }>()
-
-const emit = defineEmits<{
-  (e: 'click'): void
-}>()
 </script>
 
 <template>
@@ -29,8 +26,7 @@ const emit = defineEmits<{
     :value="balanceText"
     :value-subtitle="fiatText"
     :icon-color="iconColor"
-    chevron
-    @click="emit('click')"
+    static
   >
     <template #icon>
       <slot name="icon">

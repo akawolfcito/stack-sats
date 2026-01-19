@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ActivityRow, { type ActivityRowProps, type ActivityStatus } from './ActivityRow.vue'
+import ActivityRow, { type ActivityStatus } from './ActivityRow.vue'
 
 export interface ActivityItem {
   txId: string

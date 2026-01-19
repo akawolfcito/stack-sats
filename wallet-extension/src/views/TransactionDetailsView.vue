@@ -76,7 +76,7 @@ onBeforeMount(async () => {
     } else {
       error.value = "Transaction not found";
     }
-  } catch (e) {
+  } catch {
     error.value = "Failed to load transaction";
   } finally {
     isLoading.value = false;

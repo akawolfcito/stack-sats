@@ -38,7 +38,7 @@
  * - showBack: Whether to show back button (for onboarding flows)
  * - screenRoi: Optional screen-specific ROI identifier (e.g., "unlock", "verify-pin")
  */
-const props = defineProps<{
+defineProps<{
   title: string;
   subtitle?: string;
   eyebrow?: string;

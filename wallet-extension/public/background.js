@@ -283,8 +283,51 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "GET_QUEUE_STATUS":
       sendResponse(getQueueStatus());
       return true; // Keep channel open for sendResponse
+
+    case "OPEN_SIDEPANEL":
+      handleOpenSidePanel(sender, sendResponse);
+      return true; // Keep channel open for async
   }
 });
+
+/**
+ * V80: Open side panel with fallback to full page
+ */
+async function handleOpenSidePanel(sender, sendResponse) {
+  try {
+    // Get current window info
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const windowId = tab?.windowId;
+
+    // Check if side panel API is available
+    if (chrome.sidePanel) {
+      try {
+        // Enable side panel for this window
+        await chrome.sidePanel.setOptions({
+          enabled: true,
+          path: "index.html?view=sidepanel",
+        });
+
+        // Open side panel
+        if (windowId) {
+          await chrome.sidePanel.open({ windowId });
+        }
+
+        sendResponse({ ok: true });
+        return;
+      } catch (err) {
+        console.warn("[StacksWallet] Side panel open failed:", err);
+      }
+    }
+
+    // Fallback: open full page in new tab
+    chrome.tabs.create({ url: chrome.runtime.getURL("index.html?view=fullpage") });
+    sendResponse({ ok: true, fallback: true });
+  } catch (err) {
+    console.error("[StacksWallet] handleOpenSidePanel error:", err);
+    sendResponse({ ok: false, error: String(err) });
+  }
+}
 
 /**
  * Handle approval from UI

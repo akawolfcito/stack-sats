@@ -9,7 +9,6 @@
 
 import { ref, type Ref } from "vue";
 import { decryptWithPIN, isValidPIN } from "./encryption";
-import { walletVault } from "./vault";
 import {
   getActiveWallet,
   getActiveWalletAsync,

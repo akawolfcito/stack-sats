@@ -1,6 +1,6 @@
 {
   "name": "wallet-extension",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
@@ -28,7 +28,9 @@
     "ui:probe": "bash scripts/ui-style-probe.sh",
     "audit:accent": "bash scripts/audit-accent.sh",
     "audit:ui": "bash scripts/audit-ui.sh",
-    "contract:check": "npx tsx scripts/ui-contract-check.ts"
+    "contract:check": "npx tsx scripts/ui-contract-check.ts",
+    "verify": "run-s lint type-check build contract:check",
+    "release:zip": "cd dist && zip -r ../../denvault-v1.0.2.zip . -x '*.DS_Store' && cd .. && echo 'Created denvault-v1.0.2.zip'"
   },
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.2.0",

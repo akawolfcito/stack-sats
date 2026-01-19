@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * AssetList - V80: Static display-only asset rows
+ *
+ * No click affordance - assets are display-only.
+ * Manage tokens via dedicated "Manage" action.
+ */
 import AssetRow from './AssetRow.vue'
 
 export interface AssetRowModel {
@@ -13,10 +19,6 @@ export interface AssetRowModel {
 defineProps<{
   items: AssetRowModel[]
 }>()
-
-const emit = defineEmits<{
-  (e: 'item-click', item: AssetRowModel): void
-}>()
 </script>
 
 <template>
@@ -29,7 +31,6 @@ const emit = defineEmits<{
       :balance-text="item.balanceText"
       :fiat-text="item.fiatText"
       :icon-color="item.iconColor"
-      @click="emit('item-click', item)"
     />
 
     <!-- Empty state -->

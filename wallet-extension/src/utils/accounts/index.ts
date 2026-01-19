@@ -82,13 +82,13 @@ async function getPrivateKey(
  * Generate a Bitcoin P2TR (taproot) address from a public key
  */
 async function generateP2TR(pubkey: string): Promise<string> {
-  // @ts-ignore - bitcoin is a global variable injected by bitcoinjs-lib.js
+  // @ts-expect-error - bitcoin is a global variable injected by bitcoinjs-lib.js
   bitcoin.initEccLib(ecc);
 
-  // @ts-ignore
+  // @ts-expect-error - bitcoin is a global variable injected by bitcoinjs-lib.js
   const taproot = bitcoin.payments.p2tr({
     internalPubkey: Buffer.from(pubkey.slice(2), "hex"),
-    // @ts-ignore
+    // @ts-expect-error - bitcoin is a global variable injected by bitcoinjs-lib.js
     network: bitcoin.networks.bitcoin,
   });
 

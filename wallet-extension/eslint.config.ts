@@ -14,9 +14,34 @@ export default defineConfigWithVueTs(
 
   {
     name: 'app/files-to-ignore',
-    ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**'],
+    ignores: [
+      '**/dist/**',
+      '**/dist-ssr/**',
+      '**/coverage/**',
+      'bitcoinjs-lib.js',
+      'public/**/*.js',     // Extension runtime scripts
+      'e2e/**/*.ts',        // E2E test files
+      'scripts/**/*.js',    // Build scripts
+      '**/*.test.ts',       // Unit test files
+      '**/*.spec.ts',       // Spec test files
+    ],
   },
 
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
+
+  // V1.0.2: Allow single-word component names for UI primitives
+  {
+    name: 'app/vue-rules',
+    rules: {
+      'vue/multi-word-component-names': ['error', {
+        ignores: ['Badge', 'Button', 'Sheet', 'Toast', 'Confirmation']
+      }],
+      // Allow unused vars with _ prefix
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_'
+      }]
+    }
+  }
 )

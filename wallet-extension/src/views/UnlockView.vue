@@ -22,7 +22,7 @@ import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import PinScreenShell from "@/components/pin/PinScreenShell.vue";
 import PinInput from "@/components/PinInput.vue";
-import { Button, TextField } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 

@@ -22,7 +22,7 @@ export interface ActionItem {
   disabled?: boolean;
 }
 
-const props = defineProps<{
+defineProps<{
   /** Array of action items to render */
   items: ActionItem[];
 }>();

@@ -52,7 +52,6 @@ const {
   transitionToForm,
   setResult,
   setError,
-  clearDraft,
   isValidForConfirmTx,
   isSubmitting,
   canSubmit,

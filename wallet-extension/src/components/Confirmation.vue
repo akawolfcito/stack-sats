@@ -25,7 +25,7 @@ import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import StickyCTA from "@/components/layout/StickyCTA.vue";
 import PinInput from "@/components/PinInput.vue";
-import { Button } from "@/components/ui";
+import "@/components/ui"; // Button used in template
 import { sessionManager } from "@/utils/security/session";
 import { secureLog, secureWarn } from "@/utils/security/logger";
 

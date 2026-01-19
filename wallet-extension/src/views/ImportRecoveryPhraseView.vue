@@ -143,7 +143,7 @@ function handleDiscard() {
 
 // V77: Exit guard - use in-app modal instead of native confirm
 // This handles programmatic navigation (e.g., router.push from other components)
-onBeforeRouteLeave((_to, _from) => {
+onBeforeRouteLeave(() => {
   // Allow navigation if user is submitting (successful import)
   if (isSubmitting.value) {
     return true;

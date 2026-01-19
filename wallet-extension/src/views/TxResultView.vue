@@ -41,7 +41,6 @@ const MAX_POLL_INTERVAL = 10000; // Max 10s between polls
 const BACKOFF_FACTOR = 1.5;
 const pollStartTime = ref(0);
 let currentPollInterval = INITIAL_POLL_INTERVAL;
-let pollAttempts = 0;
 
 // V52.2: Copy feedback
 const copied = ref(false);
@@ -126,13 +125,11 @@ onUnmounted(() => {
 function startPolling() {
   pollStartTime.value = Date.now();
   currentPollInterval = INITIAL_POLL_INTERVAL;
-  pollAttempts = 0;
   schedulePoll();
 }
 
 function schedulePoll() {
   pollTimeout = setTimeout(() => {
-    pollAttempts++;
     const elapsed = Date.now() - pollStartTime.value;
 
     // V52.2: Simulated - in real implementation, this would poll the API
