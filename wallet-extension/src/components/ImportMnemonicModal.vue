@@ -1,22 +1,25 @@
 <script setup lang="ts">
 /**
- * ImportMnemonicModal - V63 Unified Overlay System
+ * ImportMnemonicModal - V72 Premium Parity
  *
- * Definition of Done (all 6 satisfied):
+ * V72 Changes (premium parity with ReceiveModal):
+ * - No decorative header icon (modal standard pattern)
+ * - Paste action in separate row (no overlay, 40px touch target)
+ * - No nested scroll trap (modal body scrolls, not word-preview)
+ * - Token-based surfaces (no hardcoded rgba values)
+ * - V66 tactile feedback on paste button
+ *
+ * Definition of Done:
  * 1. ✅ Overlay: Sheet variant="modal" (V63 centered dialog)
- * 2. ✅ Single close: Sheet showClose=true (default)
- * 3. ✅ Header: Sheet built-in header with V55 tokens
+ * 2. ✅ Single close: Sheet showClose=true (V71 high contrast)
+ * 3. ✅ Header: Sheet built-in header, no icon slot
  * 4. ✅ CTA: StickyCTA roiPrefix="import"
- * 5. ✅ Content: V55 tokens, textarea, word chips
+ * 5. ✅ Content: Token-based surfaces, word chips
  * 6. ✅ Error slot: Reserved min-height (20px)
+ * 7. ✅ Paste action: Separate row, 40px touch target
+ * 8. ✅ Scroll: No nested scroll trap
  *
  * ROI: import-* prefix for E2E anchors
- *
- * Security features:
- * - No autocomplete, autocorrect, spellcheck, autocapitalize
- * - Visual word count validation
- * - Clear security messaging
- * - Paste button for convenience
  */
 import { ref, computed, watch, nextTick } from 'vue';
 import { Sheet, Button } from '@/components/ui';
@@ -268,23 +271,25 @@ watch(() => props.isOpen, (isOpen) => {
   font-family: var(--font-family);
 }
 
-/* V71: Input actions row - trailing actions below textarea */
+/* V72: Input actions row - trailing actions below textarea */
 .input-actions {
   display: flex;
   justify-content: flex-end;
   padding: var(--space-xs) var(--space-sm);
   border-top: 1px solid var(--panel-divider);
-  background: rgba(255, 255, 255, 0.02);
+  /* V72: No background - transparent to match modal surface */
+  background: transparent;
 }
 
-/* V71: Paste Button - inline trailing action, NO overlay */
+/* V72: Paste Button - inline trailing action, 40px touch target */
 .paste-btn {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  height: var(--control-h-inline);
-  padding: 0 var(--space-sm);
-  /* V71: Transparent with hover state */
+  /* V72: 40px min touch target for accessibility */
+  min-height: 40px;
+  padding: var(--space-xs) var(--space-sm);
+  /* V72: Transparent with hover state */
   background: transparent;
   border: none;
   border-radius: var(--radius-row);
@@ -292,7 +297,11 @@ watch(() => props.isOpen, (isOpen) => {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  /* V66: Tactile transition */
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .paste-btn:hover {
@@ -303,12 +312,13 @@ watch(() => props.isOpen, (isOpen) => {
 /* V66: Tactile feedback */
 .paste-btn:active {
   background: var(--surface-pressed);
-  transform: scale(0.98);
+  transform: scale(0.985);
 }
 
 .paste-btn svg {
   flex-shrink: 0;
   opacity: 0.7;
+  transition: opacity var(--transition-fast);
 }
 
 .paste-btn:hover svg {
@@ -349,26 +359,26 @@ watch(() => props.isOpen, (isOpen) => {
   color: var(--color-error);
 }
 
-/* V65: Word Preview Grid - transparent, just spacing */
+/* V72: Word Preview Grid - NO nested scroll (modal body scrolls) */
 .word-preview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-xs);
   padding: var(--space-sm) 0;
-  /* V65: No background - Sheet provides surface */
-  max-height: 120px;
-  overflow-y: auto;
+  /* V72: No max-height/overflow - avoid nested scroll trap */
+  /* Modal body handles scrolling if content overflows */
 }
 
-/* V65: Word chip - minimal styling */
+/* V72: Word chip - uses --surface-hover token (was hardcoded 0.06) */
 .word-chip {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px 6px;
-  background: rgba(255, 255, 255, 0.06);
+  /* V72: Token-based surface - matches design system */
+  background: var(--surface-hover);
   border-radius: var(--radius-sm);
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
 }
 
 .word-chip--invalid {
