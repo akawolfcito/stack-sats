@@ -233,10 +233,10 @@ const hasFooter = computed(() => !!slots.footer);
                 aria-label="Close"
                 @click="emit('close')"
               >
-                <!-- V73: Direct stroke on lines (bypasses CSS inheritance issues) -->
+                <!-- V74: Refined stroke (2.0) with currentColor for hover transitions -->
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <line x1="18" y1="6" x2="6" y2="18" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
-                  <line x1="6" y1="6" x2="18" y2="18" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                 </svg>
               </button>
             </header>
@@ -394,31 +394,73 @@ const hasFooter = computed(() => !!slots.footer);
   margin: 0;
 }
 
-/* V73: Close button - matches AppHeader pattern */
+/* V74: Premium Glass Close Button */
 .sheet-header__close {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: var(--icon-btn-size);
   height: var(--icon-btn-size);
   padding: 0;
-  /* V73: Glass background */
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* V74: Subtle glass background */
+  background: rgba(255, 255, 255, 0.06);
+  /* V74: Soft border - barely visible at rest */
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 50%;
+  /* V74: Explicit color for SVG currentColor inheritance */
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  /* V74: Smooth transitions for all interactive properties */
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
   flex-shrink: 0;
 }
 
-.sheet-header__close:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.22);
+/* V74: Inner highlight - premium edge shine */
+.sheet-header__close::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* V74: Top highlight gradient for depth */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
+/* V74: SVG above pseudo-elements */
+.sheet-header__close svg {
+  position: relative;
+  z-index: 1;
+}
+
+/* V74: Hover - elevated glass feel */
+.sheet-header__close:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+/* V74: Active - subtle press feedback */
 .sheet-header__close:active {
-  background: rgba(255, 255, 255, 0.12);
-  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(1px);
+}
+
+/* V74: Focus-visible - accessible brand ring */
+.sheet-header__close:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* V70: Dropdown header variant - compact, no close button */
