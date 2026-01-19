@@ -6,7 +6,7 @@ import { test, expect, Page } from "@playwright/test";
  * Guards for:
  * - StartView: Wallet creation onboarding
  * - AddWalletView: Add wallet flow (from settings)
- * - ImportMnemonicModal: Seed phrase import
+ * - ImportRecoveryPhraseView: Seed phrase import (V76 dedicated page)
  * - RecoveryPhraseDisplay: Shared component (both flows)
  * - VerifyPhraseStep: Shared component (both flows)
  *
@@ -181,85 +181,67 @@ test.describe("V53 Entry Flow Overflow Guards", () => {
   });
 });
 
-test.describe("V53 ImportMnemonicModal Guards", () => {
-  test.describe("Modal Layout", () => {
-    // Note: These tests assume the modal can be triggered from AddWalletView
-    // In practice, the modal needs to be opened via user interaction
+test.describe("V76 ImportRecoveryPhraseView Guards", () => {
+  test.describe("Page Layout", () => {
+    // V76: Import flow now uses dedicated page /import-recovery
 
-    test("modal content should not overflow horizontally", async ({ page }) => {
-      // Navigate to page where import modal can be triggered
-      await page.goto("/#/add-wallet");
+    test("page content should not overflow horizontally", async ({ page }) => {
+      // Navigate directly to import page
+      await page.goto("/#/import-recovery");
       await page.waitForTimeout(500);
 
-      // Click import button to open modal
-      const importBtn = await page.$('[data-roi="add-wallet-import-cta"]');
-      if (importBtn) {
-        await importBtn.click();
-        await page.waitForTimeout(300);
-
-        const modalContent = await getElementOverflow(
-          page,
-          '[data-roi="import-mnemonic-modal"]'
-        );
-        if (modalContent) {
-          expect(
-            modalContent.overflowsX,
-            "Import modal should not overflow horizontally"
-          ).toBe(false);
-        }
+      const pageContent = await getElementOverflow(
+        page,
+        '[data-roi="import-recovery-screen"]'
+      );
+      if (pageContent) {
+        expect(
+          pageContent.overflowsX,
+          "Import page should not overflow horizontally"
+        ).toBe(false);
       }
     });
 
-    test("modal should have required ROI targets", async ({ page }) => {
-      await page.goto("/#/add-wallet");
+    test("page should have required ROI targets", async ({ page }) => {
+      await page.goto("/#/import-recovery");
       await page.waitForTimeout(500);
 
-      const importBtn = await page.$('[data-roi="add-wallet-import-cta"]');
-      if (importBtn) {
-        await importBtn.click();
-        await page.waitForTimeout(300);
+      const roiTargets = [
+        "import-recovery-screen",
+        "import-content",
+        "import-mnemonic-input",
+        "import-mnemonic-paste",
+        "import-mnemonic-count",
+      ];
 
-        const roiTargets = [
-          "import-mnemonic-modal",
-          "import-mnemonic-input",
-          "import-mnemonic-cta",
-        ];
-
-        for (const roi of roiTargets) {
-          const element = await page.$(`[data-roi="${roi}"]`);
-          if (element) {
-            console.log(`ROI target ${roi} found in modal`);
-          }
+      for (const roi of roiTargets) {
+        const element = await page.$(`[data-roi="${roi}"]`);
+        if (element) {
+          console.log(`ROI target ${roi} found on page`);
         }
       }
     });
 
     test("word preview grid should handle long words gracefully", async ({ page }) => {
-      await page.goto("/#/add-wallet");
+      await page.goto("/#/import-recovery");
       await page.waitForTimeout(500);
 
-      const importBtn = await page.$('[data-roi="add-wallet-import-cta"]');
-      if (importBtn) {
-        await importBtn.click();
-        await page.waitForTimeout(300);
+      // Type a test mnemonic
+      const textarea = await page.$("textarea.phrase-input");
+      if (textarea) {
+        await textarea.fill("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about");
+        await page.waitForTimeout(200);
 
-        // Type a test mnemonic
-        const textarea = await page.$("textarea.phrase-input");
-        if (textarea) {
-          await textarea.fill("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about");
-          await page.waitForTimeout(200);
-
-          // Check word preview doesn't overflow
-          const wordPreview = await getElementOverflow(
-            page,
-            '[data-roi="import-mnemonic-preview"]'
-          );
-          if (wordPreview) {
-            expect(
-              wordPreview.overflowsX,
-              "Word preview should not overflow"
-            ).toBe(false);
-          }
+        // Check word preview doesn't overflow
+        const wordPreview = await getElementOverflow(
+          page,
+          '[data-roi="import-mnemonic-preview"]'
+        );
+        if (wordPreview) {
+          expect(
+            wordPreview.overflowsX,
+            "Word preview should not overflow"
+          ).toBe(false);
         }
       }
     });

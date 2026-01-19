@@ -34,8 +34,8 @@ ALLOWLIST=(
   # Sticky footers
   "src/views/SendView.vue"
   "src/views/SendTokenView.vue"
-  # V40 Modals (uses Sheet primitive)
-  "src/components/ImportMnemonicModal.vue"
+  # V76: Import flow now uses dedicated page
+  "src/views/ImportRecoveryPhraseView.vue"
 )
 
 echo -e "${CYAN}[1/3] Checking for custom Teleport modals...${NC}"
@@ -156,8 +156,8 @@ HARDCODE_ALLOWLIST=(
   "src/components/BalanceHeader.vue"
   "src/components/AssetRow.vue"
   "src/components/PinInput.vue"
-  # V40 modals
-  "src/components/ImportMnemonicModal.vue"
+  # V76: Import flow now uses dedicated page
+  "src/views/ImportRecoveryPhraseView.vue"
 
   # === Established views (pre-V36 legacy) ===
   "src/views/UserHomeView.vue"
