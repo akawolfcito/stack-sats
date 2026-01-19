@@ -24,14 +24,13 @@
  * - Uses shared VerifyPhraseStep component
  * - Same recovery phrase UX as AddWalletView
  */
-import { onBeforeMount, ref, nextTick, computed } from "vue";
+import { onBeforeMount, onMounted, ref, nextTick, computed } from "vue";
 import { randomSeedPhrase } from "@stacks/wallet-sdk";
 import { useRouter } from "vue-router";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import PinScreenShell from "@/components/pin/PinScreenShell.vue";
 import PinInput from "@/components/PinInput.vue";
-import ImportMnemonicModal from "@/components/ImportMnemonicModal.vue";
 import RecoveryPhraseDisplay from "@/components/RecoveryPhraseDisplay.vue";
 import VerifyPhraseStep from "@/components/VerifyPhraseStep.vue";
 import { Button } from "@/components/ui";
@@ -89,7 +88,6 @@ const pinConfirm = ref("");
 const pinError = ref("");
 const isLoading = ref(false);
 const importError = ref("");
-const showImportModal = ref(false);
 
 // V53.2: Verification state - indices generated when entering verify step
 const verifyWord1Index = ref(0);
@@ -129,19 +127,23 @@ const handleGenerateSecret = () => {
   currentStep.value = "mnemonic";
 };
 
-// Open import modal
+// V76: Navigate to import recovery phrase page
 const handleImportMnemonic = () => {
   importError.value = "";
-  showImportModal.value = true;
+  router.push("/import-recovery");
 };
 
-// Handle confirmed import from modal
-const handleImportConfirm = (seedPhrase: string) => {
-  showImportModal.value = false;
-  secureLog("Mnemonic imported");
-  mnemonic.value = seedPhrase;
-  currentStep.value = "mnemonic";
-};
+// V76: Check for imported mnemonic from route state on mount
+onMounted(() => {
+  const state = window.history.state;
+  if (state?.importedMnemonic) {
+    secureLog("Mnemonic imported");
+    mnemonic.value = state.importedMnemonic;
+    currentStep.value = "mnemonic";
+    // Clear state to prevent re-import on refresh
+    window.history.replaceState({ ...state, importedMnemonic: undefined }, "");
+  }
+});
 
 // V53.2: Proceed to verification step
 function handleContinueToVerify() {
@@ -358,12 +360,7 @@ onBeforeMount(() => {
       </div>
     </div>
 
-    <!-- Import Mnemonic Modal -->
-    <ImportMnemonicModal
-      :is-open="showImportModal"
-      @close="showImportModal = false"
-      @confirm="handleImportConfirm"
-    />
+    <!-- V76: Import now uses dedicated page /import-recovery -->
   </ScreenShell>
 </template>
 

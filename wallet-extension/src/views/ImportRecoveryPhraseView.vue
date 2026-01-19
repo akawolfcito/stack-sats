@@ -8,17 +8,22 @@
  * - Same UI components and validation logic
  *
  * Navigation:
- * - From: /add-wallet (Import Existing Wallet button)
- * - Success: returns to /add-wallet with mnemonic in route state
- * - Cancel: returns to /add-wallet
+ * - From: / (StartView) or /add-wallet (AddWalletView)
+ * - Success: returns to origin with mnemonic in route state
+ * - Cancel: goes back
  */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import ScreenShell from '@/components/layout/ScreenShell.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import StickyCTA from '@/components/layout/StickyCTA.vue';
+import { sessionManager } from '@/utils/security/session';
 
 const router = useRouter();
+
+// V76: Determine return path based on wallet state
+// No wallet = user came from StartView (/), has wallet = from AddWalletView
+const returnPath = computed(() => sessionManager.hasWallet ? '/add-wallet' : '/');
 
 const inputValue = ref('');
 const error = ref('');
@@ -70,7 +75,7 @@ async function handlePaste() {
   }
 }
 
-// Handle confirm - navigate back with mnemonic
+// Handle confirm - navigate back to origin with mnemonic
 function handleConfirm() {
   error.value = '';
 
@@ -86,9 +91,9 @@ function handleConfirm() {
 
   const seedPhrase = words.value.join(' ');
 
-  // Navigate back to add-wallet with mnemonic in state
+  // V76: Navigate to origin (/ or /add-wallet) with mnemonic in state
   router.push({
-    path: '/add-wallet',
+    path: returnPath.value,
     state: { importedMnemonic: seedPhrase }
   });
 }
