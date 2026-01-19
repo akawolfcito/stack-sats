@@ -1,8 +1,13 @@
 <script setup lang="ts">
 /**
- * ImportRecoveryPhraseView - V76 Dedicated Page
+ * ImportRecoveryPhraseView - V77 Premium UX
  *
- * Converted from ImportMnemonicModal to full page with:
+ * V77 Changes:
+ * - Removed Cancel button from footer (redundant with header back)
+ * - Replaced native browser confirm with in-app glass modal
+ * - Single strong primary CTA "Import Wallet"
+ *
+ * V76 Features (preserved):
  * - ScreenShell + AppHeader layout
  * - Exit guard: confirms if text entered and user navigates away
  * - Same UI components and validation logic
@@ -10,13 +15,13 @@
  * Navigation:
  * - From: / (StartView) or /add-wallet (AddWalletView)
  * - Success: returns to origin with mnemonic in route state
- * - Cancel: goes back
+ * - Back: goes back (with confirmation if dirty)
  */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import ScreenShell from '@/components/layout/ScreenShell.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
-import StickyCTA from '@/components/layout/StickyCTA.vue';
+import { Sheet, Button } from '@/components/ui';
 import { sessionManager } from '@/utils/security/session';
 
 const router = useRouter();
@@ -28,6 +33,11 @@ const returnPath = computed(() => sessionManager.hasWallet ? '/add-wallet' : '/'
 const inputValue = ref('');
 const error = ref('');
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
+
+// V77: In-app discard confirmation modal state
+const showDiscardModal = ref(false);
+const pendingNavigation = ref<(() => void) | null>(null);
+const isSubmitting = ref(false); // Flag to bypass discard modal on successful submit
 
 // Track if user has entered any text (for exit guard)
 const hasUnsavedInput = computed(() => inputValue.value.trim().length > 0);
@@ -91,6 +101,9 @@ function handleConfirm() {
 
   const seedPhrase = words.value.join(' ');
 
+  // V77: Set flag to bypass discard modal on successful submit
+  isSubmitting.value = true;
+
   // V76: Navigate to origin (/ or /add-wallet) with mnemonic in state
   router.push({
     path: returnPath.value,
@@ -98,27 +111,50 @@ function handleConfirm() {
   });
 }
 
-// Handle cancel - go back
-function handleCancel() {
-  // Clear for security before navigation
+// V77: Handle back button - show in-app modal if dirty
+function handleBack() {
+  if (hasUnsavedInput.value) {
+    // Show discard confirmation modal
+    pendingNavigation.value = () => router.back();
+    showDiscardModal.value = true;
+  } else {
+    router.back();
+  }
+}
+
+// V77: Modal handlers
+function handleStay() {
+  showDiscardModal.value = false;
+  pendingNavigation.value = null;
+}
+
+function handleDiscard() {
+  // Clear sensitive data
   inputValue.value = '';
   error.value = '';
-  router.back();
+  showDiscardModal.value = false;
+
+  // Execute pending navigation
+  if (pendingNavigation.value) {
+    pendingNavigation.value();
+    pendingNavigation.value = null;
+  }
 }
 
-// Handle back button
-function handleBack() {
-  // Let the route guard handle the confirmation
-  router.back();
-}
-
-// V76: Exit guard - confirm if unsaved input
+// V77: Exit guard - use in-app modal instead of native confirm
+// This handles programmatic navigation (e.g., router.push from other components)
 onBeforeRouteLeave((_to, _from) => {
-  if (hasUnsavedInput.value) {
-    const answer = window.confirm(
-      'You have entered a recovery phrase. Are you sure you want to leave? Your input will be lost.'
-    );
-    if (!answer) return false;
+  // Allow navigation if user is submitting (successful import)
+  if (isSubmitting.value) {
+    return true;
+  }
+
+  // If modal is already showing and user confirmed, allow navigation
+  if (!showDiscardModal.value && hasUnsavedInput.value) {
+    // Block navigation and show modal
+    pendingNavigation.value = () => router.back();
+    showDiscardModal.value = true;
+    return false;
   }
   // Clear sensitive data on leave
   inputValue.value = '';
@@ -209,19 +245,61 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <!-- V77: Single primary CTA footer (no secondary - back is in header) -->
     <template #footer>
       <div class="footer-cta">
-        <StickyCTA
-          primary-text="Import Wallet"
-          secondary-text="Cancel"
-          :primary-disabled="!canSubmit"
-          roi-prefix="import"
-          @primary="handleConfirm"
-          @secondary="handleCancel"
-        />
+        <Button
+          variant="primary"
+          full-width
+          :disabled="!canSubmit"
+          data-roi="import-cta-primary"
+          @click="handleConfirm"
+        >
+          <span>Import Wallet</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cta-arrow">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </Button>
       </div>
     </template>
   </ScreenShell>
+
+  <!-- V77: In-app discard confirmation modal (replaces native browser confirm) -->
+  <Sheet
+    :is-open="showDiscardModal"
+    variant="modal"
+    title="Discard recovery phrase?"
+    :show-close="false"
+    data-roi="import-discard-modal"
+    @close="handleStay"
+  >
+    <div class="discard-modal-content">
+      <p class="discard-modal-body">
+        If you leave now, the words you entered will be cleared.
+      </p>
+    </div>
+
+    <template #footer>
+      <div class="discard-modal-actions">
+        <Button
+          variant="secondary"
+          full-width
+          data-roi="import-discard-stay"
+          @click="handleStay"
+        >
+          Stay
+        </Button>
+        <Button
+          variant="primary"
+          full-width
+          data-roi="import-discard-confirm"
+          @click="handleDiscard"
+        >
+          Discard
+        </Button>
+      </div>
+    </template>
+  </Sheet>
 </template>
 
 <style scoped>
@@ -438,5 +516,33 @@ onBeforeUnmount(() => {
   padding: var(--space-md) var(--space-lg);
   background: var(--screen-bg-base);
   border-top: 1px solid var(--panel-divider);
+}
+
+/* V77: CTA arrow animation */
+.cta-arrow {
+  transition: transform var(--transition-fast);
+}
+
+.footer-cta :deep(.btn--primary:hover:not(:disabled)) .cta-arrow {
+  transform: translateX(4px);
+}
+
+/* V77: Discard modal styles */
+.discard-modal-content {
+  padding: 0 var(--space-md);
+}
+
+.discard-modal-body {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.discard-modal-actions {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-md);
 }
 </style>

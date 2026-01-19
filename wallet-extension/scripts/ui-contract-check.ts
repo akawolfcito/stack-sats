@@ -722,8 +722,8 @@ const CHECKS: Check[] = [
     id: "RECV-DOD-4",
     file: "src/components/ReceiveModal.vue",
     scope: "template",
-    pattern: /<StickyCTA\b[\s\S]*?\broi-prefix\s*=\s*["']receive["']/,
-    description: 'DoD#4: ReceiveModal uses StickyCTA roiPrefix="receive"',
+    pattern: /data-roi="receive-cta-primary"/,
+    description: 'V77: ReceiveModal has primary CTA with ROI attribute',
   },
   {
     id: "RECV-DOD-5",
@@ -843,8 +843,8 @@ const CHECKS: Check[] = [
     id: "IMPORT-DOD-4",
     file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
-    pattern: /<StickyCTA\b[\s\S]*?\broi-prefix\s*=\s*["']import["']/,
-    description: 'V76: Import page uses StickyCTA roiPrefix="import"',
+    pattern: /data-roi="import-cta-primary"/,
+    description: 'V77: Import page has primary CTA with ROI attribute',
   },
   {
     id: "IMPORT-DOD-5",
@@ -1437,6 +1437,38 @@ const CHECKS: Check[] = [
     scope: "script",
     pattern: /path:\s*["']\/import-recovery["']/,
     description: 'V76: /import-recovery route exists',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V77: Premium CTA Hierarchy (single primary focus)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V77-1",
+    file: "src/views/ImportRecoveryPhraseView.vue",
+    scope: "template",
+    pattern: /data-roi="import-discard-modal"/,
+    description: 'V77: Import page has in-app discard confirmation modal',
+  },
+  {
+    id: "V77-2",
+    file: "src/views/ImportRecoveryPhraseView.vue",
+    scope: "script",
+    pattern: /showDiscardModal/,
+    description: 'V77: Import page manages discard modal state (no native confirm)',
+  },
+  {
+    id: "V77-3",
+    file: "src/components/ReceiveModal.vue",
+    scope: "template",
+    pattern: /class="explorer-link"/,
+    description: 'V77: ReceiveModal has tertiary explorer link (not competing CTA)',
+  },
+  {
+    id: "V77-4",
+    file: "src/components/ReceiveModal.vue",
+    scope: "style",
+    pattern: /\.explorer-link[\s\S]*?background:\s*transparent/,
+    description: 'V77: Explorer link has transparent background (tertiary style)',
   },
 ];
 
