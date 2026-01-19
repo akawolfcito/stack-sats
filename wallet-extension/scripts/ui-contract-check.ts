@@ -1470,6 +1470,45 @@ const CHECKS: Check[] = [
     pattern: /\.explorer-link[\s\S]*?background:\s*transparent/,
     description: 'V77: Explorer link has transparent background (tertiary style)',
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // V78: Manage Wallets - Dedicated screen, no expanding list in Settings
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V78-1",
+    file: "src/views/ManageWalletsView.vue",
+    scope: "template",
+    pattern: /<ListGroup/,
+    description: 'V78: ManageWalletsView uses ListGroup for wallet list',
+  },
+  {
+    id: "V78-2",
+    file: "src/views/ManageWalletsView.vue",
+    scope: "template",
+    pattern: /<Sheet[\s\S]*?variant="modal"[\s\S]*?Remove\s*wallet/i,
+    description: 'V78: ManageWalletsView has in-app remove confirmation modal',
+  },
+  {
+    id: "V78-3",
+    file: "src/views/UserMenu.vue",
+    scope: "template",
+    pattern: /Manage\s*Wallets/,
+    description: 'V78: UserMenu has "Manage Wallets" navigation row',
+  },
+  {
+    id: "V78-4",
+    file: "src/router/index.ts",
+    scope: "script",
+    pattern: /path:\s*["']\/manage-wallets["']/,
+    description: 'V78: /manage-wallets route is defined',
+  },
+  {
+    id: "V78-5",
+    file: "src/views/ManageWalletsView.vue",
+    scope: "template",
+    pattern: /data-roi="wallets-add-cta"/,
+    description: 'V78: ManageWalletsView has "Add Wallet" CTA with ROI marker',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────

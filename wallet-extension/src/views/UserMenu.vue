@@ -12,7 +12,6 @@ import {
   getWalletsAsync,
   getActiveWalletIdAsync,
   getActiveWalletAsync,
-  deleteWalletAsync,
   importWalletAsync,
   walletExistsAsync,
   type WalletEntry,
@@ -41,20 +40,15 @@ function setDensityMode(mode: DensityMode) {
   DensityService.set(mode);
 }
 
-// Wallet list state
-const wallets = ref<WalletEntry[]>([]);
-const activeWalletId = ref<string | null>(null);
-const isManagingWallets = ref(false);
+// V78: Wallet summary state (no longer expanding list)
+const walletCount = ref(0);
+const activeWalletName = ref<string>('');
 
 const showDeleteConfirm = ref(false);
 const confirmText = ref("");
 const showPinInput = ref(false);
 const deleteError = ref("");
 const walletToDelete = ref<string | null>(null);
-
-// Per-wallet removal confirmation
-const showRemoveWalletConfirm = ref(false);
-const walletToRemove = ref<WalletEntry | null>(null);
 
 const CONFIRM_WORD = "DELETE";
 
@@ -66,26 +60,26 @@ const pendingImportWallet = ref<WalletEntry | null>(null);
 
 onMounted(async () => {
   loadDensityMode();
-  await loadWallets();
+  await loadWalletSummary();
 });
 
-async function loadWallets() {
-  wallets.value = await getWalletsAsync();
-  activeWalletId.value = await getActiveWalletIdAsync();
+// V78: Load only wallet count and active wallet name (not full list)
+async function loadWalletSummary() {
+  const wallets = await getWalletsAsync();
+  const activeId = await getActiveWalletIdAsync();
+
+  walletCount.value = wallets.length;
+  const activeWallet = wallets.find(w => w.id === activeId);
+  activeWalletName.value = activeWallet?.name || 'No wallet';
 }
 
 function handleUserHome() {
   router.push({ path: "/user" });
 }
 
-async function switchWallet(walletId: string) {
-  if (walletId === activeWalletId.value) return;
-  await sessionManager.switchWalletAsync(walletId);
-  router.push({ path: "/unlock" });
-}
-
-function handleAddWallet() {
-  router.push({ path: "/add-wallet" });
+// V78: Navigate to Manage Wallets screen (replaces inline wallet list)
+function handleManageWallets() {
+  router.push({ path: "/manage-wallets" });
 }
 
 function handleManageTokens() {
@@ -97,48 +91,8 @@ function handleManageAccounts() {
   router.push({ path: "/accounts" });
 }
 
-function toggleManageWallets() {
-  isManagingWallets.value = !isManagingWallets.value;
-}
-
-// Per-wallet removal (lighter confirmation)
-function initiateRemoveWallet(walletId: string) {
-  const wallet = wallets.value.find(w => w.id === walletId);
-  if (wallet) {
-    walletToRemove.value = wallet;
-    showRemoveWalletConfirm.value = true;
-  }
-}
-
-function cancelRemoveWallet() {
-  showRemoveWalletConfirm.value = false;
-  walletToRemove.value = null;
-}
-
-async function confirmRemoveWallet() {
-  if (!walletToRemove.value) return;
-
-  const isActive = walletToRemove.value.id === activeWalletId.value;
-  await deleteWalletAsync(walletToRemove.value.id);
-
-  await loadWallets();
-  showRemoveWalletConfirm.value = false;
-  walletToRemove.value = null;
-  isManagingWallets.value = false;
-
-  if (wallets.value.length === 0) {
-    sessionManager.lock();
-    router.push({ path: "/" });
-  } else if (isActive) {
-    sessionManager.lock();
-    router.push({ path: "/unlock" });
-  }
-
-  secureLog("Wallet removed from device");
-}
-
-function initiateDelete(walletId?: string) {
-  walletToDelete.value = walletId || activeWalletId.value;
+// V78: Delete All Wallets (Danger Zone action)
+function initiateDelete() {
   showDeleteConfirm.value = true;
   confirmText.value = "";
   deleteError.value = "";
@@ -172,30 +126,14 @@ async function handlePinComplete(pin: string) {
   secureWipeAndDelete();
 }
 
+// V78: Delete ALL wallets (Danger Zone action)
 async function secureWipeAndDelete() {
-  secureLog("Starting secure wallet deletion");
+  secureLog("Starting secure wallet deletion (all wallets)");
 
-  if (walletToDelete.value) {
-    const isActive = walletToDelete.value === activeWalletId.value;
-    await deleteWalletAsync(walletToDelete.value);
+  await sessionManager.deleteWalletAsync();
+  router.push({ path: "/" });
 
-    await loadWallets();
-
-    if (wallets.value.length === 0) {
-      sessionManager.lock();
-      router.push({ path: "/" });
-    } else if (isActive) {
-      sessionManager.lock();
-      router.push({ path: "/unlock" });
-    } else {
-      cancelDelete();
-    }
-  } else {
-    await sessionManager.deleteWalletAsync();
-    router.push({ path: "/" });
-  }
-
-  secureLog("Wallet deleted securely");
+  secureLog("All wallets deleted securely");
 }
 
 function handlePinCancel() {
@@ -297,7 +235,7 @@ async function completeImport(wallet: WalletEntry, replace: boolean) {
       type: "success",
       text: result === "replaced" ? "Wallet replaced successfully" : "Wallet imported successfully",
     };
-    await loadWallets();
+    await loadWalletSummary();
     secureLog("Wallet imported from backup", { walletId: wallet.id, result });
   } else {
     backupMessage.value = { type: "error", text: "Failed to import wallet" };
@@ -333,21 +271,14 @@ function cancelImport() {
 
     <!-- Main Content -->
     <div v-if="!showDeleteConfirm" class="page-content">
-      <!-- Your Wallets Section -->
-      <ListGroup title="Your Wallets" data-roi="menu-section-wallet">
-        <template #headerAction>
-          <Button variant="ghost" size="sm" @click="toggleManageWallets">
-            {{ isManagingWallets ? 'Done' : 'Manage' }}
-          </Button>
-        </template>
+      <!-- V78: Wallets Section - Single navigation row (no expanding list) -->
+      <ListGroup title="Wallets" data-roi="menu-section-wallet">
         <ListRow
-          v-for="wallet in wallets"
-          :key="wallet.id"
-          :label="wallet.name"
-          :badge="wallet.id === activeWalletId ? 'Active' : undefined"
-          icon-color="rgba(255, 255, 255, 0.08)"
-          :chevron="!isManagingWallets"
-          @click="switchWallet(wallet.id)"
+          label="Manage Wallets"
+          :subtitle="`${walletCount} wallet${walletCount !== 1 ? 's' : ''} • ${activeWalletName}`"
+          chevron
+          data-roi="menu-action-wallets"
+          @click="handleManageWallets"
         >
           <template #icon>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -356,25 +287,7 @@ function cancelImport() {
               <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
             </svg>
           </template>
-          <template v-if="isManagingWallets" #right>
-            <Button
-              variant="icon"
-              class="delete-icon-btn"
-              @click.stop="initiateRemoveWallet(wallet.id)"
-              title="Remove wallet"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </Button>
-          </template>
         </ListRow>
-        <ListRow
-          label="Add Wallet"
-          variant="add"
-          @click="handleAddWallet"
-        />
       </ListGroup>
 
       <!-- V68: Accounts Management Section -->
@@ -564,29 +477,8 @@ function cancelImport() {
       </div>
     </div>
 
-    <!-- Remove Wallet Confirmation Modal -->
-    <ModalScaffold
-      :is-open="showRemoveWalletConfirm"
-      variant="danger"
-      title="Remove wallet?"
-      @close="cancelRemoveWallet"
-    >
-      <template #icon>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-        </svg>
-      </template>
-      <p>
-        "<strong>{{ walletToRemove?.name }}</strong>" will be removed from this device only.
-        Your funds remain safe if you have your recovery phrase.
-      </p>
-      <template #actions>
-        <Button variant="secondary" @click="cancelRemoveWallet">Cancel</Button>
-        <Button variant="danger" @click="confirmRemoveWallet">Remove</Button>
-      </template>
-    </ModalScaffold>
-
     <!-- V48: Backup PIN verification moved to fullscreen /verify-pin route -->
+    <!-- V78: Remove wallet confirmation moved to ManageWalletsView -->
 
     <!-- Import Confirmation Modal -->
     <ModalScaffold
