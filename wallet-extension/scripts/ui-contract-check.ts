@@ -1315,15 +1315,15 @@ const CHECKS: Check[] = [
     id: "V71-1",
     file: "src/components/ui/Sheet.vue",
     scope: "style",
-    pattern: /\.sheet-header__close[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*0\.1[0-9]\)/,
-    description: 'V73: Close button has glass background (0.10+ alpha)',
+    pattern: /\.sheet-header__close[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*0\.0[6-9]\)/,
+    description: 'V74: Close button has subtle glass background (0.06 alpha)',
   },
   {
     id: "V71-2",
     file: "src/components/ui/Sheet.vue",
-    scope: "template",
-    pattern: /<line[^>]*stroke="#ffffff"/,
-    description: 'V73: Close button uses inline stroke on line elements',
+    scope: "style",
+    pattern: /\.sheet-header__close::before[\s\S]*?linear-gradient/,
+    description: 'V74: Close button has inner highlight pseudo-element',
   },
   {
     id: "V71-3",
@@ -1391,6 +1391,38 @@ const CHECKS: Check[] = [
     scope: "style",
     pattern: /\.paste-btn:active[\s\S]*?transform:\s*scale\(0\.985\)/,
     description: 'V72: Paste button has V66 tactile feedback',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // V74: Premium Glass Close Button
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "V74-1",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-header__close:focus-visible[\s\S]*?outline:\s*var\(--focus-ring\)/,
+    description: 'V74: Close button has accessible focus-visible ring',
+  },
+  {
+    id: "V74-2",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-header__close\s+svg[\s\S]*?z-index:\s*1/,
+    description: 'V74: Close button SVG has z-index above pseudo-elements',
+  },
+  {
+    id: "V74-3",
+    file: "src/components/ui/Sheet.vue",
+    scope: "style",
+    pattern: /\.sheet-header__close:active[\s\S]*?translateY\(1px\)/,
+    description: 'V74: Close button has subtle press feedback',
+  },
+  {
+    id: "V74-4",
+    file: "src/components/ui/Sheet.vue",
+    scope: "template",
+    pattern: /<line[^>]*stroke="currentColor"/,
+    description: 'V74: Close button SVG uses currentColor for hover transitions',
   },
 ];
 
