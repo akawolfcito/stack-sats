@@ -80,6 +80,11 @@ const router = createRouter({
       component: () => import("../views/VerifyPinView.vue"),
     },
     {
+      path: "/import-recovery",
+      name: "import-recovery",
+      component: () => import("../views/ImportRecoveryPhraseView.vue"),
+    },
+    {
       path: "/confirm-tx",
       name: "confirm-tx",
       component: () => import("../views/ConfirmTxView.vue"),
