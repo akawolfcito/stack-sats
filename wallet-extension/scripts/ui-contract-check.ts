@@ -816,64 +816,64 @@ const CHECKS: Check[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // V56 DoD: ImportMnemonicModal.vue — 6-Point Definition of Done
+  // V76: ImportRecoveryPhraseView.vue — Dedicated Page (was modal)
   // ═══════════════════════════════════════════════════════════
   {
     id: "IMPORT-DOD-1",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
-    pattern: /<Sheet\b[\s\S]*?\bvariant\s*=\s*["']modal["']/,
-    description: 'DoD#1: ImportMnemonicModal uses Sheet primitive (variant="modal" - V63)',
+    pattern: /<ScreenShell/,
+    description: 'V76: Import page uses ScreenShell layout',
   },
   {
     id: "IMPORT-DOD-2",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
-    pattern: /@close\s*=\s*["']handleClose["']/,
-    description: 'DoD#2: ImportMnemonicModal single close affordance (Sheet @close)',
+    pattern: /<AppHeader[^>]*left="back"/,
+    description: 'V76: Import page has AppHeader with back button',
   },
   {
     id: "IMPORT-DOD-3",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
-    pattern: /\btitle\s*=\s*["']Import Recovery Phrase["']/,
-    description: 'DoD#3: ImportMnemonicModal uses Sheet built-in header',
+    pattern: /title="Import Recovery Phrase"/,
+    description: 'V76: Import page has correct title',
   },
   {
     id: "IMPORT-DOD-4",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
     pattern: /<StickyCTA\b[\s\S]*?\broi-prefix\s*=\s*["']import["']/,
-    description: 'DoD#4: ImportMnemonicModal uses StickyCTA roiPrefix="import"',
+    description: 'V76: Import page uses StickyCTA roiPrefix="import"',
   },
   {
     id: "IMPORT-DOD-5",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
     pattern: /<textarea\b/,
-    description: 'DoD#5: ImportMnemonicModal uses textarea for mnemonic input',
+    description: 'V76: Import page uses textarea for mnemonic input',
   },
   {
     id: "IMPORT-DOD-6",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "style",
     pattern: /\.error-slot[\s\S]*?min-height/,
-    description: 'DoD#6: ImportMnemonicModal has error-slot with min-height (anti-layout-shift)',
+    description: 'V76: Import page has error-slot with min-height (anti-layout-shift)',
   },
   // ROI anchors
   {
     id: "IMPORT-ROI-1",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
-    pattern: /\bdata-roi\s*=\s*["']import-sheet["']/,
-    description: 'ImportMnemonicModal has data-roi="import-sheet"',
+    pattern: /\bdata-roi\s*=\s*["']import-recovery-screen["']/,
+    description: 'V76: Import page has data-roi="import-recovery-screen"',
   },
   {
     id: "IMPORT-ROI-2",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
     pattern: /\bdata-roi\s*=\s*["']import-content["']/,
-    description: 'ImportMnemonicModal has data-roi="import-content"',
+    description: 'V76: Import page has data-roi="import-content"',
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -929,13 +929,7 @@ const CHECKS: Check[] = [
     pattern: /:show-close\s*=\s*["']?true["']?/,
     description: 'ReceiveModal has Sheet showClose=true (single close affordance)',
   },
-  {
-    id: "CLOSE-5",
-    file: "src/components/ImportMnemonicModal.vue",
-    scope: "template",
-    pattern: /<Sheet\b[\s\S]*?@close\s*=\s*["']handleClose["']/,
-    description: 'ImportMnemonicModal has @close handler (Sheet default showClose)',
-  },
+  // V76: CLOSE-5 removed - ImportMnemonicModal converted to ImportRecoveryPhraseView (uses ScreenShell, not Sheet)
 
   // ═══════════════════════════════════════════════════════════
   // V55.5 Primitives Unification — ListRow Migration
@@ -1242,10 +1236,10 @@ const CHECKS: Check[] = [
   },
   {
     id: "V70-5",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "style",
     pattern: /\.input-actions[\s\S]*?justify-content:\s*flex-end/,
-    description: 'V71: Input actions row with trailing paste button (replaces z-index overlay)',
+    description: 'V76: Import page input actions row with trailing paste button',
   },
 
   // V70 Premium Glass Parity Contracts
@@ -1325,26 +1319,20 @@ const CHECKS: Check[] = [
     pattern: /\.sheet-header__close[\s\S]*?border:\s*none/,
     description: 'V75: Close button has no border (matches back icon)',
   },
-  {
-    id: "V71-3",
-    file: "src/components/ImportMnemonicModal.vue",
-    scope: "template",
-    pattern: /<Sheet[\s\S]*?title="Import Recovery Phrase"[\s\S]*?@close[\s\S]*?>[\s\S]*?<div\s+class="import-modal"/,
-    description: 'V71: ImportMnemonicModal has no #icon slot (title directly followed by content)',
-  },
+  // V76: V71-3 removed - ImportMnemonicModal converted to ImportRecoveryPhraseView (uses ScreenShell, not Sheet)
   {
     id: "V71-4",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "style",
     pattern: /\.input-actions[\s\S]*?border-top/,
-    description: 'V71: Paste button in separate action row (no overlay)',
+    description: 'V76: Import page paste button in separate action row',
   },
   {
     id: "V71-5",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "template",
     pattern: /Paste\s+from\s+clipboard/,
-    description: 'V71: Paste button has clear label',
+    description: 'V76: Import page paste button has clear label',
   },
   {
     id: "V71-6",
@@ -1355,39 +1343,33 @@ const CHECKS: Check[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // V72: Import Recovery Phrase Premium Parity
+  // V72/V76: Import Recovery Phrase Premium Parity (now in ImportRecoveryPhraseView)
   // ═══════════════════════════════════════════════════════════
   {
     id: "V72-1",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "style",
     pattern: /\.paste-btn[\s\S]*?min-height:\s*40px/,
     description: 'V72: Paste button has 40px minimum touch target',
   },
-  {
-    id: "V72-2",
-    file: "src/components/ImportMnemonicModal.vue",
-    scope: "style",
-    pattern: /\.word-preview[\s\S]*?\/\*\s*V72:.*nested scroll/i,
-    description: 'V72: Word preview has no nested scroll (modal body scrolls)',
-  },
+  // V76: V72-2 removed - page scrolls naturally without nested scroll concern
   {
     id: "V72-3",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "style",
     pattern: /\.word-chip[\s\S]*?background:\s*var\(--surface-hover\)/,
     description: 'V72: Word chip uses --surface-hover token (no hardcoded rgba)',
   },
   {
     id: "V72-4",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "style",
     pattern: /\.input-actions[\s\S]*?background:\s*transparent/,
     description: 'V72: Input actions row has transparent background',
   },
   {
     id: "V72-5",
-    file: "src/components/ImportMnemonicModal.vue",
+    file: "src/views/ImportRecoveryPhraseView.vue",
     scope: "style",
     pattern: /\.paste-btn:active[\s\S]*?transform:\s*scale\(0\.985\)/,
     description: 'V72: Paste button has V66 tactile feedback',

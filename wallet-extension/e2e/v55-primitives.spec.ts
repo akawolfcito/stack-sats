@@ -50,7 +50,7 @@ const SEND_VIEW_FILE = "src/views/SendView.vue";
 const ACCOUNT_SWITCHER_FILE = "src/components/account/AccountSwitcher.vue";
 const NETWORK_CHIP_FILE = "src/components/network/NetworkChip.vue";
 const RECEIVE_MODAL_FILE = "src/components/ReceiveModal.vue";
-const IMPORT_MODAL_FILE = "src/components/ImportMnemonicModal.vue";
+const IMPORT_RECOVERY_VIEW_FILE = "src/views/ImportRecoveryPhraseView.vue";
 const SHEET_FILE = "src/components/ui/Sheet.vue";
 
 test.describe("V55.5 Send Flow ROI Guards", () => {
@@ -230,10 +230,10 @@ test.describe("V56 Dropdown Close Behavior (Primitive-Level)", () => {
     ).toBe(false);
   });
 
-  test("Guard 6: ImportMnemonicModal uses StickyCTA with error-slot", () => {
+  test("Guard 6: ImportRecoveryPhraseView has error-slot (V76)", () => {
     expect(
-      sourceMatches(IMPORT_MODAL_FILE, /\.error-slot[\s\S]*?min-height/),
-      "ImportMnemonicModal must have error-slot with min-height (anti-layout-shift)"
+      sourceMatches(IMPORT_RECOVERY_VIEW_FILE, /\.error-slot[\s\S]*?min-height/),
+      "ImportRecoveryPhraseView must have error-slot with min-height (anti-layout-shift)"
     ).toBe(true);
   });
 });
