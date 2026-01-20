@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * AssetList - V80: Static display-only asset rows
+ * AssetList - V82: Clickable asset rows with navigation
  *
- * No click affordance - assets are display-only.
+ * Each asset row navigates to Asset Detail screen.
  * Manage tokens via dedicated "Manage" action.
  */
 import AssetRow from './AssetRow.vue'
@@ -14,11 +14,21 @@ export interface AssetRowModel {
   balanceText: string
   fiatText?: string
   iconColor?: string
+  /** V81: Whether the asset is currently available/implemented */
+  available?: boolean
 }
 
 defineProps<{
   items: AssetRowModel[]
 }>()
+
+const emit = defineEmits<{
+  'item-click': [item: AssetRowModel]
+}>()
+
+function handleItemClick(item: AssetRowModel) {
+  emit('item-click', item)
+}
 </script>
 
 <template>
@@ -31,6 +41,8 @@ defineProps<{
       :balance-text="item.balanceText"
       :fiat-text="item.fiatText"
       :icon-color="item.iconColor"
+      :available="item.available"
+      @click="handleItemClick(item)"
     />
 
     <!-- Empty state -->
