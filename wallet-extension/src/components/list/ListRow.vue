@@ -54,8 +54,10 @@ function handleClick() {
 
     <!-- Content -->
     <div class="list-row-content">
-      <span class="list-row-label">{{ label }}</span>
-      <span v-if="subtitle" class="list-row-subtitle">{{ subtitle }}</span>
+      <slot name="content">
+        <span class="list-row-label">{{ label }}</span>
+        <span v-if="subtitle" class="list-row-subtitle">{{ subtitle }}</span>
+      </slot>
     </div>
 
     <!-- Value (balance, amount) -->

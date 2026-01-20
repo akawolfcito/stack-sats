@@ -176,6 +176,7 @@ const handleAccountSelect = (index: number) => {
 };
 
 // Asset items for AssetList component
+// V81: Added `available` flag to indicate implemented assets
 const assetItems = computed<AssetRowModel[]>(() => {
   const currentAccount = userAccounts.value[accountIndexToDisplay.value];
   if (!currentAccount) return [];
@@ -188,6 +189,7 @@ const assetItems = computed<AssetRowModel[]>(() => {
       balanceText: shortBalance.value,
       fiatText: totalValueUsd.value || undefined,
       iconColor: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1))',
+      available: true,
     },
     {
       id: 'btc',
@@ -196,6 +198,7 @@ const assetItems = computed<AssetRowModel[]>(() => {
       balanceText: '0.00',
       fiatText: undefined,
       iconColor: 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1))',
+      available: false,
     },
     {
       id: 'runes',
@@ -204,6 +207,7 @@ const assetItems = computed<AssetRowModel[]>(() => {
       balanceText: '0',
       fiatText: undefined,
       iconColor: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.1))',
+      available: false,
     },
     {
       id: 'ordinals',
@@ -212,31 +216,14 @@ const assetItems = computed<AssetRowModel[]>(() => {
       balanceText: '0',
       fiatText: undefined,
       iconColor: 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(234, 179, 8, 0.1))',
+      available: false,
     },
   ];
 });
 
-// Handle asset item click (copy address to clipboard)
+// V82: Handle asset item click - navigate to asset detail
 const handleAssetClick = (item: AssetRowModel) => {
-  const currentAccount = userAccounts.value[accountIndexToDisplay.value];
-  if (!currentAccount) return;
-
-  let address = '';
-  switch (item.id) {
-    case 'stx':
-      address = currentAccount.stxAddress || '';
-      break;
-    case 'btc':
-      address = currentAccount.btcP2PKHAddress || '';
-      break;
-    case 'runes':
-    case 'ordinals':
-      address = currentAccount.btcP2TRAddress || '';
-      break;
-  }
-  if (address) {
-    copyToClipboard(address);
-  }
+  router.push({ path: `/asset/${item.id}` });
 };
 
 // Activity items for ActivityList component
@@ -517,20 +504,6 @@ const openFullPage = () => {
   }
 };
 
-const copiedAddress = ref<string | null>(null);
-
-const copyToClipboard = async (address: string) => {
-  try {
-    await navigator.clipboard.writeText(address);
-    copiedAddress.value = address;
-    setTimeout(() => {
-      copiedAddress.value = null;
-    }, 2000);
-  } catch (error) {
-    console.error("Failed to copy:", error);
-  }
-};
-
 const truncateAddress = (address: string) => {
   return address.slice(0, 7) + "..." + address.slice(-7);
 };
@@ -714,6 +687,8 @@ const handleManageAccounts = () => {
                 </Button>
               </template>
             </SectionHeader>
+            <!-- V81: Helper microcopy -->
+            <p class="assets-helper">Core assets. Tokens appear below when available.</p>
             <ListGroup>
               <!-- Asset rows rendered inside card -->
               <AssetList
@@ -997,6 +972,15 @@ const handleManageAccounts = () => {
 .assets-section {
   padding: 0 var(--page-pad-x);
   margin-bottom: var(--stack-gap);
+}
+
+/* V81: Assets helper microcopy */
+.assets-helper {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 0 var(--space-xs);
+  margin-bottom: 8px;
+  opacity: 0.8;
 }
 
 /* Tokens Section */

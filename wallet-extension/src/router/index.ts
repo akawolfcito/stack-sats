@@ -35,6 +35,11 @@ const router = createRouter({
       component: () => import("../views/SendView.vue"),
     },
     {
+      path: "/asset/:assetId",
+      name: "asset-detail",
+      component: () => import("../views/AssetDetailView.vue"),
+    },
+    {
       path: "/transaction/:txId",
       name: "transaction-details",
       component: () => import("../views/TransactionDetailsView.vue"),
