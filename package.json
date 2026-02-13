@@ -1,14 +1,12 @@
 {
-  "name": "wallet-app-template",
+  "name": "stack-sats",
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
     "build": "pnpm --filter wallet-extension build",
     "dev": "pnpm --filter wallet-extension dev",
-    "build:all": "pnpm -r build",
-    "dev:frontend": "pnpm --filter front-end dev",
-    "test": "pnpm --filter clarity test",
-    "test:wallet": "pnpm --filter wallet-extension test",
-    "test:all": "pnpm --filter clarity test && pnpm --filter wallet-extension test"
+    "test": "pnpm --filter wallet-extension test",
+    "type-check": "pnpm --filter wallet-extension type-check",
+    "lint": "pnpm --filter wallet-extension lint"
   }
 }

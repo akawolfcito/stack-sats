@@ -196,7 +196,7 @@
     <p>Your seed phrase is protected using industry-standard encryption:</p>
     <ul>
       <li><strong>Algorithm:</strong> AES-256-GCM (authenticated encryption)</li>
-      <li><strong>Key Derivation:</strong> PBKDF2 with SHA-256, 100,000 iterations</li>
+      <li><strong>Key Derivation:</strong> PBKDF2 with SHA-256, 600,000 iterations (OWASP 2023)</li>
       <li><strong>Salt:</strong> 16 bytes, cryptographically random per wallet</li>
       <li><strong>IV:</strong> 12 bytes, cryptographically random per encryption</li>
     </ul>
@@ -243,16 +243,8 @@
           <td>Store encrypted wallet data locally</td>
         </tr>
         <tr>
-          <td>scripting</td>
-          <td>Inject wallet provider for dApp communication</td>
-        </tr>
-        <tr>
           <td>tabs</td>
           <td>Route responses to requesting tabs</td>
-        </tr>
-        <tr>
-          <td>activeTab</td>
-          <td>Validate origin of connection requests</td>
         </tr>
         <tr>
           <td>sidePanel</td>
@@ -262,25 +254,26 @@
     </table>
 
     <h2>Host Permissions</h2>
-    <p>The extension requests access to HTTPS websites to enable dApp connections:</p>
+    <p>The extension communicates only with official Stacks blockchain API endpoints:</p>
     <ul>
-      <li><strong>https://*/*</strong> - Required to inject wallet provider on any dApp the user visits</li>
-      <li><strong>localhost</strong> - Development and testing</li>
-      <li><strong>api.hiro.so</strong> - Blockchain API access</li>
+      <li><strong>api.hiro.so</strong> - Stacks mainnet blockchain API (balance queries, transaction broadcasts)</li>
+      <li><strong>api.testnet.hiro.so</strong> - Stacks testnet blockchain API (for developers)</li>
+      <li><strong>api.platform.hiro.so</strong> - Hiro Platform API (enhanced queries)</li>
     </ul>
+    <p>dApp connectivity is handled via content scripts that inject a minimal relay for standard WBIP wallet communication. The content script does NOT access or modify page content.</p>
 
     <div class="highlight-box">
       <h3>Single Purpose Declaration</h3>
       <p>
         This extension's single purpose is to enable users to manage Stacks blockchain wallets and
-        interact with decentralized applications. The broad host permission (https://*/*) is necessary
-        because users may connect to any legitimate Stacks dApp. The extension:
+        interact with decentralized applications. The extension:
       </p>
       <ul>
         <li>Does NOT read or collect browsing history</li>
         <li>Does NOT track user behavior across websites</li>
         <li>Does NOT inject content unless the user initiates a wallet connection</li>
-        <li>Only responds to explicit wallet requests from dApps</li>
+        <li>Only responds to explicit wallet RPC requests from dApps</li>
+        <li>Requires user confirmation for all transactions</li>
       </ul>
     </div>
 
