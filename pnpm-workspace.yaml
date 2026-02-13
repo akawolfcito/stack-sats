@@ -1,4 +1,2 @@
 packages:
-  - clarity
-  - front-end
-  - wallet-extension
+  - den-vault

@@ -2,13 +2,15 @@
 
 ![DenVault Preview](./preview.png)
 
-**DenVault** is a secure, non-custodial Bitcoin Layer 2 wallet for the Stacks ecosystem. Built as a Chrome extension with production-grade security.
+**DenVault** is a secure, open-source, non-custodial Stacks wallet for Bitcoin Layer 2. Built as a Chrome extension with production-grade security.
+
+> Open-source and independently developed by DenLabs — not affiliated with Hiro or Stacks Foundation. Review the source code before storing significant funds.
 
 ## Features
 
 ### Security
-- **AES-256-GCM Encryption** - Mnemonic encrypted at rest with PBKDF2 key derivation (100k iterations)
-- **6-digit PIN Protection** - Max 3 attempts before lockout
+- **AES-256-GCM Encryption** - Mnemonic encrypted at rest with PBKDF2 key derivation (600k iterations, OWASP 2023)
+- **6-digit PIN Protection** - Escalating lockout (30s → 2m → 10m → 1h)
 - **Auto-lock** - Session expires after 5 minutes of inactivity
 - **Memory Cleanup** - Private keys cleared immediately after signing
 - **Content Security Policy** - Strict CSP in manifest
@@ -42,7 +44,7 @@
 
 ```
 stack-sats/
-├── wallet-extension/   # Chrome extension (Manifest V3)
+├── den-vault/          # Chrome extension (Manifest V3)
 ├── front-end/          # Test dApp (Vue/Vite)
 └── clarity/            # Smart contracts (Clarinet)
 ```
@@ -67,7 +69,7 @@ pnpm dev:frontend
 1. Go to `chrome://extensions/`
 2. Enable "Developer mode"
 3. Click "Load unpacked"
-4. Select the `wallet-extension` folder
+4. Select the `den-vault/dist` folder
 
 ### Development Commands
 
@@ -77,9 +79,9 @@ pnpm build           # Build wallet extension
 pnpm dev             # Dev server for extension
 pnpm dev:frontend    # Dev server for test dApp (localhost:5173)
 pnpm test            # Run Clarity contract tests
-pnpm test:wallet     # Run wallet unit tests (99 tests)
+pnpm test            # Run wallet unit tests (415 tests)
 
-# From wallet-extension/
+# From den-vault/
 pnpm build           # Production build
 pnpm dev             # Dev with hot reload
 pnpm lint            # ESLint

@@ -64,4 +64,4 @@ docs/agent-loop.md
 *.zip
 
 # Playwright test snapshots (generated locally)
-wallet-extension/e2e/*-snapshots/
+den-vault/e2e/*-snapshots/

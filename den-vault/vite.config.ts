@@ -1,0 +1,23 @@
+import { fileURLToPath, URL } from "node:url";
+import wasm from "vite-plugin-wasm";
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import vueDevTools from "vite-plugin-vue-devtools";
+
+// https://vite.dev/config/
+export default defineConfig(({ mode }) => ({
+  plugins: [wasm(), vue(), vueDevTools()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+  esbuild: {
+    supported: {
+      "top-level-await": true,
+    },
+  },
+  define: {
+    __DEV__: JSON.stringify(mode === "development"),
+  },
+}));
