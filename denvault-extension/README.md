@@ -1,80 +1,67 @@
-# Stacks wallet extension template
+# DenVault - Stacks Wallet Extension
 
-This wallet template is scaffold using Vue 3 in Vite.
+Self-custodial Stacks (STX) and Bitcoin wallet browser extension, built with Vue 3 and Vite.
 
-This wallet template is compatible with Chrome [extensions](https://developer.chrome.com/docs/extensions) via the `manifest.json` file located in the `/public` folder, which also houses important context scripts:
+Compatible with Chrome [extensions](https://developer.chrome.com/docs/extensions) via Manifest V3. Key extension scripts in `/public`:
 
-- `content.js` - Acts as the communication layer between the document page and the `background.js` script
-- `background.js` - Acts as the communication layer between the `content.js` script and the popup script
+- `content.js` - Communication layer between the web page and `background.js`
+- `background.js` - Communication layer between `content.js` and the popup
+- `injection.js` - Provides `window.StacksWallet` to web pages
 
-The `/src` folders houses all the scripts used in the extension popup.
+The `/src` folder houses all the scripts used in the extension popup.
 
-> IMPORTANT: This browser wallet extension will store the generated mneomic seed phrase in the browser's local storage without any standard encryption best practices. If you plan to use this in a production environment, implement secure best practices for the safe storage of users' mnemonic seed phrases.
+## Features
 
-## Bundle and Enable Wallet Extension in Browser
+- Generate or import mnemonic seed phrase
+- Create Stacks and Bitcoin addresses (multi-account)
+- AES-256-GCM encryption with PBKDF2 (600k iterations)
+- Supports @stacks/connect v8 RPC methods
+- Network switching (mainnet, testnet, devnet)
+- Fiat price display (CoinGecko)
+- QR code receive flow
 
-- Run `npm run build` in the `wallet-extension` directory or `npm run build --workspace=wallet-extension` in the root directory.
-- The generated build file will live in a new `dist/` folder which will be added as a Chrome extension in your browser:
-  1. Enable Developer Mode:
-  - Open Chrome and go to [chrome://extensions](chrome://extensions/).
-  - Toggle on the "Developer mode" switch in the top right corner.
-  2. Load the Unpacked Extension:
-  - Click the "Load unpacked" button.
-  - Navigate to the folder containing your extension's files and click "Select Folder".
-  - Chrome will then load and install the extension.
-  - Enable and pin the extension to your browser.
-  - Click the reload button in the extension card if you make changes to the `dist/` folder.
+## Build & Load Extension
 
-## Basic default functions/features of this Stacks wallet
+```bash
+pnpm install
+pnpm build
+```
 
-- Generates random mnemonic seed phrase
-- Importing of mnemonic seed phrase
-- Creates Stacks and Bitcoin addresses
-- Supports @stacks/connect methods
+Then load in Chrome:
+1. Go to [chrome://extensions](chrome://extensions/)
+2. Enable **Developer mode**
+3. Click **Load unpacked** and select the `dist/` folder
+
+## Development
+
+```bash
+pnpm dev          # Dev server with hot-reload
+pnpm test         # Unit tests (vitest, 415 tests)
+pnpm test:e2e     # E2E tests (Playwright)
+pnpm type-check   # TypeScript checking
+pnpm lint         # ESLint with auto-fix
+```
+
+## UI Snapshots
+
+```bash
+pnpm ui:shots     # Golden matrix snapshots (24 screenshots)
+pnpm ui:store     # CWS store cards (5 screenshots, 1280x800)
+pnpm ui:verify    # Verify snapshots match golden files
+pnpm ui:accept    # Accept new snapshots as golden
+```
 
 ## Recommended IDE Setup
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
-## Type Support for `.vue` Imports in TS
+## DenLabs Integration (DenSignal v0.1)
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
-
-## DenLabs Engine-Core (DenSignal v0.1)
-
-DenVault emits DenSignal v0.1 events using `@denlabs/engine-core` (no dependency on denlabs-engine).
+DenVault emits DenSignal v0.1 events for operational telemetry.
 
 Dev-only helpers (available in the browser console when running in dev mode):
 
-- `window.__denlabsEmitEvent(event)` — maps a DenVault DV_* event into DenSignal and stores it.
-- `window.__denlabsExportSignals()` — downloads `densignals_v01.json` from `chrome.storage.local`.
+- `window.__denlabsEmitEvent(event)` - Maps a DenVault DV_* event into DenSignal and stores it.
+- `window.__denlabsExportSignals()` - Downloads `densignals_v01.json` from `chrome.storage.local`.
 
 Storage key: `denlabs_densignals_v01`.
