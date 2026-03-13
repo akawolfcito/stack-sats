@@ -1,5 +1,20 @@
 # DenVault
 
+<!-- denlabs-meta
+name: denvault
+type: app
+surface: public-wallet
+status: public
+owner: Wolfcito
+pm: pnpm
+repo: https://github.com/wolfcito/stack-sats
+url: https://github.com/wolfcito/stack-sats
+scripts: [dev, build, test, lint]
+-->
+
+> **DenLabs Lab** · Product · Stacks
+> Secure, open-source, non-custodial Stacks wallet — Chrome extension with production-grade security.
+
 ![DenVault Preview](./preview.png)
 
 **DenVault** is a secure, open-source, non-custodial Stacks wallet for Bitcoin Layer 2. Built as a Chrome extension with production-grade security.
