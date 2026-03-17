@@ -19,9 +19,9 @@ export default defineConfig({
         "**/*.spec.ts",
       ],
       thresholds: {
-        branches: 55,
-        functions: 68,
-        lines: 60,
+        branches: 80,
+        functions: 90,
+        lines: 85,
       },
     },
     setupFiles: ["./src/test/setup.ts"],
