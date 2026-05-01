@@ -93,7 +93,7 @@ function handleBack() {
       <div class="text-section">
         <h2 class="headline">Swaps are coming</h2>
         <p class="description">
-          Direct, peer-to-peer token exchanges are being integrated into Stack-SATs.
+          Direct, peer-to-peer token exchanges are being integrated into DenVault.
         </p>
       </div>
 
