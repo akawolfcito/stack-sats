@@ -2,7 +2,7 @@
 
 **Stacks Wallet Browser Extension**
 
-> **Public URL:** https://wolfcito.github.io/stack-sats/support.html
+> **Public URL:** https://akawolfcito.github.io/stack-sats/support.html
 
 ## Getting Help
 
@@ -15,7 +15,7 @@
 ### Issue Tracker
 
 Report bugs and request features:
-https://github.com/wolfcito/stack-sats/issues
+https://github.com/akawolfcito/stack-sats/issues
 
 ### Community
 

@@ -7,8 +7,8 @@ surface: public-wallet
 status: public
 owner: Wolfcito
 pm: pnpm
-repo: https://github.com/wolfcito/stack-sats
-url: https://github.com/wolfcito/stack-sats
+repo: https://github.com/akawolfcito/stack-sats
+url: https://github.com/akawolfcito/stack-sats
 scripts: [dev, build, test, lint]
 -->
 
@@ -164,8 +164,8 @@ The included `counter.clar` contract is for testing:
 
 ## Links
 
-- [Privacy Policy](https://wolfcito.github.io/stack-sats/privacy.html)
-- [Support](https://wolfcito.github.io/stack-sats/support.html)
+- [Privacy Policy](https://akawolfcito.github.io/stack-sats/privacy.html)
+- [Support](https://akawolfcito.github.io/stack-sats/support.html)
 - [Hiro Documentation](https://docs.hiro.so)
 
 ## License

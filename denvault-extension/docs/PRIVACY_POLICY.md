@@ -1,9 +1,9 @@
 # Privacy Policy
 
 **DenVault - Stacks Wallet Browser Extension**
-**Last Updated:** January 2025
+**Last Updated:** May 2026
 
-> **Public URL:** https://wolfcito.github.io/stack-sats/privacy.html
+> **Public URL:** https://akawolfcito.github.io/stack-sats/privacy.html
 
 ## Overview
 
@@ -82,13 +82,13 @@ This permanently removes all stored data from your browser.
 ## Open Source
 
 This extension is open source. You can review the code at:
-https://github.com/wolfcito/stack-sats
+https://github.com/akawolfcito/stack-sats
 
 ## Contact
 
 For privacy concerns or questions:
 - Email: wolfcito.learn+privacy@gmail.com
-- Support: https://wolfcito.github.io/stack-sats/support.html
+- Support: https://akawolfcito.github.io/stack-sats/support.html
 
 ## Changes to This Policy
 

@@ -3,7 +3,7 @@
 **Stacks Wallet Browser Extension**
 **Version:** 1.0.0
 
-> **Homepage URL:** https://wolfcito.github.io/stack-sats/
+> **Homepage URL:** https://akawolfcito.github.io/stack-sats/
 
 ## Security Model
 

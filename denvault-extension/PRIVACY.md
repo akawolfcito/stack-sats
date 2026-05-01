@@ -4,7 +4,7 @@ Effective date: 2025-01-04
 
 DenVault is a DenLabs project.
 
-> **Official Policy URL:** https://wolfcito.github.io/stack-sats/privacy.html
+> **Official Policy URL:** https://akawolfcito.github.io/stack-sats/privacy.html
 
 ## Contact
 
