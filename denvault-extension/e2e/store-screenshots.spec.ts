@@ -62,7 +62,7 @@ async function setupUnlockedWallet(page: Page) {
     sessionStorage.clear();
     localStorage.setItem('__UI_SNAPSHOT_MODE__', 'true');
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
-    localStorage.setItem('selected_network', 'devnet');
+    localStorage.setItem('selected_network', 'testnet');
     localStorage.setItem('density_mode', 'comfy');
   }, TEST_MNEMONIC);
 }
@@ -270,9 +270,11 @@ test.describe('CWS Store Screenshots', () => {
       // Reload to pick up localStorage state
       await page.reload();
 
-      // Navigate to target route
+      // Navigate to target route. The popup uses createWebHashHistory, so
+      // non-`/` routes must be addressed via the hash; otherwise the router
+      // falls back to `/` and the screenshot captures the wrong screen.
       if (card.route !== '/') {
-        await page.goto(card.route);
+        await page.goto(`/#${card.route}`);
       }
 
       // Apply density class
