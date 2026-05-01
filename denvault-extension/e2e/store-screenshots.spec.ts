@@ -226,7 +226,7 @@ function buildCardHTML(popupBase64: string, headline: string, caption: string): 
 <body>
   <div class="card">
     <div class="text-area">
-      <div class="logo-text">Stack-SATs</div>
+      <div class="logo-text">DenVault</div>
       <h1 class="headline">${headline}</h1>
       <p class="caption">${caption}</p>
     </div>
