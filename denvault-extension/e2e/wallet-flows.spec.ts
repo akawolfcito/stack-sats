@@ -1,6 +1,16 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { deriveStxAddress } from "../src/utils/accounts/derive";
-import { TEST_MNEMONIC, TEST_PIN } from "./fixtures/mock-wallet";
+import { gotoFresh } from "./helpers/storage";
+import {
+  TEST_MNEMONIC,
+  TEST_PIN,
+  completePinSetup,
+  enterPin,
+  fillVerifyWords,
+  importTestWalletThroughUi,
+  revealAndReadMnemonic,
+  submitWrongPinThreeTimes,
+} from "./helpers/wallet-setup";
 
 /**
  * Interactive E2E for wallet creation, import, and unlock flows (issue #10).
@@ -12,118 +22,6 @@ import { TEST_MNEMONIC, TEST_PIN } from "./fixtures/mock-wallet";
  */
 
 const DEFAULT_NETWORK = "devnet" as const;
-
-async function clearStorage(page: Page) {
-  await page.evaluate(async () => {
-    localStorage.clear();
-    type ChromeLike = { storage?: { local?: { clear?: () => Promise<void> } } };
-    const maybeChrome = (globalThis as unknown as { chrome?: ChromeLike }).chrome;
-    if (maybeChrome?.storage?.local?.clear) {
-      try {
-        await maybeChrome.storage.local.clear();
-      } catch {
-        // localStorage fallback is sufficient for the dev server.
-      }
-    }
-  });
-}
-
-async function gotoFresh(page: Page) {
-  await page.goto("/");
-  await clearStorage(page);
-  await page.reload();
-  await page.waitForLoadState("networkidle");
-}
-
-async function revealAndReadMnemonic(page: Page): Promise<string[]> {
-  const reveal = page.locator('[data-roi="reveal-btn"]');
-  await reveal.waitFor({ state: "visible" });
-  await reveal.click();
-  const grid = page.locator('[data-roi="mnemonic-grid"]');
-  await expect(grid).not.toHaveClass(/mnemonic-grid--hidden/);
-  const wordTexts = await grid.locator(".word-text").allInnerTexts();
-  return wordTexts.map((w) => w.trim()).filter((w) => w.length > 0);
-}
-
-async function extractVerifyOrdinals(page: Page): Promise<[number, number]> {
-  const subtitle = await page.locator('[data-roi="verify-subtitle"]').innerText();
-  const matches = [...subtitle.matchAll(/(\d+)(st|nd|rd|th)/gi)];
-  if (matches.length < 2) {
-    throw new Error(`Expected 2 ordinals in verify subtitle, got: "${subtitle}"`);
-  }
-  return [
-    parseInt(matches[0][1], 10) - 1,
-    parseInt(matches[1][1], 10) - 1,
-  ];
-}
-
-async function fillVerifyWords(page: Page, mnemonicWords: string[]) {
-  const [i1, i2] = await extractVerifyOrdinals(page);
-
-  const w1 = page.locator('[data-roi="verify-word-1-input"]');
-  await w1.click();
-  await w1.fill("");
-  await page.keyboard.type(mnemonicWords[i1], { delay: 10 });
-
-  const w2 = page.locator('[data-roi="verify-word-2-input"]');
-  await w2.click();
-  await w2.fill("");
-  await page.keyboard.type(mnemonicWords[i2], { delay: 10 });
-}
-
-async function enterPin(page: Page, pin: string) {
-  const container = page.locator('[data-roi="pin-input"]').first();
-  await container.waitFor({ state: "visible" });
-  await container.focus();
-  for (const digit of pin) {
-    await page.keyboard.press(digit);
-  }
-}
-
-async function completePinSetup(page: Page, pin: string) {
-  await enterPin(page, pin);
-  await expect(page.locator('[data-roi="pin-input"]')).toBeVisible();
-  await enterPin(page, pin);
-}
-
-async function submitWrongPinThreeTimes(page: Page) {
-  const wrongPin = "000000";
-  const errorSlot = page.locator('[data-roi="pin-error-slot"]');
-
-  // Attempts 1 and 2: expect "Wrong PIN. N attempts remaining."
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    await enterPin(page, wrongPin);
-    await expect(errorSlot).toContainText(/Wrong PIN/i, { timeout: 5_000 });
-    // Wait for the PIN dots to clear before the next attempt.
-    await expect(page.locator('[data-roi="pin-dots-rail"] .pin-dot--filled')).toHaveCount(0);
-  }
-
-  // Attempt 3: error transitions to terminal lockout copy.
-  await enterPin(page, wrongPin);
-}
-
-async function importTestWalletThroughUi(page: Page) {
-  await page.locator('[data-roi="start-secondary-cta"]').click();
-  await expect(page.locator('[data-roi="import-recovery-screen"]')).toBeVisible();
-
-  const textarea = page.locator('[data-roi="import-mnemonic-input"] textarea').first();
-  await textarea.click();
-  await textarea.fill(TEST_MNEMONIC);
-
-  await expect(page.locator('[data-roi="import-cta-primary"]')).toBeEnabled();
-  await page.locator('[data-roi="import-cta-primary"]').click();
-
-  await expect(page.locator('[data-roi="mnemonic-step"]')).toBeVisible();
-  const words = await revealAndReadMnemonic(page);
-
-  await page.locator('[data-roi="cta-primary"]').click();
-  await expect(page.locator('[data-roi="verify-phrase-step"]')).toBeVisible();
-  await fillVerifyWords(page, words);
-  await page.locator('[data-roi="verify-cta-primary"]').click();
-
-  await completePinSetup(page, TEST_PIN);
-  await expect(page).toHaveURL(/#\/user/, { timeout: 10_000 });
-}
 
 test.describe.serial("DenVault wallet flows (issue #10)", () => {
   test.beforeEach(async ({ page }) => {
