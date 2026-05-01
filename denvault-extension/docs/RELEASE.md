@@ -77,9 +77,9 @@ cd den-vault && pnpm build && cd dist && zip -r ../denvault-v1.1.0.zip . -x "*.D
 
 After deployment, verify these URLs work:
 
-- **Homepage:** `https://wolfcito.github.io/stack-sats/`
-- **Privacy Policy:** `https://wolfcito.github.io/stack-sats/privacy.html`
-- **Support:** `https://wolfcito.github.io/stack-sats/support.html`
+- **Homepage:** `https://akawolfcito.github.io/stack-sats/`
+- **Privacy Policy:** `https://akawolfcito.github.io/stack-sats/privacy.html`
+- **Support:** `https://akawolfcito.github.io/stack-sats/support.html`
 
 ---
 
@@ -127,7 +127,7 @@ SUPPORTED METHODS (WBIP/SIP-030):
 • stx_callContract - Call smart contracts
 
 Built with Vue 3, TypeScript, and official Stacks.js libraries.
-Source code: https://github.com/wolfcito/stack-sats
+Source code: https://github.com/akawolfcito/stack-sats
 ```
 
 ### Privacy Tab
@@ -169,7 +169,7 @@ dApp connectivity is handled via content scripts (not host permissions), which i
 
 **Remote Code:** No
 
-**Privacy Policy URL:** `https://wolfcito.github.io/stack-sats/privacy.html`
+**Privacy Policy URL:** `https://akawolfcito.github.io/stack-sats/privacy.html`
 
 ---
 
