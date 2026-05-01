@@ -141,3 +141,4 @@ async function getBtcKeyPair(
 }
 
 export { generateInitialAccounts, generateP2TR, getPrivateKey, getBtcKeyPair };
+export { deriveStxAddress } from "./derive";
