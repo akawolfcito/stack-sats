@@ -62,6 +62,7 @@ docs/agent-loop.md
 
 # CWS build artifacts
 *.zip
+denvault-v*/
 
 # Playwright test snapshots (generated locally)
 den-vault/e2e/*-snapshots/
