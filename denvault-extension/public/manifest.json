@@ -2,13 +2,13 @@
   "manifest_version": 3,
   "name": "DenVault",
   "short_name": "DenVault",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "DenVault - Your Bitcoin Layer 2 wallet for the Stacks ecosystem.",
   "action": {
     "default_title": "DenVault",
     "default_popup": "index.html"
   },
-  "permissions": ["storage", "tabs", "sidePanel"],
+  "permissions": ["storage", "sidePanel"],
   "side_panel": {
     "default_path": "index.html?view=sidepanel"
   },
@@ -17,8 +17,7 @@
   },
   "host_permissions": [
     "https://api.hiro.so/*",
-    "https://api.testnet.hiro.so/*",
-    "https://api.platform.hiro.so/*"
+    "https://api.testnet.hiro.so/*"
   ],
   "icons": {
     "16": "denvault-16.png",
