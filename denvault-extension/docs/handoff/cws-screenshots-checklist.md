@@ -1,8 +1,30 @@
 # CWS Screenshots Checklist
 
-**Date:** 2026-05-01 (revised after remediation)
-**Version:** DenVault v1.1.0
+**Date:** 2026-05-01 (revised after remediation) · **Re-audited 2026-08-11**
+**Version:** DenVault v1.1.0 → cards regenerated for v1.1.2
 **Verifier:** `bash scripts/verify-store-assets.sh`
+
+> ## 2026-08-11 revision — two findings the May audit got wrong
+>
+> **The row "Console error indicators → Clean, no DevTools artifacts" was incorrect.**
+> All five May cards carried the `vite-plugin-vue-devtools` floating button at
+> the bottom centre of the popup. On `cws-03-send` it sat directly on top of the
+> "Continue" CTA. Fixed in `vite.config.ts`: the plugin is now skipped whenever
+> `VITE_UI_SNAPSHOT` is set, which covers every snapshot and store run.
+>
+> **The cards depended on live testnet funds.** Balances came from a real fetch
+> of the test mnemonic's address. That address has since been drained, so a
+> regeneration produced a 0 balance and made SendView render
+> "Your balance is too low to send STX (fee required)" — an error banner on a
+> marketing asset. Fixed in `e2e/store-screenshots.spec.ts`: `mockBalances()`
+> pins the response at 94.67179 STX, matching the audited May cards, so the
+> output no longer depends on the funding state of a public account.
+>
+> Cards regenerated 2026-08-11, 5/5, all 1280x800. Remaining cosmetic items on
+> `cws-05-settings` (unchanged from May, still not blockers): the wallet count
+> reads "0 wallets - No wallet" because snapshot mode auto-unlocks without
+> writing a vault entry, and the red "Delete All Wallets" row is clipped by the
+> bottom edge of the popup frame.
 
 ## Summary
 

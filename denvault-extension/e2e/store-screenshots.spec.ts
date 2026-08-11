@@ -78,6 +78,38 @@ async function openReceiveModal(page: Page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * Fixed balances for the marketing cards.
+ *
+ * These used to come from a live testnet fetch of the test mnemonic's
+ * address. When that address was drained the cards regenerated with a
+ * 0 balance and SendView rendered "Your balance is too low to send STX"
+ * — an error banner on a store screenshot. Marketing assets must not
+ * depend on the funding state of a public testnet account.
+ */
+const DEMO_STX_MICRO = "94671790"; // 94.67179 STX, matching the audited May cards
+
+async function mockBalances(page: Page) {
+  await page.route("**/extended/v1/address/*/balances", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        stx: {
+          balance: DEMO_STX_MICRO,
+          total_sent: "0",
+          total_received: DEMO_STX_MICRO,
+          lock_height: 0,
+          lock_tx_id: "",
+          locked: "0",
+        },
+        fungible_tokens: {},
+        non_fungible_tokens: {},
+      }),
+    })
+  );
+}
+
 async function waitForStableState(page: Page) {
   await page.waitForFunction(() => {
     const spinners = document.querySelectorAll('.spinner, .animate-spin, [class*="loading"]');
@@ -255,6 +287,10 @@ test.describe('CWS Store Screenshots', () => {
     test(`Store card: ${card.id} - ${card.headline}`, async ({ page, browser }) => {
       // --- Phase 1: Capture raw popup screenshot ---
       await page.setViewportSize({ width: POPUP_WIDTH, height: POPUP_HEIGHT });
+
+      // Pin balances before the first navigation so no card can render an
+      // empty-wallet or insufficient-funds state.
+      await mockBalances(page);
 
       // Navigate to app root to get localStorage access
       await page.goto('/');
