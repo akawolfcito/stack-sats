@@ -29,7 +29,9 @@ const DEBUG_QUEUE = false;
 
 function logQueue(...args) {
   if (DEBUG_QUEUE) {
-    console.log("[Queue]", ...args);
+    // Debug level, not info: this is developer diagnostics and must not
+    // read as production logging in the shipped service worker.
+    console.debug("[Queue]", ...args);
   }
 }
 
