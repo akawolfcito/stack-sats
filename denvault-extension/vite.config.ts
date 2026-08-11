@@ -6,7 +6,15 @@ import vueDevTools from "vite-plugin-vue-devtools";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [wasm(), vue(), vueDevTools()],
+  plugins: [
+    wasm(),
+    vue(),
+    // The devtools overlay paints a floating button at the bottom centre
+    // of the viewport, which lands on top of the popup in every captured
+    // store screenshot (it was covering the "Continue" CTA). Snapshot and
+    // store runs set VITE_UI_SNAPSHOT, so drop the plugin for those.
+    ...(process.env.VITE_UI_SNAPSHOT ? [] : [vueDevTools()]),
+  ],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
