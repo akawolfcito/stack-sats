@@ -13,7 +13,7 @@
  *
  * Trust-critical flow: Users approve dApp requests here.
  */
-import { onBeforeMount, onMounted, ref, computed } from "vue";
+import { onBeforeMount, onBeforeUnmount, onMounted, ref, computed } from "vue";
 import {
   handleSignMessage,
   handleGetAddresses,
@@ -31,6 +31,7 @@ import "@/components/ui"; // Button used in template
 import { sessionManager } from "@/utils/security/session";
 import { secureLog, secureWarn } from "@/utils/security/logger";
 import { emitTxSignRequested, emitTxSignResult } from "@/denlabs/emit";
+import { fetchCanonicalRequest } from "@/composables/useCanonicalRequest";
 
 const isUnlocked = ref(false);
 const pinError = ref("");
@@ -70,6 +71,17 @@ onMounted(() => {
     "stacks",
     props.origin || "unknown"
   );
+
+  // P1-4: Subscribe to explicit error feedback from background (queue mode only).
+  if (props.isQueueMode && typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener(handleResponseError);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (props.isQueueMode && typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.removeListener(handleResponseError);
+  }
 });
 
 // Extract origin for display
@@ -204,6 +216,23 @@ function sendQueueReject(error?: { code: number; message: string }) {
   });
 }
 
+/**
+ * P1-4: Listener for explicit error responses from background. Fires
+ * when the popup's approve/reject decision was rejected (stale ID,
+ * already resolved, etc.). Without this the user would believe their
+ * decision succeeded while the dApp times out.
+ */
+function handleResponseError(message: unknown): undefined {
+  const m = message as { type?: string; requestId?: string; error?: { code: number; message: string } };
+  if (m?.type !== "DAPP_RESPONSE_ERROR") return undefined;
+  if (m.requestId && m.requestId !== props.requestId) return undefined;
+
+  isProcessing.value = false;
+  pinError.value = m.error?.message || "Request error";
+  secureWarn("Background rejected popup decision", { error: m.error });
+  return undefined;
+}
+
 // Close window/tab based on context (popup vs full-page)
 function closeWindow() {
   // Full-page mode: viewport is larger than popup dimensions
@@ -255,27 +284,47 @@ async function handleConfirm() {
 
   const accountIndex = selectedAccountIndex.value;
 
+  // P0-3: In queue mode, the canonical params live in background's
+  // activeRequest. Fetch them now and sign against THOSE bytes — never
+  // against props.payload, which a tampered popup could mutate between
+  // display and approval. Legacy URL mode keeps using props.payload
+  // because there is no background queue entry to consult.
+  let signingPayload: JsonRpcRequest = props.payload;
+  if (props.isQueueMode) {
+    const canonical = await fetchCanonicalRequest(props.requestId);
+    if (!canonical) {
+      secureWarn("Canonical request unavailable; aborting approve", {
+        requestId: props.requestId,
+      });
+      isProcessing.value = false;
+      pinError.value = "Request expired or no longer active";
+      handleReject("Request expired or no longer active");
+      return;
+    }
+    signingPayload = canonical;
+  }
+
   try {
-    switch (props.payload.method) {
+    switch (signingPayload.method) {
       case "getAddresses":
       case "stx_getAddresses":
       case "stx_getAccounts":
-        result = await handleGetAddresses(props.payload, mnemonic, accountIndex);
+        result = await handleGetAddresses(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_signMessage":
-        result = await handleSignMessage(props.payload, mnemonic, accountIndex);
+        result = await handleSignMessage(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_callContract":
-        result = await handleCallContract(props.payload, mnemonic, accountIndex);
+        result = await handleCallContract(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_transferStx":
-        result = await handleTransferStx(props.payload, mnemonic, accountIndex);
+        result = await handleTransferStx(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_signStructuredMessage":
-        result = await handleSignStructuredData(props.payload, mnemonic, accountIndex);
+        result = await handleSignStructuredData(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_deployContract":
-        result = await handleDeployContract(props.payload, mnemonic, accountIndex);
+        result = await handleDeployContract(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_transferSip10Ft":
         // TODO: implement
@@ -290,7 +339,7 @@ async function handleConfirm() {
         // TODO: implement
         break;
       default:
-        secureWarn("Unknown method", { method: props.payload.method });
+        secureWarn("Unknown method", { method: signingPayload.method });
         break;
     }
 
@@ -301,7 +350,7 @@ async function handleConfirm() {
       } else {
         await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
       }
-      secureLog("Response sent successfully", { method: props.payload.method, queueMode: props.isQueueMode });
+      secureLog("Response sent successfully", { method: signingPayload.method, queueMode: props.isQueueMode });
 
       // DenLabs: Emit TX sign result (approved)
       const walletId = sessionManager.activeWalletId || "unknown";
@@ -315,7 +364,7 @@ async function handleConfirm() {
       );
 
       // Cache getAddresses response for auto-approval
-      if (props.payload.method === "getAddresses" || props.payload.method === "stx_getAddresses" || props.payload.method === "stx_getAccounts") {
+      if (signingPayload.method === "getAddresses" || signingPayload.method === "stx_getAddresses" || signingPayload.method === "stx_getAccounts") {
         try {
           const cacheKey = `approved_${props.origin}`;
           await chrome.storage.session.set({ [cacheKey]: result.data });
@@ -331,7 +380,7 @@ async function handleConfirm() {
           code: -32603,
           message: "Internal Error",
         },
-        id: props.payload.id,
+        id: signingPayload.id,
       };
       if (props.isQueueMode) {
         sendQueueReject({ code: -32603, message: "Internal Error" });
@@ -363,7 +412,7 @@ async function handleConfirm() {
           code: -32603,
           message: errorMsg,
         },
-        id: props.payload.id,
+        id: signingPayload.id,
       });
     }
 
