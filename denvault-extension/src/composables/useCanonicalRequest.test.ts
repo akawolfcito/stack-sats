@@ -6,7 +6,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { fetchCanonicalRequest } from "./useCanonicalRequest";
+import { fetchCanonicalRequest, resolveDisplayPayload } from "./useCanonicalRequest";
+import type { JsonRpcRequest } from "@/utils/types";
 
 describe("useCanonicalRequest.fetchCanonicalRequest", () => {
   let sendMessage: ReturnType<typeof vi.fn>;
@@ -120,5 +121,92 @@ describe("useCanonicalRequest.fetchCanonicalRequest", () => {
     sendMessage.mockResolvedValueOnce(undefined);
     const result = await fetchCanonicalRequest("req-1");
     expect(result).toBeNull();
+  });
+});
+
+/**
+ * H1: the display layer must read the same canonical bytes the signer
+ * uses. Before this, signing used the canonical payload while every
+ * rendered field still read `props.payload` — so a mutated popup payload
+ * meant the user saw one transaction and signed another.
+ */
+describe("useCanonicalRequest.resolveDisplayPayload", () => {
+  let sendMessage: ReturnType<typeof vi.fn>;
+
+  const tampered: JsonRpcRequest = {
+    jsonrpc: "2.0",
+    id: "req-1",
+    method: "stx_transferStx",
+    params: { recipient: "ST_ATTACKER", amount: "999999999" },
+  } as JsonRpcRequest;
+
+  beforeEach(() => {
+    sendMessage = vi.fn();
+    (globalThis as unknown as { chrome: unknown }).chrome = {
+      runtime: { sendMessage },
+    };
+  });
+
+  it("renders the canonical payload in queue mode, not the local one", async () => {
+    sendMessage.mockResolvedValueOnce({
+      ok: true,
+      request: {
+        id: "req-1",
+        method: "stx_transferStx",
+        params: { recipient: "ST_VICTIM_APPROVED", amount: "100" },
+      },
+    });
+
+    const result = await resolveDisplayPayload({
+      payload: tampered,
+      isQueueMode: true,
+      requestId: "req-1",
+    });
+
+    expect(result.source).toBe("canonical");
+    expect(result.payload.params).toEqual({
+      recipient: "ST_VICTIM_APPROVED",
+      amount: "100",
+    });
+    expect(result.payload.params).not.toEqual(tampered.params);
+  });
+
+  it("falls back to the local payload when the canonical is unavailable", async () => {
+    // Request already resolved or expired: nothing to render from
+    // background. Display degrades to the local payload, and handleConfirm
+    // still refuses to sign because its own fetch fails too.
+    sendMessage.mockResolvedValueOnce({ ok: false });
+
+    const result = await resolveDisplayPayload({
+      payload: tampered,
+      isQueueMode: true,
+      requestId: "req-1",
+    });
+
+    expect(result.source).toBe("local");
+    expect(result.payload).toBe(tampered);
+  });
+
+  it("uses the local payload without querying background in legacy URL mode", async () => {
+    const result = await resolveDisplayPayload({
+      payload: tampered,
+      isQueueMode: false,
+      requestId: undefined,
+    });
+
+    expect(result.source).toBe("local");
+    expect(result.payload).toBe(tampered);
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it("uses the local payload when queue mode has no request id", async () => {
+    const result = await resolveDisplayPayload({
+      payload: tampered,
+      isQueueMode: true,
+      requestId: undefined,
+    });
+
+    expect(result.source).toBe("local");
+    expect(sendMessage).not.toHaveBeenCalled();
   });
 });

@@ -31,7 +31,7 @@ import "@/components/ui"; // Button used in template
 import { sessionManager } from "@/utils/security/session";
 import { secureLog, secureWarn } from "@/utils/security/logger";
 import { emitTxSignRequested, emitTxSignResult } from "@/denlabs/emit";
-import { fetchCanonicalRequest } from "@/composables/useCanonicalRequest";
+import { fetchCanonicalRequest, resolveDisplayPayload } from "@/composables/useCanonicalRequest";
 
 const isUnlocked = ref(false);
 const pinError = ref("");
@@ -56,12 +56,22 @@ const props = defineProps<{
   requestId?: string;
 }>();
 
+/**
+ * H1: every rendered field reads from here, never from `props.payload`.
+ * In queue mode this holds background's canonical params, so what the
+ * user reviews is byte-for-byte what handleConfirm signs. Until the
+ * fetch resolves (and in legacy URL mode) it falls back to the local
+ * payload, which is the only source available there.
+ */
+const canonicalPayload = ref<JsonRpcRequest | null>(null);
+const displayPayload = computed<JsonRpcRequest>(() => canonicalPayload.value ?? props.payload);
+
 onBeforeMount(() => {
   // Check if session is already unlocked
   isUnlocked.value = !sessionManager.isLocked;
 });
 
-onMounted(() => {
+onMounted(async () => {
   // DenLabs: Emit TX sign requested event
   txSignStartTime.value = Date.now();
   const walletId = sessionManager.activeWalletId || "unknown";
@@ -75,6 +85,21 @@ onMounted(() => {
   // P1-4: Subscribe to explicit error feedback from background (queue mode only).
   if (props.isQueueMode && typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
     chrome.runtime.onMessage.addListener(handleResponseError);
+  }
+
+  // H1: pull the canonical params so the review screen renders the same
+  // bytes that will be signed.
+  const display = await resolveDisplayPayload({
+    payload: props.payload,
+    isQueueMode: props.isQueueMode,
+    requestId: props.requestId,
+  });
+  if (display.source === "canonical") {
+    canonicalPayload.value = display.payload;
+  } else if (props.isQueueMode) {
+    secureWarn("Canonical request unavailable for display; rendering local payload", {
+      requestId: props.requestId,
+    });
   }
 });
 
@@ -113,14 +138,14 @@ const methodDescription = computed(() => {
     signPsbt: "Sign PSBT (Bitcoin)",
     sendTransfer: "Send transfer",
   };
-  return descriptions[props.payload.method] || props.payload.method;
+  return descriptions[displayPayload.value.method] || displayPayload.value.method;
 });
 
 // Format params for display
 const formattedParams = computed(() => {
-  if (!props.payload.params) return null;
+  if (!displayPayload.value.params) return null;
 
-  const params = props.payload.params as Record<string, unknown>;
+  const params = displayPayload.value.params as Record<string, unknown>;
   const formatted: Record<string, string> = {};
 
   // Show relevant fields based on method
@@ -151,7 +176,7 @@ const formattedParams = computed(() => {
   if (params.recipient) {
     formatted["Recipient"] = String(params.recipient);
   }
-  if (params.name && props.payload.method === "stx_deployContract") {
+  if (params.name && displayPayload.value.method === "stx_deployContract") {
     formatted["Contract Name"] = String(params.name);
   }
   if (params.clarityCode) {
@@ -169,7 +194,7 @@ const formattedParams = computed(() => {
 
 // Dynamic subtitle per method type
 const methodSubtitle = computed(() => {
-  const method = props.payload?.method;
+  const method = displayPayload.value?.method;
   switch (method) {
     case "getAddresses":
     case "stx_getAddresses":
@@ -193,7 +218,7 @@ const methodSubtitle = computed(() => {
 
 // Show account selector for methods that operate on a single account
 const showAccountSelector = computed(() => {
-  const method = props.payload?.method;
+  const method = displayPayload.value?.method;
   return method !== "getAddresses" && method !== "stx_getAddresses" && method !== "stx_getAccounts";
 });
 
@@ -532,7 +557,7 @@ function handleReject(reason?: string) {
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </summary>
-        <pre class="raw-payload" data-roi="confirm-details-panel">{{ JSON.stringify(props.payload, null, 2) }}</pre>
+        <pre class="raw-payload" data-roi="confirm-details-panel">{{ JSON.stringify(displayPayload, null, 2) }}</pre>
       </details>
 
       <!-- PIN input if not unlocked -->

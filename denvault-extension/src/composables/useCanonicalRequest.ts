@@ -62,3 +62,41 @@ export async function fetchCanonicalRequest(
     return null;
   }
 }
+
+/** Where the payload being rendered came from. */
+export type DisplaySource = "canonical" | "local";
+
+export interface DisplayPayload {
+  payload: JsonRpcRequest;
+  source: DisplaySource;
+}
+
+/**
+ * Resolve which payload the confirmation screen should render.
+ *
+ * Signing already sources its bytes from background (see
+ * `fetchCanonicalRequest`). The display must do the same, otherwise the
+ * user reviews `props.payload` while approving different bytes — the
+ * "see one thing, sign another" gap.
+ *
+ * Legacy URL mode has no background queue entry, so the local payload is
+ * the only source available and is returned as-is. In queue mode a failed
+ * fetch also degrades to the local payload: `handleConfirm` performs its
+ * own fetch and aborts, so nothing can be signed from that state.
+ */
+export async function resolveDisplayPayload(opts: {
+  payload: JsonRpcRequest;
+  isQueueMode?: boolean;
+  requestId?: string;
+}): Promise<DisplayPayload> {
+  if (!opts.isQueueMode || !opts.requestId) {
+    return { payload: opts.payload, source: "local" };
+  }
+
+  const canonical = await fetchCanonicalRequest(opts.requestId);
+  if (!canonical) {
+    return { payload: opts.payload, source: "local" };
+  }
+
+  return { payload: canonical, source: "canonical" };
+}
