@@ -18,13 +18,14 @@
  * - Compact logo (40px) and title
  * - Ghost-premium keypad via PinInput
  */
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import PinScreenShell from "@/components/pin/PinScreenShell.vue";
 import PinInput from "@/components/PinInput.vue";
 import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
+import { useLockoutCountdown } from "@/composables/useLockoutCountdown";
 
 const router = useRouter();
 
@@ -35,7 +36,33 @@ const deleteConfirmText = ref("");
 
 const pinInputRef = ref<InstanceType<typeof PinInput> | null>(null);
 
-const attemptsRemaining = computed(() => sessionManager.attemptsRemaining);
+/**
+ * Issue #18: a temporary lockout used to read as terminal — the keypad
+ * stayed disabled and the only instruction was to reset the wallet. The
+ * countdown observes LockoutManager and releases the keypad by itself
+ * when the block expires.
+ */
+const lockout = useLockoutCountdown(sessionManager);
+
+const lockoutMessage = computed(() =>
+  lockout.isLockedOut.value
+    ? `Too many attempts. Try again in ${lockout.remainingLabel.value}.`
+    : ""
+);
+
+// The lockout notice outranks the per-attempt error while it is active.
+const displayError = computed(() => lockoutMessage.value || pinError.value);
+
+// Clear the stale "Wrong PIN" text the moment the block lifts.
+watch(
+  () => lockout.isLockedOut.value,
+  (locked, wasLocked) => {
+    if (wasLocked && !locked) {
+      pinError.value = "";
+      pinInputRef.value?.focus();
+    }
+  }
+);
 
 const canDelete = computed(() => deleteConfirmText.value.toUpperCase() === "DELETE");
 
@@ -57,16 +84,22 @@ const handleUnlock = async (pin: string) => {
     if (mnemonic) {
       secureLog("Wallet unlocked");
       router.push({ path: "/user" });
+    } else if (sessionManager.isLockedOut) {
+      // This attempt tripped the lockout: show the countdown, not a
+      // dead end. lockoutMessage takes over the error slot.
+      lockout.start();
     } else {
       const remaining = sessionManager.attemptsRemaining;
-      if (remaining <= 0) {
-        pinError.value = "Too many attempts. Reset wallet to continue.";
-      } else {
-        pinError.value = `Wrong PIN. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`;
-      }
+      pinError.value = `Wrong PIN. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`;
     }
   } catch (error) {
-    pinError.value = "Failed to unlock wallet";
+    // unlock() throws while a lockout is active; surface the countdown
+    // rather than a generic failure.
+    if (sessionManager.isLockedOut) {
+      lockout.start();
+    } else {
+      pinError.value = "Failed to unlock wallet";
+    }
     secureLog("Unlock failed", error);
   } finally {
     isLoading.value = false;
@@ -103,7 +136,15 @@ onMounted(() => {
     return;
   }
 
+  // Reopening the popup mid-lockout must show the remaining time, not a
+  // blank keypad that silently refuses input.
+  lockout.start();
+
   pinInputRef.value?.focus();
+});
+
+onBeforeUnmount(() => {
+  lockout.stop();
 });
 </script>
 
@@ -120,8 +161,8 @@ onMounted(() => {
     <PinInput
       ref="pinInputRef"
       mode="unlock"
-      :error="pinError"
-      :disabled="isLoading || attemptsRemaining <= 0"
+      :error="displayError"
+      :disabled="isLoading || lockout.isLockedOut.value"
       :show-biometric="showBiometricOption"
       hide-label
       @complete="handleUnlock"

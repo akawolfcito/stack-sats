@@ -13,7 +13,7 @@
  *
  * Trust-critical flow: Users approve dApp requests here.
  */
-import { onBeforeMount, onMounted, ref, computed } from "vue";
+import { onBeforeMount, onBeforeUnmount, onMounted, ref, computed } from "vue";
 import {
   handleSignMessage,
   handleGetAddresses,
@@ -31,6 +31,7 @@ import "@/components/ui"; // Button used in template
 import { sessionManager } from "@/utils/security/session";
 import { secureLog, secureWarn } from "@/utils/security/logger";
 import { emitTxSignRequested, emitTxSignResult } from "@/denlabs/emit";
+import { fetchCanonicalRequest, resolveDisplayPayload } from "@/composables/useCanonicalRequest";
 
 const isUnlocked = ref(false);
 const pinError = ref("");
@@ -55,12 +56,22 @@ const props = defineProps<{
   requestId?: string;
 }>();
 
+/**
+ * H1: every rendered field reads from here, never from `props.payload`.
+ * In queue mode this holds background's canonical params, so what the
+ * user reviews is byte-for-byte what handleConfirm signs. Until the
+ * fetch resolves (and in legacy URL mode) it falls back to the local
+ * payload, which is the only source available there.
+ */
+const canonicalPayload = ref<JsonRpcRequest | null>(null);
+const displayPayload = computed<JsonRpcRequest>(() => canonicalPayload.value ?? props.payload);
+
 onBeforeMount(() => {
   // Check if session is already unlocked
   isUnlocked.value = !sessionManager.isLocked;
 });
 
-onMounted(() => {
+onMounted(async () => {
   // DenLabs: Emit TX sign requested event
   txSignStartTime.value = Date.now();
   const walletId = sessionManager.activeWalletId || "unknown";
@@ -70,6 +81,32 @@ onMounted(() => {
     "stacks",
     props.origin || "unknown"
   );
+
+  // P1-4: Subscribe to explicit error feedback from background (queue mode only).
+  if (props.isQueueMode && typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener(handleResponseError);
+  }
+
+  // H1: pull the canonical params so the review screen renders the same
+  // bytes that will be signed.
+  const display = await resolveDisplayPayload({
+    payload: props.payload,
+    isQueueMode: props.isQueueMode,
+    requestId: props.requestId,
+  });
+  if (display.source === "canonical") {
+    canonicalPayload.value = display.payload;
+  } else if (props.isQueueMode) {
+    secureWarn("Canonical request unavailable for display; rendering local payload", {
+      requestId: props.requestId,
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  if (props.isQueueMode && typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.removeListener(handleResponseError);
+  }
 });
 
 // Extract origin for display
@@ -101,14 +138,14 @@ const methodDescription = computed(() => {
     signPsbt: "Sign PSBT (Bitcoin)",
     sendTransfer: "Send transfer",
   };
-  return descriptions[props.payload.method] || props.payload.method;
+  return descriptions[displayPayload.value.method] || displayPayload.value.method;
 });
 
 // Format params for display
 const formattedParams = computed(() => {
-  if (!props.payload.params) return null;
+  if (!displayPayload.value.params) return null;
 
-  const params = props.payload.params as Record<string, unknown>;
+  const params = displayPayload.value.params as Record<string, unknown>;
   const formatted: Record<string, string> = {};
 
   // Show relevant fields based on method
@@ -139,7 +176,7 @@ const formattedParams = computed(() => {
   if (params.recipient) {
     formatted["Recipient"] = String(params.recipient);
   }
-  if (params.name && props.payload.method === "stx_deployContract") {
+  if (params.name && displayPayload.value.method === "stx_deployContract") {
     formatted["Contract Name"] = String(params.name);
   }
   if (params.clarityCode) {
@@ -157,7 +194,7 @@ const formattedParams = computed(() => {
 
 // Dynamic subtitle per method type
 const methodSubtitle = computed(() => {
-  const method = props.payload?.method;
+  const method = displayPayload.value?.method;
   switch (method) {
     case "getAddresses":
     case "stx_getAddresses":
@@ -181,7 +218,7 @@ const methodSubtitle = computed(() => {
 
 // Show account selector for methods that operate on a single account
 const showAccountSelector = computed(() => {
-  const method = props.payload?.method;
+  const method = displayPayload.value?.method;
   return method !== "getAddresses" && method !== "stx_getAddresses" && method !== "stx_getAccounts";
 });
 
@@ -202,6 +239,23 @@ function sendQueueReject(error?: { code: number; message: string }) {
     id: props.requestId,
     error: error,
   });
+}
+
+/**
+ * P1-4: Listener for explicit error responses from background. Fires
+ * when the popup's approve/reject decision was rejected (stale ID,
+ * already resolved, etc.). Without this the user would believe their
+ * decision succeeded while the dApp times out.
+ */
+function handleResponseError(message: unknown): undefined {
+  const m = message as { type?: string; requestId?: string; error?: { code: number; message: string } };
+  if (m?.type !== "DAPP_RESPONSE_ERROR") return undefined;
+  if (m.requestId && m.requestId !== props.requestId) return undefined;
+
+  isProcessing.value = false;
+  pinError.value = m.error?.message || "Request error";
+  secureWarn("Background rejected popup decision", { error: m.error });
+  return undefined;
 }
 
 // Close window/tab based on context (popup vs full-page)
@@ -255,27 +309,47 @@ async function handleConfirm() {
 
   const accountIndex = selectedAccountIndex.value;
 
+  // P0-3: In queue mode, the canonical params live in background's
+  // activeRequest. Fetch them now and sign against THOSE bytes — never
+  // against props.payload, which a tampered popup could mutate between
+  // display and approval. Legacy URL mode keeps using props.payload
+  // because there is no background queue entry to consult.
+  let signingPayload: JsonRpcRequest = props.payload;
+  if (props.isQueueMode) {
+    const canonical = await fetchCanonicalRequest(props.requestId);
+    if (!canonical) {
+      secureWarn("Canonical request unavailable; aborting approve", {
+        requestId: props.requestId,
+      });
+      isProcessing.value = false;
+      pinError.value = "Request expired or no longer active";
+      handleReject("Request expired or no longer active");
+      return;
+    }
+    signingPayload = canonical;
+  }
+
   try {
-    switch (props.payload.method) {
+    switch (signingPayload.method) {
       case "getAddresses":
       case "stx_getAddresses":
       case "stx_getAccounts":
-        result = await handleGetAddresses(props.payload, mnemonic, accountIndex);
+        result = await handleGetAddresses(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_signMessage":
-        result = await handleSignMessage(props.payload, mnemonic, accountIndex);
+        result = await handleSignMessage(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_callContract":
-        result = await handleCallContract(props.payload, mnemonic, accountIndex);
+        result = await handleCallContract(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_transferStx":
-        result = await handleTransferStx(props.payload, mnemonic, accountIndex);
+        result = await handleTransferStx(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_signStructuredMessage":
-        result = await handleSignStructuredData(props.payload, mnemonic, accountIndex);
+        result = await handleSignStructuredData(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_deployContract":
-        result = await handleDeployContract(props.payload, mnemonic, accountIndex);
+        result = await handleDeployContract(signingPayload, mnemonic, accountIndex);
         break;
       case "stx_transferSip10Ft":
         // TODO: implement
@@ -290,7 +364,7 @@ async function handleConfirm() {
         // TODO: implement
         break;
       default:
-        secureWarn("Unknown method", { method: props.payload.method });
+        secureWarn("Unknown method", { method: signingPayload.method });
         break;
     }
 
@@ -301,7 +375,7 @@ async function handleConfirm() {
       } else {
         await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
       }
-      secureLog("Response sent successfully", { method: props.payload.method, queueMode: props.isQueueMode });
+      secureLog("Response sent successfully", { method: signingPayload.method, queueMode: props.isQueueMode });
 
       // DenLabs: Emit TX sign result (approved)
       const walletId = sessionManager.activeWalletId || "unknown";
@@ -315,7 +389,7 @@ async function handleConfirm() {
       );
 
       // Cache getAddresses response for auto-approval
-      if (props.payload.method === "getAddresses" || props.payload.method === "stx_getAddresses" || props.payload.method === "stx_getAccounts") {
+      if (signingPayload.method === "getAddresses" || signingPayload.method === "stx_getAddresses" || signingPayload.method === "stx_getAccounts") {
         try {
           const cacheKey = `approved_${props.origin}`;
           await chrome.storage.session.set({ [cacheKey]: result.data });
@@ -331,7 +405,7 @@ async function handleConfirm() {
           code: -32603,
           message: "Internal Error",
         },
-        id: props.payload.id,
+        id: signingPayload.id,
       };
       if (props.isQueueMode) {
         sendQueueReject({ code: -32603, message: "Internal Error" });
@@ -363,7 +437,7 @@ async function handleConfirm() {
           code: -32603,
           message: errorMsg,
         },
-        id: props.payload.id,
+        id: signingPayload.id,
       });
     }
 
@@ -483,7 +557,7 @@ function handleReject(reason?: string) {
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </summary>
-        <pre class="raw-payload" data-roi="confirm-details-panel">{{ JSON.stringify(props.payload, null, 2) }}</pre>
+        <pre class="raw-payload" data-roi="confirm-details-panel">{{ JSON.stringify(displayPayload, null, 2) }}</pre>
       </details>
 
       <!-- PIN input if not unlocked -->

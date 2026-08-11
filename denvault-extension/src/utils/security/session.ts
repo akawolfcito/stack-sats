@@ -216,8 +216,12 @@ class SessionManager {
 
       return mnemonic;
     } catch {
-      this._failedAttempts.value++;
       this._lockout.recordFailure();
+      // Issue #18: mirror the lockout's cycle counter instead of a
+      // counter of our own. recordFailure() zeroes it when a lockout
+      // trips, so attemptsRemaining recovers with each cycle and the UI
+      // gates on isLockedOut — not on a count that never came back.
+      this._failedAttempts.value = this._lockout.failedAttempts;
 
       return null;
     }

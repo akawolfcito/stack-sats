@@ -29,7 +29,9 @@ const DEBUG_QUEUE = false;
 
 function logQueue(...args) {
   if (DEBUG_QUEUE) {
-    console.log("[Queue]", ...args);
+    // Debug level, not info: this is developer diagnostics and must not
+    // read as production logging in the shipped service worker.
+    console.debug("[Queue]", ...args);
   }
 }
 
@@ -280,6 +282,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleDappReject(message.id, message.error);
       return;
 
+    case "GET_ACTIVE_REQUEST":
+      // P0-3: Popup fetches canonical request params from background
+      // before signing. Background is the single source of truth.
+      handleGetActiveRequest(message.requestId, sendResponse);
+      return true; // Keep channel open for async sendResponse
+
     case "GET_QUEUE_STATUS":
       sendResponse(getQueueStatus());
       return true; // Keep channel open for sendResponse
@@ -289,6 +297,74 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true; // Keep channel open for async
   }
 });
+
+/**
+ * P0-3: Return the canonical params of the active request to the popup.
+ * The popup MUST use these params (not its own props.payload) when
+ * constructing a signature, so a tampered popup payload cannot escape
+ * the user's approved scope.
+ *
+ * @param {string} requestId - Request ID the popup believes is active
+ * @param {(response: object) => void} sendResponse - Async callback
+ */
+function handleGetActiveRequest(requestId, sendResponse) {
+  if (!activeRequest) {
+    sendResponse({
+      ok: false,
+      error: {
+        code: 4002,
+        message: "No active request — request expired or no longer active",
+      },
+    });
+    return;
+  }
+
+  if (activeRequest.id !== requestId) {
+    sendResponse({
+      ok: false,
+      error: {
+        code: 4002,
+        message: "Request ID mismatch — request expired or no longer active",
+      },
+    });
+    return;
+  }
+
+  sendResponse({
+    ok: true,
+    request: {
+      id: activeRequest.id,
+      method: activeRequest.method,
+      params: activeRequest.params,
+      origin: activeRequest.origin,
+    },
+  });
+}
+
+/**
+ * P1-4: Notify the popup that an approval/rejection it just sent is
+ * stale (no active request, ID mismatch, or already resolved). Without
+ * this, the popup would believe its decision succeeded while the dApp
+ * silently times out.
+ *
+ * @param {string} requestId - The (stale) ID the popup sent
+ * @param {string} message - Human-readable reason
+ */
+function notifyPopupResponseError(requestId, message) {
+  console.warn("[StacksWallet] Popup decision rejected:", message, requestId);
+  chrome.runtime
+    .sendMessage({
+      type: "DAPP_RESPONSE_ERROR",
+      requestId: requestId,
+      error: {
+        code: 4002,
+        message: message,
+      },
+    })
+    .catch(() => {
+      // Popup may have already closed; nothing to do.
+    });
+}
 
 /**
  * V80: Open side panel with fallback to full page
@@ -330,19 +406,42 @@ async function handleOpenSidePanel(sender, sendResponse) {
 }
 
 /**
- * Handle approval from UI
+ * Handle approval from UI.
+ *
+ * Validates that the popup's decision matches the active request and
+ * surfaces an explicit DAPP_RESPONSE_ERROR on any mismatch (P1-4).
+ *
+ * NOTE on P0-3 residual risk: the popup still constructs the signed
+ * `result` (the mnemonic lives in the popup session). This handler
+ * forwards that result to the dApp tab. Defense-in-depth guarantee
+ * provided here: the popup's `requestId` MUST match `activeRequest.id`,
+ * so a stale or replayed approval cannot silently hijack a different
+ * request. Future hardening: move signing to the background so
+ * `activeRequest.params` becomes the only source of payload bytes.
+ *
  * @param {string} id - Request ID
  * @param {object} result - Result to return
  */
 function handleDappApprove(id, result) {
-  if (!activeRequest || activeRequest.id !== id) {
-    console.warn("[StacksWallet] Approve for unknown request:", id);
+  if (!activeRequest) {
+    notifyPopupResponseError(
+      id,
+      "No active request — request expired or no longer active"
+    );
+    return;
+  }
+
+  if (activeRequest.id !== id) {
+    notifyPopupResponseError(
+      id,
+      "Request ID mismatch — request expired or no longer active"
+    );
     return;
   }
 
   activeRequest.respond({
     jsonrpc: "2.0",
-    id: id,
+    id: activeRequest.id,
     result: result,
   });
 
@@ -350,19 +449,32 @@ function handleDappApprove(id, result) {
 }
 
 /**
- * Handle rejection from UI
+ * Handle rejection from UI. Mirrors handleDappApprove's validation so
+ * stale rejects produce explicit feedback instead of silently timing out.
+ *
  * @param {string} id - Request ID
  * @param {object} [error] - Optional error details
  */
 function handleDappReject(id, error) {
-  if (!activeRequest || activeRequest.id !== id) {
-    console.warn("[StacksWallet] Reject for unknown request:", id);
+  if (!activeRequest) {
+    notifyPopupResponseError(
+      id,
+      "No active request — request expired or no longer active"
+    );
+    return;
+  }
+
+  if (activeRequest.id !== id) {
+    notifyPopupResponseError(
+      id,
+      "Request ID mismatch — request expired or no longer active"
+    );
     return;
   }
 
   activeRequest.respond({
     jsonrpc: "2.0",
-    id: id,
+    id: activeRequest.id,
     error: error || {
       code: 4001,
       message: "User rejected the request",

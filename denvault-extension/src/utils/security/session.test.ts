@@ -268,6 +268,26 @@ describe("SessionManager", () => {
       await sessionManager.unlock("654321");
       expect(sessionManager.attemptsRemaining).toBe(1);
     });
+
+    /**
+     * Issue #18: LockoutManager zeroes its own failure count when a
+     * lockout trips, but the session mirror kept climbing. That left
+     * attemptsRemaining permanently <= 0, which the unlock screen read as
+     * "terminally disabled — reset the wallet". The gate has to be
+     * isLockedOut; the counter has to follow the lockout cycle.
+     */
+    it("resets to a full cycle once the lockout trips", async () => {
+      const encrypted = await encryptWithPIN(TEST_MNEMONIC, TEST_PIN);
+      await addWalletAsync(encrypted, "Test Wallet");
+
+      await sessionManager.unlock("654321");
+      await sessionManager.unlock("654321");
+      await sessionManager.unlock("654321");
+
+      expect(sessionManager.isLockedOut).toBe(true);
+      expect(sessionManager.attemptsRemaining).toBe(3);
+      expect(sessionManager.failedAttempts).toBe(0);
+    });
   });
 
   describe("state", () => {
