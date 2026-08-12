@@ -25,7 +25,20 @@ export default defineConfig({
 
   projects: [
     {
+      /**
+       * Loads the real built extension from dist/, so the service worker,
+       * the content-script bridge and the packaged popup are exercised for
+       * real. Every other project runs against the dev server with a
+       * mocked chrome.*, which cannot see any of that.
+       *
+       * Needs a build: use `pnpm test:e2e:extension`.
+       */
+      name: 'extension',
+      testMatch: /e2e[\\/]extension[\\/].*\.spec\.ts/,
+    },
+    {
       name: 'chromium',
+      testIgnore: /e2e[\\/]extension[\\/].*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 400, height: 600 }, // Popup size
@@ -33,6 +46,7 @@ export default defineConfig({
     },
     {
       name: 'chromium-sidepanel',
+      testIgnore: /e2e[\\/]extension[\\/].*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 400, height: 800 }, // Sidepanel size

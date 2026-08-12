@@ -588,14 +588,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // that cannot complete.
   const method = message.method;
   if (!ACCEPTED_METHODS.includes(method)) {
-    sendResponse({
+    const notSupported = {
       jsonrpc: "2.0",
       id: message.id,
       error: {
         code: -32601,
         message: `Method ${method} is not supported`,
       },
-    });
+    };
+    // content.js forwards page requests with a bare sendMessage and no
+    // callback, so sendResponse alone would be dropped. The page channel
+    // is chrome.tabs.sendMessage — the same one successful responses use.
+    chrome.tabs.sendMessage(sender.tab.id, notSupported).catch(() => {});
+    sendResponse(notSupported);
     return;
   }
 

@@ -17,6 +17,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
+    "test:e2e:extension": "pnpm build-only && playwright test --project=extension",
     "ui:snapshots": "VITE_UI_SNAPSHOT=1 playwright test golden-screenshots --project=chromium",
     "ui:shots": "VITE_UI_SNAPSHOT=1 playwright test golden-matrix --project=chromium",
     "ui:roi": "VITE_UI_SNAPSHOT=1 playwright test golden-roi --project=chromium",
