@@ -64,6 +64,29 @@ async function setupUnlockedWallet(page: Page) {
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
     localStorage.setItem('selected_network', 'testnet');
     localStorage.setItem('density_mode', 'comfy');
+
+    // Snapshot mode unlocks straight from the mnemonic without writing a
+    // vault entry, so Settings read back "0 wallets - No wallet" while
+    // showing an unlocked wallet. Seed the vault (localStorage fallback,
+    // used whenever chrome.storage is absent) so the summary matches the
+    // state the rest of the card is showing.
+    localStorage.setItem(
+      'wallet_vault',
+      JSON.stringify({
+        entries: [
+          {
+            id: 'snapshot-wallet',
+            name: 'Main Wallet',
+            // Placeholder: snapshot mode never decrypts this.
+            encryptedData: { ciphertext: '', iv: '', salt: '' },
+            createdAt: Date.UTC(2026, 0, 1),
+            version: 1,
+          },
+        ],
+        activeId: 'snapshot-wallet',
+        version: 1,
+      })
+    );
   }, TEST_MNEMONIC);
 }
 
@@ -108,6 +131,23 @@ async function mockBalances(page: Page) {
       }),
     })
   );
+}
+
+/**
+ * Settings is taller than the 400x600 popup, so at scroll 0 the frame cut
+ * through the red "Delete All Wallets" row — a half-rendered destructive
+ * action as the last thing on a marketing card. Scrolling to the end
+ * lines the bottom of the content up with the bottom of the frame.
+ */
+async function scrollToBottom(page: Page) {
+  await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    const scrollable = Array.from(document.querySelectorAll<HTMLElement>("*")).find(
+      (el) => el.scrollHeight > el.clientHeight + 8 && el.clientHeight > 200
+    );
+    (scrollable ?? document.scrollingElement)?.scrollTo({ top: 1e6, behavior: "instant" });
+  });
+  await page.waitForTimeout(300);
 }
 
 async function waitForStableState(page: Page) {
@@ -160,6 +200,7 @@ const STORE_CARDS: StoreCard[] = [
     headline: 'Full Control',
     caption: 'Network switching, security settings, and account management',
     setup: setupUnlockedWallet,
+    afterNav: scrollToBottom,
   },
 ];
 

@@ -41,6 +41,10 @@ function setDensityMode(mode: DensityMode) {
 }
 
 // V78: Wallet summary state (no longer expanding list)
+// Injected from public/manifest.json at build time — the version the
+// browser and the Chrome Web Store actually report.
+const appVersion = __APP_VERSION__;
+
 const walletCount = ref(0);
 const activeWalletName = ref<string>('');
 
@@ -423,7 +427,7 @@ function cancelImport() {
 
       <!-- Version Footer -->
       <footer class="version-footer">
-        DENVAULT V1.0.1
+        DENVAULT V{{ appVersion }}
       </footer>
     </div>
 
