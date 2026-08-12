@@ -11,8 +11,8 @@
  * - UTXO selection and fee calculation
  * - PIN verification before signing
  */
-import { ref, computed, onBeforeMount, nextTick, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { ref, computed, onBeforeMount, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import PinInput from '@/components/PinInput.vue';
 import ScreenShell from '@/components/layout/ScreenShell.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
@@ -31,7 +31,6 @@ import {
   parseBtcAmount,
   formatBtcDisplay,
   satoshisToBtc,
-  btcToSatoshis,
   calculateFee,
   fetchCombinedUtxos,
   type FeeLevel,
@@ -42,7 +41,6 @@ import {
 import { useBtcTxDraft, truncateBtcAddress } from '@/composables/useBtcTxDraft';
 
 const router = useRouter();
-const route = useRoute();
 
 // BTC transaction draft state
 const {
@@ -54,7 +52,6 @@ const {
   transitionToForm,
   setResult,
   setError,
-  isValidForConfirmTx,
   isSubmitting,
   canSubmit,
 } = useBtcTxDraft();
@@ -448,7 +445,9 @@ async function handlePinComplete(pin: string) {
     setError(error instanceof Error ? error.message : 'Unknown error');
     router.push({ path: '/tx-result', query: { type: 'btc' } });
   } finally {
-    // Sensitive data cleared by transferBtc
+    // transferBtc zeroes keyPair.privateKey in place — it shares the
+    // Buffer. This comment used to be wrong: the old cleanup nulled a
+    // local reference and left the bytes intact.
   }
 }
 </script>

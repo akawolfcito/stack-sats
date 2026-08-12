@@ -647,6 +647,38 @@ describe('Bitcoin transfer utilities', () => {
       expect(result.txid).toBe('final_txid_456');
     });
 
+    /**
+     * transferBtc used to do `let privateKey = params.privateKey` and null
+     * that local in its finally block. The local was never read, so the
+     * cleanup zeroed nothing — params.privateKey kept the bytes, and the
+     * caller's keyPair.privateKey pointed at the same Buffer. Both sides
+     * carried a comment claiming the key had been cleared.
+     */
+    it('zeroes the private key bytes when the transfer succeeds', async () => {
+      const privateKey = Buffer.alloc(32, 7);
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => [makeUtxo(100_000, true)] })
+        .mockResolvedValueOnce({ ok: true, text: async () => 'aabbccdd' })
+        .mockResolvedValueOnce({ ok: true, text: async () => 'zeroed_ok' });
+
+      await transferBtc({ ...baseParams, privateKey });
+
+      expect(privateKey.every((byte) => byte === 0)).toBe(true);
+    });
+
+    it('zeroes the private key bytes even when the transfer fails', async () => {
+      const privateKey = Buffer.alloc(32, 7);
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [makeUtxo(100, true)],
+      });
+
+      const result = await transferBtc({ ...baseParams, privateKey });
+
+      expect(result.success).toBe(false);
+      expect(privateKey.every((byte) => byte === 0)).toBe(true);
+    });
+
     it('should return failure for insufficient funds', async () => {
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,

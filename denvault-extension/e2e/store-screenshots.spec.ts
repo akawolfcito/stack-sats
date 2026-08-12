@@ -27,6 +27,8 @@ const POPUP_WIDTH = 400;
 const POPUP_HEIGHT = 600;
 const CARD_WIDTH = 1280;
 const CARD_HEIGHT = 800;
+const MARQUEE_WIDTH = 1400;
+const MARQUEE_HEIGHT = 560;
 
 // Brand tokens from base.css
 const BRAND = {
@@ -203,6 +205,104 @@ const STORE_CARDS: StoreCard[] = [
     afterNav: scrollToBottom,
   },
 ];
+
+/** Marquee promo tile: brand mark, wordmark and one line of positioning. */
+function buildMarqueeHTML(iconBase64: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: ${MARQUEE_WIDTH}px;
+      height: ${MARQUEE_HEIGHT}px;
+      overflow: hidden;
+      background: ${BRAND.bg};
+      font-family: '${BRAND.font}', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .tile {
+      width: ${MARQUEE_WIDTH}px;
+      height: ${MARQUEE_HEIGHT}px;
+      display: flex;
+      align-items: center;
+      gap: 80px;
+      padding: 0 100px;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Same accent glow as the store cards, anchored behind the mark. */
+    .tile::before {
+      content: '';
+      position: absolute;
+      right: 180px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 620px;
+      height: 620px;
+      background: radial-gradient(circle, rgba(215, 248, 46, 0.07) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .copy {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      z-index: 1;
+    }
+    .eyebrow {
+      font-size: 20px;
+      font-weight: 700;
+      color: ${BRAND.accent};
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .headline {
+      font-size: 72px;
+      font-weight: 700;
+      color: ${BRAND.textPrimary};
+      line-height: 1.08;
+      letter-spacing: -1.5px;
+    }
+    .sub {
+      font-size: 24px;
+      font-weight: 400;
+      color: ${BRAND.textSecondary};
+      line-height: 1.45;
+      max-width: 620px;
+    }
+    .mark {
+      flex: 0 0 auto;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mark img {
+      width: 390px;
+      height: 390px;
+      object-fit: contain;
+      filter: drop-shadow(0 24px 60px rgba(0, 0, 0, 0.55));
+    }
+  </style>
+</head>
+<body>
+  <div class="tile">
+    <div class="copy">
+      <div class="eyebrow">DenVault</div>
+      <div class="headline">Your Bitcoin<br>Layer 2 Wallet</div>
+      <div class="sub">Self-custodial STX and BTC for the Stacks ecosystem, right in your browser.</div>
+    </div>
+    <div class="mark">
+      <img src="data:image/png;base64,${iconBase64}" alt="">
+    </div>
+  </div>
+</body>
+</html>`;
+}
 
 // --- HTML template for the composite store card ---
 
@@ -401,6 +501,47 @@ test.describe('CWS Store Screenshots', () => {
       await cardContext.close();
     });
   }
+
+  /**
+   * Marquee promo tile (1400x560).
+   *
+   * The optional large banner the store shows on featured placements. It
+   * is pure branding — no popup capture — so it reuses the same tokens,
+   * glow and type scale as the cards rather than being drawn by hand like
+   * the 440x280 tile was.
+   */
+  test('Promo tile: marquee 1400x560', async ({ browser }) => {
+    const iconBase64 = fs
+      .readFileSync(path.join(__dirname, '../public/denvault-i.png'))
+      .toString('base64');
+
+    const context = await browser.newContext({
+      viewport: { width: MARQUEE_WIDTH, height: MARQUEE_HEIGHT },
+      reducedMotion: 'reduce',
+    });
+    const marqueePage = await context.newPage();
+
+    await marqueePage.setContent(buildMarqueeHTML(iconBase64), {
+      waitUntil: 'networkidle',
+    });
+
+    await marqueePage
+      .waitForFunction(() => document.fonts.check('700 64px Quicksand'), {
+        timeout: 10000,
+      })
+      .catch(() => {
+        console.warn('Font load timeout for marquee, proceeding with fallback');
+      });
+
+    await marqueePage.waitForTimeout(500);
+
+    const outputPath = path.join(OUTPUT_DIR, 'promo_1400x560.png');
+    await marqueePage.screenshot({ path: outputPath, fullPage: false });
+
+    console.log('  Generated: promo_1400x560.png');
+
+    await context.close();
+  });
 
   test.afterAll(async () => {
     console.log('\n========================================');

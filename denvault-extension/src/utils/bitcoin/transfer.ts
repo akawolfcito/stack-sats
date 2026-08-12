@@ -222,17 +222,13 @@ export function estimateTxSize(
     unknown: 148,  // Default to legacy
   };
 
-  // Output sizes (approximate)
-  const outputSizes: Record<BtcAddressType, number> = {
-    p2pkh: 34,
-    p2sh: 32,
-    p2wpkh: 31,
-    p2tr: 43,
-    unknown: 34,
-  };
-
   const inputSize = inputSizes[inputType] || inputSizes.p2pkh;
-  const avgOutputSize = 34; // Average across types
+
+  // Outputs are averaged rather than typed. A per-type table existed here
+  // but nothing could use it: the signature takes only outputCount, not
+  // the type of each output. 34 vB is the p2pkh figure, the largest of
+  // the common types, so the estimate errs toward overpaying the fee.
+  const avgOutputSize = 34;
 
   return Math.ceil(overhead + inputCount * inputSize + outputCount * avgOutputSize);
 }
@@ -507,8 +503,6 @@ export async function broadcastTransaction(
  * Execute a complete BTC transfer
  */
 export async function transferBtc(params: BtcTransferParams): Promise<BtcTransferResult> {
-  let privateKey: Buffer | null = params.privateKey;
-
   try {
     secureLog('Starting BTC transfer', {
       recipient: params.recipient.slice(0, 8) + '...',
@@ -517,7 +511,9 @@ export async function transferBtc(params: BtcTransferParams): Promise<BtcTransfe
     });
 
     // Build and sign the transaction
-    const { txHex, txid: localTxid } = await buildAndSignTransaction(params);
+    // The locally computed txid is discarded; the broadcast response is
+    // the authoritative one.
+    const { txHex } = await buildAndSignTransaction(params);
 
     // Broadcast the transaction
     const txid = await broadcastTransaction(txHex, params.network);
@@ -556,8 +552,11 @@ export async function transferBtc(params: BtcTransferParams): Promise<BtcTransfe
       error: errorMessage,
     };
   } finally {
-    // Clear sensitive data
-    privateKey = null;
+    // Zero the key bytes in place. This previously nulled a local copy of
+    // the reference, which cleared nothing: params.privateKey still held
+    // the Buffer, and so did the caller's keyPair. Buffer extends
+    // Uint8Array, so filling it wipes the bytes the caller shares.
+    params.privateKey.fill(0);
   }
 }
 
