@@ -16,7 +16,19 @@ interface AccountSettings {
 
 type WalletAccountSettings = Record<string, AccountSettings>;
 
-const DEFAULT_ACCOUNT_COUNT = 5;
+/**
+ * Accounts a fresh wallet starts with.
+ *
+ * One. An HD wallet already contains every account mathematically; the
+ * count only decides how many get derived and shown. Starting at five put
+ * four empty addresses in the selector on the dApp approval screen — the
+ * one place where picking the wrong entry signs with the wrong key — and
+ * cost five BIP32 + Taproot derivations on every unlock instead of one.
+ *
+ * Existing wallets keep whatever count they already stored; this only
+ * affects wallets created from here on.
+ */
+const DEFAULT_ACCOUNT_COUNT = 1;
 const MIN_ACCOUNT_COUNT = 1;
 const MAX_ACCOUNT_COUNT = 100;
 
