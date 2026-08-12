@@ -9,8 +9,9 @@ const REQUEST_TIMEOUT_MS = 60000; // 60 seconds
 /**
  * Methods the wallet can actually carry to a signed result.
  *
- * This list is published to every page as `window.StacksWallet.methods`,
- * so it is a promise to dApps. Only add a method once a handler exists —
+ * Published to every page through the WBIP004 provider registration
+ * (`window.wbip_providers`), so it is a promise to dApps, and enforced
+ * here in `request()`. Only add a method once a handler exists —
  * advertising one without an implementation produced an approval screen
  * that asked for the PIN and then failed with -32603.
  */

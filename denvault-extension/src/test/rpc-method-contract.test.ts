@@ -1,9 +1,10 @@
 /**
  * RPC surface contract.
  *
- * `public/injection.js` publishes SUPPORTED_METHODS to every page as
- * `window.StacksWallet.methods`. That list is a promise: a dApp that sees
- * a method there expects the wallet to be able to complete it.
+ * `public/injection.js` publishes SUPPORTED_METHODS to every page through
+ * the WBIP004 provider registration (`window.wbip_providers`), and gates
+ * `request()` on it. That list is a promise: a dApp that sees a method
+ * there expects the wallet to be able to complete it.
  *
  * It used to advertise four methods that fell through to `// TODO:
  * implement` in Confirmation.handleConfirm. The user got a polished
