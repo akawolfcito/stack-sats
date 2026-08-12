@@ -351,18 +351,11 @@ async function handleConfirm() {
       case "stx_deployContract":
         result = await handleDeployContract(signingPayload, mnemonic, accountIndex);
         break;
-      case "stx_transferSip10Ft":
-        // TODO: implement
-        break;
-      case "stx_signTransaction":
-        // TODO: implement
-        break;
-      case "signPsbt":
-        // TODO: implement
-        break;
-      case "sendTransfer":
-        // TODO: implement
-        break;
+      // stx_transferSip10Ft, stx_signTransaction, signPsbt and sendTransfer
+      // used to sit here as empty stubs while injection.js advertised them.
+      // They are no longer advertised, so a dApp gets a clean "not
+      // supported" before any popup opens. Re-add a case here only
+      // together with its handler and its entry in SUPPORTED_METHODS.
       default:
         secureWarn("Unknown method", { method: signingPayload.method });
         break;

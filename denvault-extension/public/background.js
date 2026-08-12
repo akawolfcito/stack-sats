@@ -19,6 +19,32 @@ const ALLOWED_ORIGIN_PATTERNS = [
 // Methods that can be auto-approved after first confirmation
 const AUTO_APPROVE_METHODS = ["getAddresses", "stx_getAddresses"];
 
+/**
+ * Methods this wallet will process.
+ *
+ * injection.js publishes its own list to pages, but that check is only
+ * advisory: content.js relays any well-formed event, so a page can talk
+ * to the background without ever going through window.StacksWallet.
+ * This is the enforcing copy — it runs before anything is queued, so an
+ * unsupported method can never open an approval screen that asks for the
+ * PIN and then fails with -32603.
+ *
+ * Superset of the advertised list by exactly one: stx_getAccounts is
+ * handled by the popup but deliberately not advertised.
+ *
+ * Kept honest by src/test/rpc-method-contract.test.ts.
+ */
+const ACCEPTED_METHODS = [
+  "getAddresses",
+  "stx_getAddresses",
+  "stx_getAccounts",
+  "stx_signMessage",
+  "stx_transferStx",
+  "stx_callContract",
+  "stx_signStructuredMessage",
+  "stx_deployContract",
+];
+
 // ============================================================
 // Request Queue System (v1)
 // Ensures only one request is processed at a time
@@ -556,8 +582,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return;
   }
 
-  // Check if this is an auto-approvable method with cached response
+  // Reject unsupported methods before anything is queued. Doing this
+  // here rather than in injection.js is what makes it enforceable: the
+  // popup never opens, so the user is never asked to approve something
+  // that cannot complete.
   const method = message.method;
+  if (!ACCEPTED_METHODS.includes(method)) {
+    sendResponse({
+      jsonrpc: "2.0",
+      id: message.id,
+      error: {
+        code: -32601,
+        message: `Method ${method} is not supported`,
+      },
+    });
+    return;
+  }
+
+  // Check if this is an auto-approvable method with cached response
   if (AUTO_APPROVE_METHODS.includes(method)) {
     handleAutoApprove(message, sender, originUrl);
     return true; // Keep channel open for async response
