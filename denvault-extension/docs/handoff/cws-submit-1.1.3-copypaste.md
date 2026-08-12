@@ -1,32 +1,55 @@
-# CWS Submit v1.1.3 — copy/paste
+# CWS Submit v1.1.3 — guía lista para rellenar
 
-**Item ID:** `npojbdkhjpgfkfjeagfcfhjchcnpkfek` — sube al item existente. **Nunca crear un listing nuevo.**
-**Paquete:** `denvault-v1.1.3.zip` (raíz del repo). No subas 1.1.0, 1.1.1 ni 1.1.2, que siguen en disco.
+**Item ID:** `npojbdkhjpgfkfjeagfcfhjchcnpkfek` — sube al item existente. **Nunca crear un listing nuevo**: un duplicado es en sí una violación de política.
+**Paquete:** `denvault-v1.1.3.zip`, en la raíz del repo. No subas 1.1.0, 1.1.1 ni 1.1.2, que siguen en disco.
 
-> Todo lo de abajo está verificado contra el código de `main` @ `2d3ffb7`, no copiado de docs previas.
-> El bloque equivalente en `docs/RELEASE.md` está **obsoleto**: justifica `tabs` y `api.platform.hiro.so`, que se eliminaron en el PR #28.
+> Verificado el 2026-08-12 contra `main`: 997/997 unit, 7/7 e2e contra la extensión real cargada, `verify-store-assets` PASS (dimensiones **y** canal alfa), y el `manifest.json` dentro del ZIP es byte a byte el mismo que `public/manifest.json`.
+> El bloque equivalente de `docs/RELEASE.md` está **obsoleto**: justifica `tabs` y `api.platform.hiro.so`, eliminados en el PR #28.
 
----
-
-## Paso 0 — antes de subir nada
-
-Abre la pestaña **Package** y mira el `manifest.json` de la versión que Google revisó. Busca si aparece `scripting`. No está en ninguno de los 463 commits de este repo ni en el ZIP 1.1.0, así que si tampoco está ahí, fue un falso positivo del review automatizado y tienes caso para el formulario de apelación **además** del reenvío.
+Las secciones van en el orden en que aparecen en el menú lateral del dashboard. Cada bloque en ``` se pega tal cual.
 
 ---
 
-## Store listing
+## Paso 0 — por qué te rechazaron, y por qué esta vez no
 
-**Name**
-```
-DenVault
+El dashboard dice **Version 1.0.0**, violation date **7-ene-2026**. Nunca revisaron la 1.1.0.
+
+Esa 1.0.0 salió del commit inicial `36b7d6e` (23-dic-2025), cuando el proyecto se llamaba *Stacks-Wallet* y su manifest vivía en `wallet-extension/public/manifest.json`:
+
+```json
+"permissions": ["scripting", "tabs", "activeTab"],
+"host_permissions": ["http://*/*", "https://*/*"]
 ```
 
-**Summary** (132 caracteres máx.)
+`scripting` estaba y no se usaba. El rechazo era correcto. El commit `164728b` (1.0.1) ya lo había quitado, pero ese build nunca se subió y el draft quedó congelado en 1.0.0 durante un año.
+
+**No apeles.** El manifest de 1.1.3 pide exactamente:
+
+```json
+"permissions": ["storage", "sidePanel"],
+"host_permissions": ["https://api.hiro.so/*", "https://api.testnet.hiro.so/*"]
 ```
-Self-custodial Stacks (STX) and Bitcoin wallet with dApp support
-```
+
+Los dos permisos y los dos hosts se usan, y hay tests que fallan si vuelve `scripting` o `tabs` (`src/test/manifest-permissions.test.ts`).
+
+---
+
+## 1 · Package
+
+- [ ] **Upload new package** → `denvault-v1.1.3.zip`
+
+Sube el ZIP antes que nada: hasta que el paquete no esté en 1.1.3, el resto del formulario describe una versión que ya no existe.
+
+---
+
+## 2 · Store listing
+
+### Product details
+
+**Name** — viene del paquete, no se edita. Debe leer `DenVault`.
 
 **Description**
+
 ```
 DenVault is a self-custodial wallet extension for the Stacks ecosystem, Bitcoin's layer 2.
 
@@ -54,56 +77,82 @@ Security:
 Open source: https://github.com/akawolfcito/stack-sats
 ```
 
-**Category** — decide tú. El dashboard tiene **Developer Tools**; para una wallet de usuario final **Productivity** te da mejor alcance. No es una violación en ningún caso.
+**Category** — el dashboard tiene **Developer Tools**. Para una wallet de usuario final, **Productivity** te da mejor alcance. Ninguna de las dos es una violación; decídelo tú.
 
-**Language**
-```
-English (United States)
-```
+**Language** — `English (United States)`. Ya está puesto.
 
----
+### Graphic assets
 
-## Additional fields
+Todos en `denvault-extension/assets/store/`. `bash scripts/verify-store-assets.sh` da PASS en dimensiones y en ausencia de alfa.
 
-**Homepage URL** (el dashboard tiene el host viejo `wolfcito.` — cámbialo)
+| Campo del dashboard | Archivo | Acción |
+|---|---|---|
+| Store icon 128x128 | `icon_128.png` | ya subido, no tocar |
+| Global promo video | — | ya puesto, no tocar |
+| Screenshot 1 | `cws-01-start.png` | **reemplazar** |
+| Screenshot 2 | `cws-02-home.png` | **reemplazar** |
+| Screenshot 3 | `cws-03-send.png` | subir |
+| Screenshot 4 | `cws-04-receive.png` | subir |
+| Screenshot 5 | `cws-05-settings.png` | subir |
+| Small promo tile 440x280 | `promo_440x280.png` | subir |
+| Marquee promo tile 1400x560 | `promo_1400x560.png` | subir |
+
+- [ ] **Borra las 2 screenshots que ya están** y sube las 5 de `assets/store/`.
+
+  Las 2 del dashboard son de mayo y llevan el pill de Vue DevTools encima de la UI; el checklist de entonces las dio por buenas y estaba mal. Las de agosto lo eliminan (`vite.config.ts` omite `vueDevTools()` bajo `VITE_UI_SNAPSHOT`) y fijan el saldo con `mockBalances()`, porque la dirección de prueba fue drenada en testnet y las cards salían con "Your balance is too low to send STX" en una pieza de marketing.
+
+- [ ] Sube los 2 promo tiles.
+
+  El 440x280 se regeneró el 2026-08-12: el dibujado a mano en febrero llevaba **canal alfa**, y este campo exige "24-bit PNG, no alpha" — el dashboard habría rechazado la subida. Ahora sale del mismo spec que el marquee y `verify-store-assets.sh` falla si el alfa vuelve.
+
+### Additional fields
+
+**Official URL** — déjalo en `None`. Requiere verificar dominio en Search Console y no aporta nada aquí.
+
+**Homepage URL** — el dashboard tiene el host viejo `wolfcito.`; la cuenta se renombró a `akawolfcito`. El redirect de GitHub no está bajo tu control y se rompe si alguien reclama el handle viejo.
+
 ```
 https://akawolfcito.github.io/stack-sats/
 ```
 
 **Support URL**
+
 ```
 https://akawolfcito.github.io/stack-sats/support.html
 ```
 
+**Mature content** — off.
+
+---
+
+## 3 · Privacy
+
 **Privacy policy URL**
+
 ```
 https://akawolfcito.github.io/stack-sats/privacy.html
 ```
 
-Ambas verificadas vivas el 2026-08-11.
-
----
-
-## Privacy tab
-
 **Single purpose**
+
 ```
 DenVault lets people hold their own Stacks and Bitcoin keys in the browser: create or import a wallet, view balances and transaction history, send STX, BTC and SIP-10 tokens, and review and approve requests from Stacks dApps before anything is signed.
 ```
 
-**Permission justifications** — solo hay dos permisos:
+**Permission justification — `storage`**
 
-`storage`
 ```
 Stores the encrypted wallet vault, network and display settings, and the unlocked session cache using chrome.storage.local and chrome.storage.session. The recovery phrase is encrypted with AES-256-GCM before it is written and is never transmitted anywhere.
 ```
 
-`sidePanel`
+**Permission justification — `sidePanel`**
+
 ```
 Opens the wallet in Chrome's side panel so it stays visible while the user interacts with a dApp in the page. Used by chrome.sidePanel.open and chrome.sidePanel.setOptions in the extension's service worker.
 ```
 
 **Host permission justification**
+
 ```
 Host permissions are limited to the two public Stacks blockchain API endpoints the extension actually contacts:
 
@@ -115,49 +164,39 @@ These calls carry only public blockchain addresses and signed transactions. No p
 dApp connectivity does not use host permissions. A declared content script relays standard WBIP/SIP-030 wallet RPC messages between the page and the extension; it does not read or modify page content.
 ```
 
-**Remote code**
+**Remote code** — "No, I am not using remote code".
+
 ```
 No. The extension executes no remote code. All scripts are bundled in the package, and the content security policy is script-src 'self' 'wasm-unsafe-eval'.
 ```
 
-**Data usage** — marca lo que aplique. La respuesta honesta es que **no se recoge nada**:
+**Data usage** — no marques **nada**. La respuesta honesta es que no se recoge ningún dato:
 
-| Tipo de dato | ¿Se recoge? | Nota |
+| Tipo de dato | ¿Marcar? | Por qué |
 |---|---|---|
-| Información personal identificable | No | |
-| Información de salud | No | |
-| Información financiera y de pago | No | Las claves y la frase de recuperación se cifran y quedan **solo en el dispositivo**; nunca se transmiten |
-| Autenticación | No | El PIN nunca sale del dispositivo y no se almacena, solo deriva la clave |
-| Comunicaciones personales | No | |
-| Ubicación | No | |
-| Historial web | No | |
-| Actividad de usuario | No | |
-| Contenido del sitio web | No | El content script solo relaya mensajes RPC; no lee ni modifica el DOM |
+| Personally identifiable information | No | |
+| Health information | No | |
+| Financial and payment information | No | Claves y frase se cifran y quedan solo en el dispositivo; nunca se transmiten |
+| Authentication information | No | El PIN no se almacena ni sale del dispositivo, solo deriva la clave |
+| Personal communications | No | |
+| Location | No | |
+| Web history | No | |
+| User activity | No | |
+| Website content | No | El content script solo relaya mensajes RPC; no lee ni modifica el DOM |
 
-Las tres certificaciones del final (no vender datos a terceros, no usarlos para fines ajenos al propósito único, no usarlos para solvencia crediticia ni préstamos) se pueden marcar las tres.
+- [ ] Marca las **tres certificaciones** del final: no vender datos a terceros, no usarlos para fines ajenos al propósito único, no usarlos para solvencia crediticia ni préstamos. Las tres aplican.
 
 ---
 
-## Graphic assets
+## 4 · Distribution
 
-Todos en `denvault-extension/assets/store/`, verificados 8/8 con `bash scripts/verify-store-assets.sh`.
-
-| Campo | Archivo | Estado en el dashboard |
-|---|---|---|
-| Store icon 128x128 | `icon_128.png` | ya subido |
-| Screenshot 1 | `cws-01-start.png` | ya subido |
-| Screenshot 2 | `cws-02-home.png` | ya subido |
-| Screenshot 3 | `cws-03-send.png` | **falta** |
-| Screenshot 4 | `cws-04-receive.png` | **falta** |
-| Screenshot 5 | `cws-05-settings.png` | **falta** |
-| Small promo tile 440x280 | `promo_440x280.png` | **falta** |
-| Marquee promo tile 1400x560 | `promo_1400x560.png` | **falta** |
+Sin cambios. Visibilidad pública, todas las regiones.
 
 ---
 
-## Test instructions (pestaña Access)
+## 5 · Test instructions
 
-Ponlo, porque un revisor que no sepa por dónde empezar es un rechazo evitable:
+Un revisor que no sepa por dónde empezar es un rechazo evitable.
 
 ```
 No account or login is required. The extension is self-contained.
@@ -184,12 +223,21 @@ expires — no wallet reset is required.
 
 ## Checklist de envío
 
-- [ ] Pestaña **Package**: revisar el manifest de la versión rechazada (`scripting`)
-- [ ] Subir `denvault-v1.1.3.zip`
-- [ ] Corregir Homepage y Support URL al host `akawolfcito`
-- [ ] Subir las 3 screenshots que faltan + los 2 promo tiles
-- [ ] Rellenar Single purpose, justificación de los 2 permisos y de los 2 hosts
-- [ ] Marcar Data usage y las 3 certificaciones
-- [ ] Pegar las Test instructions
-- [ ] Decidir categoría (Developer Tools vs Productivity)
-- [ ] Submit for review
+- [x] ~~Revisar el manifest de la versión rechazada~~ — resuelto en el Paso 0. No apelar.
+- [ ] **Package**: subir `denvault-v1.1.3.zip`
+- [ ] **Store listing**: pegar la Description
+- [ ] **Store listing**: decidir categoría (Developer Tools vs Productivity)
+- [ ] **Store listing**: borrar las 2 screenshots viejas y subir las 5 nuevas
+- [ ] **Store listing**: subir Small promo tile y Marquee
+- [ ] **Store listing**: Homepage y Support URL al host `akawolfcito`
+- [ ] **Privacy**: Single purpose
+- [ ] **Privacy**: justificación de `storage`, de `sidePanel` y de los 2 hosts
+- [ ] **Privacy**: Remote code = No
+- [ ] **Privacy**: Data usage sin marcar nada + las 3 certificaciones
+- [ ] **Test instructions**: pegar el bloque
+- [ ] **Submit for review**
+
+## Después de enviar
+
+- [ ] Borrar `denvault-v1.1.0.zip`, `denvault-v1.1.1.zip` y `denvault-v1.1.2.zip` de la raíz del repo
+- [ ] Corregir el nombre en el issue [#3](https://github.com/akawolfcito/stack-sats/issues/3): aún dice "Stack-SATs", la marca es **DenVault**
