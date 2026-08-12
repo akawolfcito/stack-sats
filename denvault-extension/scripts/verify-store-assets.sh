@@ -68,6 +68,25 @@ else
   echo "⚠️  promo_1400x560.png: MISSING (optional)"
 fi
 
+# Alpha channel check.
+#
+# The dashboard states "JPEG or 24-bit PNG (no alpha)" for screenshots and
+# both promo tiles, and refuses the upload otherwise. The hand-drawn
+# promo_440x280.png shipped with alpha for six months and this script did
+# not notice, because it only ever measured dimensions.
+echo ""
+for ID in cws-01-start cws-02-home cws-03-send cws-04-receive cws-05-settings promo_440x280 promo_1400x560; do
+  ASSET="$STORE_DIR/${ID}.png"
+  [ -f "$ASSET" ] || continue
+  ALPHA=$(sips -g hasAlpha "$ASSET" 2>/dev/null | grep hasAlpha | awk '{print $2}')
+  if [ "$ALPHA" = "no" ]; then
+    echo "✅ ${ID}.png: no alpha channel (PASS)"
+  else
+    echo "❌ ${ID}.png: has an alpha channel (REQUIRED: 24-bit PNG, no alpha)"
+    ERRORS=$((ERRORS + 1))
+  fi
+done
+
 echo ""
 if [ $ERRORS -eq 0 ]; then
   echo "=== RESULT: PASS ==="

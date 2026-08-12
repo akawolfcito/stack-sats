@@ -29,6 +29,8 @@ const CARD_WIDTH = 1280;
 const CARD_HEIGHT = 800;
 const MARQUEE_WIDTH = 1400;
 const MARQUEE_HEIGHT = 560;
+const TILE_WIDTH = 440;
+const TILE_HEIGHT = 280;
 
 // Brand tokens from base.css
 const BRAND = {
@@ -304,6 +306,103 @@ function buildMarqueeHTML(iconBase64: string): string {
 </html>`;
 }
 
+/**
+ * Small promo tile (440x280).
+ *
+ * The hand-drawn February version carried an alpha channel, which the
+ * store rejects for this field ("24-bit PNG, no alpha"). Rendering it
+ * here puts it on the same opaque brand background as the marquee, and
+ * `verify-store-assets.sh` now fails if alpha ever comes back. The copy
+ * drops the marquee's sub-line: at 440px wide it would not be legible.
+ */
+function buildSmallTileHTML(iconBase64: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: ${TILE_WIDTH}px;
+      height: ${TILE_HEIGHT}px;
+      overflow: hidden;
+      background: ${BRAND.bg};
+      font-family: '${BRAND.font}', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .tile {
+      width: ${TILE_WIDTH}px;
+      height: ${TILE_HEIGHT}px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .tile::before {
+      content: '';
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(215, 248, 46, 0.07) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .copy {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1;
+    }
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      color: ${BRAND.accent};
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .headline {
+      font-size: 30px;
+      font-weight: 700;
+      color: ${BRAND.textPrimary};
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+    .mark {
+      flex: 0 0 auto;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mark img {
+      width: 112px;
+      height: 112px;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.55));
+    }
+  </style>
+</head>
+<body>
+  <div class="tile">
+    <div class="copy">
+      <div class="eyebrow">DenVault</div>
+      <div class="headline">Your Bitcoin<br>Layer 2 Wallet</div>
+    </div>
+    <div class="mark">
+      <img src="data:image/png;base64,${iconBase64}" alt="">
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 // --- HTML template for the composite store card ---
 
 function buildCardHTML(popupBase64: string, headline: string, caption: string): string {
@@ -539,6 +638,39 @@ test.describe('CWS Store Screenshots', () => {
     await marqueePage.screenshot({ path: outputPath, fullPage: false });
 
     console.log('  Generated: promo_1400x560.png');
+
+    await context.close();
+  });
+
+  test('Promo tile: small 440x280', async ({ browser }) => {
+    const iconBase64 = fs
+      .readFileSync(path.join(__dirname, '../public/denvault-i.png'))
+      .toString('base64');
+
+    const context = await browser.newContext({
+      viewport: { width: TILE_WIDTH, height: TILE_HEIGHT },
+      reducedMotion: 'reduce',
+    });
+    const tilePage = await context.newPage();
+
+    await tilePage.setContent(buildSmallTileHTML(iconBase64), {
+      waitUntil: 'networkidle',
+    });
+
+    await tilePage
+      .waitForFunction(() => document.fonts.check('700 30px Quicksand'), {
+        timeout: 10000,
+      })
+      .catch(() => {
+        console.warn('Font load timeout for small tile, proceeding with fallback');
+      });
+
+    await tilePage.waitForTimeout(500);
+
+    const outputPath = path.join(OUTPUT_DIR, 'promo_440x280.png');
+    await tilePage.screenshot({ path: outputPath, fullPage: false });
+
+    console.log('  Generated: promo_440x280.png');
 
     await context.close();
   });
