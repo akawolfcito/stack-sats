@@ -21,6 +21,7 @@ import { getAssetById, isValidAssetId, type AssetDefinition } from '@/utils/asse
 import { sessionManager } from '@/utils/security/session';
 import { generateInitialAccounts } from '@/utils/accounts';
 import { getAccountCount } from '@/utils/accounts/settings';
+import { getActiveAccountIndex } from '@/utils/accounts/active';
 import {
   fetchStxBalance,
   fetchFungibleTokens,
@@ -60,9 +61,10 @@ const route = useRoute();
 const assetId = computed(() => route.params.assetId as string);
 const asset = computed<AssetDefinition | undefined>(() => getAssetById(assetId.value));
 
-// Account state
-const ACCOUNT_STORAGE_KEY = 'selected_account_index';
-const accountIndex = ref(parseInt(localStorage.getItem(ACCOUNT_STORAGE_KEY) || '0', 10));
+// Account state. Resolved against the real account count in onMounted;
+// a raw parseInt here yielded NaN on a corrupted value and poisoned the
+// derivation path.
+const accountIndex = ref(0);
 const currentAccount = ref<Account | null>(null);
 const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
 
@@ -231,6 +233,7 @@ async function loadAccount() {
   }
 
   const count = await getAccountCount();
+  accountIndex.value = getActiveAccountIndex(count);
   const accounts = await generateInitialAccounts(mnemonic, count, selectedNetwork.value);
   currentAccount.value = accounts[accountIndex.value] || accounts[0];
 }

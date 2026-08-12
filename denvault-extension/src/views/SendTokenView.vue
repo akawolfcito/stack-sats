@@ -9,6 +9,8 @@ import PinInput from "@/components/PinInput.vue";
 import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { getPrivateKey } from "@/utils/accounts";
+import { getAccountCount } from "@/utils/accounts/settings";
+import { getActiveAccountIndex } from "@/utils/accounts/active";
 import { getSelectedNetwork, NETWORKS, type NetworkName } from "@/utils/network";
 import { validateStxAddressWithError } from "@/utils/transfer";
 import { fetchFungibleTokens } from "@/utils/balance";
@@ -327,8 +329,7 @@ onBeforeMount(async () => {
   token.value = tokenInfo;
 
   // Load account info
-  const savedIndex = localStorage.getItem("selected_account_index");
-  accountIndex.value = savedIndex ? parseInt(savedIndex, 10) : 0;
+  accountIndex.value = getActiveAccountIndex(await getAccountCount());
 
   const walletId = sessionManager.activeWalletId;
   if (walletId) {
