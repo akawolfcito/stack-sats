@@ -399,4 +399,63 @@ describe("background queue: canonical params + explicit mismatch", () => {
       });
     });
   });
+
+  /**
+   * The wallet used to advertise four methods it could not perform. A
+   * dApp calling one got a full approval screen, entered its PIN, and
+   * then received -32603 Internal Error. Rejecting at the background
+   * boundary is what makes it enforceable — injection.js can be bypassed
+   * because content.js relays any well-formed event.
+   */
+  describe("unsupported methods", () => {
+    function dispatchRaw(method: string) {
+      const contentListener = harness.messageListeners[1];
+      const sendResponse = vi.fn();
+      contentListener(
+        { jsonrpc: "2.0", id: "rpc-unsupported", method, params: {} },
+        { tab: { id: 7 }, origin: "https://app.example.com", id: "denvault-test" },
+        sendResponse
+      );
+      return sendResponse;
+    }
+
+    it.each([
+      "signPsbt",
+      "sendTransfer",
+      "stx_signTransaction",
+      "stx_transferSip10Ft",
+    ])("rejects %s with -32601 and never opens a popup", (method) => {
+      const sendResponse = dispatchRaw(method);
+
+      expect(sendResponse).toHaveBeenCalledTimes(1);
+      expect(sendResponse.mock.calls[0][0]).toMatchObject({
+        jsonrpc: "2.0",
+        id: "rpc-unsupported",
+        error: { code: -32601 },
+      });
+
+      // The whole point: the user is never asked to approve something
+      // that cannot complete.
+      expect(harness.windowsCreate).not.toHaveBeenCalled();
+    });
+
+    it("rejects an entirely unknown method", () => {
+      const sendResponse = dispatchRaw("stx_drainWallet");
+
+      expect(sendResponse.mock.calls[0][0]).toMatchObject({
+        error: { code: -32601 },
+      });
+      expect(harness.windowsCreate).not.toHaveBeenCalled();
+    });
+
+    it("still accepts an implemented method", () => {
+      const sendResponse = dispatchRaw("stx_transferStx");
+
+      // No immediate error response: the request proceeds to the queue.
+      const rejected = sendResponse.mock.calls.some(
+        (call) => (call[0] as { error?: { code: number } })?.error?.code === -32601
+      );
+      expect(rejected).toBe(false);
+    });
+  });
 });

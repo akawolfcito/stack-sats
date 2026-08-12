@@ -6,18 +6,22 @@
 
 const REQUEST_TIMEOUT_MS = 60000; // 60 seconds
 
+/**
+ * Methods the wallet can actually carry to a signed result.
+ *
+ * This list is published to every page as `window.StacksWallet.methods`,
+ * so it is a promise to dApps. Only add a method once a handler exists —
+ * advertising one without an implementation produced an approval screen
+ * that asked for the PIN and then failed with -32603.
+ */
 const SUPPORTED_METHODS = [
   "getAddresses",
   "stx_signMessage",
   "stx_transferStx",
-  "stx_transferSip10Ft",
-  "stx_signTransaction",
   "stx_signStructuredMessage",
   "stx_getAddresses",
   "stx_deployContract",
   "stx_callContract",
-  "signPsbt",
-  "sendTransfer",
 ];
 
 const StacksWallet = {

@@ -19,6 +19,8 @@ import AppHeader from '@/components/layout/AppHeader.vue';
 import { Button, TextField, InlineAction } from '@/components/ui';
 import { sessionManager } from '@/utils/security/session';
 import { generateInitialAccounts, getBtcKeyPair } from '@/utils/accounts';
+import { getAccountCount } from '@/utils/accounts/settings';
+import { getActiveAccountIndex } from '@/utils/accounts/active';
 import { getSelectedNetwork, type NetworkName } from '@/utils/network';
 import {
   fetchCombinedBtcBalance,
@@ -212,8 +214,7 @@ onBeforeMount(async () => {
 
   network.value = getSelectedNetwork();
 
-  const savedIndex = localStorage.getItem('selected_account_index');
-  accountIndex.value = savedIndex ? parseInt(savedIndex, 10) : 0;
+  accountIndex.value = getActiveAccountIndex(await getAccountCount());
 
   const walletId = sessionManager.activeWalletId;
   if (walletId) {

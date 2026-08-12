@@ -32,18 +32,22 @@ import { sessionManager } from "@/utils/security/session";
 import { secureLog, secureWarn } from "@/utils/security/logger";
 import { emitTxSignRequested, emitTxSignResult } from "@/denlabs/emit";
 import { fetchCanonicalRequest, resolveDisplayPayload } from "@/composables/useCanonicalRequest";
+import { getAccountCount, getAllAccountNames } from "@/utils/accounts/settings";
+import {
+  buildAccountOptions,
+  getActiveAccountIndex,
+  type AccountOption,
+} from "@/utils/accounts/active";
 
 const isUnlocked = ref(false);
 const pinError = ref("");
 const isProcessing = ref(false);
 
-// Account selector state
+// Account selector state. Populated in onMounted from the accounts that
+// actually exist — a fixed list of three used to hide accounts 4+ and,
+// worse, ignore the account the user was operating as.
 const selectedAccountIndex = ref(0);
-const availableAccounts = ref<Array<{ index: number; label: string }>>([
-  { index: 0, label: "Account 1" },
-  { index: 1, label: "Account 2" },
-  { index: 2, label: "Account 3" },
-]);
+const availableAccounts = ref<AccountOption[]>([]);
 
 // DenLabs: Track sign request for latency measurement
 const txSignStartTime = ref<number>(0);
@@ -86,6 +90,13 @@ onMounted(async () => {
   if (props.isQueueMode && typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
     chrome.runtime.onMessage.addListener(handleResponseError);
   }
+
+  // Offer the accounts that exist, and default to the one the user is
+  // actually operating as — this index derives the signing key.
+  const accountCount = await getAccountCount();
+  const accountNames = await getAllAccountNames();
+  availableAccounts.value = buildAccountOptions(accountCount, accountNames);
+  selectedAccountIndex.value = getActiveAccountIndex(accountCount);
 
   // H1: pull the canonical params so the review screen renders the same
   // bytes that will be signed.
@@ -351,18 +362,11 @@ async function handleConfirm() {
       case "stx_deployContract":
         result = await handleDeployContract(signingPayload, mnemonic, accountIndex);
         break;
-      case "stx_transferSip10Ft":
-        // TODO: implement
-        break;
-      case "stx_signTransaction":
-        // TODO: implement
-        break;
-      case "signPsbt":
-        // TODO: implement
-        break;
-      case "sendTransfer":
-        // TODO: implement
-        break;
+      // stx_transferSip10Ft, stx_signTransaction, signPsbt and sendTransfer
+      // used to sit here as empty stubs while injection.js advertised them.
+      // They are no longer advertised, so a dApp gets a clean "not
+      // supported" before any popup opens. Re-add a case here only
+      // together with its handler and its entry in SUPPORTED_METHODS.
       default:
         secureWarn("Unknown method", { method: signingPayload.method });
         break;

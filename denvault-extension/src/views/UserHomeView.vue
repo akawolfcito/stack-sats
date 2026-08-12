@@ -52,6 +52,10 @@ import {
   DEFAULT_ACCOUNT_COUNT,
 } from "../utils/accounts/settings";
 import {
+  getActiveAccountIndex,
+  setActiveAccountIndex,
+} from "../utils/accounts/active";
+import {
   fetchTransactions,
   formatRelativeTime,
   formatAmount,
@@ -90,24 +94,25 @@ const isLoading = ref(true);
 const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
 const currentMnemonic = ref<string | null>(null);
 
-// Persistent account selection
-const ACCOUNT_STORAGE_KEY = "selected_account_index";
-function getSavedAccountIndex(): number {
-  const saved = localStorage.getItem(ACCOUNT_STORAGE_KEY);
-  if (saved !== null) {
-    const index = parseInt(saved, 10);
-    if (!isNaN(index) && index >= 0 && index < 20) {
-      return index;
-    }
-  }
-  return 0;
-}
-const accountIndexToDisplay = ref(getSavedAccountIndex());
+// Persistent account selection. Shared with the dApp approval screen so
+// both agree on which account signs. Resolved against the real account
+// count once it loads, instead of a hardcoded ceiling of 20 that ignored
+// MAX_ACCOUNT_COUNT.
+const accountIndexToDisplay = ref(0);
 
 // Balance state
 const stxBalanceMicro = ref<string>("0");
 const isLoadingBalance = ref(false);
-const stxPriceUsd = ref(0); // TODO: Fetch from price API
+/**
+ * Fiat conversion rate. Zero means "unknown", which hides the fiat line
+ * rather than showing a fabricated $0.00 next to a real balance.
+ *
+ * utils/prices/index.ts implements the fetch against CoinGecko and is
+ * ready to plug in here, but wiring it needs api.coingecko.com added to
+ * host_permissions and declared as a third party in the store's privacy
+ * tab. Deliberately deferred until after the CWS resubmit.
+ */
+const stxPriceUsd = ref(0);
 
 // BTC Balance state
 const btcBalance = ref<BtcBalance>({ confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 });
@@ -454,6 +459,7 @@ async function refreshBalance() {
 onBeforeMount(async () => {
   // Load account settings
   accountCount.value = await getAccountCount();
+  accountIndexToDisplay.value = getActiveAccountIndex(accountCount.value);
   await loadAccountNames();
 
   // Check for encrypted wallet first
@@ -497,7 +503,7 @@ watch(selectedNetwork, async (newNetwork) => {
 
 // Watch for account index changes - save to localStorage and reload balance
 watch(accountIndexToDisplay, async (newIndex) => {
-  localStorage.setItem(ACCOUNT_STORAGE_KEY, String(newIndex));
+  setActiveAccountIndex(newIndex);
   transactions.value = []; // Clear transactions on account change
   tokens.value = []; // Clear tokens on account change
   await loadBalance();
@@ -664,7 +670,7 @@ const handleManageAccounts = () => {
           <BalanceHeader
             :amount-text="isLoadingBalance ? '...' : shortBalance"
             symbol="STX"
-            :usd-text="`${totalValueUsd || '$0.00'} USD`"
+            :usd-text="totalValueUsd ? `${totalValueUsd} USD` : undefined"
             :is-hidden="!showBalance"
             data-roi="home-balance-card"
             @toggle-hidden="toggleBalanceVisibility"

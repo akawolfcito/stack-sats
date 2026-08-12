@@ -55,7 +55,10 @@ beforeEach(() => {
 describe("accounts/settings", () => {
   describe("exported constants", () => {
     it("should have correct default values", () => {
-      expect(DEFAULT_ACCOUNT_COUNT).toBe(5);
+      // A fresh wallet starts with a single account. HD wallets derive
+      // accounts on demand; materialising extras puts empty addresses in
+      // the selector on the screen where the user signs.
+      expect(DEFAULT_ACCOUNT_COUNT).toBe(1);
       expect(MIN_ACCOUNT_COUNT).toBe(1);
       expect(MAX_ACCOUNT_COUNT).toBe(100);
     });
@@ -184,9 +187,11 @@ describe("accounts/settings", () => {
       expect(newCount).toBe(MIN_ACCOUNT_COUNT);
     });
 
-    it("should decrement from default count", async () => {
+    it("cannot drop a fresh wallet below its single account", async () => {
+      // The default is the minimum, so removing from a fresh wallet is a
+      // no-op rather than leaving it with zero accounts.
       const newCount = await removeLastAccount(WALLET_ID);
-      expect(newCount).toBe(DEFAULT_ACCOUNT_COUNT - 1);
+      expect(newCount).toBe(MIN_ACCOUNT_COUNT);
     });
   });
 

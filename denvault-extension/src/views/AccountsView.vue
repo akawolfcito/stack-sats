@@ -18,6 +18,7 @@ import ListGroup from '@/components/list/ListGroup.vue'
 import ListRow from '@/components/list/ListRow.vue'
 import { Button } from '@/components/ui'
 import { generateInitialAccounts } from '@/utils/accounts'
+import { getActiveAccountIndex } from '@/utils/accounts/active'
 import { sessionManager } from '@/utils/security/session'
 import { getSelectedNetwork, type NetworkName } from '@/utils/network'
 import {
@@ -25,6 +26,7 @@ import {
   getAccountCount,
   setAccountCount,
   isAccountHidden,
+  MAX_ACCOUNT_COUNT,
 } from '@/utils/accounts/settings'
 
 interface AccountDisplay {
@@ -45,11 +47,10 @@ const network = ref<NetworkName>('devnet')
 const activeAccountIndex = ref(0)
 const copySuccess = ref<number | null>(null)
 
-// Maximum accounts allowed (from existing logic)
-const MAX_ACCOUNTS = 10
-
-// Can add more accounts
-const canAddAccount = computed(() => accounts.value.length < MAX_ACCOUNTS)
+// Can add more accounts. Uses the shared ceiling: this screen used to cap
+// at 10 while the home screen allowed 100, so the same wallet accepted or
+// refused a new account depending on which screen you asked from.
+const canAddAccount = computed(() => accounts.value.length < MAX_ACCOUNT_COUNT)
 
 // Truncate address for display
 function truncateAddress(address: string, chars: number = 6): string {
@@ -73,10 +74,9 @@ onBeforeMount(async () => {
   }
 
   try {
-    const savedIndex = localStorage.getItem('selected_account_index')
-    activeAccountIndex.value = savedIndex ? parseInt(savedIndex, 10) : 0
-
     const accountCount = await getAccountCount()
+    activeAccountIndex.value = getActiveAccountIndex(accountCount)
+
     const rawAccounts = await generateInitialAccounts(mnemonic, accountCount, network.value)
 
     // Build display list with names and hidden status
@@ -240,7 +240,7 @@ async function addAccount() {
           Add account
         </Button>
         <p v-else class="max-accounts-hint">
-          Maximum {{ MAX_ACCOUNTS }} accounts reached
+          Maximum {{ MAX_ACCOUNT_COUNT }} accounts reached
         </p>
       </div>
 
