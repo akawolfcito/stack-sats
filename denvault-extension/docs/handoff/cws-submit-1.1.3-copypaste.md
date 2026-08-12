@@ -168,7 +168,9 @@ To review:
 3. The wallet opens on the home screen showing a zero STX balance.
 4. Use the network selector in the header to switch to Testnet.
 5. "Receive" shows the address and a QR code. Testnet STX can be obtained
-   from the public faucet at https://explorer.hyperledger.stacks.co/sandbox/faucet
+   from the Stacks Explorer sandbox at https://explorer.hiro.so/sandbox
+   (connect the wallet, then use the Faucet tab), or from the public
+   faucet at https://learnweb3.io/faucets/stacks/
 6. "Send" walks through recipient, amount, fee and a PIN confirmation.
 7. To review dApp connectivity, any Stacks dApp using @stacks/connect will
    detect DenVault through the WBIP provider registration.
