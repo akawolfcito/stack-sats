@@ -55,6 +55,19 @@ else
   echo "⚠️  promo_440x280.png: MISSING (optional)"
 fi
 
+# Check promo_1400x560.png (OPTIONAL marquee: exactly 1400x560)
+MARQUEE="$STORE_DIR/promo_1400x560.png"
+if [ -f "$MARQUEE" ]; then
+  SIZE=$(sips -g pixelWidth -g pixelHeight "$MARQUEE" 2>/dev/null | grep pixel | awk '{print $2}' | tr '\n' 'x' | sed 's/x$//')
+  if [ "$SIZE" = "1400x560" ]; then
+    echo "✅ promo_1400x560.png: $SIZE (PASS)"
+  else
+    echo "⚠️  promo_1400x560.png: $SIZE (RECOMMENDED: 1400x560)"
+  fi
+else
+  echo "⚠️  promo_1400x560.png: MISSING (optional)"
+fi
+
 echo ""
 if [ $ERRORS -eq 0 ]; then
   echo "=== RESULT: PASS ==="
