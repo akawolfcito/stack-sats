@@ -103,7 +103,16 @@ const accountIndexToDisplay = ref(0);
 // Balance state
 const stxBalanceMicro = ref<string>("0");
 const isLoadingBalance = ref(false);
-const stxPriceUsd = ref(0); // TODO: Fetch from price API
+/**
+ * Fiat conversion rate. Zero means "unknown", which hides the fiat line
+ * rather than showing a fabricated $0.00 next to a real balance.
+ *
+ * utils/prices/index.ts implements the fetch against CoinGecko and is
+ * ready to plug in here, but wiring it needs api.coingecko.com added to
+ * host_permissions and declared as a third party in the store's privacy
+ * tab. Deliberately deferred until after the CWS resubmit.
+ */
+const stxPriceUsd = ref(0);
 
 // BTC Balance state
 const btcBalance = ref<BtcBalance>({ confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 });
@@ -661,7 +670,7 @@ const handleManageAccounts = () => {
           <BalanceHeader
             :amount-text="isLoadingBalance ? '...' : shortBalance"
             symbol="STX"
-            :usd-text="`${totalValueUsd || '$0.00'} USD`"
+            :usd-text="totalValueUsd ? `${totalValueUsd} USD` : undefined"
             :is-hidden="!showBalance"
             data-roi="home-balance-card"
             @toggle-hidden="toggleBalanceVisibility"
