@@ -10,6 +10,8 @@ Las secciones van en el orden en que aparecen en el menú lateral del dashboard.
 
 ---
 
+
+
 ## Paso 0 — por qué te rechazaron, y por qué esta vez no
 
 El dashboard dice **Version 1.0.0**, violation date **7-ene-2026**. Nunca revisaron la 1.1.0.
@@ -34,6 +36,8 @@ Los dos permisos y los dos hosts se usan, y hay tests que fallan si vuelve `scri
 
 ---
 
+
+
 ## 1 · Package
 
 - [ ] **Upload new package** → `denvault-v1.1.3.zip`
@@ -42,7 +46,11 @@ Sube el ZIP antes que nada: hasta que el paquete no esté en 1.1.3, el resto del
 
 ---
 
+
+
 ## 2 · Store listing
+
+
 
 ### Product details
 
@@ -85,25 +93,27 @@ Open source: https://github.com/akawolfcito/stack-sats
 
 Todos en `denvault-extension/assets/store/`. `bash scripts/verify-store-assets.sh` da PASS en dimensiones y en ausencia de alfa.
 
-| Campo del dashboard | Archivo | Acción |
-|---|---|---|
-| Store icon 128x128 | `icon_128.png` | ya subido, no tocar |
-| Global promo video | — | ya puesto, no tocar |
-| Screenshot 1 | `cws-01-start.png` | **reemplazar** |
-| Screenshot 2 | `cws-02-home.png` | **reemplazar** |
-| Screenshot 3 | `cws-03-send.png` | subir |
-| Screenshot 4 | `cws-04-receive.png` | subir |
-| Screenshot 5 | `cws-05-settings.png` | subir |
-| Small promo tile 440x280 | `promo_440x280.png` | subir |
-| Marquee promo tile 1400x560 | `promo_1400x560.png` | subir |
+
+| Campo del dashboard         | Archivo               | Acción              |
+| --------------------------- | --------------------- | ------------------- |
+| Store icon 128x128          | `icon_128.png`        | ya subido, no tocar |
+| Global promo video          | —                     | ya puesto, no tocar |
+| Screenshot 1                | `cws-01-start.png`    | **reemplazar**      |
+| Screenshot 2                | `cws-02-home.png`     | **reemplazar**      |
+| Screenshot 3                | `cws-03-send.png`     | subir               |
+| Screenshot 4                | `cws-04-receive.png`  | subir               |
+| Screenshot 5                | `cws-05-settings.png` | subir               |
+| Small promo tile 440x280    | `promo_440x280.png`   | subir               |
+| Marquee promo tile 1400x560 | `promo_1400x560.png`  | subir               |
+
 
 - [ ] **Borra las 2 screenshots que ya están** y sube las 5 de `assets/store/`.
-
   Las 2 del dashboard son de mayo y llevan el pill de Vue DevTools encima de la UI; el checklist de entonces las dio por buenas y estaba mal. Las de agosto lo eliminan (`vite.config.ts` omite `vueDevTools()` bajo `VITE_UI_SNAPSHOT`) y fijan el saldo con `mockBalances()`, porque la dirección de prueba fue drenada en testnet y las cards salían con "Your balance is too low to send STX" en una pieza de marketing.
 
 - [ ] Sube los 2 promo tiles.
-
   El 440x280 se regeneró el 2026-08-12: el dibujado a mano en febrero llevaba **canal alfa**, y este campo exige "24-bit PNG, no alpha" — el dashboard habría rechazado la subida. Ahora sale del mismo spec que el marquee y `verify-store-assets.sh` falla si el alfa vuelve.
+
+
 
 ### Additional fields
 
@@ -125,6 +135,8 @@ https://akawolfcito.github.io/stack-sats/support.html
 
 ---
 
+
+
 ## 3 · Privacy
 
 **Privacy policy URL**
@@ -139,13 +151,13 @@ https://akawolfcito.github.io/stack-sats/privacy.html
 DenVault lets people hold their own Stacks and Bitcoin keys in the browser: create or import a wallet, view balances and transaction history, send STX, BTC and SIP-10 tokens, and review and approve requests from Stacks dApps before anything is signed.
 ```
 
-**Permission justification — `storage`**
+**Permission justification —** `storage`
 
 ```
 Stores the encrypted wallet vault, network and display settings, and the unlocked session cache using chrome.storage.local and chrome.storage.session. The recovery phrase is encrypted with AES-256-GCM before it is written and is never transmitted anywhere.
 ```
 
-**Permission justification — `sidePanel`**
+**Permission justification —** `sidePanel`
 
 ```
 Opens the wallet in Chrome's side panel so it stays visible while the user interacts with a dApp in the page. Used by chrome.sidePanel.open and chrome.sidePanel.setOptions in the extension's service worker.
@@ -172,27 +184,33 @@ No. The extension executes no remote code. All scripts are bundled in the packag
 
 **Data usage** — no marques **nada**. La respuesta honesta es que no se recoge ningún dato:
 
-| Tipo de dato | ¿Marcar? | Por qué |
-|---|---|---|
-| Personally identifiable information | No | |
-| Health information | No | |
-| Financial and payment information | No | Claves y frase se cifran y quedan solo en el dispositivo; nunca se transmiten |
-| Authentication information | No | El PIN no se almacena ni sale del dispositivo, solo deriva la clave |
-| Personal communications | No | |
-| Location | No | |
-| Web history | No | |
-| User activity | No | |
-| Website content | No | El content script solo relaya mensajes RPC; no lee ni modifica el DOM |
+
+| Tipo de dato                        | ¿Marcar? | Por qué                                                                       |
+| ----------------------------------- | -------- | ----------------------------------------------------------------------------- |
+| Personally identifiable information | No       |                                                                               |
+| Health information                  | No       |                                                                               |
+| Financial and payment information   | No       | Claves y frase se cifran y quedan solo en el dispositivo; nunca se transmiten |
+| Authentication information          | No       | El PIN no se almacena ni sale del dispositivo, solo deriva la clave           |
+| Personal communications             | No       |                                                                               |
+| Location                            | No       |                                                                               |
+| Web history                         | No       |                                                                               |
+| User activity                       | No       |                                                                               |
+| Website content                     | No       | El content script solo relaya mensajes RPC; no lee ni modifica el DOM         |
+
 
 - [ ] Marca las **tres certificaciones** del final: no vender datos a terceros, no usarlos para fines ajenos al propósito único, no usarlos para solvencia crediticia ni préstamos. Las tres aplican.
 
 ---
+
+
 
 ## 4 · Distribution
 
 Sin cambios. Visibilidad pública, todas las regiones.
 
 ---
+
+
 
 ## 5 · Test instructions
 
@@ -221,6 +239,8 @@ expires — no wallet reset is required.
 
 ---
 
+
+
 ## Checklist de envío
 
 - [x] ~~Revisar el manifest de la versión rechazada~~ — resuelto en el Paso 0. No apelar.
@@ -236,6 +256,8 @@ expires — no wallet reset is required.
 - [ ] **Privacy**: Data usage sin marcar nada + las 3 certificaciones
 - [ ] **Test instructions**: pegar el bloque
 - [ ] **Submit for review**
+
+
 
 ## Después de enviar
 
