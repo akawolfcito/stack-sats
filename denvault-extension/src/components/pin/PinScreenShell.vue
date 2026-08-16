@@ -202,8 +202,8 @@ function handleBack() {
   position: absolute;
   /* V55.1: Proportional glow for 44px logo */
   inset: -8px;
-  background: var(--color-accent-primary);
-  opacity: 0.2;
+  background: var(--color-mark-glow);
+  opacity: 0.22;
   filter: blur(16px);
   border-radius: 50%;
 }
@@ -214,7 +214,11 @@ function handleBack() {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #2a2d15, #1a1c0d);
+  background: linear-gradient(
+    135deg,
+    var(--color-mark-plate-from),
+    var(--color-mark-plate-to)
+  );
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.3),
