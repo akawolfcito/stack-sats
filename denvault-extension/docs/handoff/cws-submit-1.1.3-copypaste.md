@@ -166,14 +166,16 @@ Opens the wallet in Chrome's side panel so it stays visible while the user inter
 **Host permission justification**
 
 ```
-Host permissions are limited to the two public Stacks blockchain API endpoints the extension actually contacts:
+Host permissions are limited to the two public Stacks blockchain API endpoints:
 
 - https://api.hiro.so/* for mainnet: balance and token queries, transaction history, broadcasting signed transactions
 - https://api.testnet.hiro.so/* for the same queries on testnet
 
-These calls carry only public blockchain addresses and signed transactions. No personal data, no recovery phrase and no private key is ever sent.
+The wallet also holds Bitcoin, and reads Bitcoin balances, UTXOs and fee estimates from a public block explorer API, blockstream.info, falling back to mempool.space when it cannot be reached. Those are CORS requests and need no host permission, which is why they are not in the list above; they are declared here because the extension does contact them.
 
-dApp connectivity does not use host permissions. A declared content script relays standard WBIP/SIP-030 wallet RPC messages between the page and the extension; it does not read or modify page content.
+Every one of these calls carries only public blockchain addresses and signed transactions. No personal data, no recovery phrase and no private key is ever sent.
+
+dApp connectivity does not use host permissions either. A declared content script relays standard WBIP/SIP-030 wallet RPC messages between the page and the extension; it does not read or modify page content.
 ```
 
 **Remote code**: "No, I am not using remote code".
@@ -251,7 +253,7 @@ expires. No wallet reset is required.
 - [ ] **Store listing**: subir Small promo tile y Marquee
 - [ ] **Store listing**: Homepage y Support URL al host `akawolfcito`
 - [ ] **Privacy**: Single purpose
-- [ ] **Privacy**: justificación de `storage`, de `sidePanel` y de los 2 hosts
+- [ ] **Privacy**: justificación de `storage`, de `sidePanel` y de los 2 hosts, incluyendo el explorador de Bitcoin que se contacta por CORS
 - [ ] **Privacy**: Remote code = No
 - [ ] **Privacy**: Data usage sin marcar nada + las 3 certificaciones
 - [ ] **Test instructions**: pegar el bloque
