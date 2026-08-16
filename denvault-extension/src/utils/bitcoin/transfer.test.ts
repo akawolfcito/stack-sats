@@ -81,6 +81,7 @@ import {
   formatBtcDisplay,
   type UTXO,
   type FeeEstimate,
+  feeEstimateFromEsplora,
 } from './transfer';
 
 // --- Test data ---
@@ -745,6 +746,55 @@ describe('Bitcoin transfer utilities', () => {
 
       const result = await transferBtc(baseParams);
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('feeEstimateFromEsplora', () => {
+    it('rounds the rate up, so tidying it cannot underpay', () => {
+      // Blockstream answers 17.730999999999998 and that float reached the
+      // fee selector verbatim, three levels of it.
+      const fees = feeEstimateFromEsplora({
+        '144': 17.730999999999998,
+        '504': 17.730999999999998,
+        '1008': 17.730999999999998,
+      });
+
+      expect(fees.fastestFee).toBe(17.74);
+      expect(fees.hourFee).toBe(17.74);
+      expect(fees.minimumFee).toBe(17.74);
+    });
+
+    it('degrades to the fastest published target when short ones are missing', () => {
+      const fees = feeEstimateFromEsplora({ '144': 5, '1008': 2 });
+
+      // Nothing on this ladder confirms in one block, so the fastest rate
+      // published is the most a "fast" choice can honestly offer.
+      expect(fees.fastestFee).toBe(5);
+      expect(fees.economyFee).toBe(5);
+      expect(fees.minimumFee).toBe(2);
+    });
+
+    it('uses the exact target when the ladder has it', () => {
+      const fees = feeEstimateFromEsplora({
+        '1': 30,
+        '3': 20,
+        '6': 12,
+        '144': 3,
+        '1008': 1,
+      });
+
+      expect(fees.fastestFee).toBe(30);
+      expect(fees.halfHourFee).toBe(20);
+      expect(fees.hourFee).toBe(12);
+      expect(fees.economyFee).toBe(3);
+    });
+
+    it('never goes below one sat per vbyte', () => {
+      expect(feeEstimateFromEsplora({ '1': 0.2 }).fastestFee).toBe(1);
+    });
+
+    it('throws when the estimate map is empty', () => {
+      expect(() => feeEstimateFromEsplora({})).toThrow(/empty/i);
     });
   });
 });

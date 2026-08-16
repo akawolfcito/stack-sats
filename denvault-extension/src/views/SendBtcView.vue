@@ -127,9 +127,23 @@ const totalSats = computed(() => {
   return amountSats.value + estimatedFee.value;
 });
 
+/**
+ * What can actually be spent: confirmed UTXOs only.
+ *
+ * The screen used to show the total, mempool included, and then refuse
+ * the send with "insufficient confirmed balance". Both statements were
+ * true and together they read like a bug.
+ */
 const formattedBalance = computed(() => {
-  return formatBtcDisplay(btcBalance.value.total);
+  return formatBtcDisplay(totalAvailableSats.value);
 });
+
+/** Funds received but not yet confirmed, so not yet spendable. */
+const pendingSats = computed(() => Math.max(0, btcBalance.value.unconfirmed));
+
+const hasPendingFunds = computed(() => pendingSats.value > 0);
+
+const formattedPending = computed(() => formatBtcDisplay(pendingSats.value));
 
 const formattedFee = computed(() => {
   return formatBtcDisplay(estimatedFee.value);
@@ -156,8 +170,13 @@ const canContinue = computed(() => {
 });
 
 const hasZeroBalance = computed(() => {
-  // Unknown is not zero: the screen says so separately.
-  return !isBtcBalanceUnknown.value && btcBalance.value.total <= 0;
+  // Unknown is not zero, and neither is "still confirming": each of the
+  // three says its own thing.
+  return (
+    !isBtcBalanceUnknown.value &&
+    !hasPendingFunds.value &&
+    btcBalance.value.total <= 0
+  );
 });
 
 const hasInsufficientBalance = computed(() => {
@@ -514,8 +533,24 @@ async function handlePinComplete(pin: string) {
         <span class="notice-text">Your BTC balance is empty.</span>
       </div>
 
+      <!-- Funds on their way, not yet spendable -->
+      <div
+        v-if="hasPendingFunds"
+        class="zero-balance-notice"
+        data-roi="send-btc-pending"
+      >
+        <span class="notice-icon">!</span>
+        <span class="notice-text">
+          {{ formattedPending }} BTC is waiting for its first confirmation and
+          cannot be spent yet.
+        </span>
+      </div>
+
       <!-- Insufficient balance warning -->
-      <div v-if="hasInsufficientBalance && !hasZeroBalance" class="insufficient-notice">
+      <div
+        v-if="hasInsufficientBalance && !hasZeroBalance && !hasPendingFunds"
+        class="insufficient-notice"
+      >
         <span class="notice-icon">!</span>
         <span class="notice-text">Insufficient confirmed balance for this transaction.</span>
       </div>

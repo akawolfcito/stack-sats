@@ -171,7 +171,11 @@ export function feeEstimateFromEsplora(
     // fastest published when nothing is that fast.
     const withinTarget = targets.filter((candidate) => candidate <= target);
     const chosen = withinTarget.length > 0 ? withinTarget[withinTarget.length - 1] : targets[0];
-    return Math.max(1, estimates[String(chosen)]);
+    // Esplora answers in full float precision, and 17.730999999999998
+    // reached the fee selector verbatim. Rounded up, never down, so
+    // tidying the number can never underpay a transaction.
+    const rate = Math.ceil(estimates[String(chosen)] * 100) / 100;
+    return Math.max(1, rate);
   };
 
   return {
