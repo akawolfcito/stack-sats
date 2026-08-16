@@ -224,6 +224,82 @@ Guardado por `src/test/provider-registration.test.ts`, que replica `getProviderF
 
 ---
 
+## H7 · El popup de cola nunca recibe la petición, y la dApp expira
+
+**Severidad:** CRÍTICA y ABIERTA. Descubierta al final de la sesión del 2026-08-16, sin arreglar.
+
+### Evidencia
+
+En `chrome://extensions` tras pulsar Connect en `explorer.hiro.so/sandbox/faucet`:
+
+```
+background.js:561  [StacksWallet] Origin not allowed: chrome-extension://bajigbjefnldfhoebgkldnnbnjbnjfpj
+background.js:153  [StacksWallet] Request timed out: 30030b55-add8-4e1c-9b85-af18524812f3
+```
+
+Ese id de extensión es DenVault. Y la ventana de popup mostró la pantalla Home, con saldo y botones Send/Receive, en lugar de una pantalla de aprobación.
+
+### Lo que está PROBADO, por flujo de control
+
+```
+554:  if (!sender.tab?.id || !originUrl) {
+555:      console.error("Missing sender info");
+556:      return;                                  <- sale aqui si NO hay tab
+557:  }
+560:  if (!isOriginAllowed(originUrl)) {
+561:      console.error("Origin not allowed: ...") <- el log real
+```
+
+Para alcanzar la 561 hay que pasar la 554, y pasar la 554 exige `sender.tab.id`. Por tanto queda demostrado que llegó un mensaje **con `sender.tab.id`** y **origen `chrome-extension://`**, o sea desde una página de la propia extensión.
+
+Eso falsa la premisa sobre la que se reparten los dos listeners de `background.js`:
+
+- Listener 1, línea 289, atiende al popup con la guarda `if (sender.tab) return;`
+- Listener 2, línea 550, atiende a dApps y rechaza cualquier origen que no sea localhost, 127.0.0.1 o https
+
+El popup de cola se crea en `ensurePopupOpenOrFocus()` con `chrome.windows.create({ type: "popup" })`, es decir **una ventana con una pestaña real**. Sus mensajes llevan `sender.tab`, así que el listener 1 los descarta y el listener 2 los rechaza.
+
+### Cadena de fallo, parcialmente inferida
+
+1. La dApp pide conectarse y la petición se encola
+2. El background abre el popup de cola
+3. El popup envía `UI_READY`
+4. Listener 1 lo ignora por tener `sender.tab`
+5. Listener 2 lo rechaza por origen y loguea la 561
+6. `uiReady` no pasa nunca a `true`
+7. `sendToUI` guarda el `DAPP_REQUEST` en `pendingUIMessage` y no lo entrega
+8. El popup muestra el Home, que es lo observado
+9. A los 55s salta `Request timed out` en la línea 153
+
+### Lo que NO está probado
+
+- **Cuál mensaje concreto disparó el log.** Se asume `UI_READY` por ser el primero que envía el popup, pero pudo ser `GET_ACTIVE_REQUEST` u otro.
+- **Que arreglar el enrutado repare el flujo completo.** Hay un eslabón roto demostrado; no está recorrida la cadena entera. El popup en `?mode=queue` nunca ha recibido un `DAPP_REQUEST`, así que su lógica está sin ejercitar.
+- **Que el timeout provenga de esta causa.** Encaja con la cronología y con la captura, pero es correlación.
+
+### Por qué los tests no lo vieron
+
+`src/test/background-queue.test.ts:152-166` simula el popup así:
+
+```
+popupListener(message, { id: "denvault-test" }, sendResponse);
+```
+
+Sin `tab`, y con el comentario "the popup messages are routed by the first registered listener (no sender.tab)". El harness **copia la premisa equivocada**, así que el test la confirma en vez de cuestionarla. Arreglar H7 exige corregir también el harness.
+
+### Dos caminos
+
+1. **Parchear la heurística.** Listener 1 atiende lo que venga de `chrome-extension://${chrome.runtime.id}`, con pestaña o sin ella; listener 2 ignora en silencio ese mismo origen. Cambio pequeño.
+2. **Unificar en un solo listener** con enrutado explícito por origen. Más cambio, pero elimina la clase de bug en vez de este caso concreto.
+
+Decisión pendiente del usuario.
+
+### Cómo se verifica de verdad
+
+Ningún test propio lo prueba, porque los escribiría con la premisa ya corregida. La prueba es repetir el camino real: ir al faucet, pulsar Connect, y comprobar que aparece la pantalla de aprobación en lugar del Home.
+
+---
+
 ## Errores de consola que NO son nuestros
 
 Del mismo log, para no perseguirlos:
