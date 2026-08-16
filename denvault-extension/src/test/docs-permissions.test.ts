@@ -90,7 +90,11 @@ describe("docs match the manifest", () => {
   });
 
   it("keeps the manifest itself down to what is used", () => {
-    expect(MANIFEST.permissions).toEqual(["storage", "sidePanel"]);
+    expect(MANIFEST.permissions).toEqual([
+      "storage",
+      "sidePanel",
+      "clipboardRead",
+    ]);
     expect(MANIFEST.host_permissions).toEqual([
       "https://api.hiro.so/*",
       "https://api.testnet.hiro.so/*",

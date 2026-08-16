@@ -57,6 +57,7 @@ phrase, no private key and no PIN ever leaves the device.
 |------------|---------|
 | `storage` | Store encrypted wallet data locally |
 | `sidePanel` | Offer the wallet, and dApp approvals, in Chrome's side panel |
+| `clipboardRead` | Read the clipboard when you press Paste on the Send screen, and only then |
 
 | Host permission | Purpose |
 |------------|---------|
@@ -70,6 +71,8 @@ not read or modify page content.
 
 ## What We Do NOT Do
 
+- We do NOT read your clipboard in the background. The clipboard is read
+  only when you press Paste, to fill in a recipient address
 - We do NOT collect analytics or telemetry
 - We do NOT track your browsing history
 - We do NOT sell or share personal data with anyone. The blockchain

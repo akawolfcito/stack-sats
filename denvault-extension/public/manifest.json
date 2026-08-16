@@ -8,7 +8,7 @@
     "default_title": "DenVault",
     "default_popup": "index.html"
   },
-  "permissions": ["storage", "sidePanel"],
+  "permissions": ["storage", "sidePanel", "clipboardRead"],
   "side_panel": {
     "default_path": "index.html?view=sidepanel"
   },

@@ -253,7 +253,7 @@ expires. No wallet reset is required.
 - [ ] **Store listing**: subir Small promo tile y Marquee
 - [ ] **Store listing**: Homepage y Support URL al host `akawolfcito`
 - [ ] **Privacy**: Single purpose
-- [ ] **Privacy**: justificación de `storage`, de `sidePanel` y de los 2 hosts, incluyendo el explorador de Bitcoin que se contacta por CORS
+- [ ] **Privacy**: justificación de `storage`, de `sidePanel`, de `clipboardRead` y de los 2 hosts, incluyendo el explorador de Bitcoin que se contacta por CORS
 - [ ] **Privacy**: Remote code = No
 - [ ] **Privacy**: Data usage sin marcar nada + las 3 certificaciones
 - [ ] **Test instructions**: pegar el bloque

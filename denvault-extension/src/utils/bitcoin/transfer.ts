@@ -568,7 +568,7 @@ export async function transferBtc(params: BtcTransferParams): Promise<BtcTransfe
     } else if (rawError.includes('No confirmed UTXOs')) {
       errorMessage = 'No confirmed balance available. Please wait for pending transactions to confirm.';
     } else if (rawError.includes('dust')) {
-      errorMessage = 'Amount is too small (dust). Minimum amount is ~546 satoshis.';
+      errorMessage = 'Amount is too small. The minimum is 0.00000546 BTC (546 sats).';
     } else if (rawError.includes('Network') || rawError.includes('fetch') || rawError.includes('ECONNREFUSED')) {
       errorMessage = `Network error. Please check your connection and try again.`;
     } else if (rawError.includes('Broadcast failed')) {
@@ -635,7 +635,13 @@ export function parseBtcAmount(btcStr: string): { success: boolean; sats: number
 
   // Check for dust
   if (sats < 546) {
-    return { success: false, sats: 0, error: 'Amount is too small (dust threshold is 546 sats)' };
+    return {
+      success: false,
+      sats: 0,
+      // "546 sats" means nothing to someone who thinks in BTC, and this is
+      // the first wall a new user hits when trying a tiny test amount.
+      error: 'Amount is too small. The minimum is 0.00000546 BTC (546 sats)',
+    };
   }
 
   return { success: true, sats };

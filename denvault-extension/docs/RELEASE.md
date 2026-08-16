@@ -148,6 +148,7 @@ This extension enables users to manage Stacks blockchain wallets, view token bal
 |------------|---------------|
 | storage | Store encrypted wallet data locally using chrome.storage.local. No data is transmitted externally. |
 | sidePanel | Offer the wallet, and dApp approval screens, in Chrome's side panel. |
+| clipboardRead | Fill the recipient field when the user presses Paste on the Send screen. Read on that click only; nothing observes the clipboard in the background. |
 
 **Host Permission Justification:**
 

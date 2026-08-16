@@ -363,7 +363,10 @@ describe('Bitcoin transfer utilities', () => {
       // 0.00000100 = 100 sats (below 546)
       const result = parseBtcAmount('0.000001');
       expect(result.success).toBe(false);
-      expect(result.error).toContain('dust');
+      // The message used to say "dust threshold is 546 sats", which means
+      // nothing to someone entering an amount in BTC.
+      expect(result.error).toContain('0.00000546 BTC');
+      expect(result.error).toContain('546 sats');
     });
 
     it('should accept amounts at dust threshold', () => {

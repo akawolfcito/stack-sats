@@ -155,6 +155,7 @@ The extension uses `chrome.storage.local` for all sensitive data.
 |------------|-----------|---------------|
 | `storage` | Required | Store encrypted wallet data |
 | `sidePanel` | Required | Wallet and dApp approvals in Chrome's side panel |
+| `clipboardRead` | Required | The Paste button on Send BTC, on that click only |
 
 ### Host Permissions
 

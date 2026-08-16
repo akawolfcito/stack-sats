@@ -78,6 +78,8 @@ const isLoadingBalance = ref(false);
 /** The indexer did not answer: the balance is unknown, not zero. */
 const isBtcBalanceUnknown = ref(false);
 const balanceError = ref('');
+/** Shown when the Paste button could not do its job. */
+const pasteHint = ref('');
 
 // UTXO state
 const utxos = ref<{ address: string; utxos: UTXO[] }[]>([]);
@@ -360,9 +362,16 @@ async function handlePaste() {
     if (text) {
       recipient.value = text.trim();
       validateRecipient();
+      pasteHint.value = '';
+      return;
     }
+    // An empty clipboard is not a failure, but silence would look like one.
+    pasteHint.value = 'Your clipboard is empty.';
   } catch (err) {
-    console.error('Failed to paste:', err);
+    // Chrome can still refuse the read, for instance when the document is
+    // not focused. The button used to swallow that and do nothing at all.
+    secureLog('Clipboard read refused', err);
+    pasteHint.value = 'Could not read the clipboard. Paste with Cmd+V or Ctrl+V.';
   }
 }
 
@@ -588,6 +597,7 @@ async function handlePinComplete(pin: string) {
         </TextField>
         <div class="input-hint-row">
           <p v-if="amountError" class="form-error" data-roi="send-btc-error-amount">{{ amountError }}</p>
+          <span v-else-if="pasteHint" class="input-hint">{{ pasteHint }}</span>
           <span v-else class="input-hint">Available: {{ formattedBalance }} BTC</span>
         </div>
       </div>

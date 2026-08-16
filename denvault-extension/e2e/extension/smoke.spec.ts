@@ -14,7 +14,11 @@ test("the service worker boots and reports the packaged version", async ({
   const manifest = await serviceWorker.evaluate(() => chrome.runtime.getManifest());
 
   expect(manifest.version).toBe("1.1.3");
-  expect(manifest.permissions).toEqual(["storage", "sidePanel"]);
+  expect(manifest.permissions).toEqual([
+    "storage",
+    "sidePanel",
+    "clipboardRead",
+  ]);
   expect(manifest.host_permissions).toEqual([
     "https://api.hiro.so/*",
     "https://api.testnet.hiro.so/*",

@@ -20,6 +20,11 @@ import manifest from "../../public/manifest.json";
  * - storage:   chrome.storage.local / .session / .onChanged — the
  *              encrypted vault, settings and session cache.
  * - sidePanel: chrome.sidePanel.open + setOptions in background.js.
+ * - clipboardRead: navigator.clipboard.readText() behind the Paste button
+ *              in SendBtcView. Without it Chrome refuses the read and the
+ *              button did nothing at all, silently. Read only on that
+ *              click; nothing reads the clipboard in the background, and
+ *              there is no listener on it anywhere.
  *
  * Deliberately absent:
  * - tabs:      chrome.tabs.create/getCurrent/query/remove/sendMessage all
@@ -29,7 +34,7 @@ import manifest from "../../public/manifest.json";
  * - scripting: never used; the page bridge ships through the declared
  *              content script, not programmatic injection.
  */
-const EXPECTED_PERMISSIONS = ["storage", "sidePanel"];
+const EXPECTED_PERMISSIONS = ["storage", "sidePanel", "clipboardRead"];
 
 /**
  * Hosts the production bundle actually contacts.
