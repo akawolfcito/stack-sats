@@ -14,6 +14,12 @@ import { resolve } from "node:path";
 const BACKGROUND_PATH = resolve(__dirname, "../../public/background.js");
 const BACKGROUND_SOURCE = readFileSync(BACKGROUND_PATH, "utf-8");
 
+/** Mirrors chrome.runtime.id in the mock below. */
+const EXTENSION_ID = "denvault-test";
+const EXTENSION_ORIGIN = `chrome-extension://${EXTENSION_ID}`;
+/** The queue popup window carries a tab id, like any other window. */
+const POPUP_TAB_ID = 7;
+
 type Listener = (
   message: unknown,
   sender: unknown,
@@ -42,7 +48,7 @@ function installChromeMock(): ChromeHarness {
 
   const chromeMock = {
     runtime: {
-      id: "denvault-test",
+      id: EXTENSION_ID,
       getURL: (p: string) => `chrome-extension://test/${p}`,
       sendMessage: runtimeSendMessage,
       onMessage: {
@@ -133,7 +139,7 @@ async function dispatchDappRequest(
   const sender = {
     tab: { id: tabId },
     origin,
-    id: "denvault-test",
+    id: EXTENSION_ID,
   };
 
   contentListener(
@@ -150,19 +156,39 @@ async function dispatchDappRequest(
 }
 
 /**
- * Simulate a popup → background message via runtime.onMessage. The popup
- * messages are routed by the first registered listener (no sender.tab).
+ * Simulate a popup → background message via runtime.onMessage.
+ *
+ * The queue popup is opened with chrome.windows.create({ type: "popup" }),
+ * so it is a real window with a real tab and its messages carry
+ * sender.tab, same as a content script's. Chrome then offers the message
+ * to every registered listener, so this helper does too: which listener
+ * picks it up is exactly what is under test here. See H7 in
+ * docs/handoff/smoke-1.1.3-hallazgos.md.
  */
 function dispatchPopupMessage(
   harness: ChromeHarness,
   message: unknown,
   sendResponse: (response?: unknown) => void = () => undefined
 ): unknown {
-  const popupListener = harness.messageListeners[0];
-  if (!popupListener) {
-    throw new Error("popup listener not registered");
+  if (harness.messageListeners.length === 0) {
+    throw new Error("no message listener registered");
   }
-  return popupListener(message, { id: "denvault-test" }, sendResponse);
+
+  const sender = {
+    id: EXTENSION_ID,
+    tab: { id: POPUP_TAB_ID },
+    origin: EXTENSION_ORIGIN,
+    url: `${EXTENSION_ORIGIN}/index.html?mode=queue`,
+  };
+
+  let handled: unknown;
+  for (const listener of harness.messageListeners) {
+    const result = listener(message, sender, sendResponse);
+    if (result !== undefined) {
+      handled = result;
+    }
+  }
+  return handled;
 }
 
 describe("background queue: canonical params + explicit mismatch", () => {
@@ -413,7 +439,7 @@ describe("background queue: canonical params + explicit mismatch", () => {
       const sendResponse = vi.fn();
       contentListener(
         { jsonrpc: "2.0", id: "rpc-unsupported", method, params: {} },
-        { tab: { id: 7 }, origin: "https://app.example.com", id: "denvault-test" },
+        { tab: { id: 7 }, origin: "https://app.example.com", id: EXTENSION_ID },
         sendResponse
       );
       return sendResponse;
@@ -456,6 +482,66 @@ describe("background queue: canonical params + explicit mismatch", () => {
         (call) => (call[0] as { error?: { code: number } })?.error?.code === -32601
       );
       expect(rejected).toBe(false);
+    });
+  });
+
+  describe("H7 — routing messages from the queue popup window", () => {
+    it("delivers the queued request once the popup signals UI_READY", async () => {
+      await dispatchDappRequest(harness, {
+        id: "req-h7",
+        method: "stx_transferStx",
+        params: { recipient: "ST_H7", amount: "500" },
+        origin: "https://h7.example",
+      });
+
+      // Nothing reaches the popup before it announces itself.
+      expect(harness.runtimeSendMessage).not.toHaveBeenCalled();
+
+      dispatchPopupMessage(harness, { type: "UI_READY" });
+
+      // The popup window has a sender.tab, so this is the assertion that
+      // fails when the UI listener is gated on the absence of one.
+      expect(harness.runtimeSendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "DAPP_REQUEST",
+          payload: expect.objectContaining({ id: "req-h7" }),
+        })
+      );
+    });
+
+    it("does not answer 'Origin not allowed' to the extension's own pages", () => {
+      const sendResponse = vi.fn();
+
+      dispatchPopupMessage(harness, { type: "UI_READY" }, sendResponse);
+
+      const rejectedByOrigin = sendResponse.mock.calls.some(
+        (call) =>
+          (call[0] as { error?: { message?: string } })?.error?.message ===
+          "Origin not allowed"
+      );
+      expect(rejectedByOrigin).toBe(false);
+    });
+
+    it("still rejects an unlisted origin that fakes an extension URL", () => {
+      const sendResponse = vi.fn();
+      const contentListener = harness.messageListeners[1];
+
+      contentListener(
+        { jsonrpc: "2.0", id: "spoof", method: "stx_transferStx", params: {} },
+        {
+          tab: { id: 55 },
+          // Another extension, not ours.
+          origin: "chrome-extension://someotherextensionid",
+          id: "someotherextensionid",
+        },
+        sendResponse
+      );
+
+      expect(sendResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({ message: "Origin not allowed" }),
+        })
+      );
     });
   });
 });

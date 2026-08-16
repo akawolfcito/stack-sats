@@ -283,13 +283,36 @@ function handleUIReady() {
 }
 
 /**
+ * Is this message coming from one of our own extension pages?
+ *
+ * The presence of sender.tab does not answer that. The queue popup is
+ * opened with chrome.windows.create({ type: "popup" }), so it is a real
+ * window with a real tab and Chrome fills sender.tab for it, exactly as
+ * it does for a content script. The origin is what separates the two.
+ *
+ * Chrome sets sender.origin to "chrome-extension://<id>" for extension
+ * pages; sender.url carries the full page URL and covers the case where
+ * origin is absent.
+ *
+ * @param {chrome.runtime.MessageSender} sender
+ * @returns {boolean}
+ */
+function isOwnExtensionPage(sender) {
+  const origin = sender.origin ?? sender.url ?? "";
+  const base = `chrome-extension://${chrome.runtime.id}`;
+  // Exact match or a path under it, so another extension whose id merely
+  // starts with ours cannot pass.
+  return origin === base || origin.startsWith(`${base}/`);
+}
+
+/**
  * Listen for messages from UI (popup)
  * Handles: UI_READY, DAPP_APPROVE, DAPP_REJECT
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Only handle messages from extension pages (popup)
-  if (sender.tab) {
-    return; // This is from a content script, not popup
+  // Only handle messages from our own extension pages
+  if (!isOwnExtensionPage(sender)) {
+    return; // This is from a content script or another extension
   }
 
   switch (message.type) {
@@ -549,6 +572,14 @@ function isOriginAllowed(origin) {
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const originUrl = sender.origin ?? sender.url;
+
+  // Our own pages are served by the UI listener above. Chrome offers every
+  // message to every listener, so this one has to step aside in silence:
+  // answering "Origin not allowed" to the queue popup is what kept the
+  // dApp request from ever reaching the approval screen (H7).
+  if (isOwnExtensionPage(sender)) {
+    return;
+  }
 
   // Validate sender has required info
   if (!sender.tab?.id || !originUrl) {
