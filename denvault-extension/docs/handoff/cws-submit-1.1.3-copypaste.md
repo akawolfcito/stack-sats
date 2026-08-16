@@ -1,6 +1,6 @@
-# CWS Submit v1.1.3 — guía lista para rellenar
+# CWS Submit v1.1.3: guía lista para rellenar
 
-**Item ID:** `npojbdkhjpgfkfjeagfcfhjchcnpkfek` — sube al item existente. **Nunca crear un listing nuevo**: un duplicado es en sí una violación de política.
+**Item ID:** `npojbdkhjpgfkfjeagfcfhjchcnpkfek`. Sube al item existente. **Nunca crear un listing nuevo**: un duplicado es en sí una violación de política.
 **Paquete:** `denvault-v1.1.3.zip`, en la raíz del repo. No subas 1.1.0, 1.1.1 ni 1.1.2, que siguen en disco.
 
 > Verificado el 2026-08-12 contra `main`: 997/997 unit, 7/7 e2e contra la extensión real cargada, `verify-store-assets` PASS (dimensiones **y** canal alfa), y el `manifest.json` dentro del ZIP es byte a byte el mismo que `public/manifest.json`.
@@ -12,7 +12,7 @@ Las secciones van en el orden en que aparecen en el menú lateral del dashboard.
 
 
 
-## Paso 0 — por qué te rechazaron, y por qué esta vez no
+## Paso 0: por qué te rechazaron, y por qué esta vez no
 
 El dashboard dice **Version 1.0.0**, violation date **7-ene-2026**. Nunca revisaron la 1.1.0.
 
@@ -54,7 +54,7 @@ Sube el ZIP antes que nada: hasta que el paquete no esté en 1.1.3, el resto del
 
 ### Product details
 
-**Name** — viene del paquete, no se edita. Debe leer `DenVault`.
+**Name**: viene del paquete, no se edita. Debe leer `DenVault`.
 
 **Description**
 
@@ -85,9 +85,9 @@ Security:
 Open source: https://github.com/akawolfcito/stack-sats
 ```
 
-**Category** — el dashboard tiene **Developer Tools**. Para una wallet de usuario final, **Productivity** te da mejor alcance. Ninguna de las dos es una violación; decídelo tú.
+**Category**: el dashboard tiene **Developer Tools**. Para una wallet de usuario final, **Productivity** te da mejor alcance. Ninguna de las dos es una violación; decídelo tú.
 
-**Language** — `English (United States)`. Ya está puesto.
+**Language**: `English (United States)`. Ya está puesto.
 
 ### Graphic assets
 
@@ -97,7 +97,7 @@ Todos en `denvault-extension/assets/store/`. `bash scripts/verify-store-assets.s
 | Campo del dashboard         | Archivo               | Acción              |
 | --------------------------- | --------------------- | ------------------- |
 | Store icon 128x128          | `icon_128.png`        | ya subido, no tocar |
-| Global promo video          | —                     | ya puesto, no tocar |
+| Global promo video          | n/a                   | ya puesto, no tocar |
 | Screenshot 1                | `cws-01-start.png`    | **reemplazar**      |
 | Screenshot 2                | `cws-02-home.png`     | **reemplazar**      |
 | Screenshot 3                | `cws-03-send.png`     | subir               |
@@ -111,15 +111,15 @@ Todos en `denvault-extension/assets/store/`. `bash scripts/verify-store-assets.s
   Las 2 del dashboard son de mayo y llevan el pill de Vue DevTools encima de la UI; el checklist de entonces las dio por buenas y estaba mal. Las de agosto lo eliminan (`vite.config.ts` omite `vueDevTools()` bajo `VITE_UI_SNAPSHOT`) y fijan el saldo con `mockBalances()`, porque la dirección de prueba fue drenada en testnet y las cards salían con "Your balance is too low to send STX" en una pieza de marketing.
 
 - [ ] Sube los 2 promo tiles.
-  El 440x280 se regeneró el 2026-08-12: el dibujado a mano en febrero llevaba **canal alfa**, y este campo exige "24-bit PNG, no alpha" — el dashboard habría rechazado la subida. Ahora sale del mismo spec que el marquee y `verify-store-assets.sh` falla si el alfa vuelve.
+  El 440x280 se regeneró el 2026-08-12: el dibujado a mano en febrero llevaba **canal alfa**, y este campo exige "24-bit PNG, no alpha", así que el dashboard habría rechazado la subida. Ahora sale del mismo spec que el marquee y `verify-store-assets.sh` falla si el alfa vuelve.
 
 
 
 ### Additional fields
 
-**Official URL** — déjalo en `None`. Requiere verificar dominio en Search Console y no aporta nada aquí.
+**Official URL**: déjalo en `None`. Requiere verificar dominio en Search Console y no aporta nada aquí.
 
-**Homepage URL** — el dashboard tiene el host viejo `wolfcito.`; la cuenta se renombró a `akawolfcito`. El redirect de GitHub no está bajo tu control y se rompe si alguien reclama el handle viejo.
+**Homepage URL**: el dashboard tiene el host viejo `wolfcito.`; la cuenta se renombró a `akawolfcito`. El redirect de GitHub no está bajo tu control y se rompe si alguien reclama el handle viejo.
 
 ```
 https://akawolfcito.github.io/stack-sats/
@@ -131,7 +131,7 @@ https://akawolfcito.github.io/stack-sats/
 https://akawolfcito.github.io/stack-sats/support.html
 ```
 
-**Mature content** — off.
+**Mature content**: off.
 
 ---
 
@@ -151,13 +151,13 @@ https://akawolfcito.github.io/stack-sats/privacy.html
 DenVault lets people hold their own Stacks and Bitcoin keys in the browser: create or import a wallet, view balances and transaction history, send STX, BTC and SIP-10 tokens, and review and approve requests from Stacks dApps before anything is signed.
 ```
 
-**Permission justification —** `storage`
+**Permission justification:** `storage`
 
 ```
 Stores the encrypted wallet vault, network and display settings, and the unlocked session cache using chrome.storage.local and chrome.storage.session. The recovery phrase is encrypted with AES-256-GCM before it is written and is never transmitted anywhere.
 ```
 
-**Permission justification —** `sidePanel`
+**Permission justification:** `sidePanel`
 
 ```
 Opens the wallet in Chrome's side panel so it stays visible while the user interacts with a dApp in the page. Used by chrome.sidePanel.open and chrome.sidePanel.setOptions in the extension's service worker.
@@ -168,21 +168,21 @@ Opens the wallet in Chrome's side panel so it stays visible while the user inter
 ```
 Host permissions are limited to the two public Stacks blockchain API endpoints the extension actually contacts:
 
-- https://api.hiro.so/* — mainnet: balance and token queries, transaction history, broadcasting signed transactions
-- https://api.testnet.hiro.so/* — the same, on testnet
+- https://api.hiro.so/* for mainnet: balance and token queries, transaction history, broadcasting signed transactions
+- https://api.testnet.hiro.so/* for the same queries on testnet
 
 These calls carry only public blockchain addresses and signed transactions. No personal data, no recovery phrase and no private key is ever sent.
 
 dApp connectivity does not use host permissions. A declared content script relays standard WBIP/SIP-030 wallet RPC messages between the page and the extension; it does not read or modify page content.
 ```
 
-**Remote code** — "No, I am not using remote code".
+**Remote code**: "No, I am not using remote code".
 
 ```
 No. The extension executes no remote code. All scripts are bundled in the package, and the content security policy is script-src 'self' 'wasm-unsafe-eval'.
 ```
 
-**Data usage** — no marques **nada**. La respuesta honesta es que no se recoge ningún dato:
+**Data usage**: no marques **nada**. La respuesta honesta es que no se recoge ningún dato:
 
 
 | Tipo de dato                        | ¿Marcar? | Por qué                                                                       |
@@ -234,7 +234,7 @@ To review:
 
 To review the failed-PIN behaviour: lock the wallet, then enter a wrong PIN
 three times. The keypad shows a countdown and re-enables itself when it
-expires — no wallet reset is required.
+expires. No wallet reset is required.
 ```
 
 ---
@@ -243,7 +243,7 @@ expires — no wallet reset is required.
 
 ## Checklist de envío
 
-- [x] ~~Revisar el manifest de la versión rechazada~~ — resuelto en el Paso 0. No apelar.
+- [x] ~~Revisar el manifest de la versión rechazada~~. Resuelto en el Paso 0. No apelar.
 - [ ] **Package**: subir `denvault-v1.1.3.zip`
 - [ ] **Store listing**: pegar la Description
 - [ ] **Store listing**: decidir categoría (Developer Tools vs Productivity)
