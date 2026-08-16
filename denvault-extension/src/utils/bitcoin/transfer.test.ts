@@ -129,7 +129,9 @@ function mockFetchError(status: number, body = 'error') {
 }
 
 function mockFetchReject(message: string) {
-  global.fetch = vi.fn().mockRejectedValueOnce(new Error(message));
+  // Every host, not just the first: the Bitcoin calls fail over between
+  // Esplora hosts, so "the network is down" means all of them are down.
+  global.fetch = vi.fn().mockRejectedValue(new Error(message));
 }
 
 // --- Tests ---
@@ -442,7 +444,7 @@ describe('Bitcoin transfer utilities', () => {
       mockFetchOk([]);
       await fetchUtxos(FAKE_ADDRESS_P2PKH, 'devnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('mempool.space/testnet/api'),
+        expect.stringContaining('blockstream.info/testnet/api'),
         expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
@@ -451,7 +453,7 @@ describe('Bitcoin transfer utilities', () => {
       mockFetchOk([]);
       await fetchUtxos(FAKE_ADDRESS_P2PKH, 'mainnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/mempool\.space\/api\/address/),
+        expect.stringMatching(/blockstream\.info\/api\/address/),
         expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });

@@ -67,7 +67,9 @@ function mockFetchError(status: number) {
 }
 
 function mockFetchReject(message: string) {
-  global.fetch = vi.fn().mockRejectedValueOnce(new Error(message));
+  // Every host, not just the first: the Bitcoin calls fail over between
+  // Esplora hosts, so "the network is down" means all of them are down.
+  global.fetch = vi.fn().mockRejectedValue(new Error(message));
 }
 
 // --- Tests ---
@@ -167,7 +169,7 @@ describe('Bitcoin balance utilities', () => {
       mockFetchOk(makeAddressInfo());
       await fetchBtcAddressInfo(FAKE_ADDRESS, 'devnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('mempool.space/testnet/api'),
+        expect.stringContaining('blockstream.info/testnet/api'),
         expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
@@ -176,7 +178,7 @@ describe('Bitcoin balance utilities', () => {
       mockFetchOk(makeAddressInfo());
       await fetchBtcAddressInfo(FAKE_ADDRESS, 'mainnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/mempool\.space\/api\/address/),
+        expect.stringMatching(/blockstream\.info\/api\/address/),
         expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
@@ -282,17 +284,17 @@ describe('Bitcoin balance utilities', () => {
   describe('getBtcExplorerUrl', () => {
     it('should return mainnet explorer URL', () => {
       const url = getBtcExplorerUrl(FAKE_ADDRESS, 'mainnet');
-      expect(url).toBe(`https://mempool.space/address/${FAKE_ADDRESS}`);
+      expect(url).toBe(`https://blockstream.info/address/${FAKE_ADDRESS}`);
     });
 
     it('should return testnet explorer URL', () => {
       const url = getBtcExplorerUrl(FAKE_ADDRESS, 'testnet');
-      expect(url).toBe(`https://mempool.space/testnet/address/${FAKE_ADDRESS}`);
+      expect(url).toBe(`https://blockstream.info/testnet/address/${FAKE_ADDRESS}`);
     });
 
     it('should return testnet URL for devnet', () => {
       const url = getBtcExplorerUrl(FAKE_ADDRESS, 'devnet');
-      expect(url).toBe(`https://mempool.space/testnet/address/${FAKE_ADDRESS}`);
+      expect(url).toBe(`https://blockstream.info/testnet/address/${FAKE_ADDRESS}`);
     });
 
     it('should use selected network when no network provided', () => {
@@ -308,17 +310,17 @@ describe('Bitcoin balance utilities', () => {
   describe('getBtcTxExplorerUrl', () => {
     it('should return mainnet tx explorer URL', () => {
       const url = getBtcTxExplorerUrl(FAKE_TXID, 'mainnet');
-      expect(url).toBe(`https://mempool.space/tx/${FAKE_TXID}`);
+      expect(url).toBe(`https://blockstream.info/tx/${FAKE_TXID}`);
     });
 
     it('should return testnet tx explorer URL', () => {
       const url = getBtcTxExplorerUrl(FAKE_TXID, 'testnet');
-      expect(url).toBe(`https://mempool.space/testnet/tx/${FAKE_TXID}`);
+      expect(url).toBe(`https://blockstream.info/testnet/tx/${FAKE_TXID}`);
     });
 
     it('should return testnet URL for devnet', () => {
       const url = getBtcTxExplorerUrl(FAKE_TXID, 'devnet');
-      expect(url).toBe(`https://mempool.space/testnet/tx/${FAKE_TXID}`);
+      expect(url).toBe(`https://blockstream.info/testnet/tx/${FAKE_TXID}`);
     });
   });
 });

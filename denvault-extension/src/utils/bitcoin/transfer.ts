@@ -14,29 +14,12 @@ import { Buffer } from 'buffer';
 import ecc from '@bitcoinerlab/secp256k1';
 import { getSelectedNetwork, type NetworkName } from '../network';
 import { secureLog } from '../security/logger';
-import { fetchWithTimeout } from './http';
+import { esploraFetch } from './endpoints';
 import { detectAddressType, type BtcAddressType } from './validation';
 
 // Initialize ECC library for bitcoinjs-lib
 // @ts-expect-error - bitcoin is a global variable injected by bitcoinjs-lib.js
 bitcoin.initEccLib(ecc);
-
-/**
- * Mempool.space API URLs
- */
-const MEMPOOL_URLS: Record<NetworkName, string> = {
-  mainnet: 'https://mempool.space/api',
-  testnet: 'https://mempool.space/testnet/api',
-  devnet: 'https://mempool.space/testnet/api', // Devnet uses testnet for BTC
-};
-
-/**
- * Get the Mempool API URL for the specified network
- */
-function getMempoolUrl(network?: NetworkName): string {
-  const selectedNetwork = network || getSelectedNetwork();
-  return MEMPOOL_URLS[selectedNetwork];
-}
 
 /**
  * Get the bitcoinjs-lib network object
@@ -116,11 +99,12 @@ export async function fetchUtxos(
   address: string,
   network?: NetworkName
 ): Promise<UTXO[]> {
-  const apiUrl = getMempoolUrl(network);
-  const url = `${apiUrl}/address/${address}/utxo`;
+  const selectedNetwork = network || getSelectedNetwork();
 
   try {
-    const response = await fetchWithTimeout(url);
+    const response = await esploraFetch(`/address/${address}/utxo`, {
+      network: selectedNetwork,
+    });
 
     if (!response.ok) {
       if (response.status === 400) {
@@ -159,20 +143,62 @@ export async function fetchCombinedUtxos(
 /**
  * Estimate fees from Mempool.space
  */
+/**
+ * Turn Esplora's confirmation-target map into the levels the UI offers.
+ *
+ * Esplora answers `{ "1": 12.3, "6": 5, "144": 1.1 }`, keyed by target in
+ * blocks. The ladder is not guaranteed: blockstream's testnet publishes
+ * only 144, 504 and 1008, so every level has to degrade to the best
+ * estimate that exists rather than assume a key is there.
+ *
+ * `/v1/fees/recommended`, which this used to call, is mempool.space's own
+ * shape and does not exist on the standard Esplora API.
+ */
+export function feeEstimateFromEsplora(
+  estimates: Record<string, number>
+): FeeEstimate {
+  const targets = Object.keys(estimates)
+    .map(Number)
+    .filter((target) => Number.isFinite(target))
+    .sort((a, b) => a - b);
+
+  if (targets.length === 0) {
+    throw new Error('Fee estimates were empty');
+  }
+
+  const rateFor = (target: number): number => {
+    // The most economical target that still confirms this soon, or the
+    // fastest published when nothing is that fast.
+    const withinTarget = targets.filter((candidate) => candidate <= target);
+    const chosen = withinTarget.length > 0 ? withinTarget[withinTarget.length - 1] : targets[0];
+    return Math.max(1, estimates[String(chosen)]);
+  };
+
+  return {
+    fastestFee: rateFor(1),
+    halfHourFee: rateFor(3),
+    hourFee: rateFor(6),
+    economyFee: rateFor(144),
+    minimumFee: rateFor(1008),
+  };
+}
+
 export async function estimateFees(network?: NetworkName): Promise<FeeEstimate> {
-  const apiUrl = getMempoolUrl(network);
-  const url = `${apiUrl}/v1/fees/recommended`;
+  const selectedNetwork = network || getSelectedNetwork();
 
   try {
-    const response = await fetchWithTimeout(url);
+    const response = await esploraFetch('/fee-estimates', {
+      network: selectedNetwork,
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch fees: ${response.status}`);
     }
 
-    const data = await response.json();
-    secureLog('BTC fees fetched', data);
-    return data as FeeEstimate;
+    const data = (await response.json()) as Record<string, number>;
+    const fees = feeEstimateFromEsplora(data);
+    secureLog('BTC fees fetched', fees);
+    return fees;
   } catch (error) {
     secureLog('BTC fee fetch error', { error: String(error) });
     // Return conservative defaults
@@ -456,10 +482,11 @@ export async function buildAndSignTransaction(
  * Fetch raw transaction hex
  */
 async function fetchRawTransaction(txid: string, network?: NetworkName): Promise<string> {
-  const apiUrl = getMempoolUrl(network);
-  const url = `${apiUrl}/tx/${txid}/hex`;
+  const selectedNetwork = network || getSelectedNetwork();
 
-  const response = await fetchWithTimeout(url);
+  const response = await esploraFetch(`/tx/${txid}/hex`, {
+    network: selectedNetwork,
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch raw transaction: ${response.status}`);
   }
@@ -474,16 +501,18 @@ export async function broadcastTransaction(
   txHex: string,
   network?: NetworkName
 ): Promise<string> {
-  const apiUrl = getMempoolUrl(network);
-  const url = `${apiUrl}/tx`;
+  const selectedNetwork = network || getSelectedNetwork();
 
   try {
-    const response = await fetchWithTimeout(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
+    const response = await esploraFetch('/tx', {
+      network: selectedNetwork,
+      init: {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: txHex,
       },
-      body: txHex,
     });
 
     if (!response.ok) {

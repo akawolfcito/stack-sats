@@ -7,24 +7,7 @@
 
 import { getSelectedNetwork, type NetworkName } from '../network';
 import { secureLog } from '../security/logger';
-import { fetchWithTimeout } from './http';
-
-/**
- * Mempool.space API URLs
- */
-const MEMPOOL_URLS: Record<NetworkName, string> = {
-  mainnet: 'https://mempool.space/api',
-  testnet: 'https://mempool.space/testnet/api',
-  devnet: 'https://mempool.space/testnet/api', // Devnet uses testnet for BTC
-};
-
-/**
- * Get the Mempool API URL for the current or specified network
- */
-function getMempoolUrl(network?: NetworkName): string {
-  const selectedNetwork = network || getSelectedNetwork();
-  return MEMPOOL_URLS[selectedNetwork];
-}
+import { esploraFetch, getBtcExplorerBase } from './endpoints';
 
 /**
  * Bitcoin address info from Mempool.space API
@@ -68,11 +51,12 @@ export async function fetchBtcAddressInfo(
   address: string,
   network?: NetworkName
 ): Promise<BtcAddressInfo | null> {
-  const apiUrl = getMempoolUrl(network);
-  const url = `${apiUrl}/address/${address}`;
+  const selectedNetwork = network || getSelectedNetwork();
 
   try {
-    const response = await fetchWithTimeout(url);
+    const response = await esploraFetch(`/address/${address}`, {
+      network: selectedNetwork,
+    });
 
     if (!response.ok) {
       // 400 means address not found or invalid - return empty balance
@@ -178,27 +162,17 @@ export function formatBtcBalance(satoshis: number): string {
 }
 
 /**
- * Get Mempool.space explorer URL for an address
+ * Explorer URL for an address, on the host the wallet can reach.
  */
 export function getBtcExplorerUrl(address: string, network?: NetworkName): string {
   const selectedNetwork = network || getSelectedNetwork();
-
-  if (selectedNetwork === 'mainnet') {
-    return `https://mempool.space/address/${address}`;
-  }
-
-  return `https://mempool.space/testnet/address/${address}`;
+  return `${getBtcExplorerBase(selectedNetwork)}/address/${address}`;
 }
 
 /**
- * Get Mempool.space explorer URL for a transaction
+ * Explorer URL for a transaction, on the host the wallet can reach.
  */
 export function getBtcTxExplorerUrl(txid: string, network?: NetworkName): string {
   const selectedNetwork = network || getSelectedNetwork();
-
-  if (selectedNetwork === 'mainnet') {
-    return `https://mempool.space/tx/${txid}`;
-  }
-
-  return `https://mempool.space/testnet/tx/${txid}`;
+  return `${getBtcExplorerBase(selectedNetwork)}/tx/${txid}`;
 }
