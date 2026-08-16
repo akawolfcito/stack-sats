@@ -140,7 +140,8 @@ describe('Bitcoin balance utilities', () => {
       const result = await fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet');
       expect(result).toEqual(info);
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/address/${FAKE_ADDRESS}`)
+        expect.stringContaining(`/address/${FAKE_ADDRESS}`),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
 
@@ -166,7 +167,8 @@ describe('Bitcoin balance utilities', () => {
       mockFetchOk(makeAddressInfo());
       await fetchBtcAddressInfo(FAKE_ADDRESS, 'devnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('mempool.space/testnet/api')
+        expect.stringContaining('mempool.space/testnet/api'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
 
@@ -174,7 +176,8 @@ describe('Bitcoin balance utilities', () => {
       mockFetchOk(makeAddressInfo());
       await fetchBtcAddressInfo(FAKE_ADDRESS, 'mainnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/mempool\.space\/api\/address/)
+        expect.stringMatching(/mempool\.space\/api\/address/),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
   });

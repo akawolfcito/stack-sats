@@ -14,6 +14,7 @@ import { Buffer } from 'buffer';
 import ecc from '@bitcoinerlab/secp256k1';
 import { getSelectedNetwork, type NetworkName } from '../network';
 import { secureLog } from '../security/logger';
+import { fetchWithTimeout } from './http';
 import { detectAddressType, type BtcAddressType } from './validation';
 
 // Initialize ECC library for bitcoinjs-lib
@@ -119,7 +120,7 @@ export async function fetchUtxos(
   const url = `${apiUrl}/address/${address}/utxo`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetchWithTimeout(url);
 
     if (!response.ok) {
       if (response.status === 400) {
@@ -163,7 +164,7 @@ export async function estimateFees(network?: NetworkName): Promise<FeeEstimate> 
   const url = `${apiUrl}/v1/fees/recommended`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetchWithTimeout(url);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch fees: ${response.status}`);
@@ -458,7 +459,7 @@ async function fetchRawTransaction(txid: string, network?: NetworkName): Promise
   const apiUrl = getMempoolUrl(network);
   const url = `${apiUrl}/tx/${txid}/hex`;
 
-  const response = await fetch(url);
+  const response = await fetchWithTimeout(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch raw transaction: ${response.status}`);
   }
@@ -477,7 +478,7 @@ export async function broadcastTransaction(
   const url = `${apiUrl}/tx`;
 
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',

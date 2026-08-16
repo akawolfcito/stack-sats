@@ -414,7 +414,8 @@ describe('Bitcoin transfer utilities', () => {
       const result = await fetchUtxos(FAKE_ADDRESS_P2PKH, 'testnet');
       expect(result).toEqual(utxos);
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/address/${FAKE_ADDRESS_P2PKH}/utxo`)
+        expect.stringContaining(`/address/${FAKE_ADDRESS_P2PKH}/utxo`),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
 
@@ -441,7 +442,8 @@ describe('Bitcoin transfer utilities', () => {
       mockFetchOk([]);
       await fetchUtxos(FAKE_ADDRESS_P2PKH, 'devnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('mempool.space/testnet/api')
+        expect.stringContaining('mempool.space/testnet/api'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
 
@@ -449,7 +451,8 @@ describe('Bitcoin transfer utilities', () => {
       mockFetchOk([]);
       await fetchUtxos(FAKE_ADDRESS_P2PKH, 'mainnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/mempool\.space\/api\/address/)
+        expect.stringMatching(/mempool\.space\/api\/address/),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
   });

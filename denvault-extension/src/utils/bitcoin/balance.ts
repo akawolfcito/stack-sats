@@ -7,6 +7,7 @@
 
 import { getSelectedNetwork, type NetworkName } from '../network';
 import { secureLog } from '../security/logger';
+import { fetchWithTimeout } from './http';
 
 /**
  * Mempool.space API URLs
@@ -71,7 +72,7 @@ export async function fetchBtcAddressInfo(
   const url = `${apiUrl}/address/${address}`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetchWithTimeout(url);
 
     if (!response.ok) {
       // 400 means address not found or invalid - return empty balance
