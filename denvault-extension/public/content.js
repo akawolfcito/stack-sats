@@ -58,9 +58,28 @@ document.addEventListener("stackswallet_request", (event) => {
   // onMessage listener below, not through this promise, so swallow its
   // rejection: an asleep or restarting service worker would otherwise
   // surface as an uncaught error on the dApp's page.
-  chrome.runtime.sendMessage(event.detail).catch((err) => {
-    console.warn("[StacksWallet] Failed to reach background:", err?.message);
-  });
+  try {
+    chrome.runtime.sendMessage(event.detail).catch((err) => {
+      console.warn("[StacksWallet] Failed to reach background:", err?.message);
+    });
+  } catch (err) {
+    // Reloading the extension orphans the copy of this script already
+    // injected in open tabs: chrome.runtime is dead and sendMessage throws
+    // synchronously, so the .catch above never runs. Tell the page instead
+    // of letting the request hang until injection.js gives up 60s later.
+    console.warn("[StacksWallet] Extension context gone:", err?.message);
+    window.postMessage(
+      {
+        jsonrpc: "2.0",
+        id,
+        error: {
+          code: -32603,
+          message: "Wallet extension was reloaded. Reload this page to continue.",
+        },
+      },
+      window.location.origin
+    );
+  }
 });
 
 /**
