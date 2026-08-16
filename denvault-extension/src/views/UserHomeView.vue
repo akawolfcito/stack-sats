@@ -968,6 +968,38 @@ const handleManageAccounts = () => {
   padding: var(--card-pad-x);
   padding-top: var(--space-lg);
   padding-bottom: var(--space-sm);
+  /* At popup width there is no room to spare. Adding the copy button
+     pushed the network chip and the two view buttons off the right edge,
+     because the account pill would not give any width back. */
+  min-width: 0;
+}
+
+/* The account pill is the only elastic piece: it already truncates its
+   address, so it is the one that yields. */
+.header :deep(.account-switcher) {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.header :deep(.account-pill) {
+  max-width: 100%;
+}
+
+.header :deep(.account-pill__info) {
+  min-width: 0;
+}
+
+.header :deep(.account-pill__label),
+.header :deep(.account-pill__address) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Everything else keeps its size rather than being squeezed into nothing. */
+.header > :deep(.btn--icon),
+.header .header-actions {
+  flex: 0 0 auto;
 }
 
 /* Header right actions group (V33: aligned + balanced) */
