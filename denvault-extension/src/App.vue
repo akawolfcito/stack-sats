@@ -6,6 +6,7 @@ import type { JsonRpcRequest } from "@/utils/types";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import { useUiMode } from "@/composables/useUiMode";
+import { startBackgroundKeepalive } from "@/composables/useBackgroundKeepalive";
 import { emitSessionStarted, emitSessionEnded } from "@/denlabs/emit";
 
 // UI Mode detection (popup vs panel)
@@ -23,6 +24,9 @@ const isInitializing = ref(true);
 
 // Queue mode state
 const isQueueMode = ref(false);
+
+// Set in queue mode only: closes the keepalive port when this window goes.
+let stopKeepalive: (() => void) | null = null;
 const currentRequestId = ref<string>("");
 
 // Check wallet state
@@ -101,6 +105,10 @@ onBeforeMount(async () => {
   if (capturedSearchParams.get("mode") === "queue") {
     isQueueMode.value = true;
     secureLog("Queue mode enabled, sending UI_READY");
+    // Hold the service worker open for as long as this window is. Without
+    // it Chrome recycles the worker after ~30s and the queue goes with it,
+    // so an approval given after typing a PIN lands nowhere.
+    stopKeepalive = startBackgroundKeepalive();
     // Signal to background that UI is ready (only in extension context)
     if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
       chrome.runtime.sendMessage({ type: "UI_READY" });
@@ -150,6 +158,8 @@ onBeforeUnmount(() => {
   if (typeof window !== "undefined") {
     window.removeEventListener("beforeunload", handleSessionEnd);
   }
+  stopKeepalive?.();
+  stopKeepalive = null;
 });
 </script>
 

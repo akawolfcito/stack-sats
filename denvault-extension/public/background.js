@@ -305,6 +305,42 @@ function isOwnExtensionPage(sender) {
   return origin === base || origin.startsWith(`${base}/`);
 }
 
+/** Port name the approval window uses to hold this worker open. */
+const KEEPALIVE_PORT_NAME = "denvault-keepalive";
+
+/**
+ * Keep this worker alive while an approval window is open.
+ *
+ * Chrome recycles an idle MV3 worker after about 30 seconds, and the queue
+ * lives in this worker's memory. The popup sends UI_READY once and then
+ * goes quiet while the user reads the request and types a PIN, which
+ * routinely takes longer than that. The worker died, its 55s timeout timer
+ * died with it, injection.js fell through to its own 60s timeout, and the
+ * approval the user finally gave arrived at a restarted worker with
+ * activeRequest === null, so it was dropped in silence.
+ *
+ * Traffic on a connected port resets the idle timer. See
+ * src/composables/useBackgroundKeepalive.ts for the other end.
+ */
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== KEEPALIVE_PORT_NAME) {
+    return;
+  }
+
+  // Only our own pages get to hold the worker open.
+  if (!isOwnExtensionPage(port.sender ?? {})) {
+    port.disconnect();
+    return;
+  }
+
+  logQueue("Keepalive port connected");
+  // Receiving is the point; the payload is irrelevant.
+  port.onMessage.addListener(() => {});
+  port.onDisconnect.addListener(() => {
+    logQueue("Keepalive port disconnected");
+  });
+});
+
 /**
  * Listen for messages from UI (popup)
  * Handles: UI_READY, DAPP_APPROVE, DAPP_REJECT

@@ -26,8 +26,20 @@ type Listener = (
   sendResponse: (response?: unknown) => void
 ) => unknown;
 
+interface PortMock {
+  name: string;
+  sender?: { origin?: string; url?: string; tab?: { id: number } };
+  postMessage: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+  onMessage: { addListener: ReturnType<typeof vi.fn> };
+  onDisconnect: { addListener: ReturnType<typeof vi.fn> };
+}
+
+type ConnectListener = (port: PortMock) => void;
+
 interface ChromeHarness {
   messageListeners: Listener[];
+  connectListeners: ConnectListener[];
   windowsRemovedListeners: Array<(id: number) => void>;
   tabsSendMessage: ReturnType<typeof vi.fn>;
   runtimeSendMessage: ReturnType<typeof vi.fn>;
@@ -38,6 +50,7 @@ interface ChromeHarness {
 
 function installChromeMock(): ChromeHarness {
   const messageListeners: Listener[] = [];
+  const connectListeners: ConnectListener[] = [];
   const windowsRemovedListeners: Array<(id: number) => void> = [];
 
   const tabsSendMessage = vi.fn().mockResolvedValue(undefined);
@@ -56,6 +69,11 @@ function installChromeMock(): ChromeHarness {
           messageListeners.push(l);
         },
         removeListener: vi.fn(),
+      },
+      onConnect: {
+        addListener: (l: ConnectListener) => {
+          connectListeners.push(l);
+        },
       },
     },
     tabs: {
@@ -92,6 +110,7 @@ function installChromeMock(): ChromeHarness {
 
   return {
     messageListeners,
+    connectListeners,
     windowsRemovedListeners,
     tabsSendMessage,
     runtimeSendMessage,
@@ -514,6 +533,55 @@ describe("background queue: canonical params + explicit mismatch", () => {
         (call) => (call[0] as { error?: { code: number } })?.error?.code === -32601
       );
       expect(rejected).toBe(false);
+    });
+  });
+
+  describe("H11 — keepalive port from the approval window", () => {
+    function makePort(overrides: Partial<PortMock> = {}): PortMock {
+      return {
+        name: "denvault-keepalive",
+        sender: { origin: EXTENSION_ORIGIN, tab: { id: POPUP_TAB_ID } },
+        postMessage: vi.fn(),
+        disconnect: vi.fn(),
+        onMessage: { addListener: vi.fn() },
+        onDisconnect: { addListener: vi.fn() },
+        ...overrides,
+      };
+    }
+
+    it("registers an onConnect listener", () => {
+      expect(harness.connectListeners.length).toBeGreaterThan(0);
+    });
+
+    it("accepts the port from our own approval window", () => {
+      const port = makePort();
+
+      harness.connectListeners[0](port);
+
+      // Holding the port open is what keeps the worker, and with it the
+      // in-memory queue, alive while the user types a PIN.
+      expect(port.disconnect).not.toHaveBeenCalled();
+      expect(port.onMessage.addListener).toHaveBeenCalled();
+    });
+
+    it("drops a keepalive port from anywhere else", () => {
+      const port = makePort({
+        sender: { origin: "https://app.example.com", tab: { id: 42 } },
+      });
+
+      harness.connectListeners[0](port);
+
+      expect(port.disconnect).toHaveBeenCalledTimes(1);
+      expect(port.onMessage.addListener).not.toHaveBeenCalled();
+    });
+
+    it("ignores ports with another name", () => {
+      const port = makePort({ name: "something-else" });
+
+      harness.connectListeners[0](port);
+
+      expect(port.disconnect).not.toHaveBeenCalled();
+      expect(port.onMessage.addListener).not.toHaveBeenCalled();
     });
   });
 
