@@ -382,6 +382,46 @@ El listener ya no reclama el canal, y `content.js` captura el rechazo de todas f
 
 ---
 
+## H11 · El service worker se muere mientras el usuario teclea el PIN
+
+**Severidad:** CRÍTICA. Descubierta el 2026-08-16 al verificar H8. **Corregida en `dc6825d`, pendiente de verificación manual.**
+
+### Evidencia
+
+Consola de la dApp, tras aprobar y no pasar nada:
+
+```
+JsonRpcError: Request timeout
+    at e.fromResponse
+```
+
+Ese texto es **nuestro**: `injection.js:107`, con `REQUEST_TIMEOUT_MS = 60000`.
+
+### Causa
+
+Lo revelador es qué timeout **no** saltó. Background tiene el suyo a 55s (`background.js:151`), justamente para contestar antes que injection. Si hubiera vivido, la dApp habría recibido `Request timed out` a los 55s y nunca se habría llegado a los 60.
+
+Chrome recicla un service worker MV3 inactivo a los ~30s. El popup manda `UI_READY` una vez (`App.vue:114`) y después no vuelve a hablar: no hay port ni polling que lo mantenga vivo. Y la cola vive en memoria del worker (`activeRequest`, `requestQueue`, `uiReady` son `let` de módulo).
+
+Cadena:
+
+1. El popup se abre y pide PIN, porque nace bloqueado (ver H10)
+2. A los ~30s de silencio Chrome recicla el worker
+3. Muere con él el timer de 55s, así que injection cae en su propio timeout de 60s: `Request timeout`
+4. El usuario aprueba, el worker revive con `activeRequest === null`, y `handleDappApprove` descarta la aprobación
+5. Desde fuera: "acepté y no pasó nada"
+6. El segundo intento parece funcionar porque es rápido y además se sirve de la caché de sesión
+
+Por eso el fallo era intermitente: depende de cuánto tarde el usuario.
+
+### Arreglo
+
+El popup abre un port `denvault-keepalive` al montarse en modo cola y lo pinguea cada 20s, por debajo del corte de 30s, de modo que el worker vive exactamente lo que viva la ventana que el usuario tiene delante. Background acepta ese port solo desde páginas propias, reutilizando `isOwnExtensionPage`, e ignora cualquier otro nombre de port. 9 tests nuevos.
+
+Es mitigación, no durabilidad: un worker que crashea sigue perdiendo la cola. Lo duradero es persistir la cola en `chrome.storage.session` con `chrome.alarms`, que obliga a reconstruir el closure `respond()` desde el `tabId` guardado. Queda en la lista.
+
+---
+
 ## H10 · Cada página de la extensión se desbloquea por separado
 
 **Severidad:** UX. **Sin arreglar, y no es un bug.**
