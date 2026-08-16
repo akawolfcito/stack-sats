@@ -314,6 +314,86 @@ El harness quedó corregido: `dispatchPopupMessage` envía ahora el sender real 
 
 Ningún test propio lo prueba, porque los escribiría con la premisa ya corregida. La prueba es repetir el camino real: ir al faucet, pulsar Connect, y comprobar que aparece la pantalla de aprobación en lugar del Home.
 
+### Verificado el 2026-08-16
+
+Sale la pantalla de aprobación, con el origen `explorer.hiro.so` y el payload correcto. **H7 cerrado.** Al recorrer el resto de la cadena, que hasta ahora nunca se había ejecutado, aparecieron H8 y H9.
+
+---
+
+## H8 · La respuesta JSON-RPC va envuelta dos veces en modo cola
+
+**Severidad:** CRÍTICA. Descubierta el 2026-08-16 al verificar H7. **Corregida en `d8d3a5f`, pendiente de verificación manual.**
+
+### Evidencia
+
+En la consola de la dApp, tras aprobar:
+
+```
+Error: No STX address found in response
+```
+
+### Causa
+
+Todos los handlers de `utils/stxmethods` devuelven en `Result.data` un envelope JSON-RPC completo:
+
+```js
+{ jsonrpc: "2.0", id, result: { addresses: [...], network: {...} } }
+```
+
+Y `handleDappApprove` (`background.js`) construye su propio envelope alrededor de lo que apruebe el popup:
+
+```js
+activeRequest.respond({ jsonrpc: "2.0", id: activeRequest.id, result: result });
+```
+
+El popup mandaba el envelope entero, así que la dApp recibía `result.result.addresses` donde busca `result.addresses`.
+
+Afecta a **todos los métodos**, no solo a `getAddresses`. El modo URL heredado contesta a la pestaña directamente, sin pasar por background, y siempre estuvo bien. Solo se ve ahora porque hasta `3b49d2c` el popup de cola nunca recibía peticiones.
+
+### Por qué el segundo intento sí conectaba
+
+`Confirmation.vue` cachea el envelope correcto en `approved_<origin>`, y `handleAutoApprove` lo reenvía tal cual por `chrome.tabs.sendMessage`, ruta que el doble envoltorio nunca tocó. O sea: el primer intento fallaba y el segundo se servía de la caché. **Al reprobar hay que recargar la extensión primero**, porque si no la caché tapa el arreglo.
+
+### Arreglo
+
+`toQueueApproveResult()` en `utils/stxmethods/queue.ts` desenvuelve el envelope y lanza si el handler devolvió otra cosa, de modo que una aprobación malformada llegue a la dApp como `-32603` explícito y no como una respuesta ilegible. 5 tests propios más 1 de contrato en `background-queue.test.ts`.
+
+---
+
+## H9 · El canal de mensajes queda colgado y la dApp reporta un error no capturado
+
+**Severidad:** media, ruido en consola. **Corregida en `d8d3a5f`.**
+
+### Evidencia
+
+```
+faucet?chain=testnet:1 Uncaught (in promise) Error: A listener indicated an
+asynchronous response by returning true, but the message channel closed
+before a response was received
+```
+
+### Causa
+
+El listener de dApps hacía `return true` para dejar abierto el canal de `sendResponse`, pero las respuestas vuelven por `chrome.tabs.sendMessage` y `sendResponse` no se llama nunca. Chrome acaba rechazando la promesa de `chrome.runtime.sendMessage` de `content.js`, que no la capturaba, y el fallo asoma en la página de la dApp.
+
+### Arreglo
+
+El listener ya no reclama el canal, y `content.js` captura el rechazo de todas formas, por si el service worker está dormido o reiniciando. 2 tests nuevos.
+
+---
+
+## H10 · Cada página de la extensión se desbloquea por separado
+
+**Severidad:** UX. **Sin arreglar, y no es un bug.**
+
+Observado el 2026-08-16: tras desbloquear con PIN en el popup de aprobación, el side panel seguía mostrando "Welcome Back" con el teclado de PIN.
+
+`SessionManager` guarda `_decryptedMnemonic` en memoria de la página (`utils/security/session.ts:48`). Cada superficie de la extensión (popup de la barra, ventana de aprobación, side panel, pestaña completa) tiene su propia instancia, así que desbloquear en una no desbloquea las demás.
+
+Es una postura de seguridad deliberada: la frase nunca sale de la memoria de la página ni se escribe en storage. Compartirla exigiría tocar `utils/security/*`, que está fuera de límites sin autorización explícita. Queda anotado como coste de UX conocido, no como defecto.
+
+Relacionado: las aprobaciones **siempre** abren una ventana emergente nueva (`ensurePopupOpenOrFocus` usa `chrome.windows.create({ type: "popup" })`). Aunque el side panel esté abierto, la petición no se le entrega. Encaja con H2, que ya recoge que nadie envía nunca `OPEN_SIDEPANEL`.
+
 ---
 
 ## Errores de consola que NO son nuestros
@@ -324,6 +404,8 @@ Del mismo log, para no perseguirlos:
 |---|---|
 | `The resource <URL> was preloaded using link preload but not used` | La dApp (Next.js en Vercel). Sugerencia de rendimiento suya. |
 | `JsonRpcError: User canceled the request` en `handleCloseModal` | `@stacks/connect`. Es lo que emite al cerrar el modal. Comportamiento esperado al cancelar, aunque lo loguee como error. |
+
+El de `A listener indicated an asynchronous response...` **sí era nuestro**. Ver H9.
 
 ---
 
