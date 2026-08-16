@@ -77,11 +77,12 @@ import ActivityList, { type ActivityItem } from "../components/activity/Activity
 import ListGroup from "../components/list/ListGroup.vue";
 import ListRow from "../components/list/ListRow.vue";
 import { useUiMode } from "../composables/useUiMode";
+import { openSidePanel } from "@/composables/useSidePanel";
 
 const router = useRouter();
 
 // UI Mode detection
-const { isPopup } = useUiMode();
+const { isPopup, isSidePanel } = useUiMode();
 
 // Tab state for navigation (unified for popup and panel)
 const activeTab = ref<'assets' | 'activity'>('assets');
@@ -519,6 +520,23 @@ const handleActionClick = (key: string) => {
   else if (key === 'receive') openReceiveModal();
 };
 
+/**
+ * Open the wallet in Chrome's side panel.
+ *
+ * More than a convenience: a panel open in the same window as a dApp is
+ * where background delivers the approval, and it is usually already
+ * unlocked. Until now the only way to open it was Chrome's extensions
+ * menu, which no one finds.
+ */
+const handleOpenSidePanel = async () => {
+  const outcome = await openSidePanel();
+  // The toolbar popup cannot survive the panel taking focus, and leaving
+  // two copies of the wallet on screen is confusing anyway.
+  if (outcome === "sidepanel" && isPopup.value) {
+    window.close();
+  }
+};
+
 // Open wallet in full-page tab (only in extension context)
 const openFullPage = () => {
   if (typeof chrome !== "undefined" && chrome.runtime?.getURL && chrome.tabs?.create) {
@@ -641,6 +659,20 @@ const handleManageAccounts = () => {
                 :label="NETWORKS[selectedNetwork].name"
                 @select="handleNetworkSelect"
               />
+
+              <!-- Side panel entry: hidden when this already is the panel -->
+              <Button
+                v-if="!isSidePanel"
+                variant="icon"
+                data-roi="home-sidepanel"
+                title="Open in side panel"
+                @click="handleOpenSidePanel"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <line x1="15" y1="3" x2="15" y2="21"/>
+                </svg>
+              </Button>
 
               <!-- Fullpage Button (V28) -->
               <Button variant="icon" @click="openFullPage" title="Open in full page">

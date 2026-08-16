@@ -1,0 +1,113 @@
+/**
+ * The side panel entry point, against the real loaded extension.
+ *
+ * The panel is where background delivers a dApp approval when it shares a
+ * window with the requesting tab, and it is usually already unlocked. That
+ * only helps if the user can open it: until this button existed the sole
+ * way in was Chrome's own extensions menu.
+ *
+ * Playwright does not expose a side panel as a page, so the assertion is
+ * on the call: that chrome.sidePanel.open() runs with the right window and
+ * that Chrome accepts the gesture, which is what fails when the call is
+ * moved out of the click handler. The fallback path is covered by
+ * src/composables/useSidePanel.test.ts.
+ */
+
+import type { Page } from "@playwright/test";
+import { test, expect } from "./fixtures";
+import { TEST_PIN, importTestWalletThroughUi } from "../helpers/wallet-setup";
+
+interface SidePanelCall {
+  method: "setOptions" | "open";
+  args: { path?: string; enabled?: boolean; windowId?: number };
+  rejected?: string;
+}
+
+/** Record what the page asks of chrome.sidePanel, without blocking it. */
+async function recordSidePanelCalls(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const scope = window as unknown as { __sidePanelCalls: unknown[] };
+    scope.__sidePanelCalls = [];
+
+    const track = (method: string, original: (arg: unknown) => Promise<unknown>) => {
+      return async (arg: unknown) => {
+        const entry: Record<string, unknown> = { method, args: arg };
+        scope.__sidePanelCalls.push(entry);
+        try {
+          return await original(arg);
+        } catch (error) {
+          entry.rejected = String(error);
+          throw error;
+        }
+      };
+    };
+
+    const api = chrome.sidePanel as unknown as Record<string, unknown>;
+    api.setOptions = track("setOptions", (api.setOptions as never));
+    api.open = track("open", (api.open as never));
+  });
+}
+
+test("the Home header opens the wallet in the side panel", async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/index.html`);
+  await expect(page.locator('[data-roi="start-hero"]')).toBeVisible({
+    timeout: 20000,
+  });
+  await importTestWalletThroughUi(page);
+  await expect(page.locator('[data-roi="home-screen"]')).toBeVisible({
+    timeout: 20000,
+  });
+
+  await recordSidePanelCalls(page);
+
+  const entry = page.locator('[data-roi="home-sidepanel"]');
+  await expect(entry).toBeVisible();
+  await entry.click();
+
+  const calls = await page.waitForFunction(() => {
+    const scope = window as unknown as { __sidePanelCalls: unknown[] };
+    return scope.__sidePanelCalls.length >= 2 ? scope.__sidePanelCalls : null;
+  });
+  const recorded = (await calls.jsonValue()) as SidePanelCall[];
+
+  const setOptions = recorded.find((call) => call.method === "setOptions");
+  expect(setOptions?.args.enabled).toBe(true);
+  expect(setOptions?.args.path).toBe("index.html?view=sidepanel");
+
+  const open = recorded.find((call) => call.method === "open");
+  expect(typeof open?.args.windowId).toBe("number");
+  // Chrome refuses this outside a user gesture. Moving the call behind a
+  // message to the service worker is exactly how that gesture gets lost.
+  expect(open?.rejected).toBeUndefined();
+});
+
+test("the panel does not offer to open itself", async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/index.html`);
+  await expect(page.locator('[data-roi="start-hero"]')).toBeVisible({
+    timeout: 20000,
+  });
+  await importTestWalletThroughUi(page);
+
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extensionId}/index.html?view=sidepanel`);
+
+  const pinInput = panel.locator('[data-roi="pin-input"]').first();
+  await expect(pinInput).toBeVisible({ timeout: 20000 });
+  await pinInput.focus();
+  for (const digit of TEST_PIN) {
+    await panel.keyboard.press(digit);
+  }
+
+  await expect(panel.locator('[data-roi="home-screen"]')).toBeVisible({
+    timeout: 20000,
+  });
+  await expect(panel.locator('[data-roi="home-sidepanel"]')).toHaveCount(0);
+});
