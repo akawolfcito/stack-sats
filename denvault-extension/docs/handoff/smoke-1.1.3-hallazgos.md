@@ -382,6 +382,57 @@ El listener ya no reclama el canal, y `content.js` captura el rechazo de todas f
 
 ---
 
+## H13 · `No STX address found in response` es un bug del explorador de Hiro
+
+**Severidad:** ninguna para nosotros. **Cerrado el 2026-08-16, sin cambios en nuestro código.**
+
+Ese error acompañaba a **toda** conexión, incluso a las que funcionaban y pintaban la dirección. Persistía después de arreglar H8, y también en la ruta de auto-aprobación por caché, que nunca tuvo el doble envoltorio.
+
+### Lo que devolvemos, verificado en la página
+
+```json
+{ "id": "e881f5a5…", "jsonrpc": "2.0",
+  "result": { "addresses": [
+      { "address": "mw7qXcn8…", "symbol": "BTC", "publicKey": "03df55ab…" },
+      { "address": "tb1p0lh8…", "symbol": "BTC", "publicKey": "03df55ab…" },
+      { "address": "ST2NJ5K0…", "symbol": "STX", "publicKey": "03df55ab…" } ],
+    "network": { "name": "testnet", "chainId": 2147483648, … } } }
+```
+
+Correcto según el contrato de `@stacks/connect`, que en `dist/index.js` hace:
+
+```js
+let n = await e.request(t, s);
+if (!n) throw new x("Provider did not return a response", -31000);
+if ("error" in n) throw x.fromResponse(n.error);
+return n.result;
+```
+
+O sea, la librería espera el envelope y extrae `.result`. `injection.js` resuelve el envelope, que es lo correcto.
+
+### El bug, en su bundle
+
+De `explorer.hiro.so/_next/static/chunks/3171-f557f27ba8e520e7.js`, deminificado:
+
+```js
+const t = await connect();
+if (t?.addresses && t.addresses.length > 0) {
+  const r = t.addresses.find(e =>
+    ("symbol" in e && e.symbol === "STX") || ("addressType" in e && e.addressType === "stacks")
+  );
+  throw (
+    r && (localStorage.setItem(p, h.url), dispatch(setUserData({ stxAddress: r.address, … }))),
+    Error("No STX address found in response")
+  );
+}
+```
+
+El `throw` es una expresión coma. Cuando **sí** encuentra la dirección STX, ejecuta el camino de éxito (guarda en localStorage y despacha el estado) y **lanza el error a continuación, sin condición**. Les falta un `return` o un `else`. Lo capturan y lo reportan como `warning` bajo `sandbox-connect-wallet`.
+
+Le ocurre con cualquier wallet, no solo con la nuestra. Nada que arreglar de nuestro lado.
+
+---
+
 ## H11 · El service worker se muere mientras el usuario teclea el PIN
 
 **Severidad:** CRÍTICA. Descubierta el 2026-08-16 al verificar H8. **Corregida en `dc6825d`, pendiente de verificación manual.**
@@ -446,6 +497,8 @@ Del mismo log, para no perseguirlos:
 | `JsonRpcError: User canceled the request` en `handleCloseModal` | `@stacks/connect`. Es lo que emite al cerrar el modal. Comportamiento esperado al cancelar, aunque lo loguee como error. |
 
 El de `A listener indicated an asynchronous response...` **sí era nuestro**. Ver H9.
+
+| `Error: No STX address found in response` | El explorador de Hiro. Lanza el error incluso cuando encuentra la dirección. Ver H13. |
 
 ---
 
