@@ -59,26 +59,34 @@ export async function fetchBtcAddressInfo(
     });
 
     if (!response.ok) {
-      // 400 means address not found or invalid - return empty balance
-      if (response.status === 400) {
+      // An address the indexer has never seen is an answer: it is empty.
+      // Blockstream replies 200 with zeroed stats, mempool.space replies
+      // 400, so both shapes end up here as "nothing to report".
+      if (response.status === 400 || response.status === 404) {
         secureLog('BTC address not found (new address)', { address: address.slice(0, 8) + '...' });
         return null;
       }
-      secureLog('BTC balance fetch failed', { status: response.status, address: address.slice(0, 8) + '...' });
-      return null;
+      throw new Error(`Bitcoin API answered ${response.status}`);
     }
 
     const data = await response.json();
     secureLog('BTC balance fetched', { address: address.slice(0, 8) + '...' });
     return data as BtcAddressInfo;
   } catch (error) {
+    // Deliberately not swallowed. Returning zero here is what made an
+    // unreachable network look exactly like an empty wallet, and a wallet
+    // must not state a balance it does not know.
     secureLog('BTC balance fetch error', { error: String(error) });
-    return null;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
 /**
- * Fetch Bitcoin balance for an address
+ * Fetch the Bitcoin balance of an address.
+ *
+ * @throws when the balance could not be read. An empty address resolves to
+ * zero; an unreachable indexer does not, because those two are not the
+ * same thing and the UI has to say which one it is.
  */
 export async function fetchBtcBalance(
   address: string,

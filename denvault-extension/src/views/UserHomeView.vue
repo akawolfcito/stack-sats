@@ -119,6 +119,12 @@ const stxPriceUsd = ref(0);
 // BTC Balance state
 const btcBalance = ref<BtcBalance>({ confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 });
 const isLoadingBtcBalance = ref(false);
+/**
+ * True when the Bitcoin indexer could not be reached. Kept apart from the
+ * balance itself: reporting zero for an unknown balance is the wallet
+ * telling the user something it does not know.
+ */
+const isBtcBalanceUnknown = ref(false);
 
 // Account count state
 const accountCount = ref(DEFAULT_ACCOUNT_COUNT);
@@ -234,7 +240,7 @@ const handleAccountSelect = (index: number) => {
 // wallet had never looked for.
 const assetBalanceText: Record<string, () => string> = {
   stx: () => shortBalance.value,
-  btc: () => formatBtcBalance(btcBalance.value.total),
+  btc: () => (isBtcBalanceUnknown.value ? 'Unavailable' : formatBtcBalance(btcBalance.value.total)),
 };
 
 const assetItems = computed<AssetRowModel[]>(() => {
@@ -388,8 +394,11 @@ async function loadBtcBalance() {
   try {
     const balance = await fetchCombinedBtcBalance(addresses, selectedNetwork.value);
     btcBalance.value = balance;
+    isBtcBalanceUnknown.value = false;
     secureLog("BTC balance loaded", { total: balance.total });
   } catch (error) {
+    // Say so, rather than leaving the last figure or a zero on screen.
+    isBtcBalanceUnknown.value = true;
     secureLog("Failed to load BTC balance", error);
   }
   isLoadingBtcBalance.value = false;

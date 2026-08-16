@@ -153,16 +153,26 @@ describe('Bitcoin balance utilities', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null on other error status', async () => {
-      mockFetchError(500);
+    it('should return null on 404 (address never seen)', async () => {
+      mockFetchError(404);
       const result = await fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet');
       expect(result).toBeNull();
     });
 
-    it('should return null on network error', async () => {
+    it('throws when every host answers with a server error', async () => {
+      mockFetchError(500);
+      // Returning null here is what made an outage look like an empty
+      // address: the caller had no way to tell the two apart.
+      await expect(
+        fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet')
+      ).rejects.toThrow();
+    });
+
+    it('throws on a network error', async () => {
       mockFetchReject('ECONNREFUSED');
-      const result = await fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet');
-      expect(result).toBeNull();
+      await expect(
+        fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet')
+      ).rejects.toThrow(/ECONNREFUSED|could be reached/i);
     });
 
     it('should use testnet URL for devnet', async () => {
@@ -181,6 +191,39 @@ describe('Bitcoin balance utilities', () => {
         expect.stringMatching(/blockstream\.info\/api\/address/),
         expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
+    });
+  });
+
+  describe('fetchBtcBalance: unknown is not zero', () => {
+    it('reports zero for an address the indexer has never seen', async () => {
+      mockFetchError(404);
+
+      const balance = await fetchBtcBalance(FAKE_ADDRESS, 'testnet');
+
+      expect(balance).toEqual({
+        confirmed: 0,
+        unconfirmed: 0,
+        total: 0,
+        txCount: 0,
+      });
+    });
+
+    it('refuses to report zero when it could not read the balance', async () => {
+      mockFetchReject('ECONNREFUSED');
+
+      // A wallet must not state a balance it does not know. The UI turns
+      // this rejection into "Unavailable" instead of a figure.
+      await expect(
+        fetchBtcBalance(FAKE_ADDRESS, 'testnet')
+      ).rejects.toThrow();
+    });
+
+    it('makes a combined balance unknown when either address fails', async () => {
+      mockFetchReject('ECONNREFUSED');
+
+      await expect(
+        fetchCombinedBtcBalance([FAKE_ADDRESS, FAKE_ADDRESS], 'testnet')
+      ).rejects.toThrow();
     });
   });
 
@@ -255,17 +298,20 @@ describe('Bitcoin balance utilities', () => {
       expect(result.txCount).toBe(12);
     });
 
-    it('should handle one address failing (returns zeros for that address)', async () => {
+    it('is unknown when one of the addresses cannot be read', async () => {
       const info1 = makeAddressInfo();
 
-      global.fetch = vi.fn()
+      global.fetch = vi
+        .fn()
         .mockResolvedValueOnce({ ok: true, json: async () => info1 })
-        .mockRejectedValueOnce(new Error('Network error'));
+        .mockRejectedValue(new Error('Network error'));
 
-      const result = await fetchCombinedBtcBalance([FAKE_ADDRESS, FAKE_ADDRESS_2], 'testnet');
-      // addr1: confirmed=300k, addr2: 0 (error)
-      expect(result.confirmed).toBe(300_000);
-      expect(result.total).toBe(350_000);
+      // This used to add zero for the unreadable address and report the
+      // sum as if it were the whole balance: a figure lower than reality,
+      // presented with the same confidence as a real one.
+      await expect(
+        fetchCombinedBtcBalance([FAKE_ADDRESS, FAKE_ADDRESS_2], 'testnet')
+      ).rejects.toThrow();
     });
 
     it('should handle empty address list', async () => {

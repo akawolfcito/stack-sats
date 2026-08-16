@@ -18,6 +18,7 @@ import ScreenShell from '@/components/layout/ScreenShell.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import { Button, TextField, InlineAction } from '@/components/ui';
 import { sessionManager } from '@/utils/security/session';
+import { secureLog } from '@/utils/security/logger';
 import { generateInitialAccounts, getBtcKeyPair } from '@/utils/accounts';
 import { getAccountCount } from '@/utils/accounts/settings';
 import { getActiveAccountIndex } from '@/utils/accounts/active';
@@ -74,6 +75,9 @@ const accountIndex = ref(0);
 // Balance state
 const btcBalance = ref<BtcBalance>({ confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 });
 const isLoadingBalance = ref(false);
+/** The indexer did not answer: the balance is unknown, not zero. */
+const isBtcBalanceUnknown = ref(false);
+const balanceError = ref('');
 
 // UTXO state
 const utxos = ref<{ address: string; utxos: UTXO[] }[]>([]);
@@ -145,12 +149,15 @@ const canContinue = computed(() => {
     amount.value.trim() &&
     !recipientError.value &&
     !amountError.value &&
+    // Never let a send proceed on a balance nobody could read.
+    !isBtcBalanceUnknown.value &&
     totalAvailableSats.value >= totalSats.value
   );
 });
 
 const hasZeroBalance = computed(() => {
-  return btcBalance.value.total <= 0;
+  // Unknown is not zero: the screen says so separately.
+  return !isBtcBalanceUnknown.value && btcBalance.value.total <= 0;
 });
 
 const hasInsufficientBalance = computed(() => {
@@ -253,8 +260,14 @@ async function loadBalance() {
 
     const result = await fetchCombinedBtcBalance(addresses, network.value);
     btcBalance.value = result;
-  } catch {
-    btcBalance.value = { confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 };
+    isBtcBalanceUnknown.value = false;
+  } catch (error) {
+    // Sending against a balance nobody could read is how a user ends up
+    // signing a transaction that cannot be funded. Say it and block.
+    isBtcBalanceUnknown.value = true;
+    balanceError.value =
+      'Could not reach the Bitcoin network to read your balance. Try again in a moment.';
+    secureLog('Failed to load BTC balance', error);
   }
   isLoadingBalance.value = false;
 }
@@ -487,6 +500,12 @@ async function handlePinComplete(pin: string) {
             <span class="balance-label">AVAILABLE</span>
           </div>
         </div>
+      </div>
+
+      <!-- Unknown balance: the network did not answer -->
+      <div v-if="isBtcBalanceUnknown" class="zero-balance-notice" data-roi="send-btc-balance-unknown">
+        <span class="notice-icon">!</span>
+        <span class="notice-text">{{ balanceError }}</span>
       </div>
 
       <!-- Zero balance warning -->
