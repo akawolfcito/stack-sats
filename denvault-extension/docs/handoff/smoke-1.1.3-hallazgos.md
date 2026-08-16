@@ -382,6 +382,20 @@ El listener ya no reclama el canal, y `content.js` captura el rechazo de todas f
 
 ---
 
+## H14 · La tarjeta de revisión se aplasta y `View full data` parece vacío
+
+**Severidad:** UX en pantalla de confianza. **Corregida en `e9170b4`.**
+
+Al desplegar `View full data` no se veía nada. El DOM sí tenía el contenido: `document.querySelector('[data-roi="confirm-details-panel"]').textContent` devolvía 98 caracteres con el payload correcto. O sea, no era un fallo de datos ni de la ruta canónica.
+
+`.confirm-content` es un flex column, y `.raw-details` lleva `overflow: hidden`, lo que fija el tamaño mínimo automático de ese ítem en cero. Con `flex-shrink` en su valor por defecto, la tarjeta era lo primero que cedía cuando el contenido no cabía: el `summary` quedaba en una línea de un pixel y el `<pre>`, presente y con su texto, se renderizaba con altura cero.
+
+Playwright lo delató de otra forma: al pulsar el `summary`, los elementos vecinos interceptaban el click.
+
+Arreglo: `flex-shrink: 0` en `.raw-details`. Ningún golden cubre esta pantalla, así que no se movió ninguna captura.
+
+---
+
 ## H13 · `No STX address found in response` es un bug del explorador de Hiro
 
 **Severidad:** ninguna para nosotros. **Cerrado el 2026-08-16, sin cambios en nuestro código.**
