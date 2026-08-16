@@ -745,6 +745,12 @@ function handleReject(reason?: string) {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
+  /* .confirm-content is a flex column, and `overflow: hidden` sets this
+     item's automatic minimum size to zero. Without this the card was the
+     one that gave way whenever the content did not fit: the summary
+     flattened to a hairline and the payload, present in the DOM with its
+     text, rendered at zero height. The panel looked empty. */
+  flex-shrink: 0;
 }
 
 .raw-details summary {
