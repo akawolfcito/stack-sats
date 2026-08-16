@@ -85,6 +85,57 @@ test("the Home header opens the wallet in the side panel", async ({
   expect(open?.rejected).toBeUndefined();
 });
 
+test("the Home header copies the address on screen", async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/index.html`);
+  await expect(page.locator('[data-roi="start-hero"]')).toBeVisible({
+    timeout: 20000,
+  });
+  await importTestWalletThroughUi(page);
+  await expect(page.locator('[data-roi="home-screen"]')).toBeVisible({
+    timeout: 20000,
+  });
+
+  const shown = await page
+    .locator('[data-roi="acctsw-trigger"]')
+    .innerText();
+
+  // Chrome refuses clipboard permissions on a chrome-extension:// origin,
+  // which is an opaque origin, so the write is recorded instead of read
+  // back. What matters here is the value the wallet hands over.
+  await page.evaluate(() => {
+    const scope = window as unknown as { __copied?: string };
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          scope.__copied = text;
+        },
+      },
+    });
+  });
+
+  await page.locator('[data-roi="home-copy-address"]').click();
+
+  const clipboard = await page.evaluate(
+    () => (window as unknown as { __copied?: string }).__copied ?? ""
+  );
+  expect(clipboard).toMatch(/^ST[0-9A-Z]{38,}$/);
+
+  // The header shows a truncated form of the same address, so the copy
+  // cannot be of some other account.
+  const [head] = shown.match(/ST[0-9A-Z]{4,}/) ?? [];
+  expect(clipboard.startsWith(head ?? "never")).toBe(true);
+
+  // Feedback, so the user knows it happened.
+  await expect(
+    page.locator('[data-roi="home-copy-address"]')
+  ).toHaveAttribute("title", "Copied");
+});
+
 test("the panel does not offer to open itself", async ({
   context,
   extensionId,

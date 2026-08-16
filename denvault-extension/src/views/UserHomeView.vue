@@ -172,6 +172,35 @@ const currentAccountName = computed(() => {
 });
 
 // Current account address (short)
+/** Full address of the account on screen, for the copy button. */
+const currentStxAddress = computed(
+  () => userAccounts.value[accountIndexToDisplay.value]?.stxAddress ?? ''
+);
+
+const addressCopied = ref(false);
+
+/**
+ * Copy the address shown in the header.
+ *
+ * The most repeated action in a wallet used to live two taps away, inside
+ * the Receive screen, with no affordance where the user is actually
+ * looking at their address.
+ */
+async function copyCurrentAddress() {
+  const address = currentStxAddress.value;
+  if (!address) return;
+
+  try {
+    await navigator.clipboard.writeText(address);
+    addressCopied.value = true;
+    setTimeout(() => {
+      addressCopied.value = false;
+    }, 2000);
+  } catch (error) {
+    secureLog('Failed to copy address', error);
+  }
+}
+
 const currentAccountAddressShort = computed(() => {
   const address = userAccounts.value[accountIndexToDisplay.value]?.stxAddress || '';
   return truncateAddress(address);
@@ -649,6 +678,23 @@ const handleManageAccounts = () => {
               @add-account="handleAddAccount"
               @manage="handleManageAccounts"
             />
+
+            <!-- Copy the address on screen, without a detour through Receive -->
+            <Button
+              variant="icon"
+              data-roi="home-copy-address"
+              :title="addressCopied ? 'Copied' : 'Copy address'"
+              :aria-label="addressCopied ? 'Address copied' : 'Copy address'"
+              @click="copyCurrentAddress"
+            >
+              <svg v-if="addressCopied" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </Button>
 
             <!-- Header Right Actions -->
             <div class="header-actions">
