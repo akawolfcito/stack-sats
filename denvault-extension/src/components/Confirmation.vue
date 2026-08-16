@@ -22,6 +22,7 @@ import {
   handleSignStructuredData,
   handleDeployContract,
 } from "../utils/stxmethods";
+import { toQueueApproveResult } from "@/utils/stxmethods/queue";
 import type { JsonRpcRequest, Result } from "@/utils/types";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
@@ -235,8 +236,9 @@ const showAccountSelector = computed(() => {
 
 secureLog("Incoming request", { method: props.payload.method, tabId: props.tabId, queueMode: props.isQueueMode });
 
-// Queue mode: send response via background message
-function sendQueueApprove(result: object) {
+// Queue mode: send response via background message. `result` is the inner
+// JSON-RPC result, never a full envelope: background adds the envelope.
+function sendQueueApprove(result: unknown) {
   chrome.runtime.sendMessage({
     type: "DAPP_APPROVE",
     id: props.requestId,
@@ -375,7 +377,9 @@ async function handleConfirm() {
     if (result.status === "COMPLETE") {
       // Send response based on mode
       if (props.isQueueMode) {
-        sendQueueApprove(result.data);
+        // Background wraps this in its own JSON-RPC envelope, so only the
+        // inner result travels. See toQueueApproveResult.
+        sendQueueApprove(toQueueApproveResult(result.data));
       } else {
         await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
       }

@@ -638,7 +638,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Check if this is an auto-approvable method with cached response
   if (AUTO_APPROVE_METHODS.includes(method)) {
     handleAutoApprove(message, sender, originUrl);
-    return true; // Keep channel open for async response
+    // No return true: the answer travels back through
+    // chrome.tabs.sendMessage, so claiming the sendResponse channel would
+    // only leave content.js waiting for a reply that never arrives.
+    return;
   }
 
   // Create request context and enqueue
@@ -664,7 +667,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   };
 
   enqueueRequest(ctx);
-  return true; // Keep channel open for async response
+  // Same as above: ctx.respond() answers through chrome.tabs.sendMessage.
+  return;
 });
 
 /**

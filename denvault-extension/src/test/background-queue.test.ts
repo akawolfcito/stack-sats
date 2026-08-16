@@ -349,6 +349,38 @@ describe("background queue: canonical params + explicit mismatch", () => {
       });
     });
 
+    it("delivers addresses one level deep, the way the dApp reads them", async () => {
+      const { sender } = await dispatchDappRequest(harness, {
+        id: "req-shape",
+        method: "getAddresses",
+        params: {},
+      });
+      dispatchPopupMessage(harness, { type: "UI_READY" });
+      harness.tabsSendMessage.mockClear();
+
+      // What the popup sends after toQueueApproveResult unwraps the
+      // handler's envelope. Sending the envelope itself would nest it.
+      dispatchPopupMessage(harness, {
+        type: "DAPP_APPROVE",
+        id: "req-shape",
+        result: {
+          addresses: [{ symbol: "STX", address: "ST_SHAPE", publicKey: "pk" }],
+          network: { name: "testnet", chainId: 2147483648 },
+        },
+      });
+
+      const [tabId, body] = harness.tabsSendMessage.mock.calls[0];
+      expect(tabId).toBe(sender.tab.id);
+      const envelope = body as { result: Record<string, unknown> };
+      // @stacks/connect reads response.result.addresses and throws
+      // "No STX address found in response" when it is not there.
+      expect(envelope.result.addresses).toEqual([
+        { symbol: "STX", address: "ST_SHAPE", publicKey: "pk" },
+      ]);
+      expect(envelope.result).not.toHaveProperty("result");
+      expect(envelope.result).not.toHaveProperty("jsonrpc");
+    });
+
     it("rejects double approve (request already resolved)", async () => {
       await dispatchDappRequest(harness, { id: "req-once" });
       dispatchPopupMessage(harness, { type: "UI_READY" });
@@ -520,6 +552,40 @@ describe("background queue: canonical params + explicit mismatch", () => {
           "Origin not allowed"
       );
       expect(rejectedByOrigin).toBe(false);
+    });
+
+    it("does not hold the page's message channel open", () => {
+      // Responses travel back through chrome.tabs.sendMessage, never
+      // through sendResponse. Returning true would make Chrome wait for a
+      // reply that never comes and reject content.js's sendMessage promise
+      // with "message channel closed before a response was received",
+      // which surfaces as an uncaught error on the dApp page.
+      const contentListener = harness.messageListeners[1];
+
+      const returned = contentListener(
+        {
+          jsonrpc: "2.0",
+          id: "rpc-channel",
+          method: "stx_transferStx",
+          params: { recipient: "ST123", amount: "1" },
+        },
+        { tab: { id: 42 }, origin: "https://app.example.com", id: EXTENSION_ID },
+        () => undefined
+      );
+
+      expect(returned).not.toBe(true);
+    });
+
+    it("does not hold the channel open for auto-approved methods either", () => {
+      const contentListener = harness.messageListeners[1];
+
+      const returned = contentListener(
+        { jsonrpc: "2.0", id: "rpc-addr", method: "getAddresses", params: {} },
+        { tab: { id: 42 }, origin: "https://app.example.com", id: EXTENSION_ID },
+        () => undefined
+      );
+
+      expect(returned).not.toBe(true);
     });
 
     it("still rejects an unlisted origin that fakes an extension URL", () => {

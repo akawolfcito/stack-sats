@@ -54,8 +54,13 @@ document.addEventListener("stackswallet_request", (event) => {
     return;
   }
 
-  // Forward to background script
-  chrome.runtime.sendMessage(event.detail);
+  // Forward to background script. The real answer comes back through the
+  // onMessage listener below, not through this promise, so swallow its
+  // rejection: an asleep or restarting service worker would otherwise
+  // surface as an uncaught error on the dApp's page.
+  chrome.runtime.sendMessage(event.detail).catch((err) => {
+    console.warn("[StacksWallet] Failed to reach background:", err?.message);
+  });
 });
 
 /**
