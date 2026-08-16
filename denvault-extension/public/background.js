@@ -130,30 +130,50 @@ async function dispatchNext() {
     return; // Nothing to process
   }
 
-  activeRequest = requestQueue.shift();
-  logQueue("Dispatching:", activeRequest.id, activeRequest.method);
+  // Held in a local because preparing the surface is asynchronous, and a
+  // decision can land in the meantime: clearActive() sets activeRequest to
+  // null, and everything below would then be reading from nothing.
+  const request = requestQueue.shift();
+  activeRequest = request;
+  logQueue("Dispatching:", request.id, request.method);
 
-  // Ensure single popup is open
-  await ensurePopupOpenOrFocus();
+  // Prefer a side panel the user already has open in the same window: it
+  // is on screen, and its session may already be unlocked, so the request
+  // does not spend the dApp's patience on a PIN. Everything else keeps
+  // getting the popup window.
+  const requestWindowId = await windowIdForTab(request.tabId);
+  if (hasSidePanelInWindow(requestWindowId)) {
+    logQueue("Delivering to the side panel in window", requestWindowId);
+    // The panel is connected and listening, which is what uiReady stands
+    // for. Nothing is going to send UI_READY on its behalf.
+    uiReady = true;
+  } else {
+    await ensurePopupOpenOrFocus();
+  }
+
+  if (activeRequest !== request) {
+    logQueue("Request resolved while its surface was being prepared:", request.id);
+    return;
+  }
 
   // Send request to UI
   sendToUI({
     type: "DAPP_REQUEST",
     payload: {
-      id: activeRequest.id,
-      method: activeRequest.method,
-      params: activeRequest.params,
-      origin: activeRequest.origin,
+      id: request.id,
+      method: request.method,
+      params: request.params,
+      origin: request.origin,
     },
   });
 
   // Start timeout timer (55s < injection's 60s)
   activeTimeoutId = setTimeout(() => {
-    if (activeRequest !== null) {
-      console.warn("[StacksWallet] Request timed out:", activeRequest.id);
-      activeRequest.respond({
+    if (activeRequest === request) {
+      console.warn("[StacksWallet] Request timed out:", request.id);
+      request.respond({
         jsonrpc: "2.0",
-        id: activeRequest.id,
+        id: request.id,
         error: {
           code: -32002,
           message: "Request timed out",
@@ -334,12 +354,69 @@ chrome.runtime.onConnect.addListener((port) => {
   }
 
   logQueue("Keepalive port connected");
-  // Receiving is the point; the payload is irrelevant.
-  port.onMessage.addListener(() => {});
+
+  // Receiving is what resets the idle timer, so the payload only matters
+  // for the one message that declares which surface this is.
+  port.onMessage.addListener((message) => {
+    if (message?.type !== "SURFACE_HELLO") {
+      return;
+    }
+    openSurfaces.set(port, {
+      surface: message.surface,
+      windowId: message.windowId ?? null,
+    });
+    logQueue("Surface announced:", message.surface, message.windowId);
+  });
+
   port.onDisconnect.addListener(() => {
+    openSurfaces.delete(port);
     logQueue("Keepalive port disconnected");
   });
 });
+
+/**
+ * Surfaces currently on screen, keyed by their keepalive port.
+ *
+ * @type {Map<chrome.runtime.Port, {surface: string, windowId: number|null}>}
+ */
+const openSurfaces = new Map();
+
+/**
+ * Is a side panel open in this window?
+ *
+ * Only the same window counts. A panel open somewhere else would put the
+ * approval on a screen the user is not looking at, which is worse than a
+ * popup in front of them.
+ *
+ * @param {number|null} windowId
+ * @returns {boolean}
+ */
+function hasSidePanelInWindow(windowId) {
+  if (windowId === null || windowId === undefined) {
+    return false;
+  }
+  for (const entry of openSurfaces.values()) {
+    if (entry.surface === "sidepanel" && entry.windowId === windowId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Which window hosts the tab that made the request.
+ *
+ * @param {number} tabId
+ * @returns {Promise<number|null>}
+ */
+async function windowIdForTab(tabId) {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    return tab?.windowId ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Listen for messages from UI (popup)
@@ -372,6 +449,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // before signing. Background is the single source of truth.
       handleGetActiveRequest(message.requestId, sendResponse);
       return true; // Keep channel open for async sendResponse
+
+    case "GET_PENDING_REQUEST":
+      // Lets a surface the user opened themselves pick up a request that
+      // is already in flight, instead of greeting them with Home.
+      sendResponse(
+        activeRequest
+          ? {
+              ok: true,
+              request: {
+                id: activeRequest.id,
+                method: activeRequest.method,
+                params: activeRequest.params,
+                origin: activeRequest.origin,
+              },
+            }
+          : { ok: false, request: null }
+      );
+      return true;
 
     case "GET_QUEUE_STATUS":
       sendResponse(getQueueStatus());

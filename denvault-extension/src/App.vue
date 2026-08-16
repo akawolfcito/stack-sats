@@ -22,10 +22,22 @@ const hasWallet = ref(false);
 const isLocked = ref(true);
 const isInitializing = ref(true);
 
-// Queue mode state
-const isQueueMode = ref(false);
+// The dedicated approval window background opens (index.html?mode=queue).
+const isQueueWindow = ref(false);
+// The side panel (index.html?view=sidepanel), a surface the user keeps open.
+const isSidePanel = ref(false);
+// True once a request arrives from the background queue, whatever the
+// surface. It selects the queue protocol for the reply.
+const isQueueDelivery = ref(false);
 
-// Set in queue mode only: closes the keepalive port when this window goes.
+/**
+ * Dismiss the approval instead of closing the window when this surface
+ * belongs to the user, not to the request. Closing the side panel or the
+ * toolbar popup would take the whole wallet off screen.
+ */
+const dismissOnly = computed(() => isQueueDelivery.value && !isQueueWindow.value);
+
+// Closes the keepalive port when this surface goes.
 let stopKeepalive: (() => void) | null = null;
 const currentRequestId = ref<string>("");
 
@@ -61,6 +73,7 @@ watch(
 // Handle DAPP_REQUEST messages from background (queue mode)
 function handleDappRequest(request: { id: string; method: string; params: unknown; origin: string }) {
   secureLog("Received DAPP_REQUEST", { method: request.method });
+  isQueueDelivery.value = true;
   payload.value = {
     jsonrpc: "2.0",
     id: request.id,
@@ -72,10 +85,49 @@ function handleDappRequest(request: { id: string; method: string; params: unknow
   tabId.value = "queue"; // Special marker for queue mode
 }
 
+/**
+ * Ask background whether a request is already waiting for a decision.
+ *
+ * This is the passive half of the routing: background pushes a request to
+ * the queue window or to an open side panel, but a user who opens the
+ * toolbar popup or the panel afterwards should still land on the approval
+ * rather than on Home.
+ */
+async function adoptPendingRequest(): Promise<void> {
+  if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
+
+  try {
+    const response = (await chrome.runtime.sendMessage({
+      type: "GET_PENDING_REQUEST",
+    })) as
+      | { ok: boolean; request: { id: string; method: string; params: unknown; origin: string } | null }
+      | undefined;
+
+    if (!response?.ok || !response.request) return;
+
+    handleDappRequest(response.request);
+    // Hold the worker open while this surface shows the request: the queue
+    // lives in its memory and the user is about to spend time on a PIN.
+    stopKeepalive ??= startBackgroundKeepalive(
+      isSidePanel.value ? "sidepanel" : "queue"
+    );
+  } catch {
+    // No background, or nothing pending. Either way there is nothing to show.
+  }
+}
+
+/** The approval is over: hand the surface back to the wallet UI. */
+function dismissConfirmation(): void {
+  payload.value = undefined;
+  currentRequestId.value = "";
+  origin.value = "";
+  isQueueDelivery.value = false;
+}
+
 // Listen for messages from background (only in extension context)
 if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
   chrome.runtime.onMessage.addListener((message): undefined => {
-    if (message.type === "DAPP_REQUEST" && isQueueMode.value) {
+    if (message.type === "DAPP_REQUEST" && (isQueueWindow.value || isSidePanel.value)) {
       handleDappRequest(message.payload);
     }
     return undefined;
@@ -101,14 +153,30 @@ onBeforeMount(async () => {
 
   const capturedSearchParams = new URLSearchParams(document.location.search);
 
+  isQueueWindow.value = capturedSearchParams.get("mode") === "queue";
+  isSidePanel.value = capturedSearchParams.get("view") === "sidepanel";
+
+  // The side panel stays open across requests, so it announces itself and
+  // background can route an approval to it when it shares the window with
+  // the requesting tab.
+  if (isSidePanel.value) {
+    stopKeepalive = startBackgroundKeepalive("sidepanel");
+  }
+
+  // Any surface the user opens themselves picks up a request already in
+  // flight, instead of greeting them with Home while a dApp waits. The
+  // queue window is told directly and needs no polling.
+  if (!isQueueWindow.value) {
+    await adoptPendingRequest();
+  }
+
   // Check if this is queue mode
-  if (capturedSearchParams.get("mode") === "queue") {
-    isQueueMode.value = true;
+  if (isQueueWindow.value) {
     secureLog("Queue mode enabled, sending UI_READY");
     // Hold the service worker open for as long as this window is. Without
     // it Chrome recycles the worker after ~30s and the queue goes with it,
     // so an approval given after typing a PIN lands nowhere.
-    stopKeepalive = startBackgroundKeepalive();
+    stopKeepalive = startBackgroundKeepalive("queue");
     // Signal to background that UI is ready (only in extension context)
     if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
       chrome.runtime.sendMessage({ type: "UI_READY" });
@@ -177,8 +245,10 @@ onBeforeUnmount(() => {
         :payload="payload"
         :tabId="tabId"
         :origin="origin"
-        :isQueueMode="isQueueMode"
+        :isQueueMode="isQueueDelivery"
+        :dismissOnly="dismissOnly"
         :requestId="currentRequestId"
+        @dismiss="dismissConfirmation"
       />
     </div>
 

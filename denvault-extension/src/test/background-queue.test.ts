@@ -19,6 +19,8 @@ const EXTENSION_ID = "denvault-test";
 const EXTENSION_ORIGIN = `chrome-extension://${EXTENSION_ID}`;
 /** The queue popup window carries a tab id, like any other window. */
 const POPUP_TAB_ID = 7;
+/** Window hosting the dApp tab that makes the requests. */
+const DAPP_WINDOW_ID = 500;
 
 type Listener = (
   message: unknown,
@@ -40,6 +42,7 @@ type ConnectListener = (port: PortMock) => void;
 interface ChromeHarness {
   messageListeners: Listener[];
   connectListeners: ConnectListener[];
+  tabsGet: ReturnType<typeof vi.fn>;
   windowsRemovedListeners: Array<(id: number) => void>;
   tabsSendMessage: ReturnType<typeof vi.fn>;
   runtimeSendMessage: ReturnType<typeof vi.fn>;
@@ -56,6 +59,7 @@ function installChromeMock(): ChromeHarness {
   const tabsSendMessage = vi.fn().mockResolvedValue(undefined);
   const runtimeSendMessage = vi.fn().mockResolvedValue(undefined);
   const windowsCreate = vi.fn().mockResolvedValue({ id: 99 });
+  const tabsGet = vi.fn().mockResolvedValue({ id: 42, windowId: DAPP_WINDOW_ID });
   const storageSessionGet = vi.fn().mockResolvedValue({});
   const storageSessionSet = vi.fn().mockResolvedValue(undefined);
 
@@ -78,6 +82,7 @@ function installChromeMock(): ChromeHarness {
     },
     tabs: {
       sendMessage: tabsSendMessage,
+      get: tabsGet,
       query: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
       remove: vi.fn(),
@@ -111,6 +116,7 @@ function installChromeMock(): ChromeHarness {
   return {
     messageListeners,
     connectListeners,
+    tabsGet,
     windowsRemovedListeners,
     tabsSendMessage,
     runtimeSendMessage,
@@ -582,6 +588,146 @@ describe("background queue: canonical params + explicit mismatch", () => {
 
       expect(port.disconnect).not.toHaveBeenCalled();
       expect(port.onMessage.addListener).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("side panel as the approval surface", () => {
+    function connectSurface(
+      surface: "queue" | "sidepanel",
+      windowId: number | undefined = DAPP_WINDOW_ID
+    ): { port: PortMock; disconnect: () => void } {
+      const port: PortMock = {
+        name: "denvault-keepalive",
+        sender: { origin: EXTENSION_ORIGIN, tab: { id: POPUP_TAB_ID } },
+        postMessage: vi.fn(),
+        disconnect: vi.fn(),
+        onMessage: { addListener: vi.fn() },
+        onDisconnect: { addListener: vi.fn() },
+      };
+
+      harness.connectListeners[0](port);
+
+      const onMessage = port.onMessage.addListener.mock.calls[0]?.[0] as (
+        message: unknown
+      ) => void;
+      onMessage({ type: "SURFACE_HELLO", surface, windowId });
+
+      const onDisconnect = port.onDisconnect.addListener.mock
+        .calls[0]?.[0] as () => void;
+
+      return { port, disconnect: onDisconnect };
+    }
+
+    it("delivers to an open side panel instead of opening a window", async () => {
+      connectSurface("sidepanel");
+
+      await dispatchDappRequest(harness, { id: "req-panel" });
+
+      // The panel is already on screen, and often already unlocked. Opening
+      // a second window on top of it is the behaviour being replaced.
+      expect(harness.windowsCreate).not.toHaveBeenCalled();
+      expect(harness.runtimeSendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "DAPP_REQUEST",
+          payload: expect.objectContaining({ id: "req-panel" }),
+        })
+      );
+    });
+
+    it("opens the window when the panel sits in another window", async () => {
+      connectSurface("sidepanel", DAPP_WINDOW_ID + 1);
+
+      await dispatchDappRequest(harness, { id: "req-elsewhere" });
+
+      // Routing there would put the approval on a screen the user is not
+      // looking at, which is worse than a popup in front of them.
+      expect(harness.windowsCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("opens the window when no side panel is connected", async () => {
+      await dispatchDappRequest(harness, { id: "req-nopanel" });
+
+      expect(harness.windowsCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("ignores a queue window claiming to be a surface", async () => {
+      connectSurface("queue");
+
+      await dispatchDappRequest(harness, { id: "req-queue-surface" });
+
+      expect(harness.windowsCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("forgets the panel once it closes", async () => {
+      const { disconnect } = connectSurface("sidepanel");
+      disconnect();
+
+      await dispatchDappRequest(harness, { id: "req-after-close" });
+
+      expect(harness.windowsCreate).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("survives a decision that lands while the surface is being prepared", async () => {
+    // Preparing a surface is asynchronous. Reading activeRequest after the
+    // await threw "Cannot read properties of null" whenever the request
+    // resolved first.
+    const { sender } = await dispatchDappRequest(harness, { id: "req-race" });
+    dispatchPopupMessage(harness, { type: "UI_READY" });
+    harness.tabsSendMessage.mockClear();
+
+    dispatchPopupMessage(harness, {
+      type: "DAPP_APPROVE",
+      id: "req-race",
+      result: { addresses: [] },
+    });
+
+    // Let anything still pending from the dispatch settle.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(harness.tabsSendMessage).toHaveBeenCalledWith(
+      sender.tab.id,
+      expect.objectContaining({ id: "req-race" })
+    );
+  });
+
+  describe("GET_PENDING_REQUEST", () => {
+    it("hands a surface the request waiting for a decision", async () => {
+      await dispatchDappRequest(harness, {
+        id: "req-pending",
+        method: "stx_transferStx",
+        params: { recipient: "ST_PENDING", amount: "7" },
+        origin: "https://pending.example",
+      });
+
+      const sendResponse = vi.fn();
+      const result = dispatchPopupMessage(
+        harness,
+        { type: "GET_PENDING_REQUEST" },
+        sendResponse
+      );
+
+      expect(result).toBe(true);
+      // This is what lets a surface the user opens themselves pick up a
+      // request that is already in flight, instead of showing Home.
+      expect(sendResponse).toHaveBeenCalledWith({
+        ok: true,
+        request: {
+          id: "req-pending",
+          method: "stx_transferStx",
+          params: { recipient: "ST_PENDING", amount: "7" },
+          origin: "https://pending.example",
+        },
+      });
+    });
+
+    it("reports nothing pending when the queue is idle", () => {
+      const sendResponse = vi.fn();
+
+      dispatchPopupMessage(harness, { type: "GET_PENDING_REQUEST" }, sendResponse);
+
+      expect(sendResponse).toHaveBeenCalledWith({ ok: false, request: null });
     });
   });
 

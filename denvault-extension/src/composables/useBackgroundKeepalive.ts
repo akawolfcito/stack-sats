@@ -20,6 +20,16 @@
 
 export const KEEPALIVE_PORT_NAME = "denvault-keepalive";
 
+/**
+ * Which surface is on the other end.
+ *
+ * "queue" is the popup window background opens for an approval.
+ * "sidepanel" is the panel the user already had open, which background
+ * prefers as the approval surface when it sits in the same window as the
+ * requesting tab: it is on screen already and often already unlocked.
+ */
+export type Surface = "queue" | "sidepanel";
+
 /** Comfortably under Chrome's ~30s idle cutoff. */
 export const KEEPALIVE_INTERVAL_MS = 20000;
 
@@ -29,7 +39,7 @@ export const KEEPALIVE_INTERVAL_MS = 20000;
  * @returns a function that stops pinging and closes the port. Safe to call
  * outside an extension context, where it does nothing.
  */
-export function startBackgroundKeepalive(): () => void {
+export function startBackgroundKeepalive(surface: Surface = "queue"): () => void {
   if (typeof chrome === "undefined" || !chrome.runtime?.connect) {
     return () => {};
   }
@@ -47,6 +57,8 @@ export function startBackgroundKeepalive(): () => void {
     port = chrome.runtime.connect(chrome.runtime.id, {
       name: KEEPALIVE_PORT_NAME,
     });
+    announce(port);
+
     // The worker can still recycle the port. Reopen so a long approval
     // does not silently lose its lifeline.
     port.onDisconnect.addListener(() => {
@@ -54,6 +66,30 @@ export function startBackgroundKeepalive(): () => void {
       open();
     });
   };
+
+  /**
+   * Tell background which surface this is and which window hosts it.
+   * The window is what lets background route an approval to a panel the
+   * user is actually looking at, instead of one open somewhere else.
+   */
+  function announce(target: chrome.runtime.Port): void {
+    if (!chrome.windows?.getCurrent) {
+      target.postMessage({ type: "SURFACE_HELLO", surface });
+      return;
+    }
+    chrome.windows
+      .getCurrent()
+      .then((current) => {
+        target.postMessage({
+          type: "SURFACE_HELLO",
+          surface,
+          windowId: current?.id,
+        });
+      })
+      .catch(() => {
+        target.postMessage({ type: "SURFACE_HELLO", surface });
+      });
+  }
 
   open();
 

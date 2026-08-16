@@ -58,8 +58,16 @@ const props = defineProps<{
   tabId: string;
   origin?: string;
   isQueueMode?: boolean;
+  /**
+   * True when this screen is an overlay inside a surface the user keeps
+   * open, such as the side panel. Closing the window there would take the
+   * whole wallet with it, so the screen is dismissed instead.
+   */
+  dismissOnly?: boolean;
   requestId?: string;
 }>();
+
+const emit = defineEmits<{ dismiss: [] }>();
 
 /**
  * H1: every rendered field reads from here, never from `props.payload`.
@@ -273,6 +281,11 @@ function handleResponseError(message: unknown): undefined {
 
 // Close window/tab based on context (popup vs full-page)
 function closeWindow() {
+  if (props.dismissOnly) {
+    emit("dismiss");
+    return;
+  }
+
   // Full-page mode: viewport is larger than popup dimensions
   if (window.innerWidth > 400 || window.innerHeight > 650) {
     chrome.tabs.getCurrent((tab) => {

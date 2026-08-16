@@ -107,6 +107,33 @@ async function approve(approval: Page): Promise<void> {
   await primary.click();
 }
 
+/**
+ * Open the wallet on the side-panel surface and unlock it.
+ *
+ * Loaded as a tab rather than through chrome.sidePanel, which needs a user
+ * gesture Playwright cannot supply. Same document, same query string, same
+ * window, so background sees the surface it would see for real.
+ */
+async function openUnlockedSidePanel(
+  context: BrowserContext,
+  extensionId: string
+): Promise<Page> {
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extensionId}/index.html?view=sidepanel`);
+
+  const pinInput = panel.locator('[data-roi="pin-input"]').first();
+  await expect(pinInput).toBeVisible({ timeout: 20000 });
+  await pinInput.focus();
+  for (const digit of TEST_PIN) {
+    await panel.keyboard.press(digit);
+  }
+  await expect(panel.locator('[data-roi="home-screen"]')).toBeVisible({
+    timeout: 20000,
+  });
+
+  return panel;
+}
+
 test.describe("dApp approval chain", () => {
   test("getAddresses reaches the page as an envelope connect can read", async ({
     context,
@@ -210,6 +237,78 @@ test.describe("dApp approval chain", () => {
     expect(result).not.toHaveProperty("result");
     expect(String(result.signature)).toMatch(/^[0-9a-f]{130}$/i);
     expect(String(result.publicKey)).toMatch(/^[0-9a-f]{66}$/i);
+  });
+
+  test("an open side panel takes the approval instead of a new window", async ({
+    context,
+    extensionId,
+  }) => {
+    await setUpWallet(context, extensionId);
+    const panel = await openUnlockedSidePanel(context, extensionId);
+    const dapp = await openDapp(context, DAPP_ORIGIN);
+
+    await callWallet(dapp, "getAddresses");
+
+    // The approval lands in the surface the user already had open.
+    await expect(panel.locator('[data-roi="confirm-screen"]')).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(panel.locator('[data-roi="confirm-origin"]')).toContainText(
+      "dapp.test"
+    );
+
+    // No second window: that is the behaviour being replaced.
+    expect(
+      context.pages().filter((page) => page.url().includes("mode=queue"))
+    ).toHaveLength(0);
+
+    // The panel was already unlocked, so there is no PIN to type. This is
+    // the whole point of routing here: the request stops spending the
+    // dApp's patience on an unlock.
+    await expect(panel.locator('[data-roi="pin-input"]')).toHaveCount(0);
+
+    await panel.locator('[data-roi="confirm-cta-primary"]').click();
+
+    const outcome = await walletCallOutcome(dapp);
+    expect(outcome.status).toBe("resolved");
+    const addresses = outcome.result!.result!.addresses as Array<{
+      symbol: string;
+      address: string;
+    }>;
+    expect(addresses.find((entry) => entry.symbol === "STX")?.address).toMatch(
+      /^ST/
+    );
+
+    // The panel hands itself back to the wallet instead of closing.
+    await expect(panel.locator('[data-roi="home-screen"]')).toBeVisible({
+      timeout: 10000,
+    });
+    expect(panel.isClosed()).toBe(false);
+  });
+
+  test("a surface opened mid request picks it up instead of showing Home", async ({
+    context,
+    extensionId,
+  }) => {
+    await setUpWallet(context, extensionId);
+    const dapp = await openDapp(context, DAPP_ORIGIN);
+
+    const approvalWindow = waitForApprovalWindow(context);
+    await callWallet(dapp, "getAddresses");
+    await approvalWindow;
+
+    // The user goes to the wallet themselves while the request waits.
+    const panel = await context.newPage();
+    await panel.goto(
+      `chrome-extension://${extensionId}/index.html?view=sidepanel`
+    );
+
+    await expect(panel.locator('[data-roi="confirm-screen"]')).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(panel.locator('[data-roi="confirm-origin"]')).toContainText(
+      "dapp.test"
+    );
   });
 
   test("Deny sends a rejection instead of leaving the page waiting", async ({
