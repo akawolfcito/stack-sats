@@ -39,13 +39,22 @@ test("the page API advertises exactly the implemented methods", async ({ context
 
   // The advertised list reaches dApps through the WBIP004 provider
   // registration, not as a property of window.StacksWallet.
+  //
+  // Looked up by name, because id is the dotted window path the connect
+  // library walks to reach request(), not a label.
   const provider = await page.evaluate(
     () =>
-      (window as unknown as { wbip_providers?: Array<{ id: string; methods: string[] }> })
-        .wbip_providers?.find((p) => p.id === "DenVault")
+      (
+        window as unknown as {
+          wbip_providers?: Array<{ id: string; name: string; methods: string[] }>;
+        }
+      ).wbip_providers?.find((p) => p.name === "DenVault")
   );
 
   expect(provider).toBeTruthy();
+  // Selecting the wallet resolves this id against window; when it missed,
+  // @stacks/connect crashed with "Cannot use 'in' operator ... in undefined".
+  expect(provider!.id).toBe("StacksWallet");
   expect(provider!.methods).toEqual([
     "getAddresses",
     "stx_signMessage",
