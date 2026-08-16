@@ -32,8 +32,8 @@ O sea, para copiar tu propia dirección hay que abrir Receive. Es la acción má
 
 El handler existe y está completo, con fallback a pestaña completa:
 
-- `public/background.js:398` define `handleOpenSidePanel()`
-- `public/background.js:321` lo enruta bajo el mensaje `OPEN_SIDEPANEL`
+- `public/background.js:421` define `handleOpenSidePanel()`
+- `public/background.js:344` lo enruta bajo el mensaje `OPEN_SIDEPANEL`
 - `public/manifest.json` declara `side_panel.default_path`
 
 **Nadie envía ese mensaje.** `grep -rn "OPEN_SIDEPANEL" src/` no devuelve nada. El único botón del Home es `openFullPage()` (`views/UserHomeView.vue:523`), que abre pestaña completa, no panel lateral.
@@ -226,7 +226,7 @@ Guardado por `src/test/provider-registration.test.ts`, que replica `getProviderF
 
 ## H7 · El popup de cola nunca recibe la petición, y la dApp expira
 
-**Severidad:** CRÍTICA y ABIERTA. Descubierta al final de la sesión del 2026-08-16, sin arreglar.
+**Severidad:** CRÍTICA. Descubierta el 2026-08-16. **Corregida en `3b49d2c`, pendiente de verificación manual.**
 
 ### Evidencia
 
@@ -253,6 +253,8 @@ Ese id de extensión es DenVault. Y la ventana de popup mostró la pantalla Home
 Para alcanzar la 561 hay que pasar la 554, y pasar la 554 exige `sender.tab.id`. Por tanto queda demostrado que llegó un mensaje **con `sender.tab.id`** y **origen `chrome-extension://`**, o sea desde una página de la propia extensión.
 
 Eso falsa la premisa sobre la que se reparten los dos listeners de `background.js`:
+
+Números de línea de antes del arreglo:
 
 - Listener 1, línea 289, atiende al popup con la guarda `if (sender.tab) return;`
 - Listener 2, línea 550, atiende a dApps y rechaza cualquier origen que no sea localhost, 127.0.0.1 o https
@@ -287,12 +289,26 @@ popupListener(message, { id: "denvault-test" }, sendResponse);
 
 Sin `tab`, y con el comentario "the popup messages are routed by the first registered listener (no sender.tab)". El harness **copia la premisa equivocada**, así que el test la confirma en vez de cuestionarla. Arreglar H7 exige corregir también el harness.
 
-### Dos caminos
+### Arreglo aplicado (`3b49d2c`)
 
-1. **Parchear la heurística.** Listener 1 atiende lo que venga de `chrome-extension://${chrome.runtime.id}`, con pestaña o sin ella; listener 2 ignora en silencio ese mismo origen. Cambio pequeño.
-2. **Unificar en un solo listener** con enrutado explícito por origen. Más cambio, pero elimina la clase de bug en vez de este caso concreto.
+De los dos caminos posibles (parchear la heurística, o unificar los dos listeners en uno con enrutado explícito), se eligió **parchear la heurística**, por ser el cambio pequeño y reversible que corresponde a una rama de bugfixes.
 
-Decisión pendiente del usuario.
+Nuevo `isOwnExtensionPage(sender)` en `background.js`, que discrimina por origen y no por la presencia de pestaña:
+
+```js
+function isOwnExtensionPage(sender) {
+  const origin = sender.origin ?? sender.url ?? "";
+  const base = `chrome-extension://${chrome.runtime.id}`;
+  return origin === base || origin.startsWith(`${base}/`);
+}
+```
+
+- Listener 1 atiende solo ese origen (antes: `if (sender.tab) return`).
+- Listener 2 retorna en silencio para ese mismo origen, antes de validar nada.
+
+La comparación es exacta o anclada a `/`, así que otra extensión cuyo id empiece igual que el nuestro no pasa. Un origen no listado sigue recibiendo `Origin not allowed`, con test que lo fija.
+
+El harness quedó corregido: `dispatchPopupMessage` envía ahora el sender real (id de pestaña + origen `chrome-extension://`) y ofrece el mensaje a **todos** los listeners, como hace Chrome. Contra el código viejo eso pone 9 tests existentes en rojo. 3 tests nuevos para el enrutado en sí. Total 1014/1014.
 
 ### Cómo se verifica de verdad
 
