@@ -70,6 +70,7 @@ import { Button, ActionBar, SectionHeader } from "@/components/ui";
 import type { ActionItem } from "@/components/ui";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
+import { getAvailableAssets } from "../utils/assets/registry";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
@@ -190,49 +191,36 @@ const handleAccountSelect = (index: number) => {
 };
 
 // Asset items for AssetList component
-// V81: Added `available` flag to indicate implemented assets
+//
+// Driven by ASSETS_REGISTRY via getAvailableAssets(), so the Home list shows
+// only assets the wallet actually queries. Unimplemented ones stay declared in
+// the registry with `available: false` and reappear here the moment that flips.
+//
+// This list used to be hand-written, which let it drift from the registry: it
+// declared Inscriptions as `ordinals` while the registry called it
+// `inscriptions`, so tapping the row failed isValidAssetId() in AssetDetailView
+// and bounced straight back to /user. It also hard-coded `balanceText: '0'` for
+// assets no code ever fetches, telling the user they held none of something the
+// wallet had never looked for.
+const assetBalanceText: Record<string, () => string> = {
+  stx: () => shortBalance.value,
+  btc: () => formatBtcBalance(btcBalance.value.total),
+};
+
 const assetItems = computed<AssetRowModel[]>(() => {
   const currentAccount = userAccounts.value[accountIndexToDisplay.value];
   if (!currentAccount) return [];
 
-  return [
-    {
-      id: 'stx',
-      symbol: 'STX',
-      name: 'Stacks',
-      balanceText: shortBalance.value,
-      fiatText: totalValueUsd.value || undefined,
-      iconColor: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1))',
-      available: true,
-    },
-    {
-      id: 'btc',
-      symbol: 'BTC',
-      name: 'Bitcoin',
-      balanceText: formatBtcBalance(btcBalance.value.total),
-      fiatText: undefined, // TODO: BTC price API
-      iconColor: 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1))',
-      available: true,
-    },
-    {
-      id: 'runes',
-      symbol: 'R',
-      name: 'Runes',
-      balanceText: '0',
-      fiatText: undefined,
-      iconColor: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.1))',
-      available: false,
-    },
-    {
-      id: 'ordinals',
-      symbol: 'O',
-      name: 'Inscriptions',
-      balanceText: '0',
-      fiatText: undefined,
-      iconColor: 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(234, 179, 8, 0.1))',
-      available: false,
-    },
-  ];
+  return getAvailableAssets().map((asset) => ({
+    id: asset.id,
+    symbol: asset.symbol,
+    name: asset.name,
+    balanceText: assetBalanceText[asset.id]?.() ?? '0',
+    // TODO: BTC price API. Only STX has a fiat figure today.
+    fiatText: asset.id === 'stx' ? totalValueUsd.value || undefined : undefined,
+    iconColor: asset.iconColor,
+    available: asset.available,
+  }));
 });
 
 // V82: Handle asset item click - navigate to asset detail
