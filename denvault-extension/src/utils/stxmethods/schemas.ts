@@ -1,16 +1,22 @@
 import { z } from "zod";
+import { isContractId, isStacksAddress } from "./address";
 
-/** Stacks address: SP/ST prefix + 33-41 c32 characters */
-const StxAddressSchema = z.string().regex(
-  /^(SP|ST)[0-9A-HJ-NP-Z]{33,41}$/,
-  "Invalid Stacks address format"
-);
+/**
+ * Stacks address, decided by c32check rather than by a guessed length.
+ *
+ * The old rule was SP/ST plus 33 to 41 characters. c32 strips leading
+ * zeros, so boot addresses are far shorter: pox-4 lives at
+ * ST000000000000000000002AMW42H, 29 characters. Every system contract
+ * was rejected as invalid before a handler saw the request.
+ */
+const StxAddressSchema = z
+  .string()
+  .refine(isStacksAddress, "Invalid Stacks address format");
 
 /** Contract identifier: address.name */
-const ContractIdSchema = z.string().regex(
-  /^(SP|ST)[0-9A-HJ-NP-Z]{33,41}\.[a-zA-Z][a-zA-Z0-9_-]{0,127}$/,
-  "Contract must be in format address.name"
-);
+const ContractIdSchema = z
+  .string()
+  .refine(isContractId, "Contract must be in format address.name");
 
 /** Positive non-zero amount as string (for BigInt conversion) */
 const PositiveAmountSchema = z.string().refine(

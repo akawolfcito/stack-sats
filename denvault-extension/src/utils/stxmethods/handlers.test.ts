@@ -82,8 +82,14 @@ vi.mock("../network", () => ({
   })),
 }));
 
-vi.mock("c32check", () => ({
+vi.mock("c32check", async () => ({
   c32ToB58: vi.fn(() => "mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn"),
+  // The real decoder: address validation runs through it now, and a fake
+  // one would recreate exactly the class of bug this replaced, where a
+  // hand-rolled rule quietly rejected every Stacks boot contract.
+  c32addressDecode: (
+    await vi.importActual<typeof import("c32check")>("c32check")
+  ).c32addressDecode,
 }));
 
 vi.mock("../accounts", () => ({
