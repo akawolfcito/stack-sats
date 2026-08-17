@@ -39,6 +39,16 @@ test("every header control fits inside the popup", async ({
   }));
   expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
 
+  // The pill has to clip its own label rather than spill over its box:
+  // that overflow is what read as a collision with the next control.
+  const pill = await page
+    .locator('[data-roi="acctsw-trigger"]')
+    .evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }));
+  expect(pill.scrollWidth).toBeLessThanOrEqual(pill.clientWidth + 1);
+
   // And every control is actually on screen, not clipped at the edge.
   for (const roi of ["acctsw-trigger", "home-copy-address", "home-sidepanel"]) {
     const control = page.locator(`[data-roi="${roi}"]`);

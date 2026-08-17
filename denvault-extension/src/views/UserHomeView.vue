@@ -575,18 +575,6 @@ const handleOpenSidePanel = async () => {
   }
 };
 
-// Open wallet in full-page tab (only in extension context)
-const openFullPage = () => {
-  if (typeof chrome !== "undefined" && chrome.runtime?.getURL && chrome.tabs?.create) {
-    const url = chrome.runtime.getURL("index.html");
-    chrome.tabs.create({ url });
-    window.close();
-  } else {
-    // Fallback for non-extension context (e.g., Playwright tests)
-    secureLog("Full page mode not available outside extension context");
-  }
-};
-
 const truncateAddress = (address: string) => {
   return address.slice(0, 7) + "..." + address.slice(-7);
 };
@@ -680,30 +668,12 @@ const handleManageAccounts = () => {
             <AccountSwitcher
               ref="accountSwitcherRef"
               :current-label="currentAccountName"
-              :current-address-short="currentAccountAddressShort"
               :accounts="accountItems"
               :can-add-account="accountCount < 100"
               @select="handleAccountSelect"
               @add-account="handleAddAccount"
               @manage="handleManageAccounts"
             />
-
-            <!-- Copy the address on screen, without a detour through Receive -->
-            <Button
-              variant="icon"
-              data-roi="home-copy-address"
-              :title="addressCopied ? 'Copied' : 'Copy address'"
-              :aria-label="addressCopied ? 'Address copied' : 'Copy address'"
-              @click="copyCurrentAddress"
-            >
-              <svg v-if="addressCopied" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-            </Button>
 
             <!-- Header Right Actions -->
             <div class="header-actions">
@@ -729,15 +699,10 @@ const handleManageAccounts = () => {
                 </svg>
               </Button>
 
-              <!-- Fullpage Button (V28) -->
-              <Button variant="icon" @click="openFullPage" title="Open in full page">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="15 3 21 3 21 9"/>
-                  <polyline points="9 21 3 21 3 15"/>
-                  <line x1="21" y1="3" x2="14" y2="10"/>
-                  <line x1="3" y1="21" x2="10" y2="14"/>
-                </svg>
-              </Button>
+              <!-- Full page moved to the menu: an occasional exit, and two
+                   window icons side by side were indistinguishable at 16px.
+                   The side panel stays because approvals are delivered
+                   there, so it cannot be the one that hides. -->
             </div>
           </header>
 
@@ -747,9 +712,12 @@ const handleManageAccounts = () => {
             symbol="STX"
             :usd-text="totalValueUsd ? `${totalValueUsd} USD` : undefined"
             :is-hidden="!showBalance"
+            :address-short="currentAccountAddressShort"
+            :address-copied="addressCopied"
             data-roi="home-balance-card"
             @toggle-hidden="toggleBalanceVisibility"
             @refresh="refreshBalance"
+            @copy-address="copyCurrentAddress"
           />
 
           <!-- V55.2: Quick Actions with data-roi -->

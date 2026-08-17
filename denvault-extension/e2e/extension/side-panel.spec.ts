@@ -99,8 +99,10 @@ test("the Home header copies the address on screen", async ({
     timeout: 20000,
   });
 
+  // The address lives in the balance block now, as the copy target
+  // itself, so the label of the control is the address.
   const shown = await page
-    .locator('[data-roi="acctsw-trigger"]')
+    .locator('[data-roi="home-copy-address"]')
     .innerText();
 
   // Chrome refuses clipboard permissions on a chrome-extension:// origin,
@@ -130,10 +132,10 @@ test("the Home header copies the address on screen", async ({
   const [head] = shown.match(/ST[0-9A-Z]{4,}/) ?? [];
   expect(clipboard.startsWith(head ?? "never")).toBe(true);
 
-  // Feedback, so the user knows it happened.
-  await expect(
-    page.locator('[data-roi="home-copy-address"]')
-  ).toHaveAttribute("title", "Copied");
+  // Feedback in words, not just a 16px icon swap.
+  await expect(page.locator('[data-roi="home-copy-address"]')).toContainText(
+    "Copied"
+  );
 });
 
 test("the panel does not offer to open itself", async ({

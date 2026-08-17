@@ -90,6 +90,22 @@ function handleManageTokens() {
   router.push({ path: "/manage-tokens" });
 }
 
+/**
+ * Open the wallet in a full browser tab.
+ *
+ * Lived in the Home header until the row ran out of room at popup width,
+ * where it also sat next to the side panel button as a second, nearly
+ * identical window icon.
+ */
+function handleOpenFullPage() {
+  if (typeof chrome !== "undefined" && chrome.runtime?.getURL && chrome.tabs?.create) {
+    chrome.tabs.create({ url: chrome.runtime.getURL("index.html?view=fullpage") });
+    window.close();
+    return;
+  }
+  secureLog("Full page mode not available outside extension context");
+}
+
 // V68: Navigate to accounts management screen
 function handleManageAccounts() {
   router.push({ path: "/accounts" });
@@ -309,6 +325,28 @@ function cancelImport() {
               <circle cx="9" cy="7" r="4"/>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </template>
+        </ListRow>
+      </ListGroup>
+
+      <!-- View section: moved out of the Home header, where two window
+           icons sat side by side and were indistinguishable at 16px. This
+           is an occasional exit, not a per-session action. -->
+      <ListGroup title="View" data-roi="menu-section-view">
+        <ListRow
+          label="Open in Full Page"
+          subtitle="Use the wallet in a full browser tab"
+          chevron
+          data-roi="menu-action-fullpage"
+          @click="handleOpenFullPage"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 3 21 3 21 9"/>
+              <polyline points="9 21 3 21 3 15"/>
+              <line x1="21" y1="3" x2="14" y2="10"/>
+              <line x1="3" y1="21" x2="10" y2="14"/>
             </svg>
           </template>
         </ListRow>
