@@ -33,6 +33,7 @@ import {
   formatBtcDisplay,
   satoshisToBtc,
   calculateFee,
+  detectAddressType,
   fetchCombinedUtxos,
   type FeeLevel,
   type FeeEstimate,
@@ -114,9 +115,36 @@ const feeRate = computed(() => {
   return getFeeRateForLevel(feeEstimate.value, feeLevel.value);
 });
 
+/**
+ * The address the change will return to: the same script type the inputs
+ * came from. Mirrors buildAndSignTransaction, so the figure on screen and
+ * the figure charged agree.
+ */
+const changeAddress = computed(() => {
+  const inputType = detectAddressType(fundingAddress.value, network.value);
+  return inputType === 'p2tr' && senderP2TR.value ? senderP2TR.value : senderP2PKH.value;
+});
+
 const estimatedFee = computed(() => {
-  // Estimate for 1 input, 2 outputs (recipient + change)
-  return calculateFee(1, 2, feeRate.value, 'p2pkh');
+  /**
+   * The input type was hardcoded to 'p2pkh' here, so the screen always
+   * quoted the legacy price: 0.000599 BTC for a Taproot send that actually
+   * costs 0.000384. That number is not only shown, it drives the balance
+   * check, the MAX button and the draft handed to the confirmation screen,
+   * so the wallet was validating against a fee it was not going to pay.
+   *
+   * Before a recipient is typed there is no address to read, so it assumes
+   * the largest output type: the estimate then only ever falls once the
+   * real recipient is known, never rises.
+   */
+  const inputType = detectAddressType(fundingAddress.value, network.value);
+
+  const typed = recipient.value.trim();
+  const recipientType = typed ? detectAddressType(typed, network.value) : 'p2tr';
+  const changeType = detectAddressType(changeAddress.value, network.value);
+
+  // 1 input, 2 outputs (recipient + change)
+  return calculateFee(1, 2, feeRate.value, inputType, [recipientType, changeType]);
 });
 
 const amountSats = computed(() => {
@@ -546,7 +574,7 @@ async function handlePinComplete(pin: string) {
             </div>
             <div class="from-info">
               <span class="from-name">{{ accountName }}</span>
-              <span class="from-address">{{ truncateBtcAddress(senderP2PKH) }}</span>
+              <span class="from-address">{{ senderAddressShort }}</span>
             </div>
           </div>
           <div class="from-balance">
