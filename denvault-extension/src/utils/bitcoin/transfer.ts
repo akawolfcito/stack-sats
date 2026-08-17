@@ -459,16 +459,40 @@ export async function buildAndSignTransaction(
     );
 
     if (utxoInfo?.type === 'p2tr') {
-      // Taproot signing (Schnorr)
+      // Key-path Taproot spend.
+      //
+      // Two things were wrong here and neither could ever have produced a
+      // valid signature: the signer offered `sign` where the library calls
+      // `signSchnorr`, and it signed with the raw private key. A key-path
+      // spend signs with the tweaked key, and the parity of the internal
+      // point decides whether the scalar is negated first.
+      const internalPubKey = publicKey.subarray(1); // x-only
+      const evenKey =
+        publicKey[0] === 3 ? Buffer.from(ecc.privateNegate(privateKey)) : privateKey;
+      // @ts-expect-error - bitcoin is a global variable
+      const tapTweak = bitcoin.crypto.taggedHash('TapTweak', internalPubKey);
+      const tweakedKey = Buffer.from(ecc.privateAdd(evenKey, tapTweak)!);
+
       psbt.signInput(i, {
-        publicKey: publicKey.slice(1), // x-only pubkey
-        sign: (hash: Buffer) => Buffer.from(ecc.signSchnorr(hash, privateKey)),
+        publicKey: Buffer.from(ecc.pointFromScalar(tweakedKey, true)!).subarray(1),
+        signSchnorr: (hash: Buffer) => Buffer.from(ecc.signSchnorr(hash, tweakedKey)),
       });
     } else {
-      // ECDSA signing for P2PKH and P2WPKH
-      // @ts-expect-error - ECPair from bitcoin is a global
-      const keyPair = bitcoin.ECPair.fromPrivateKey(privateKey, { network: btcNetwork });
-      psbt.signInput(i, keyPair);
+      // ECDSA signing for P2PKH and P2WPKH.
+      //
+      // This used to call bitcoin.ECPair.fromPrivateKey(). ECPair left
+      // bitcoinjs-lib in v6 and moved to its own package, so on the real
+      // bundle that read `fromPrivateKey` off undefined and every Bitcoin
+      // send died there, one PIN after the user had approved it. The unit
+      // test did not catch it because the mocked `bitcoin` global carried
+      // an ECPair the library has not shipped for years.
+      //
+      // Same signer shape the Taproot branch above already used: PSBT only
+      // needs a public key and something that can sign a hash.
+      psbt.signInput(i, {
+        publicKey,
+        sign: (hash: Buffer) => Buffer.from(ecc.sign(hash, privateKey)),
+      });
     }
   }
 

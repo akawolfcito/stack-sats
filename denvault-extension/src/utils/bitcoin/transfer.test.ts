@@ -37,11 +37,12 @@ const { mockPsbt } = vi.hoisted(() => {
       p2wpkh: vi.fn(() => ({ output: Buffer.alloc(25) })),
       p2tr: vi.fn(() => ({ output: Buffer.alloc(34) })),
     },
-    ECPair: {
-      fromPrivateKey: vi.fn(() => ({
-        publicKey: Buffer.alloc(33),
-        sign: vi.fn(() => Buffer.alloc(64)),
-      })),
+    // No ECPair on purpose. bitcoinjs-lib dropped it in v6, and having it
+    // here is what let `bitcoin.ECPair.fromPrivateKey()` pass its tests
+    // for months while failing on every real send. The signer shape is
+    // exercised against the real library in signing.test.ts.
+    crypto: {
+      taggedHash: vi.fn(() => Buffer.alloc(32, 7)),
     },
   };
 
