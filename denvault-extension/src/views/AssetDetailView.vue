@@ -25,8 +25,8 @@ import { getActiveAccountIndex } from '@/utils/accounts/active';
 import {
   fetchStxBalance,
   fetchFungibleTokens,
-  microStxToStx,
 } from '@/utils/balance';
+import { formatStxFromMicro } from '@/utils/balance/format';
 import {
   fetchCombinedBtcBalance,
   formatBtcBalance,
@@ -102,10 +102,8 @@ const showReceiveModal = ref(false);
 const balanceText = computed(() => {
   if (!asset.value) return '0';
   if (asset.value.id === 'stx') {
-    const num = microStxToStx(stxBalanceMicro.value);
-    if (num === 0) return '0.00';
-    if (num < 0.01) return num.toFixed(6);
-    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // Truncated, never rounded: see utils/balance/format.
+    return formatStxFromMicro(stxBalanceMicro.value);
   }
   if (asset.value.id === 'btc') {
     if (isBtcBalanceUnknown.value) return 'Unavailable';

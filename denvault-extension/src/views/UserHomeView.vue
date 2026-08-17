@@ -72,6 +72,7 @@ import type { ActionItem } from "@/components/ui";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import { getAvailableAssets } from "../utils/assets/registry";
+import { formatStxFromMicro } from "@/utils/balance/format";
 import { fetchBtcActivity, type BtcActivityItem } from "@/utils/bitcoin/activity";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
@@ -164,13 +165,15 @@ const toggleBalanceVisibility = () => {
 // Computed properties for balance display
 const stxBalanceNumber = computed(() => microStxToStx(stxBalanceMicro.value));
 
-// Short balance format (2 decimals)
-const shortBalance = computed(() => {
-  const num = stxBalanceNumber.value;
-  if (num === 0) return "0.00";
-  if (num < 0.01) return num.toFixed(6);
-  return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-});
+/**
+ * Short balance, truncated rather than rounded.
+ *
+ * toLocaleString rounds, so 499.995501 STX rendered as "500.00": a
+ * balance the account does not hold, and a deploy that had just cost
+ * 0.004499 looked like it never happened. A wallet may show fewer digits
+ * than it has; it may not show more money than it has.
+ */
+const shortBalance = computed(() => formatStxFromMicro(stxBalanceMicro.value));
 
 const totalValueUsd = computed(() => {
   if (stxPriceUsd.value === 0) return null;
