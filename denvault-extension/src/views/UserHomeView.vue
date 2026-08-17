@@ -322,9 +322,11 @@ const btcActivityItems = computed<ActivityItem[]>(() =>
     // Date.now() / 1000. Multiplying made every Bitcoin row read "Just
     // now", including one from hours earlier.
     timeText: item.blockTime ? formatRelativeTime(item.blockTime) : 'Pending',
-    // A self transfer gets no minus sign: the money did not leave, it only
-    // changed address, and a "-" beside it reads as a loss.
-    isOutgoing: item.isOutgoing && !item.isSelfTransfer,
+    isOutgoing: item.isOutgoing,
+    // A self transfer gets no sign at all. Dropping only the minus was not
+    // enough: the row then rendered "+0.0005 BTC" in green, which reads as
+    // money arriving. Nothing arrived and nothing left.
+    isNeutral: item.isSelfTransfer,
   }))
 );
 

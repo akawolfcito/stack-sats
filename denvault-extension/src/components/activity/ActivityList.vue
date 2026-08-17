@@ -9,6 +9,8 @@ export interface ActivityItem {
   amountText?: string
   timeText?: string
   isOutgoing?: boolean
+  /** Neither in nor out: the wallet paid itself. See ActivityRow. */
+  isNeutral?: boolean
 }
 
 defineProps<{
@@ -64,6 +66,7 @@ const skeletonCount = 4
         :amount-text="item.amountText"
         :time-text="item.timeText"
         :is-outgoing="item.isOutgoing"
+        :is-neutral="item.isNeutral"
         @click="emit('item-click', item.txId)"
       />
     </template>
