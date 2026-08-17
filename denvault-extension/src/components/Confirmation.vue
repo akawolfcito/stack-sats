@@ -22,7 +22,7 @@ import {
   handleSignStructuredData,
   handleDeployContract,
 } from "../utils/stxmethods";
-import { toQueueApproveResult } from "@/utils/stxmethods/queue";
+import { toQueueApproveResult, isRpcErrorEnvelope } from "@/utils/stxmethods/queue";
 import type { JsonRpcRequest, Result } from "@/utils/types";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
@@ -385,6 +385,23 @@ async function handleConfirm() {
       default:
         secureWarn("Unknown method", { method: signingPayload.method });
         break;
+    }
+
+    // A handler answers COMPLETE with an error envelope when the dApp
+    // sent something invalid. That is a reply, and it belongs to the
+    // dApp: forwarding it as an approval buried a precise -32602 under an
+    // internal message about envelopes.
+    if (result.status === "COMPLETE" && isRpcErrorEnvelope(result.data)) {
+      const { error } = result.data as { error: { code: number; message: string } };
+      secureWarn("Handler returned an error envelope", { code: error.code });
+
+      if (props.isQueueMode) {
+        sendQueueReject({ code: error.code, message: error.message });
+      } else {
+        await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
+      }
+      setTimeout(() => closeWindow(), 150);
+      return;
     }
 
     if (result.status === "COMPLETE") {

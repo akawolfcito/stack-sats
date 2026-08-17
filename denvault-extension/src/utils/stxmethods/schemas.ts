@@ -25,13 +25,28 @@ const PositiveAmountSchema = z.string().refine(
   "Amount must be a positive integer string"
 );
 
-/** Optional network params (baseUrl validated separately) */
-const NetworkParamsSchema = z.object({
-  chainId: z.number().optional(),
-  client: z.object({
-    baseUrl: z.string().url().optional(),
-  }).optional(),
-}).optional();
+/**
+ * Optional network params (baseUrl validated separately).
+ *
+ * A dApp sends a plain string: @stacks/connect types this as
+ * NetworkString and Hiro's sandbox puts "testnet" on the wire. Only the
+ * object form was accepted, so every dApp call that named its network
+ * failed validation with -32602 before reaching a handler. Both forms are
+ * valid now, and resolveRequestedNetwork decides what the string means.
+ */
+const NetworkParamsSchema = z
+  .union([
+    z.string().min(1).max(32),
+    z.object({
+      chainId: z.number().optional(),
+      client: z
+        .object({
+          baseUrl: z.string().url().optional(),
+        })
+        .optional(),
+    }),
+  ])
+  .optional();
 
 export const TransferStxParamsSchema = z.object({
   recipient: StxAddressSchema,

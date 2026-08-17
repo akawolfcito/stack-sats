@@ -11,7 +11,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { Cl, cvToHex } from '@stacks/transactions';
-import { toClarityArgs, toTxOptions } from './params';
+import { toClarityArgs, toTxOptions, resolveRequestedNetwork } from './params';
 
 describe('toClarityArgs', () => {
   it('deserializes the hex strings a dApp actually sends', () => {
@@ -51,6 +51,40 @@ describe('toClarityArgs', () => {
     // Better here than as an unreadable failure from the node, or worse,
     // a transaction that means something other than what was asked.
     expect(() => toClarityArgs(['not-hex'])).toThrow(/argument/i);
+  });
+});
+
+describe('resolveRequestedNetwork', () => {
+  it('accepts the plain string a dApp actually sends', () => {
+    // @stacks/connect types this as NetworkString, and Hiro's sandbox
+    // sends "testnet". The schema demanded an object, so every contract
+    // call and every STX transfer from a dApp failed Zod validation
+    // before it reached a handler.
+    expect(() => resolveRequestedNetwork('testnet', 'testnet')).not.toThrow();
+  });
+
+  it('accepts the object form too', () => {
+    expect(() =>
+      resolveRequestedNetwork({ chainId: 2147483648 }, 'testnet')
+    ).not.toThrow();
+  });
+
+  it('accepts nothing at all', () => {
+    expect(() => resolveRequestedNetwork(undefined, 'testnet')).not.toThrow();
+  });
+
+  it('refuses to sign on a chain the user is not on', () => {
+    // Silently signing a mainnet transaction while the wallet says
+    // testnet is the worst available outcome: the user approves what the
+    // screen shows, and the screen shows their own network.
+    expect(() => resolveRequestedNetwork('mainnet', 'testnet')).toThrow(
+      /mainnet/i
+    );
+  });
+
+  it('treats devnet and regtest as testnet, which is the chain they use', () => {
+    expect(() => resolveRequestedNetwork('devnet', 'testnet')).not.toThrow();
+    expect(() => resolveRequestedNetwork('regtest', 'testnet')).not.toThrow();
   });
 });
 

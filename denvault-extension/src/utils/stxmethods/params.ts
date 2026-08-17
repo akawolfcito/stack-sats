@@ -48,6 +48,38 @@ export interface TxOptions {
 }
 
 /**
+ * Check the network a dApp asked for against the one the user is on.
+ *
+ * @stacks/connect types this as `NetworkString`, so a dApp sends
+ * `"testnet"`. The schema demanded an object, which meant every contract
+ * call and every STX transfer coming from a dApp failed validation before
+ * a handler ever saw it.
+ *
+ * The wallet keeps signing on its own selected network. What it will not
+ * do is sign quietly on a different chain than the one on screen: the
+ * user approves what they can see, and what they can see is their own
+ * network chip.
+ *
+ * @throws when the dApp asks for a chain the wallet is not on.
+ */
+export function resolveRequestedNetwork(
+  requested: unknown,
+  selected: 'mainnet' | 'testnet' | 'devnet'
+): void {
+  if (typeof requested !== 'string') return;
+
+  const askedForMainnet = requested.toLowerCase() === 'mainnet';
+  const onMainnet = selected === 'mainnet';
+
+  // devnet and regtest run on the testnet chain, so they agree with it.
+  if (askedForMainnet !== onMainnet) {
+    throw new Error(
+      `This app asked to sign on ${requested}, but the wallet is on ${selected}. Switch networks in the wallet and try again.`
+    );
+  }
+}
+
+/**
  * Deserialize contract-call arguments.
  *
  * @throws when a string is not a Clarity value, which is better than a

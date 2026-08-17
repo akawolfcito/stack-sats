@@ -29,7 +29,12 @@ import {
 import type { JsonRpcResponse } from "@stacks/connect/dist/types/methods";
 import type { JsonRpcRequest } from "@/utils/types";
 import { secureLog, isDebugMode } from "../security/logger";
-import { toClarityArgs, toTxOptions, type DappTxParams } from "./params";
+import {
+  toClarityArgs,
+  toTxOptions,
+  resolveRequestedNetwork,
+  type DappTxParams,
+} from "./params";
 import {
   TransferStxParamsSchema,
   CallContractParamsSchema,
@@ -214,6 +219,9 @@ async function handleCallContract(
   try {
     privateKey = await getPrivateKey(mnemonic, accountIndex);
 
+    // Refuse to sign on a chain the user is not looking at.
+    resolveRequestedNetwork(params.network, getSelectedNetwork());
+
     // Build proper network config
     const network = buildNetworkWithClient(
       params.network as { chainId?: number; client?: { baseUrl?: string } }
@@ -342,6 +350,9 @@ async function handleTransferStx(
 
   try {
     privateKey = await getPrivateKey(mnemonic, accountIndex);
+
+    // Refuse to sign on a chain the user is not looking at.
+    resolveRequestedNetwork(params.network, getSelectedNetwork());
 
     // Build proper network config
     const network = buildNetworkWithClient(
@@ -550,6 +561,9 @@ async function handleDeployContract(
 
   try {
     privateKey = await getPrivateKey(mnemonic, accountIndex);
+
+    // Refuse to sign on a chain the user is not looking at.
+    resolveRequestedNetwork(params.network, getSelectedNetwork());
 
     // Build proper network config
     const network = buildNetworkWithClient(

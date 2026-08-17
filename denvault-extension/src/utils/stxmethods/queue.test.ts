@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toQueueApproveResult } from "./queue";
+import { toQueueApproveResult, isRpcErrorEnvelope } from "./queue";
 
 /**
  * Exactly the shape handleGetAddresses puts in Result.data. Every method
@@ -49,6 +49,24 @@ describe("toQueueApproveResult", () => {
   it("keeps a result that is present but empty", () => {
     expect(toQueueApproveResult({ jsonrpc: "2.0", id: "x", result: {} })).toEqual(
       {}
+    );
+  });
+
+  it("recognises an error envelope as an answer, not a malfunction", () => {
+    // The handlers return status COMPLETE with an error envelope when a
+    // dApp sends bad parameters. Treating that as a broken payload
+    // replaced a precise "-32602 Invalid parameters" with an internal
+    // message about envelopes, which is what a user actually saw when
+    // Hiro's sandbox sent its network as a string.
+    const envelope = {
+      jsonrpc: "2.0",
+      id: "req-1",
+      error: { code: -32602, message: "Invalid parameters" },
+    };
+
+    expect(isRpcErrorEnvelope(envelope)).toBe(true);
+    expect(isRpcErrorEnvelope({ jsonrpc: "2.0", id: "x", result: {} })).toBe(
+      false
     );
   });
 
