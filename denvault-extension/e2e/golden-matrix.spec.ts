@@ -113,46 +113,52 @@ async function setupUnlockedWallet(page: Page) {
   // No reload - navigation happens after setup
 }
 
+/**
+ * Open an overlay through the snapshot hook the app exposes.
+ *
+ * These used to sleep 500ms and hope the hook had appeared, then warn to a
+ * console nobody reads when it had not, and carry on to photograph whatever
+ * was on screen. Under parallel load that produced entirely black frames,
+ * saved as golden, and counted as passes: the run reported "all 8 dropdown
+ * screenshots present" because present only meant the file existed.
+ *
+ * Waiting for the hook itself removes the guess, and a missing hook now
+ * fails the test instead of quietly capturing nothing.
+ */
+async function openViaSnapshotHook(page: Page, name: string) {
+  // The hook only exists once the app has mounted, so waiting for it is
+  // also the proof that there is something on screen to photograph.
+  await page.waitForFunction(
+    (hookName) => Boolean((window as any).__UI_SNAPSHOT__?.[hookName]),
+    name,
+    { timeout: 15_000 }
+  );
+
+  // Let the view settle before opening anything. Invoking the moment the
+  // hook appears is too early: the overlay opens and a later render closes
+  // it again, which photographs the plain home screen.
+  await page.waitForTimeout(500);
+
+  await page.evaluate((hookName) => {
+    (window as any).__UI_SNAPSHOT__[hookName]();
+  }, name);
+
+  await page.waitForTimeout(300); // Overlay animation
+}
+
 // V35: Helper to open ReceiveModal via snapshot hook
 async function openReceiveModal(page: Page) {
-  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
-  await page.evaluate(() => {
-    const hook = (window as any).__UI_SNAPSHOT__;
-    if (hook?.openReceiveModal) {
-      hook.openReceiveModal();
-    } else {
-      console.warn('Snapshot hook not available for ReceiveModal');
-    }
-  });
-  await page.waitForTimeout(300); // Wait for modal animation
+  await openViaSnapshotHook(page, 'openReceiveModal');
 }
 
 // V57: Helper to open AccountSwitcher dropdown via snapshot hook
 async function openAccountSwitcher(page: Page) {
-  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
-  await page.evaluate(() => {
-    const hook = (window as any).__UI_SNAPSHOT__;
-    if (hook?.openAccountSwitcher) {
-      hook.openAccountSwitcher();
-    } else {
-      console.warn('Snapshot hook not available for AccountSwitcher');
-    }
-  });
-  await page.waitForTimeout(300); // Wait for dropdown animation
+  await openViaSnapshotHook(page, 'openAccountSwitcher');
 }
 
 // V57: Helper to open NetworkChip dropdown via snapshot hook
 async function openNetworkChip(page: Page) {
-  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
-  await page.evaluate(() => {
-    const hook = (window as any).__UI_SNAPSHOT__;
-    if (hook?.openNetworkChip) {
-      hook.openNetworkChip();
-    } else {
-      console.warn('Snapshot hook not available for NetworkChip');
-    }
-  });
-  await page.waitForTimeout(300); // Wait for dropdown animation
+  await openViaSnapshotHook(page, 'openNetworkChip');
 }
 
 // Helper: Set density mode
@@ -236,8 +242,18 @@ for (const viewport of VIEWPORTS) {
             await page.reload();
 
             // Step 6: Navigate to target route (if not root)
+            //
+            // Through the hash, because the router is createWebHashHistory
+            // (src/router/index.ts). Navigating to "/send" left the hash
+            // empty, so the app started at "/" and landed on /user, and the
+            // suite has been photographing the home screen under three
+            // different names: send and usermenu were both just /user.
+            //
+            // start and unlock only looked right by accident: their storage
+            // state makes the app land there on its own. The overlays are
+            // captured by afterNav hooks on /user, so they were fine.
             if (route.path !== '/') {
-              await page.goto(route.path);
+              await page.goto(`/#${route.path}`);
             }
 
             // Step 7: Apply density class to document
