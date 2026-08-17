@@ -23,6 +23,7 @@ import {
   handleDeployContract,
 } from "../utils/stxmethods";
 import { toQueueApproveResult, isRpcErrorEnvelope } from "@/utils/stxmethods/queue";
+import { decodeBigInts } from "@/utils/stxmethods/wire";
 import type { JsonRpcRequest, Result } from "@/utils/types";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
@@ -354,6 +355,14 @@ async function handleConfirm() {
     }
     signingPayload = canonical;
   }
+
+  // Undo the tagging injection.js applies so a Clarity uint can cross a
+  // JSON bridge. One place, because every method's params come through
+  // here, whether from the queue or from the legacy URL payload.
+  signingPayload = {
+    ...signingPayload,
+    params: decodeBigInts(signingPayload.params),
+  };
 
   try {
     switch (signingPayload.method) {

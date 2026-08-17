@@ -67,14 +67,21 @@ document.addEventListener("stackswallet_request", (event) => {
     // injected in open tabs: chrome.runtime is dead and sendMessage throws
     // synchronously, so the .catch above never runs. Tell the page instead
     // of letting the request hang until injection.js gives up 60s later.
-    console.warn("[StacksWallet] Extension context gone:", err?.message);
+    // Two very different failures land here, and telling the user to
+    // reload the page when the payload is at fault is bad advice.
+    const message = String(err?.message ?? "");
+    const isSerialization = message.includes("serialize");
+
+    console.warn("[StacksWallet] Could not relay request:", message);
     window.postMessage(
       {
         jsonrpc: "2.0",
         id,
         error: {
-          code: -32603,
-          message: "Wallet extension was reloaded. Reload this page to continue.",
+          code: isSerialization ? -32602 : -32603,
+          message: isSerialization
+            ? "This request could not be sent to the wallet: it contains a value the extension bridge cannot carry."
+            : "Wallet extension was reloaded. Reload this page to continue.",
         },
       },
       window.location.origin

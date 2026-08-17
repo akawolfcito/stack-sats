@@ -311,6 +311,60 @@ test.describe("dApp approval chain", () => {
     );
   });
 
+  test("stx_signStructuredMessage survives the bridge and returns a signature", async ({
+    context,
+    extensionId,
+  }) => {
+    await setUpWallet(context, extensionId);
+    const dapp = await openDapp(context, DAPP_ORIGIN);
+
+    const approvalWindow = waitForApprovalWindow(context);
+
+    // @stacks/connect hands the wallet ClarityValue objects here, not hex,
+    // and a Clarity uint carries a BigInt. postMessage can clone one;
+    // chrome.runtime.sendMessage, which the content script uses, cannot:
+    // it serializes as JSON. This is the shape a real dApp sends, so the
+    // bridge either survives it or the method never worked.
+    await dapp.evaluate(() => {
+      const w = window as unknown as {
+        StacksWallet: { request: (m: string, p: unknown) => Promise<unknown> };
+        __walletCall?: Promise<unknown>;
+      };
+      const domain = {
+        type: "tuple",
+        value: {
+          name: { type: "ascii", value: "DenVault e2e" },
+          version: { type: "ascii", value: "1.0.0" },
+          "chain-id": { type: "uint", value: 2147483648n },
+        },
+      };
+      const message = { type: "ascii", value: "structured hello" };
+
+      w.__walletCall = w.StacksWallet.request("stx_signStructuredMessage", {
+        message,
+        domain,
+      })
+        .then((result) => ({ status: "resolved", result }))
+        .catch((error) => ({ status: "rejected", error: String(error) }));
+    });
+
+    const approval = await approvalWindow;
+    await expect(approval.locator('[data-roi="confirm-screen"]')).toBeVisible({
+      timeout: 20000,
+    });
+    await approve(approval);
+
+    const outcome = await walletCallOutcome(dapp);
+    expect(outcome.status).toBe("resolved");
+
+    const result = outcome.result!.result! as {
+      signature?: string;
+      publicKey?: string;
+    };
+    expect(String(result.signature)).toMatch(/^[0-9a-f]{130}$/i);
+    expect(String(result.publicKey)).toMatch(/^[0-9a-f]{66}$/i);
+  });
+
   test("Deny sends a rejection instead of leaving the page waiting", async ({
     context,
     extensionId,

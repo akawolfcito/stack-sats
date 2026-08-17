@@ -7,6 +7,37 @@
 const REQUEST_TIMEOUT_MS = 60000; // 60 seconds
 
 /**
+ * Marker for a BigInt crossing the bridge. Must match
+ * src/utils/stxmethods/wire.ts.
+ */
+const BIGINT_TAG = "__denvault_bigint__";
+
+/**
+ * Tag every BigInt so the request can survive JSON.
+ *
+ * A Clarity uint holds a BigInt, and the content script relays through
+ * chrome.runtime.sendMessage, which serializes as JSON. Anything carrying
+ * one was dropped at the bridge with "Could not serialize message":
+ * stx_signStructuredMessage never reached the wallet at all.
+ */
+function tagBigInts(value) {
+  if (typeof value === "bigint") {
+    return { [BIGINT_TAG]: value.toString() };
+  }
+  if (Array.isArray(value)) {
+    return value.map(tagBigInts);
+  }
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const key of Object.keys(value)) {
+      out[key] = tagBigInts(value[key]);
+    }
+    return out;
+  }
+  return value;
+}
+
+/**
  * Methods the wallet can actually carry to a signed result.
  *
  * Published to every page through the WBIP004 provider registration
@@ -54,7 +85,7 @@ const StacksWallet = {
       jsonrpc: "2.0",
       id,
       method,
-      params,
+      params: tagBigInts(params),
     };
 
     // Dispatch request to content script
