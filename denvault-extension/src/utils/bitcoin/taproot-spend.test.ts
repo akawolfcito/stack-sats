@@ -122,6 +122,39 @@ describe('a Taproot spend, driven by transfer.ts itself', () => {
     expect(tx.ins[0].witness[0]).toHaveLength(64);
   });
 
+  it('costs the input it actually spends, not the first one it looked up', async () => {
+    // The fee used to be estimated from allUtxos[0], which is only the first
+    // address queried, and the legacy address is queried first. Spending
+    // Taproot was therefore priced as legacy: 148 vB against 57.5. The
+    // broadcast of 2026-08-17 paid 440 sat/vB for a 265 sat/vB request.
+    //
+    // Correct size here: 10 + 57.5 (p2tr in) + 34 + 34 (two p2pkh outs)
+    // = 135.5 → 136 vB, which is exactly what the transaction measured.
+    const keys = keyPair(ODD_KEY);
+    fundTaprootOnly(keys.p2tr, 120_000);
+
+    const { txHex } = await buildAndSignTransaction({
+      recipient: keys.p2pkh,
+      amountSats: 50_000,
+      feeRate: 2,
+      senderP2PKH: keys.p2pkh,
+      senderP2TR: keys.p2tr,
+      privateKey: keys.privateKey,
+      publicKey: keys.publicKey,
+      network: 'testnet',
+    });
+
+    const tx = bitcoin.Transaction.fromHex(txHex);
+    const spent = 120_000;
+    const paidOut = tx.outs.reduce((total, out) => total + out.value, 0);
+
+    expect(spent - paidOut).toBe(136 * 2);
+
+    // And the estimate is honest about the transaction it produced: the real
+    // virtual size should match what was charged for.
+    expect(Math.ceil(tx.virtualSize())).toBe(136);
+  });
+
   it('never asks for the previous transaction, which it does not need', async () => {
     // A Taproot input is signed over witnessUtxo, so the whole previous
     // transaction is dead weight. It used to be fetched for every input

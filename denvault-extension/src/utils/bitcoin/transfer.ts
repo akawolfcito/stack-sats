@@ -239,7 +239,8 @@ export function getFeeRateForLevel(fees: FeeEstimate, level: FeeLevel): number {
 export function estimateTxSize(
   inputCount: number,
   outputCount: number,
-  inputType: BtcAddressType = 'p2pkh'
+  inputType: BtcAddressType = 'p2pkh',
+  outputTypes?: BtcAddressType[]
 ): number {
   // Base transaction overhead
   const overhead = 10;
@@ -255,13 +256,34 @@ export function estimateTxSize(
 
   const inputSize = inputSizes[inputType] || inputSizes.p2pkh;
 
-  // Outputs are averaged rather than typed. A per-type table existed here
-  // but nothing could use it: the signature takes only outputCount, not
-  // the type of each output. 34 vB is the p2pkh figure, the largest of
-  // the common types, so the estimate errs toward overpaying the fee.
-  const avgOutputSize = 34;
+  /**
+   * Output sizes by type: 8 bytes of value, 1 of script length, then the
+   * script itself.
+   *
+   * A previous comment here called 34 "the largest of the common types" and
+   * used it for every output. That is wrong, and it cost real money: a
+   * Taproot output is 43 vB. Paying to a tb1p address therefore
+   * underestimated the transaction, and on 2026-08-17 the wallet paid
+   * 255.66 sat/vB against the 264.71 it had told the user it was paying.
+   *
+   * Unknown falls to the largest, so an unrecognised address overpays
+   * instead of sitting in the mempool.
+   */
+  const outputSizes: Record<BtcAddressType, number> = {
+    p2pkh: 34,     // 8 + 1 + 25
+    p2sh: 32,      // 8 + 1 + 23
+    p2wpkh: 31,    // 8 + 1 + 22
+    p2tr: 43,      // 8 + 1 + 34
+    unknown: 43,
+  };
 
-  return Math.ceil(overhead + inputCount * inputSize + outputCount * avgOutputSize);
+  // Callers that do not know their output types keep the old flat estimate,
+  // which is correct whenever every output is legacy.
+  const outputsSize = outputTypes
+    ? outputTypes.reduce((total, type) => total + (outputSizes[type] ?? outputSizes.unknown), 0)
+    : outputCount * outputSizes.p2pkh;
+
+  return Math.ceil(overhead + inputCount * inputSize + outputsSize);
 }
 
 /**
@@ -271,9 +293,10 @@ export function calculateFee(
   inputCount: number,
   outputCount: number,
   feeRate: number,
-  inputType: BtcAddressType = 'p2pkh'
+  inputType: BtcAddressType = 'p2pkh',
+  outputTypes?: BtcAddressType[]
 ): number {
-  const vBytes = estimateTxSize(inputCount, outputCount, inputType);
+  const vBytes = estimateTxSize(inputCount, outputCount, inputType, outputTypes);
   return Math.ceil(vBytes * feeRate);
 }
 
@@ -285,7 +308,9 @@ export function selectUtxos(
   utxos: UTXO[],
   targetAmount: number,
   feeRate: number,
-  inputType: BtcAddressType = 'p2pkh'
+  inputType: BtcAddressType = 'p2pkh',
+  /** Recipient and change, in that order, when the caller knows them. */
+  outputTypes?: BtcAddressType[]
 ): { selected: UTXO[]; fee: number; change: number } | null {
   // Sort by value descending
   const sorted = [...utxos].sort((a, b) => b.value - a.value);
@@ -298,7 +323,7 @@ export function selectUtxos(
     totalInput += utxo.value;
 
     // Calculate fee with current inputs (2 outputs: recipient + change)
-    const fee = calculateFee(selected.length, 2, feeRate, inputType);
+    const fee = calculateFee(selected.length, 2, feeRate, inputType, outputTypes);
     const required = targetAmount + fee;
 
     if (totalInput >= required) {
@@ -359,15 +384,32 @@ export async function buildAndSignTransaction(
   // Calculate total available
   const totalAvailable = allUtxos.reduce((sum, item) => sum + item.utxo.value, 0);
 
-  // Determine primary input type for fee estimation
-  const primaryType = allUtxos[0]?.type || 'p2pkh';
+  /**
+   * Primary input type for the fee estimate: the type of the largest UTXO,
+   * because selectUtxos sorts by value and takes that one first.
+   *
+   * This used to read allUtxos[0], which is merely the first address queried,
+   * and the legacy address is queried first. So spending a Taproot UTXO was
+   * costed as if it were legacy, 148 vB against 57.5. On 2026-08-17 that
+   * turned a 265 sat/vB request into 440 paid, which the explorer flagged as
+   * overpaying by 66%.
+   */
+  const largestUtxo = [...allUtxos].sort((a, b) => b.utxo.value - a.utxo.value)[0];
+  const primaryType = largestUtxo?.type || 'p2pkh';
+
+  // Recipient as addressed, change back to the legacy address (see below).
+  const outputTypes: BtcAddressType[] = [
+    detectAddressType(recipient, network),
+    detectAddressType(senderP2PKH, network),
+  ];
 
   // Select UTXOs
   const selection = selectUtxos(
     allUtxos.map((item) => item.utxo),
     amountSats,
     feeRate,
-    primaryType
+    primaryType,
+    outputTypes
   );
 
   if (!selection) {

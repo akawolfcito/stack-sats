@@ -211,6 +211,43 @@ describe('Bitcoin transfer utilities', () => {
     it('should use p2pkh size for unknown type', () => {
       expect(estimateTxSize(1, 2, 'unknown')).toBe(estimateTxSize(1, 2, 'p2pkh'));
     });
+
+    /**
+     * Both figures below are measured, not derived: they are the two Taproot
+     * testnet transactions of 2026-08-17, `33251914...40db96e4` (block
+     * 5124343) and `6786c176...6b6c1fe4`.
+     *
+     * The output size was hardcoded at 34 vB with a comment claiming that was
+     * the largest common type. It is not: a Taproot output is 43 vB. So
+     * paying to a tb1p address underestimated the transaction, and the wallet
+     * paid 255.66 sat/vB against a requested 264.71, quietly missing the fee
+     * rate it had promised the user.
+     */
+    it('counts a Taproot output as 43 vB, not as 34', () => {
+      // 10 + 148 (legacy input) + 43 (p2tr out) + 34 (p2pkh change) = 235.
+      // The funding transaction measured 234 vB on chain, the last byte being
+      // signature length, which varies.
+      expect(estimateTxSize(1, 2, 'p2pkh', ['p2tr', 'p2pkh'])).toBe(235);
+    });
+
+    it('matches the Taproot spend that was actually broadcast', () => {
+      // 10 + 57.5 (p2tr input) + 34 + 34 = 135.5 → 136, and the transaction
+      // measured exactly 136 vB.
+      expect(estimateTxSize(1, 2, 'p2tr', ['p2pkh', 'p2pkh'])).toBe(136);
+    });
+
+    it('keeps the old estimate when no output types are given', () => {
+      // Every existing caller must keep working unchanged.
+      expect(estimateTxSize(1, 2, 'p2pkh')).toBe(226);
+    });
+
+    it('assumes the largest output for a type it cannot place', () => {
+      // Erring toward overpaying is the safe direction: an underpaid
+      // transaction sits in the mempool.
+      expect(estimateTxSize(1, 1, 'p2pkh', ['unknown'])).toBe(
+        estimateTxSize(1, 1, 'p2pkh', ['p2tr'])
+      );
+    });
   });
 
   describe('calculateFee', () => {
