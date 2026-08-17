@@ -194,6 +194,18 @@ export function validateBtcAddress(
       }
     }
 
+    // A Stacks address in a Bitcoin field is the likeliest mistake in
+    // this wallet, and the generic message left the user staring at a
+    // string that looks perfectly valid to them. Their own STX address
+    // is one Paste away from here.
+    if (/^S[PTMN][0-9A-Z]{37,}$/i.test(addr)) {
+      return {
+        valid: false,
+        error:
+          'That is a Stacks address, not a Bitcoin one. Testnet Bitcoin addresses start with m, n, 2 or tb1.',
+      };
+    }
+
     return {
       valid: false,
       error: `Invalid Bitcoin address format for ${selectedNetwork}`,

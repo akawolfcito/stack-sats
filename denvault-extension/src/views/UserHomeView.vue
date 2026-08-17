@@ -713,6 +713,7 @@ const handleManageAccounts = () => {
             :usd-text="totalValueUsd ? `${totalValueUsd} USD` : undefined"
             :is-hidden="!showBalance"
             :address-short="currentAccountAddressShort"
+            address-label="STX"
             :address-copied="addressCopied"
             data-roi="home-balance-card"
             @toggle-hidden="toggleBalanceVisibility"

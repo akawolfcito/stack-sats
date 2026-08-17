@@ -132,9 +132,13 @@ test("the Home header copies the address on screen", async ({
   const [head] = shown.match(/ST[0-9A-Z]{4,}/) ?? [];
   expect(clipboard.startsWith(head ?? "never")).toBe(true);
 
+  // The chip names the chain, because this wallet holds two and the
+  // Bitcoin send screen is one Paste away from the wrong one.
+  expect(shown).toContain("STX");
+
   // Feedback in words, not just a 16px icon swap.
   await expect(page.locator('[data-roi="home-copy-address"]')).toContainText(
-    "Copied"
+    "copied"
   );
 });
 

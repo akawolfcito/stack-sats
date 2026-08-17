@@ -8,6 +8,9 @@ defineProps<{
   isHidden?: boolean
   /** Truncated address shown under the balance, tap to copy. */
   addressShort?: string
+  /** Which chain the address belongs to. A wallet holding two of them
+   *  cannot offer "the address" without saying which one. */
+  addressLabel?: string
   /** True for a moment after a copy, so the confirmation is in words. */
   addressCopied?: boolean
 }>()
@@ -60,8 +63,11 @@ const emit = defineEmits<{
         <rect x="9" y="9" width="13" height="13" rx="2"/>
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
       </svg>
+      <span v-if="addressLabel && !addressCopied" class="balance-address__chain">
+        {{ addressLabel }}
+      </span>
       <span class="balance-address__text">
-        {{ addressCopied ? 'Copied' : addressShort }}
+        {{ addressCopied ? `${addressLabel ?? ''} address copied`.trim() : addressShort }}
       </span>
     </button>
 
@@ -96,6 +102,17 @@ const emit = defineEmits<{
 
 .balance-address--copied {
   color: var(--color-accent-primary);
+}
+
+.balance-address__chain {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm, 6px);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans, inherit);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
 }
 
 .balance-address__text {
