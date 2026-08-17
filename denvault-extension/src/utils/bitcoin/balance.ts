@@ -82,6 +82,35 @@ export async function fetchBtcAddressInfo(
 }
 
 /**
+ * Has a Bitcoin transaction been mined?
+ *
+ * @returns true once it is in a block, false while it sits in the
+ * mempool, and null when the chain could not be asked. The result screen
+ * used to skip this call entirely and declare success after three
+ * seconds, which told the user a transaction had confirmed when nobody
+ * had checked.
+ */
+export async function fetchBtcTxConfirmed(
+  txid: string,
+  network?: NetworkName
+): Promise<boolean | null> {
+  const selectedNetwork = network || getSelectedNetwork();
+
+  try {
+    const response = await esploraFetch(`/tx/${txid}/status`, {
+      network: selectedNetwork,
+    });
+    if (!response.ok) return null;
+
+    const status = (await response.json()) as { confirmed?: boolean };
+    return status.confirmed === true;
+  } catch (error) {
+    secureLog('BTC tx status fetch error', { error: String(error) });
+    return null;
+  }
+}
+
+/**
  * Fetch the Bitcoin balance of an address.
  *
  * @throws when the balance could not be read. An empty address resolves to

@@ -17,17 +17,48 @@
  * - Guard redirect if draft has no result
  */
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import { Button } from "@/components/ui";
 import { NETWORKS } from "@/utils/network";
 import { useTxDraft } from "@/composables/useTxDraft";
+import { useBtcTxDraft } from "@/composables/useBtcTxDraft";
+import { fetchTransaction } from "@/utils/transactions";
+import { fetchBtcTxConfirmed, getBtcTxExplorerUrl } from "@/utils/bitcoin/balance";
 
 const router = useRouter();
+const route = useRoute();
 
-// V52.2: Single source of truth with setConfirmed
-const { draft, hasResult, isSuccess, isError, setConfirmed, clearDraft } = useTxDraft();
+/**
+ * Which chain sent us here.
+ *
+ * This screen only ever read the Stacks draft, so a Bitcoin result found
+ * no data, hit the guard below and pushed the user to the Stacks send
+ * form: the outcome of their Bitcoin transaction, success or failure,
+ * was never shown at all.
+ */
+const isBtc = computed(() => route.query.type === "btc");
+
+const stxDraft = useTxDraft();
+const btcDraft = useBtcTxDraft();
+
+const draft = computed(() =>
+  isBtc.value ? btcDraft.draft : stxDraft.draft
+);
+const hasResult = computed(() =>
+  isBtc.value ? btcDraft.hasResult.value : stxDraft.hasResult.value
+);
+const isSuccess = computed(() =>
+  isBtc.value ? btcDraft.isSuccess.value : stxDraft.isSuccess.value
+);
+const isError = computed(() =>
+  isBtc.value ? btcDraft.isError.value : stxDraft.isError.value
+);
+const setConfirmed = () =>
+  isBtc.value ? btcDraft.setConfirmed() : stxDraft.setConfirmed();
+const clearDraft = () =>
+  isBtc.value ? btcDraft.clearDraft() : stxDraft.clearDraft();
 
 // V52.2: Status states - pending | confirmed | timeout | error
 type TxStatus = "pending" | "confirmed" | "timeout" | "error";
@@ -47,17 +78,25 @@ const copied = ref(false);
 
 // Computed - V52.2: Read from draft
 const explorerUrl = computed(() => {
-  if (!draft.txid) return "";
-  const base = NETWORKS[draft.network]?.explorerUrl;
+  if (!draft.value.txid) return "";
+
+  // A Bitcoin txid on the Stacks explorer is a dead link.
+  if (isBtc.value) {
+    return getBtcTxExplorerUrl(draft.value.txid, draft.value.network);
+  }
+
+  const base = NETWORKS[draft.value.network]?.explorerUrl;
   if (!base) return "";
-  const formattedTxId = draft.txid.startsWith("0x") ? draft.txid : `0x${draft.txid}`;
-  const chainParam = draft.network === "mainnet" ? "" : `?chain=${draft.network}`;
+  const formattedTxId = draft.value.txid.startsWith("0x")
+    ? draft.value.txid
+    : `0x${draft.value.txid}`;
+  const chainParam = draft.value.network === "mainnet" ? "" : `?chain=${draft.value.network}`;
   return `${base}/txid/${formattedTxId}${chainParam}`;
 });
 
 const txidShort = computed(() => {
-  if (!draft.txid) return "";
-  const id = draft.txid.startsWith("0x") ? draft.txid.slice(2) : draft.txid;
+  if (!draft.value.txid) return "";
+  const id = draft.value.txid.startsWith("0x") ? draft.value.txid.slice(2) : draft.value.txid;
   if (id.length <= 16) return id;
   return `${id.slice(0, 8)}...${id.slice(-8)}`;
 });
@@ -89,22 +128,26 @@ const statusMessage = computed(() => {
     case "pending": return "Broadcasting to network...";
     case "confirmed": return "Your transaction has been sent";
     case "timeout": return "Transaction broadcast, waiting for confirmation";
-    case "error": return draft.error || "Transaction failed";
+    case "error": return draft.value.error || "Transaction failed";
     default: return "";
   }
 });
 
 // Check if test/dev network (for chip warning style)
 const isTestOrDev = computed(() => {
-  const label = draft.networkLabel.toLowerCase();
+  const label = draft.value.networkLabel.toLowerCase();
   return label.includes("test") || label.includes("dev");
 });
 
 // V52.2: Read from draft on mount
 onMounted(() => {
-  // Guard: must have result data
+  // Guard: must have result data. Back to the form this came from, not
+  // whichever one happens to be first.
   if (!hasResult.value) {
-    router.push({ path: "/send", query: { error: "no-result" } });
+    router.push({
+      path: isBtc.value ? "/send-btc" : "/send",
+      query: { error: "no-result" },
+    });
     return;
   }
 
@@ -128,13 +171,40 @@ function startPolling() {
   schedulePoll();
 }
 
+/**
+ * Ask the chain whether the transaction is in a block.
+ *
+ * @returns true when mined, false when still pending, null when the
+ * network could not be asked.
+ */
+async function isTxConfirmed(): Promise<boolean | null> {
+  const txid = draft.value.txid;
+  if (!txid) return null;
+
+  if (isBtc.value) {
+    return fetchBtcTxConfirmed(txid, draft.value.network);
+  }
+
+  const tx = await fetchTransaction(txid, draft.value.network);
+  if (!tx) return null;
+  if (tx.status === "success") return true;
+  if (tx.status === "pending") return false;
+
+  // Rejected on chain. Saying "sent" here would be the worst kind of lie.
+  status.value = "error";
+  stopPolling();
+  return null;
+}
+
 function schedulePoll() {
-  pollTimeout = setTimeout(() => {
+  pollTimeout = setTimeout(async () => {
     const elapsed = Date.now() - pollStartTime.value;
 
-    // V52.2: Simulated - in real implementation, this would poll the API
-    // For demo, confirm after 3 seconds
-    if (elapsed >= 3000) {
+    // This used to declare success after three seconds without asking
+    // anyone. The wallet told the user a transaction had confirmed when
+    // nobody had checked, which is not a claim a wallet gets to make.
+    const confirmed = await isTxConfirmed();
+    if (confirmed === true) {
       status.value = "confirmed";
       setConfirmed();
       stopPolling();
@@ -166,8 +236,8 @@ function stopPolling() {
 
 // V52.2: Copy with feedback
 function handleCopyTxid() {
-  if (draft.txid) {
-    navigator.clipboard.writeText(draft.txid);
+  if (draft.value.txid) {
+    navigator.clipboard.writeText(draft.value.txid);
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 2000);
   }
