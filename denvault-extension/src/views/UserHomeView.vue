@@ -14,8 +14,8 @@
  * - Fixed header zone (menu, account switcher, network, balance, actions, tabs)
  * - Scrollable body (assets, tokens, activity)
  */
-import { useRouter } from "vue-router";
-import { onBeforeMount, ref, watch, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { onBeforeMount, onBeforeUnmount, ref, watch, computed } from "vue";
 import { generateInitialAccounts } from "../utils/accounts";
 import { type Account } from "../utils/types";
 import { sessionManager } from "../utils/security/session";
@@ -73,6 +73,7 @@ import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import { getAvailableAssets } from "../utils/assets/registry";
 import { formatStxFromMicro } from "@/utils/balance/format";
+import { startAutoRefresh } from "@/composables/useAutoRefresh";
 import { fetchBtcActivity, type BtcActivityItem } from "@/utils/bitcoin/activity";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
@@ -88,7 +89,27 @@ const router = useRouter();
 const { isPopup, isSidePanel } = useUiMode();
 
 // Tab state for navigation (unified for popup and panel)
-const activeTab = ref<'assets' | 'activity'>('assets');
+/**
+ * Which tab opens. `?tab=activity` is how a dApp approval lands here:
+ * approving used to drop the user on Assets with an unchanged balance and
+ * no word about the transaction they had just authorised.
+ */
+const activeTab = ref<'assets' | 'activity'>(
+  useRoute().query.tab === 'activity' ? 'activity' : 'assets'
+);
+
+/**
+ * Anything on screen still waiting for a block.
+ *
+ * Drives how often the view refreshes itself: this is the state in which
+ * the user is watching and wondering whether their transaction went out.
+ */
+const hasPendingActivity = computed(() =>
+  activityItems.value.some((item) => item.status === 'pending')
+);
+
+/** Undone on unmount; installed once the first load has run. */
+let stopAutoRefresh: (() => void) | null = null;
 const tabItems = [
   { key: 'assets', label: 'Assets' },
   { key: 'activity', label: 'Activity' },
@@ -558,6 +579,18 @@ onBeforeMount(async () => {
       loadBtcBalance(); // Don't await, load in background
       loadTransactions(); // Don't await, load in background
       loadTokens(); // Don't await, load in background
+
+      // Nothing refreshed on its own until now, so a transaction that had
+      // already been mined left no trace on screen and users sent it
+      // again. See utils/composables/useAutoRefresh.
+      stopAutoRefresh = startAutoRefresh({
+        hasPending: hasPendingActivity,
+        onRefresh: () => {
+          loadBalance();
+          loadBtcBalance();
+          loadTransactions();
+        },
+      });
     } else {
       router.push({ path: "/unlock" });
     }
@@ -588,6 +621,11 @@ watch(accountIndexToDisplay, async (newIndex) => {
   await loadBalance();
   loadTransactions();
   loadTokens();
+});
+
+onBeforeUnmount(() => {
+  stopAutoRefresh?.();
+  stopAutoRefresh = null;
 });
 
 const handleOpenUserMenu = () => {
