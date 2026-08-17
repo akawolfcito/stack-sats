@@ -101,22 +101,37 @@ const txidShort = computed(() => {
   return `${id.slice(0, 8)}...${id.slice(-8)}`;
 });
 
-// V52.2: Header title based on status
+/**
+ * Sending is the part the user did, and it worked. The chain confirming
+ * it is the part that takes time.
+ *
+ * The screen used to open on "Broadcasting..." and settle into
+ * "Transaction Pending" under an amber clock, which reads like a warning
+ * about something that in fact succeeded. It says so now, and still
+ * refuses to call anything confirmed until a block says it is.
+ */
 const headerTitle = computed(() => {
   switch (status.value) {
-    case "pending": return "Broadcasting...";
-    case "confirmed": return "Transaction Sent";
-    case "timeout": return "Transaction Pending";
+    case "pending": return "Transaction Sent";
+    case "confirmed": return "Transaction Confirmed";
+    case "timeout": return "Transaction Sent";
     case "error": return "Transaction Failed";
     default: return "Transaction";
   }
 });
 
+/** Roughly how long a block takes on each chain. */
+const confirmationEstimate = computed(() =>
+  isBtc.value ? "about 10 minutes" : "a few minutes"
+);
+
 const statusIconClass = computed(() => {
   switch (status.value) {
-    case "pending": return "status-icon--pending";
+    // Sent is a success, not a caution. Confirmation is what is still
+    // outstanding, and the message below says so in words.
+    case "pending": return "status-icon--success";
     case "confirmed": return "status-icon--success";
-    case "timeout": return "status-icon--timeout";
+    case "timeout": return "status-icon--success";
     case "error": return "status-icon--error";
     default: return "";
   }
@@ -125,11 +140,16 @@ const statusIconClass = computed(() => {
 // V52.2: Status message based on state
 const statusMessage = computed(() => {
   switch (status.value) {
-    case "pending": return "Broadcasting to network...";
-    case "confirmed": return "Your transaction has been sent";
-    case "timeout": return "Transaction broadcast, waiting for confirmation";
-    case "error": return draft.value.error || "Transaction failed";
-    default: return "";
+    case "pending":
+      return `Sent to the network. It should confirm in ${confirmationEstimate.value}, and Activity will show when it does.`;
+    case "confirmed":
+      return "Confirmed on chain";
+    case "timeout":
+      return `Sent to the network and still confirming. Activity will show when it lands, and the explorer has the live status.`;
+    case "error":
+      return draft.value.error || "Transaction failed";
+    default:
+      return "";
   }
 });
 
@@ -287,13 +307,9 @@ function handleTryAgain() {
       <!-- V52.2: Status Icon with timeout state -->
       <div class="status-section" data-roi="tx-result-status">
         <div class="status-icon" :class="statusIconClass">
-          <!-- Pending: Spinner -->
-          <svg v-if="status === 'pending'" class="spinner-svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
-            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
-          </svg>
-          <!-- Confirmed: Checkmark -->
-          <svg v-else-if="status === 'confirmed'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <!-- Sent and confirmed both get the check: the send succeeded.
+               What is still outstanding is said in words below. -->
+          <svg v-if="status === 'pending' || status === 'confirmed'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <!-- Timeout: Clock icon -->
@@ -351,29 +367,23 @@ function handleTryAgain() {
       </div>
 
       <!-- V52.2: Hint based on state -->
-      <div v-if="status === 'confirmed' || status === 'timeout'" class="hint-text" data-roi="tx-result-hint">
+      <div v-if="status !== 'error'" class="hint-text" data-roi="tx-result-hint">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10" />
           <path d="M12 16v-4M12 8h.01" />
         </svg>
-        <span v-if="status === 'confirmed'">Transaction confirmation may take a few minutes.</span>
-        <span v-else>Check explorer for confirmation status.</span>
+        <span v-if="status === 'confirmed'">This transaction is in a block.</span>
+        <span v-else>Activity keeps its status, and the explorer has it live.</span>
       </div>
     </div>
 
     <!-- V52.2: CTA Rail with coherent actions per state -->
     <div class="cta-rail" data-roi="tx-result-cta-rail">
-      <!-- Pending: Disabled Done (wait) -->
-      <template v-if="status === 'pending'">
-        <Button v-if="explorerUrl" variant="ghost" full-width @click="handleOpenExplorer">
-          View in Explorer
-        </Button>
-        <Button variant="primary" full-width disabled>
-          Please wait...
-        </Button>
-      </template>
-      <!-- Confirmed/Timeout: Explorer + Done -->
-      <template v-else-if="status === 'confirmed' || status === 'timeout'">
+      <!-- Sent, confirmed or still confirming: the user is free to go.
+           Holding Done hostage to a confirmation meant standing in front
+           of a disabled button for the ten minutes a Bitcoin block takes,
+           for a transaction that had already succeeded. -->
+      <template v-if="status !== 'error'">
         <Button v-if="explorerUrl" variant="ghost" full-width @click="handleOpenExplorer">
           View in Explorer
         </Button>
