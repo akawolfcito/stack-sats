@@ -57,6 +57,7 @@ import {
   setActiveAccountIndex,
 } from "../utils/accounts/active";
 import {
+  fetchMempoolTransactions,
   fetchTransactions,
   formatRelativeTime,
   formatAmount,
@@ -484,9 +485,22 @@ async function loadTransactions() {
 
   isLoadingTx.value = true;
   try {
-    const txs = await fetchTransactions(currentAccount.stxAddress, 20, 0, selectedNetwork.value);
+    // Mempool first: a Stacks transaction is invisible to the confirmed
+    // endpoint for the whole minute between approving it and its block,
+    // which is precisely when someone is asking whether it worked.
+    const [txs, pending] = await Promise.all([
+      fetchTransactions(currentAccount.stxAddress, 20, 0, selectedNetwork.value),
+      fetchMempoolTransactions(currentAccount.stxAddress, selectedNetwork.value),
+    ]);
+
     if (txs !== null) {
-      transactions.value = txs;
+      // A transaction can appear in both for a moment, once mined and
+      // still listed as pending. The mined copy is the truthful one.
+      const mined = new Set(txs.map((tx) => tx.txId));
+      transactions.value = [
+        ...pending.filter((tx) => !mined.has(tx.txId)),
+        ...txs,
+      ];
     }
   } catch (error) {
     secureLog("Failed to load transactions", error);

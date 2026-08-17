@@ -338,6 +338,41 @@ export function truncateAddress(address: string, chars: number = 4): string {
 }
 
 /**
+ * Transactions this address has broadcast that no block contains yet.
+ *
+ * /extended/v1/address/{addr}/transactions only returns mined ones, so a
+ * Stacks transaction was invisible in the wallet for the entire minute
+ * between approving it and its block. That is exactly the window in which
+ * someone asks whether it went through, and on 2026-08-17 it led to the
+ * same deploy being sent twice. Esplora already reports Bitcoin's mempool,
+ * which is why Bitcoin never had this gap.
+ *
+ * @returns pending transactions, or an empty list when the API cannot be
+ * reached: a gap in the view is not a claim about the account.
+ */
+export async function fetchMempoolTransactions(
+  address: string,
+  network?: NetworkName
+): Promise<Transaction[]> {
+  const apiUrl = getApiUrl(network);
+  const url = `${apiUrl}/extended/v1/address/${address}/mempool?limit=20`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      secureLog("Mempool fetch failed", { status: response.status });
+      return [];
+    }
+
+    const data = (await response.json()) as { results?: ApiTransaction[] };
+    return (data.results ?? []).map(transformTransaction);
+  } catch (error) {
+    secureLog("Mempool fetch error", { error: String(error) });
+    return [];
+  }
+}
+
+/**
  * Fetch a single transaction by ID
  * @param txId - Transaction ID (with or without 0x prefix)
  * @param network - Network to fetch from

@@ -24,6 +24,7 @@ import { getSelectedNetwork } from "../network";
 // --- Import module under test ---
 
 import {
+  fetchMempoolTransactions,
   fetchTransactions,
   fetchTransactionList,
   fetchTransaction,
@@ -718,3 +719,52 @@ describe("transactions/index", () => {
     });
   });
 });
+
+describe("fetchMempoolTransactions", () => {
+  it("returns what the address has broadcast but no block holds yet", async () => {
+    // The confirmed endpoint knows nothing about these, so a Stacks
+    // transaction was invisible for the whole minute between approving it
+    // and its block: the window in which someone asks whether it worked.
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        results: [
+          {
+            tx_id: "0xpending",
+            tx_type: "smart_contract",
+            tx_status: "pending",
+            sender_address: "ST2NJ5K0XKKPTSDZ0KGZF5XRFZTVDQK56VQQWSJBQ",
+            fee_rate: "4499",
+            smart_contract: { contract_id: "ST2NJ5K0.long-plum-jaguar" },
+          },
+        ],
+      }),
+    });
+
+    const pending = await fetchMempoolTransactions("ST2NJ5K0XKKPTSDZ0KGZF5XRFZTVDQK56VQQWSJBQ");
+
+    expect(pending).toHaveLength(1);
+    expect(pending[0].status).toBe("pending");
+    expect(pending[0].txId).toBe("0xpending");
+    expect(pending[0].contractId).toBe("ST2NJ5K0.long-plum-jaguar");
+  });
+
+  it("asks the mempool endpoint, not the confirmed one", async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ results: [] }) });
+
+    await fetchMempoolTransactions("ST2NJ5K0XKKPTSDZ0KGZF5XRFZTVDQK56VQQWSJBQ");
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/mempool")
+    );
+  });
+
+  it("returns nothing rather than throwing when the API is down", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("ECONNREFUSED"));
+
+    await expect(
+      fetchMempoolTransactions("ST2NJ5K0XKKPTSDZ0KGZF5XRFZTVDQK56VQQWSJBQ")
+    ).resolves.toEqual([]);
+  });
+});
+
