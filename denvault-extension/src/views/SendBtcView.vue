@@ -195,7 +195,33 @@ const networkLabel = computed(() => {
   return labels[network.value] || network.value;
 });
 
-const senderAddressShort = computed(() => truncateBtcAddress(senderP2PKH.value));
+/**
+ * The address this send will actually spend from.
+ *
+ * The header showed the legacy address unconditionally, so a transaction
+ * funded by the Taproot UTXO announced the wrong source. Yesterday's spend
+ * said "From mw7qXcn8..." on screen and spent tb1p0lh8... on chain.
+ *
+ * The rule mirrors selectUtxos, which sorts by value and takes the largest
+ * confirmed UTXO first, so the two agree by construction. Before the UTXOs
+ * arrive there is nothing to go on, and legacy is the safe thing to show.
+ */
+const fundingAddress = computed(() => {
+  let largest: { address: string; value: number } | null = null;
+
+  for (const entry of utxos.value) {
+    for (const utxo of entry.utxos) {
+      if (!utxo.status.confirmed) continue;
+      if (!largest || utxo.value > largest.value) {
+        largest = { address: entry.address, value: utxo.value };
+      }
+    }
+  }
+
+  return largest?.address ?? senderP2PKH.value;
+});
+
+const senderAddressShort = computed(() => truncateBtcAddress(fundingAddress.value));
 const truncatedRecipient = computed(() => truncateBtcAddress(recipient.value.trim()));
 
 // Header
