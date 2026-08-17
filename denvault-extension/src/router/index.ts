@@ -80,11 +80,6 @@ const router = createRouter({
       component: () => import("../views/SendTokenView.vue"),
     },
     {
-      path: "/add-network",
-      name: "add-network",
-      component: () => import("../views/AddNetworkView.vue"),
-    },
-    {
       path: "/verify-pin",
       name: "verify-pin",
       component: () => import("../views/VerifyPinView.vue"),
