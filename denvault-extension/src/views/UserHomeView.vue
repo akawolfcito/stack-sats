@@ -280,9 +280,20 @@ const handleAccountSelect = (index: number) => {
 // and bounced straight back to /user. It also hard-coded `balanceText: '0'` for
 // assets no code ever fetches, telling the user they held none of something the
 // wallet had never looked for.
+/**
+ * Balances carry their unit.
+ *
+ * The rows showed bare numbers: STX read "499.99" and BTC read "0". For
+ * Bitcoin that is not a cosmetic gap, since 0.0005 and 50000 are the same
+ * amount written in different units, and this wallet talks in sats
+ * elsewhere. "Unavailable" keeps no unit: it is not a quantity.
+ */
 const assetBalanceText: Record<string, () => string> = {
-  stx: () => shortBalance.value,
-  btc: () => (isBtcBalanceUnknown.value ? 'Unavailable' : formatBtcBalance(btcBalance.value.total)),
+  stx: () => `${shortBalance.value} STX`,
+  btc: () =>
+    isBtcBalanceUnknown.value
+      ? 'Unavailable'
+      : `${formatBtcBalance(btcBalance.value.total)} BTC`,
 };
 
 const assetItems = computed<AssetRowModel[]>(() => {

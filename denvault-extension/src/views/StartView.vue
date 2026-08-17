@@ -340,13 +340,23 @@ onBeforeMount(() => {
             <p v-if="importError" class="error-text">{{ importError }}</p>
           </div>
 
-          <!-- Security Badge -->
+          <!--
+            Security Badge
+
+            Said "END-TO-END ENCRYPTED", which describes a channel between two
+            parties. There is no channel here: the mnemonic is encrypted at
+            rest on this machine with AES-256-GCM and a PBKDF2 key derived
+            from the PIN, and it never goes anywhere. Claiming the wrong
+            property is a poor trade when the true one is the stronger
+            argument for a wallet, and it is the first security claim a new
+            user reads.
+          -->
           <div class="security-badge">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
-            <span>END-TO-END ENCRYPTED</span>
+            <span>ENCRYPTED ON THIS DEVICE</span>
           </div>
         </div>
       </div>
