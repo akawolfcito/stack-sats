@@ -35,12 +35,18 @@ import { ref, computed } from 'vue';
 import { Button, Toast } from '@/components/ui';
 import { secureLog } from '@/utils/security/logger';
 
-const props = defineProps<{
-  mnemonic: string;
-}>();
-
-// V54.2: Simplified CTA - single primary button
-const PRIMARY_CTA_LABEL = 'I saved it securely';
+const props = withDefaults(
+  defineProps<{
+    mnemonic: string;
+    /**
+     * Creating a wallet asks for a promise ("I saved it securely"); looking
+     * the phrase up again is just a visit, so RecoveryPhraseView passes
+     * "Done" instead.
+     */
+    ctaLabel?: string;
+  }>(),
+  { ctaLabel: 'I saved it securely' }
+);
 
 const emit = defineEmits<{
   continue: [];
@@ -202,7 +208,7 @@ function handleContinue() {
         data-roi="cta-primary"
         @click="handleContinue"
       >
-        {{ PRIMARY_CTA_LABEL }}
+        {{ props.ctaLabel }}
       </Button>
     </div>
 

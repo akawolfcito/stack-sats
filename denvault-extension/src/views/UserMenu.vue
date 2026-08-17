@@ -181,6 +181,24 @@ async function handleExportBackup() {
   });
 }
 
+/**
+ * Show the recovery phrase again.
+ *
+ * Goes straight to the phrase on success rather than back here, because the
+ * grant VerifyPinView issues is spent by the first screen that asks for it.
+ */
+function handleShowRecoveryPhrase() {
+  backupMessage.value = null;
+
+  router.push({
+    path: "/verify-pin",
+    query: {
+      action: "reveal",
+      returnTo: "/recovery-phrase",
+    },
+  });
+}
+
 // V48: Handle return from PIN verification
 async function handlePinVerifiedReturn() {
   const activeWallet = await getActiveWalletAsync();
@@ -354,6 +372,20 @@ function cancelImport() {
 
       <!-- Security & Backup Section -->
       <ListGroup title="Security & Backup" data-roi="menu-section-security">
+        <ListRow
+          label="Recovery Phrase"
+          subtitle="See your words again, after your PIN"
+          chevron
+          data-roi="menu-action-recovery-phrase"
+          @click="handleShowRecoveryPhrase"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </template>
+        </ListRow>
         <ListRow
           label="Export Secret Key"
           subtitle="Download encrypted backup"

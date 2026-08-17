@@ -8,6 +8,21 @@ import { secureLog } from "../security/logger";
 import { getAddressVersion, getSelectedNetwork, type NetworkName } from "../network";
 
 /**
+ * Where every key in this wallet comes from, account index appended.
+ *
+ * This is the Stacks path, and the Bitcoin addresses hang off it too:
+ * btcP2PKHAddress is the Stacks address re-encoded to Base58, and the Taproot
+ * address comes from the same public key. There is no BIP-84 branch.
+ *
+ * The consequence belongs in front of the user, which is why this is exported
+ * rather than inlined: a recovery phrase from this wallet, typed into Sparrow
+ * or a Ledger with default settings, will not show the bitcoin. Those wallets
+ * scan m/44'/0', m/84'/0' and m/86'/0', and none of them will guess a Stacks
+ * path on their own. The reveal screen shows this string for that reason.
+ */
+export const STACKS_DERIVATION_PREFIX = "m/44'/5757'/0'/0";
+
+/**
  * Generate the first N accounts for the user (without private keys)
  * Private keys are derived on-demand when needed for signing
  */
@@ -33,7 +48,7 @@ async function generateInitialAccounts(
   const addressVersion = getAddressVersion(network);
 
   for (let index = 0; index < count; index++) {
-    const path = `m/44'/5757'/0'/0/${index}`;
+    const path = `${STACKS_DERIVATION_PREFIX}/${index}`;
     const stxPrivateKey = finalWallet.accounts[index].stxPrivateKey;
 
     const stxAddress = privateKeyToAddress(stxPrivateKey, addressVersion);
