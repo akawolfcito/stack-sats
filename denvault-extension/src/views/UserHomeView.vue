@@ -95,8 +95,19 @@ const { isPopup, isSidePanel } = useUiMode();
  * approving used to drop the user on Assets with an unchanged balance and
  * no word about the transaction they had just authorised.
  */
+const route = useRoute();
 const activeTab = ref<'assets' | 'activity'>(
-  useRoute().query.tab === 'activity' ? 'activity' : 'assets'
+  route.query.tab === 'activity' ? 'activity' : 'assets'
+);
+
+// Read again on every change: a side panel is already mounted when the
+// approval lands, so replacing the query alone left it sitting on Assets
+// and the user had to find the tab themselves.
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (tab === 'activity') activeTab.value = 'activity';
+  }
 );
 
 /**
@@ -615,7 +626,11 @@ onBeforeMount(async () => {
       // read as nothing having happened.
       if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
         onTxSubmitted = (message: { type?: string }) => {
-          if (message?.type === "WALLET_TX_SUBMITTED") refreshAll();
+          if (message?.type === "WALLET_TX_SUBMITTED") {
+            // Show the transaction, not a balance that has not moved yet.
+            activeTab.value = 'activity';
+            refreshAll();
+          }
           return undefined;
         };
         chrome.runtime.onMessage.addListener(onTxSubmitted);
