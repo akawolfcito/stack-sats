@@ -147,12 +147,12 @@ describe('a Taproot spend, driven by transfer.ts itself', () => {
     const tx = bitcoin.Transaction.fromHex(txHex);
     const spent = 120_000;
     const paidOut = tx.outs.reduce((total, out) => total + out.value, 0);
+    const feePaid = spent - paidOut;
 
-    expect(spent - paidOut).toBe(136 * 2);
-
-    // And the estimate is honest about the transaction it produced: the real
-    // virtual size should match what was charged for.
-    expect(Math.ceil(tx.virtualSize())).toBe(136);
+    // The property worth holding, whatever the shape of the transaction: the
+    // wallet charges for the size it actually produced, so the rate the user
+    // was shown is the rate the network sees.
+    expect(feePaid).toBe(Math.ceil(tx.virtualSize()) * 2);
   });
 
   it('never asks for the previous transaction, which it does not need', async () => {
@@ -178,15 +178,68 @@ describe('a Taproot spend, driven by transfer.ts itself', () => {
     expect(paths.some((path) => path.includes('/tx/'))).toBe(false);
   });
 
-  it('sends the change back to the legacy address, not to Taproot', async () => {
-    // Worth pinning because it is a real consequence rather than an accident:
-    // spending Taproot moves the remainder to P2PKH, so balances drift toward
-    // legacy with every send.
+  it('returns the change to the type it was spent from', async () => {
+    // Change used to go to the legacy address unconditionally, so every
+    // Taproot send quietly migrated the remainder to P2PKH. That costs the
+    // user twice: a legacy input is 148 vB to spend later against 57.5, and
+    // it undoes the address format they chose in Receive.
     const keys = keyPair(ODD_KEY);
     fundTaprootOnly(keys.p2tr, 120_000);
 
     const { txHex } = await buildAndSignTransaction({
       recipient: keys.p2pkh,
+      amountSats: 50_000,
+      feeRate: 2,
+      senderP2PKH: keys.p2pkh,
+      senderP2TR: keys.p2tr,
+      privateKey: keys.privateKey,
+      publicKey: keys.publicKey,
+      network: 'testnet',
+    });
+
+    const tx = bitcoin.Transaction.fromHex(txHex);
+    const changeOutput = tx.outs[tx.outs.length - 1];
+
+    expect(
+      bitcoin.address.fromOutputScript(changeOutput.script, NETWORK)
+    ).toBe(keys.p2tr);
+  });
+
+  it('keeps change on the legacy address when legacy is what it spent', async () => {
+    // The rule is "same type as the input", not "always Taproot".
+    const keys = keyPair(ODD_KEY);
+
+    // A legacy input is signed over the whole previous transaction, so this
+    // one has to be real: PSBT checks that nonWitnessUtxo hashes to the txid
+    // the input names.
+    const funding = new bitcoin.Transaction();
+    funding.version = 2;
+    funding.addInput(Buffer.alloc(32), 0xffffffff);
+    funding.addOutput(
+      bitcoin.payments.p2pkh({ pubkey: keys.publicKey, network: NETWORK }).output!,
+      400_000
+    );
+
+    vi.mocked(esploraFetch).mockImplementation((async (path: string) => {
+      if (path.includes('/tx/')) {
+        return { ok: true, status: 200, text: async () => funding.toHex() };
+      }
+
+      const utxos = path.includes(keys.p2pkh)
+        ? [
+            {
+              txid: funding.getId(),
+              vout: 0,
+              value: 400_000,
+              status: { confirmed: true, block_height: 5_124_000 },
+            },
+          ]
+        : [];
+      return { ok: true, status: 200, json: async () => utxos };
+    }) as unknown as typeof esploraFetch);
+
+    const { txHex } = await buildAndSignTransaction({
+      recipient: keys.p2tr,
       amountSats: 50_000,
       feeRate: 2,
       senderP2PKH: keys.p2pkh,

@@ -84,6 +84,7 @@ import {
   type FeeEstimate,
   feeEstimateFromEsplora,
 } from './transfer';
+import type { BtcAddressType } from './validation';
 
 // --- Test data ---
 
@@ -343,6 +344,38 @@ describe('Bitcoin transfer utilities', () => {
       expect(result).not.toBeNull();
       expect(result!.change).toBe(0);
       expect(result!.fee).toBe(fee + 200);
+    });
+
+    /**
+     * Dust depends on the output being created, not on the input being
+     * spent. The threshold was read off inputType, which happened to be
+     * survivable while change always went to a legacy address, and stopped
+     * being survivable once change follows the input type: a Taproot output
+     * is dust below 330 sats, and 294 would have built one the network
+     * refuses to relay.
+     */
+    it('uses the Taproot dust threshold when change is Taproot', () => {
+      const outputs: BtcAddressType[] = ['p2pkh', 'p2tr'];
+      const fee = calculateFee(1, 2, 1, 'p2tr', outputs);
+      // 300 sats of change: above the segwit threshold, below Taproot's 330.
+      const utxos = [makeUtxo(50_000 + fee + 300)];
+
+      const result = selectUtxos(utxos, 50_000, 1, 'p2tr', outputs);
+
+      expect(result).not.toBeNull();
+      expect(result!.change).toBe(0);
+      expect(result!.fee).toBe(fee + 300);
+    });
+
+    it('keeps Taproot change once it clears 330', () => {
+      const outputs: BtcAddressType[] = ['p2pkh', 'p2tr'];
+      const fee = calculateFee(1, 2, 1, 'p2tr', outputs);
+      const utxos = [makeUtxo(50_000 + fee + 400)];
+
+      const result = selectUtxos(utxos, 50_000, 1, 'p2tr', outputs);
+
+      expect(result).not.toBeNull();
+      expect(result!.change).toBe(400);
     });
 
     it('should return zero change when exact amount', () => {

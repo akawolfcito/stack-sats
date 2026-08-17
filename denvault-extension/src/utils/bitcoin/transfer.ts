@@ -301,6 +301,18 @@ export function calculateFee(
 }
 
 /**
+ * Below these values an output costs more to spend than it holds, and the
+ * network will not relay it. Keyed by the output's own script type.
+ */
+const DUST_THRESHOLDS: Record<BtcAddressType, number> = {
+  p2pkh: 546,
+  p2sh: 540,
+  p2wpkh: 294,
+  p2tr: 330,
+  unknown: 546,
+};
+
+/**
  * Select UTXOs to cover the amount + fee
  * Uses simple "largest first" selection strategy
  */
@@ -329,8 +341,21 @@ export function selectUtxos(
     if (totalInput >= required) {
       const change = totalInput - targetAmount - fee;
 
-      // Check if change is dust (< 546 sats for legacy, < 294 for segwit)
-      const dustThreshold = inputType === 'p2pkh' ? 546 : 294;
+      /**
+       * Dust is a property of the output being created, not of the input
+       * being spent, and the two stopped agreeing once change began
+       * following the input type. A Taproot output is dust below 330 sats,
+       * so the old 294 would have built one the network refuses to relay.
+       *
+       * Callers that do not say where the change is going keep the previous
+       * input-based guess, which is what every existing test asserts.
+       */
+      const changeType = outputTypes?.[1];
+      const dustThreshold = changeType
+        ? DUST_THRESHOLDS[changeType]
+        : inputType === 'p2pkh'
+          ? 546
+          : 294;
 
       if (change > 0 && change < dustThreshold) {
         // Add dust to fee instead
@@ -397,10 +422,25 @@ export async function buildAndSignTransaction(
   const largestUtxo = [...allUtxos].sort((a, b) => b.utxo.value - a.utxo.value)[0];
   const primaryType = largestUtxo?.type || 'p2pkh';
 
-  // Recipient as addressed, change back to the legacy address (see below).
+  /**
+   * Change returns to the type it was spent from.
+   *
+   * It used to go to the legacy address unconditionally, so every Taproot
+   * send quietly migrated the remainder to P2PKH. That charged the user
+   * twice: a legacy input costs 148 vB to spend later against 57.5, and it
+   * silently undid the address format they had chosen in Receive.
+   *
+   * This wallet has no internal change chain, so the change lands on an
+   * address the user already uses. Reusing it is a privacy cost that a
+   * proper BIP-32 change branch would remove, but sending it to the wrong
+   * script type was a cost on top of that one, not a substitute for it.
+   */
+  const changeAddress =
+    primaryType === 'p2tr' && senderP2TR ? senderP2TR : senderP2PKH;
+
   const outputTypes: BtcAddressType[] = [
     detectAddressType(recipient, network),
-    detectAddressType(senderP2PKH, network),
+    detectAddressType(changeAddress, network),
   ];
 
   // Select UTXOs
@@ -492,7 +532,7 @@ export async function buildAndSignTransaction(
   // Add change output if there's change
   if (selection.change > 0) {
     psbt.addOutput({
-      address: senderP2PKH, // Send change back to P2PKH address
+      address: changeAddress, // Same script type the inputs came from
       value: selection.change,
     });
   }
