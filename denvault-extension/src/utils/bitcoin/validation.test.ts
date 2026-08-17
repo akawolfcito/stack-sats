@@ -96,10 +96,11 @@ describe("Bitcoin validation utilities", () => {
         expect(result.valid).toBe(true);
       });
 
-      it("should default to devnet (testnet) when no network stored", () => {
-        // devnet is default, which uses testnet prefixes
-        const result = validateTaprootNetworkPrefix(TESTNET_TAPROOT);
-        expect(result.valid).toBe(true);
+      it("should default to mainnet when no network stored", () => {
+        // The default network is mainnet, so a bc1p address is the one that
+        // belongs here and a tb1p address does not.
+        expect(validateTaprootNetworkPrefix(MAINNET_TAPROOT).valid).toBe(true);
+        expect(validateTaprootNetworkPrefix(TESTNET_TAPROOT).valid).toBe(false);
       });
     });
   });

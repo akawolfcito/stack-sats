@@ -48,8 +48,18 @@ describe("network utilities", () => {
   });
 
   describe("getSelectedNetwork", () => {
-    it("should return devnet as default when nothing stored", () => {
-      expect(getSelectedNetwork()).toBe("devnet");
+    /**
+     * A fresh install has to land on a network that works.
+     *
+     * The default used to be devnet, which in a published build cannot
+     * function at all: its API URL is built from VITE_PLATFORM_HIRO_API_KEY,
+     * a compile-time variable, and without it getApiUrl falls back to testnet
+     * while getNetworkConfig still points at localhost:3999. So the first
+     * screen said "Devnet", read from testnet and would have written to a
+     * node nobody was running.
+     */
+    it("should return mainnet as default when nothing stored", () => {
+      expect(getSelectedNetwork()).toBe("mainnet");
     });
 
     it("should return stored mainnet value", () => {
@@ -67,14 +77,14 @@ describe("network utilities", () => {
       expect(getSelectedNetwork()).toBe("devnet");
     });
 
-    it("should return devnet for invalid stored value", () => {
+    it("should return mainnet for invalid stored value", () => {
       localStorage.setItem("selected_network", "invalid_network");
-      expect(getSelectedNetwork()).toBe("devnet");
+      expect(getSelectedNetwork()).toBe("mainnet");
     });
 
-    it("should return devnet for empty string", () => {
+    it("should return mainnet for empty string", () => {
       localStorage.setItem("selected_network", "");
-      expect(getSelectedNetwork()).toBe("devnet");
+      expect(getSelectedNetwork()).toBe("mainnet");
     });
   });
 
@@ -125,9 +135,9 @@ describe("network utilities", () => {
       expect(config).toBe(NETWORKS.mainnet.config);
     });
 
-    it("should return devnet config by default", () => {
+    it("should return mainnet config by default", () => {
       const config = getNetworkConfig();
-      expect(config).toBe(NETWORKS.devnet.config);
+      expect(config).toBe(NETWORKS.mainnet.config);
     });
   });
 
@@ -149,25 +159,25 @@ describe("network utilities", () => {
       expect(getAddressVersion()).toBe("mainnet");
     });
 
-    it("should return testnet by default (devnet is default)", () => {
-      expect(getAddressVersion()).toBe("testnet");
+    it("should return mainnet by default (mainnet is default)", () => {
+      expect(getAddressVersion()).toBe("mainnet");
     });
   });
 
   describe("buildNetworkWithClient", () => {
     it("should return base network config when no params provided", () => {
       const config = buildNetworkWithClient();
-      expect(config).toBe(NETWORKS.devnet.config);
+      expect(config).toBe(NETWORKS.mainnet.config);
     });
 
     it("should return base network config when no baseUrl in params", () => {
       const config = buildNetworkWithClient({});
-      expect(config).toBe(NETWORKS.devnet.config);
+      expect(config).toBe(NETWORKS.mainnet.config);
     });
 
     it("should return base network config when client is empty", () => {
       const config = buildNetworkWithClient({ client: {} });
-      expect(config).toBe(NETWORKS.devnet.config);
+      expect(config).toBe(NETWORKS.mainnet.config);
     });
 
     it("should use fallback network when specified", () => {
@@ -215,7 +225,7 @@ describe("network utilities", () => {
     it("should work with chainId parameter (ignored)", () => {
       const config = buildNetworkWithClient({ chainId: 999 });
       // chainId in params is not used, base network config is returned
-      expect(config).toBe(NETWORKS.devnet.config);
+      expect(config).toBe(NETWORKS.mainnet.config);
     });
   });
 });

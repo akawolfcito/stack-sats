@@ -50,7 +50,18 @@ export function getSelectedNetwork(): NetworkName {
   if (stored && (stored === "mainnet" || stored === "testnet" || stored === "devnet")) {
     return stored;
   }
-  return "devnet"; // Default to devnet for development
+  /**
+   * Mainnet, because it is the only network that works without configuring
+   * anything.
+   *
+   * This used to default to devnet, which a published build cannot reach at
+   * all: getApiUrl builds the devnet URL from VITE_PLATFORM_HIRO_API_KEY, a
+   * compile-time variable, and falls back to testnet when there is none,
+   * while getNetworkConfig keeps pointing at localhost:3999. So a fresh
+   * install opened on a chip reading "Devnet", took its balances from
+   * testnet and would have broadcast to a node nobody was running.
+   */
+  return "mainnet";
 }
 
 /**
