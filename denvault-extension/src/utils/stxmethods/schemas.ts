@@ -40,11 +40,25 @@ export const TransferStxParamsSchema = z.object({
   network: NetworkParamsSchema,
 });
 
+/**
+ * Transaction knobs every dApp method may set, from CommonTxParams in
+ * @stacks/connect. These were absent from the schemas, so Zod stripped
+ * them before the handlers ever saw them.
+ */
+const CommonTxParamsSchema = {
+  postConditions: z.array(z.unknown()).optional(),
+  postConditionMode: z.union([z.string(), z.number()]).optional(),
+  fee: z.union([z.string(), z.number()]).optional(),
+  nonce: z.union([z.string(), z.number()]).optional(),
+  sponsored: z.boolean().optional(),
+};
+
 export const CallContractParamsSchema = z.object({
   contract: ContractIdSchema,
   functionName: z.string().min(1).max(128),
   functionArgs: z.array(z.unknown()).default([]),
   network: NetworkParamsSchema,
+  ...CommonTxParamsSchema,
 });
 
 export const SignMessageParamsSchema = z.object({
@@ -74,6 +88,7 @@ export const DeployContractParamsSchema = z.object({
   clarityCode: z.string().min(1),
   clarityVersion: z.number().optional(),
   network: NetworkParamsSchema,
+  ...CommonTxParamsSchema,
 });
 
 export type TransferStxParams = z.infer<typeof TransferStxParamsSchema>;

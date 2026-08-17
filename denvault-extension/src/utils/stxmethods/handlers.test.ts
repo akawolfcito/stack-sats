@@ -265,6 +265,58 @@ describe("handleCallContract - happy path", () => {
     expect(mockTransaction.setFee).not.toHaveBeenCalled();
   });
 
+  it("forwards the post conditions the dApp asked for", async () => {
+    mockMakeContractCall.mockClear();
+
+    await handleCallContract(
+      makeRequest("stx_callContract", {
+        ...validParams,
+        postConditions: ["0x00021a", "0x00021b"],
+        postConditionMode: "deny",
+      }),
+      DUMMY_MNEMONIC,
+      0
+    );
+
+    // These were dropped on the floor, schema included. With the SDK on
+    // its Deny default and nothing declared, every call that moves an
+    // asset aborted on chain.
+    expect(mockMakeContractCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        postConditions: ["0x00021a", "0x00021b"],
+        postConditionMode: "deny",
+      })
+    );
+  });
+
+  it("forwards an explicit fee and nonce", async () => {
+    mockMakeContractCall.mockClear();
+
+    await handleCallContract(
+      makeRequest("stx_callContract", { ...validParams, fee: 5000, nonce: 12 }),
+      DUMMY_MNEMONIC,
+      0
+    );
+
+    expect(mockMakeContractCall).toHaveBeenCalledWith(
+      expect.objectContaining({ fee: 5000, nonce: 12 })
+    );
+  });
+
+  it("leaves absent options absent, so the SDK keeps its defaults", async () => {
+    mockMakeContractCall.mockClear();
+
+    await handleCallContract(
+      makeRequest("stx_callContract", validParams),
+      DUMMY_MNEMONIC,
+      0
+    );
+
+    const options = mockMakeContractCall.mock.calls[0][0];
+    expect("postConditionMode" in options).toBe(false);
+    expect("fee" in options).toBe(false);
+  });
+
   it("returns error envelope when makeContractCall throws", async () => {
     mockMakeContractCall.mockRejectedValueOnce(new Error("Node unreachable"));
 
