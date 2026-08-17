@@ -30,6 +30,12 @@ import type { JsonRpcResponse } from "@stacks/connect/dist/types/methods";
 import type { JsonRpcRequest } from "@/utils/types";
 import { secureLog, isDebugMode } from "../security/logger";
 import {
+  toClarityArgs,
+  toTxOptions,
+  resolveRequestedNetwork,
+  type DappTxParams,
+} from "./params";
+import {
   TransferStxParamsSchema,
   CallContractParamsSchema,
   SignMessageParamsSchema,
@@ -213,6 +219,9 @@ async function handleCallContract(
   try {
     privateKey = await getPrivateKey(mnemonic, accountIndex);
 
+    // Refuse to sign on a chain the user is not looking at.
+    resolveRequestedNetwork(params.network, getSelectedNetwork());
+
     // Build proper network config
     const network = buildNetworkWithClient(
       params.network as { chainId?: number; client?: { baseUrl?: string } }
@@ -229,10 +238,10 @@ async function handleCallContract(
     // Parse contract address and name
     const [contractAddress, contractName] = params.contract.split(".");
 
-    // Process functionArgs - they come as ClarityValues from @stacks/connect
-    const functionArgs: ClarityValue[] = Array.isArray(params.functionArgs)
-      ? (params.functionArgs as ClarityValue[])
-      : [];
+    // @stacks/connect types these as `string[] | ClarityValue[]`, and only
+    // the strings survive JSON-RPC. Casting them was a lie the type system
+    // could not catch and the node rejects.
+    const functionArgs = toClarityArgs(params.functionArgs as unknown[]);
 
     // Omit fee to let the SDK auto-estimate via fetchFeeEstimate
     const transaction = await makeContractCall({
@@ -242,6 +251,11 @@ async function handleCallContract(
       functionArgs,
       senderKey: privateKey,
       network,
+      // Post conditions are the user's guarantee that a contract cannot
+      // move more than it said it would. Dropping them left the SDK on
+      // its Deny default with nothing declared, so any call that
+      // transfers an asset aborted on chain.
+      ...toTxOptions(params as unknown as DappTxParams),
     });
 
     // Fallback: if fee estimation failed (returned 0), use default
@@ -336,6 +350,9 @@ async function handleTransferStx(
 
   try {
     privateKey = await getPrivateKey(mnemonic, accountIndex);
+
+    // Refuse to sign on a chain the user is not looking at.
+    resolveRequestedNetwork(params.network, getSelectedNetwork());
 
     // Build proper network config
     const network = buildNetworkWithClient(
@@ -545,6 +562,9 @@ async function handleDeployContract(
   try {
     privateKey = await getPrivateKey(mnemonic, accountIndex);
 
+    // Refuse to sign on a chain the user is not looking at.
+    resolveRequestedNetwork(params.network, getSelectedNetwork());
+
     // Build proper network config
     const network = buildNetworkWithClient(
       params.network as { chainId?: number; client?: { baseUrl?: string } }
@@ -565,6 +585,7 @@ async function handleDeployContract(
       codeBody: params.clarityCode,
       senderKey: privateKey,
       network,
+      ...toTxOptions(params as unknown as DappTxParams),
     };
 
     // Add clarityVersion if specified (coerce to number for ClarityVersion enum)

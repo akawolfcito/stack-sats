@@ -116,12 +116,22 @@ async function adoptPendingRequest(): Promise<void> {
   }
 }
 
-/** The approval is over: hand the surface back to the wallet UI. */
+/**
+ * The approval is over: hand the surface back to the wallet UI.
+ *
+ * Land on Activity rather than wherever the user happened to be. Approving
+ * a dApp transaction used to return them to Assets, where the balance had
+ * not refreshed either, so a deploy that was already on chain looked like
+ * nothing had happened. Two users' worth of duplicate transactions came
+ * from that on 2026-08-17.
+ */
 function dismissConfirmation(): void {
   payload.value = undefined;
   currentRequestId.value = "";
   origin.value = "";
   isQueueDelivery.value = false;
+
+  router.replace({ path: "/user", query: { tab: "activity" } });
 }
 
 // Listen for messages from background (only in extension context)

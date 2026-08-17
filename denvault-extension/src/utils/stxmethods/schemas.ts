@@ -1,16 +1,22 @@
 import { z } from "zod";
+import { isContractId, isStacksAddress } from "./address";
 
-/** Stacks address: SP/ST prefix + 33-41 c32 characters */
-const StxAddressSchema = z.string().regex(
-  /^(SP|ST)[0-9A-HJ-NP-Z]{33,41}$/,
-  "Invalid Stacks address format"
-);
+/**
+ * Stacks address, decided by c32check rather than by a guessed length.
+ *
+ * The old rule was SP/ST plus 33 to 41 characters. c32 strips leading
+ * zeros, so boot addresses are far shorter: pox-4 lives at
+ * ST000000000000000000002AMW42H, 29 characters. Every system contract
+ * was rejected as invalid before a handler saw the request.
+ */
+const StxAddressSchema = z
+  .string()
+  .refine(isStacksAddress, "Invalid Stacks address format");
 
 /** Contract identifier: address.name */
-const ContractIdSchema = z.string().regex(
-  /^(SP|ST)[0-9A-HJ-NP-Z]{33,41}\.[a-zA-Z][a-zA-Z0-9_-]{0,127}$/,
-  "Contract must be in format address.name"
-);
+const ContractIdSchema = z
+  .string()
+  .refine(isContractId, "Contract must be in format address.name");
 
 /** Positive non-zero amount as string (for BigInt conversion) */
 const PositiveAmountSchema = z.string().refine(
@@ -25,13 +31,28 @@ const PositiveAmountSchema = z.string().refine(
   "Amount must be a positive integer string"
 );
 
-/** Optional network params (baseUrl validated separately) */
-const NetworkParamsSchema = z.object({
-  chainId: z.number().optional(),
-  client: z.object({
-    baseUrl: z.string().url().optional(),
-  }).optional(),
-}).optional();
+/**
+ * Optional network params (baseUrl validated separately).
+ *
+ * A dApp sends a plain string: @stacks/connect types this as
+ * NetworkString and Hiro's sandbox puts "testnet" on the wire. Only the
+ * object form was accepted, so every dApp call that named its network
+ * failed validation with -32602 before reaching a handler. Both forms are
+ * valid now, and resolveRequestedNetwork decides what the string means.
+ */
+const NetworkParamsSchema = z
+  .union([
+    z.string().min(1).max(32),
+    z.object({
+      chainId: z.number().optional(),
+      client: z
+        .object({
+          baseUrl: z.string().url().optional(),
+        })
+        .optional(),
+    }),
+  ])
+  .optional();
 
 export const TransferStxParamsSchema = z.object({
   recipient: StxAddressSchema,
@@ -40,11 +61,25 @@ export const TransferStxParamsSchema = z.object({
   network: NetworkParamsSchema,
 });
 
+/**
+ * Transaction knobs every dApp method may set, from CommonTxParams in
+ * @stacks/connect. These were absent from the schemas, so Zod stripped
+ * them before the handlers ever saw them.
+ */
+const CommonTxParamsSchema = {
+  postConditions: z.array(z.unknown()).optional(),
+  postConditionMode: z.union([z.string(), z.number()]).optional(),
+  fee: z.union([z.string(), z.number()]).optional(),
+  nonce: z.union([z.string(), z.number()]).optional(),
+  sponsored: z.boolean().optional(),
+};
+
 export const CallContractParamsSchema = z.object({
   contract: ContractIdSchema,
   functionName: z.string().min(1).max(128),
   functionArgs: z.array(z.unknown()).default([]),
   network: NetworkParamsSchema,
+  ...CommonTxParamsSchema,
 });
 
 export const SignMessageParamsSchema = z.object({
@@ -74,6 +109,7 @@ export const DeployContractParamsSchema = z.object({
   clarityCode: z.string().min(1),
   clarityVersion: z.number().optional(),
   network: NetworkParamsSchema,
+  ...CommonTxParamsSchema,
 });
 
 export type TransferStxParams = z.infer<typeof TransferStxParamsSchema>;

@@ -15,6 +15,28 @@ function isRpcEnvelope(value: unknown): value is RpcEnvelope {
   );
 }
 
+/** A JSON-RPC error response. Also an answer, not a malfunction. */
+export interface RpcErrorEnvelope {
+  error: { code: number; message: string; data?: unknown };
+}
+
+/**
+ * Did the handler answer with an error rather than a result?
+ *
+ * The handlers return status COMPLETE either way: a dApp that sends bad
+ * parameters gets a -32602 envelope, and that is a legitimate reply.
+ * Feeding it to toQueueApproveResult replaced a precise message with an
+ * internal one about envelopes, which is exactly what a user saw when
+ * Hiro's sandbox sent its network as a string.
+ */
+export function isRpcErrorEnvelope(value: unknown): value is RpcErrorEnvelope {
+  if (typeof value !== "object" || value === null || !("error" in value)) {
+    return false;
+  }
+  const error = (value as { error?: unknown }).error;
+  return typeof error === "object" && error !== null && "message" in error;
+}
+
 /**
  * The payload the popup hands to background as DAPP_APPROVE.result.
  *

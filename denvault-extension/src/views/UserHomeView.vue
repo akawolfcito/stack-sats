@@ -14,8 +14,8 @@
  * - Fixed header zone (menu, account switcher, network, balance, actions, tabs)
  * - Scrollable body (assets, tokens, activity)
  */
-import { useRouter } from "vue-router";
-import { onBeforeMount, ref, watch, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { onBeforeMount, onBeforeUnmount, ref, watch, computed } from "vue";
 import { generateInitialAccounts } from "../utils/accounts";
 import { type Account } from "../utils/types";
 import { sessionManager } from "../utils/security/session";
@@ -57,6 +57,7 @@ import {
   setActiveAccountIndex,
 } from "../utils/accounts/active";
 import {
+  fetchMempoolTransactions,
   fetchTransactions,
   formatRelativeTime,
   formatAmount,
@@ -72,6 +73,8 @@ import type { ActionItem } from "@/components/ui";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import { getAvailableAssets } from "../utils/assets/registry";
+import { formatStxFromMicro } from "@/utils/balance/format";
+import { startAutoRefresh } from "@/composables/useAutoRefresh";
 import { fetchBtcActivity, type BtcActivityItem } from "@/utils/bitcoin/activity";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
@@ -87,7 +90,39 @@ const router = useRouter();
 const { isPopup, isSidePanel } = useUiMode();
 
 // Tab state for navigation (unified for popup and panel)
-const activeTab = ref<'assets' | 'activity'>('assets');
+/**
+ * Which tab opens. `?tab=activity` is how a dApp approval lands here:
+ * approving used to drop the user on Assets with an unchanged balance and
+ * no word about the transaction they had just authorised.
+ */
+const route = useRoute();
+const activeTab = ref<'assets' | 'activity'>(
+  route.query.tab === 'activity' ? 'activity' : 'assets'
+);
+
+// Read again on every change: a side panel is already mounted when the
+// approval lands, so replacing the query alone left it sitting on Assets
+// and the user had to find the tab themselves.
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (tab === 'activity') activeTab.value = 'activity';
+  }
+);
+
+/**
+ * Anything on screen still waiting for a block.
+ *
+ * Drives how often the view refreshes itself: this is the state in which
+ * the user is watching and wondering whether their transaction went out.
+ */
+const hasPendingActivity = computed(() =>
+  activityItems.value.some((item) => item.status === 'pending')
+);
+
+/** Undone on unmount; installed once the first load has run. */
+let stopAutoRefresh: (() => void) | null = null;
+let onTxSubmitted: ((message: { type?: string }) => undefined) | null = null;
 const tabItems = [
   { key: 'assets', label: 'Assets' },
   { key: 'activity', label: 'Activity' },
@@ -164,13 +199,15 @@ const toggleBalanceVisibility = () => {
 // Computed properties for balance display
 const stxBalanceNumber = computed(() => microStxToStx(stxBalanceMicro.value));
 
-// Short balance format (2 decimals)
-const shortBalance = computed(() => {
-  const num = stxBalanceNumber.value;
-  if (num === 0) return "0.00";
-  if (num < 0.01) return num.toFixed(6);
-  return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-});
+/**
+ * Short balance, truncated rather than rounded.
+ *
+ * toLocaleString rounds, so 499.995501 STX rendered as "500.00": a
+ * balance the account does not hold, and a deploy that had just cost
+ * 0.004499 looked like it never happened. A wallet may show fewer digits
+ * than it has; it may not show more money than it has.
+ */
+const shortBalance = computed(() => formatStxFromMicro(stxBalanceMicro.value));
 
 const totalValueUsd = computed(() => {
   if (stxPriceUsd.value === 0) return null;
@@ -459,9 +496,22 @@ async function loadTransactions() {
 
   isLoadingTx.value = true;
   try {
-    const txs = await fetchTransactions(currentAccount.stxAddress, 20, 0, selectedNetwork.value);
+    // Mempool first: a Stacks transaction is invisible to the confirmed
+    // endpoint for the whole minute between approving it and its block,
+    // which is precisely when someone is asking whether it worked.
+    const [txs, pending] = await Promise.all([
+      fetchTransactions(currentAccount.stxAddress, 20, 0, selectedNetwork.value),
+      fetchMempoolTransactions(currentAccount.stxAddress, selectedNetwork.value),
+    ]);
+
     if (txs !== null) {
-      transactions.value = txs;
+      // A transaction can appear in both for a moment, once mined and
+      // still listed as pending. The mined copy is the truthful one.
+      const mined = new Set(txs.map((tx) => tx.txId));
+      transactions.value = [
+        ...pending.filter((tx) => !mined.has(tx.txId)),
+        ...txs,
+      ];
     }
   } catch (error) {
     secureLog("Failed to load transactions", error);
@@ -555,6 +605,36 @@ onBeforeMount(async () => {
       loadBtcBalance(); // Don't await, load in background
       loadTransactions(); // Don't await, load in background
       loadTokens(); // Don't await, load in background
+
+      // Nothing refreshed on its own until now, so a transaction that had
+      // already been mined left no trace on screen and users sent it
+      // again. See utils/composables/useAutoRefresh.
+      const refreshAll = () => {
+        loadBalance();
+        loadBtcBalance();
+        loadTransactions();
+      };
+
+      stopAutoRefresh = startAutoRefresh({
+        hasPending: hasPendingActivity,
+        onRefresh: refreshAll,
+      });
+
+      // Background says when a dApp transaction has gone out. Without it
+      // a side panel open beside the dApp waited for its next poll, so a
+      // deploy that was already confirmed showed up a minute late and
+      // read as nothing having happened.
+      if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+        onTxSubmitted = (message: { type?: string }) => {
+          if (message?.type === "WALLET_TX_SUBMITTED") {
+            // Show the transaction, not a balance that has not moved yet.
+            activeTab.value = 'activity';
+            refreshAll();
+          }
+          return undefined;
+        };
+        chrome.runtime.onMessage.addListener(onTxSubmitted);
+      }
     } else {
       router.push({ path: "/unlock" });
     }
@@ -585,6 +665,16 @@ watch(accountIndexToDisplay, async (newIndex) => {
   await loadBalance();
   loadTransactions();
   loadTokens();
+});
+
+onBeforeUnmount(() => {
+  stopAutoRefresh?.();
+  stopAutoRefresh = null;
+
+  if (onTxSubmitted && typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.removeListener(onTxSubmitted);
+    onTxSubmitted = null;
+  }
 });
 
 const handleOpenUserMenu = () => {
