@@ -391,11 +391,16 @@ export async function buildAndSignTransaction(
       throw new Error(`UTXO info not found for ${selectedUtxo.txid}:${selectedUtxo.vout}`);
     }
 
-    // Fetch the raw transaction to get the scriptPubKey
-    const rawTxHex = await fetchRawTransaction(selectedUtxo.txid, network);
-
     if (utxoInfo.type === 'p2pkh') {
-      // Legacy P2PKH input
+      // Legacy P2PKH input.
+      //
+      // Only this branch needs the whole previous transaction: a legacy input
+      // is signed over it, while segwit and Taproot inputs carry the amount
+      // and script in witnessUtxo. This fetch used to run for every input,
+      // so a Taproot send died whenever /tx/{id}/hex was slow or unavailable,
+      // waiting on data it was never going to use.
+      const rawTxHex = await fetchRawTransaction(selectedUtxo.txid, network);
+
       psbt.addInput({
         hash: selectedUtxo.txid,
         index: selectedUtxo.vout,
