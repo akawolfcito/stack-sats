@@ -311,16 +311,20 @@ const btcActivityItems = computed<ActivityItem[]>(() =>
   btcActivity.value.map((item) => ({
     txId: item.txid,
     status: item.confirmed ? ('success' as const) : ('pending' as const),
-    title: 'Bitcoin Transfer',
+    title: item.isSelfTransfer ? 'Moved Between Your Addresses' : 'Bitcoin Transfer',
     subtitle: item.counterparty
-      ? `${item.isOutgoing ? 'To' : 'From'} ${truncateTxAddress(item.counterparty, 4)}`
+      ? item.isSelfTransfer
+        ? `To your ${truncateTxAddress(item.counterparty, 4)}`
+        : `${item.isOutgoing ? 'To' : 'From'} ${truncateTxAddress(item.counterparty, 4)}`
       : undefined,
     amountText: `${formatBtcBalance(item.amountSats)} BTC`,
     // Seconds, not milliseconds: formatRelativeTime compares against
     // Date.now() / 1000. Multiplying made every Bitcoin row read "Just
     // now", including one from hours earlier.
     timeText: item.blockTime ? formatRelativeTime(item.blockTime) : 'Pending',
-    isOutgoing: item.isOutgoing,
+    // A self transfer gets no minus sign: the money did not leave, it only
+    // changed address, and a "-" beside it reads as a loss.
+    isOutgoing: item.isOutgoing && !item.isSelfTransfer,
   }))
 );
 
