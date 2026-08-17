@@ -72,6 +72,8 @@ const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
 const stxBalanceMicro = ref<string>('0');
 const btcBalance = ref<BtcBalance>({ confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 });
 const isLoadingBalance = ref(false);
+/** The Bitcoin indexer did not answer, so the balance is unknown. */
+const isBtcBalanceUnknown = ref(false);
 
 // Transaction state
 const transactions = ref<Transaction[]>([]);
@@ -106,6 +108,7 @@ const balanceText = computed(() => {
     return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   if (asset.value.id === 'btc') {
+    if (isBtcBalanceUnknown.value) return 'Unavailable';
     return formatBtcBalance(btcBalance.value.total);
   }
   // For unavailable assets, show placeholder
@@ -267,7 +270,10 @@ async function loadBtcBalance() {
   try {
     const balance = await fetchCombinedBtcBalance(addresses, selectedNetwork.value);
     btcBalance.value = balance;
+    isBtcBalanceUnknown.value = false;
   } catch (error) {
+    // The indexer did not answer. Zero would be a claim, not a reading.
+    isBtcBalanceUnknown.value = true;
     console.error('Failed to load BTC balance:', error);
   }
   isLoadingBalance.value = false;

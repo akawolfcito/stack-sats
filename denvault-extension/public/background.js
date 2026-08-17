@@ -130,30 +130,50 @@ async function dispatchNext() {
     return; // Nothing to process
   }
 
-  activeRequest = requestQueue.shift();
-  logQueue("Dispatching:", activeRequest.id, activeRequest.method);
+  // Held in a local because preparing the surface is asynchronous, and a
+  // decision can land in the meantime: clearActive() sets activeRequest to
+  // null, and everything below would then be reading from nothing.
+  const request = requestQueue.shift();
+  activeRequest = request;
+  logQueue("Dispatching:", request.id, request.method);
 
-  // Ensure single popup is open
-  await ensurePopupOpenOrFocus();
+  // Prefer a side panel the user already has open in the same window: it
+  // is on screen, and its session may already be unlocked, so the request
+  // does not spend the dApp's patience on a PIN. Everything else keeps
+  // getting the popup window.
+  const requestWindowId = await windowIdForTab(request.tabId);
+  if (hasSidePanelInWindow(requestWindowId)) {
+    logQueue("Delivering to the side panel in window", requestWindowId);
+    // The panel is connected and listening, which is what uiReady stands
+    // for. Nothing is going to send UI_READY on its behalf.
+    uiReady = true;
+  } else {
+    await ensurePopupOpenOrFocus();
+  }
+
+  if (activeRequest !== request) {
+    logQueue("Request resolved while its surface was being prepared:", request.id);
+    return;
+  }
 
   // Send request to UI
   sendToUI({
     type: "DAPP_REQUEST",
     payload: {
-      id: activeRequest.id,
-      method: activeRequest.method,
-      params: activeRequest.params,
-      origin: activeRequest.origin,
+      id: request.id,
+      method: request.method,
+      params: request.params,
+      origin: request.origin,
     },
   });
 
   // Start timeout timer (55s < injection's 60s)
   activeTimeoutId = setTimeout(() => {
-    if (activeRequest !== null) {
-      console.warn("[StacksWallet] Request timed out:", activeRequest.id);
-      activeRequest.respond({
+    if (activeRequest === request) {
+      console.warn("[StacksWallet] Request timed out:", request.id);
+      request.respond({
         jsonrpc: "2.0",
-        id: activeRequest.id,
+        id: request.id,
         error: {
           code: -32002,
           message: "Request timed out",
@@ -283,13 +303,129 @@ function handleUIReady() {
 }
 
 /**
+ * Is this message coming from one of our own extension pages?
+ *
+ * The presence of sender.tab does not answer that. The queue popup is
+ * opened with chrome.windows.create({ type: "popup" }), so it is a real
+ * window with a real tab and Chrome fills sender.tab for it, exactly as
+ * it does for a content script. The origin is what separates the two.
+ *
+ * Chrome sets sender.origin to "chrome-extension://<id>" for extension
+ * pages; sender.url carries the full page URL and covers the case where
+ * origin is absent.
+ *
+ * @param {chrome.runtime.MessageSender} sender
+ * @returns {boolean}
+ */
+function isOwnExtensionPage(sender) {
+  const origin = sender.origin ?? sender.url ?? "";
+  const base = `chrome-extension://${chrome.runtime.id}`;
+  // Exact match or a path under it, so another extension whose id merely
+  // starts with ours cannot pass.
+  return origin === base || origin.startsWith(`${base}/`);
+}
+
+/** Port name the approval window uses to hold this worker open. */
+const KEEPALIVE_PORT_NAME = "denvault-keepalive";
+
+/**
+ * Keep this worker alive while an approval window is open.
+ *
+ * Chrome recycles an idle MV3 worker after about 30 seconds, and the queue
+ * lives in this worker's memory. The popup sends UI_READY once and then
+ * goes quiet while the user reads the request and types a PIN, which
+ * routinely takes longer than that. The worker died, its 55s timeout timer
+ * died with it, injection.js fell through to its own 60s timeout, and the
+ * approval the user finally gave arrived at a restarted worker with
+ * activeRequest === null, so it was dropped in silence.
+ *
+ * Traffic on a connected port resets the idle timer. See
+ * src/composables/useBackgroundKeepalive.ts for the other end.
+ */
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== KEEPALIVE_PORT_NAME) {
+    return;
+  }
+
+  // Only our own pages get to hold the worker open.
+  if (!isOwnExtensionPage(port.sender ?? {})) {
+    port.disconnect();
+    return;
+  }
+
+  logQueue("Keepalive port connected");
+
+  // Receiving is what resets the idle timer, so the payload only matters
+  // for the one message that declares which surface this is.
+  port.onMessage.addListener((message) => {
+    if (message?.type !== "SURFACE_HELLO") {
+      return;
+    }
+    openSurfaces.set(port, {
+      surface: message.surface,
+      windowId: message.windowId ?? null,
+    });
+    logQueue("Surface announced:", message.surface, message.windowId);
+  });
+
+  port.onDisconnect.addListener(() => {
+    openSurfaces.delete(port);
+    logQueue("Keepalive port disconnected");
+  });
+});
+
+/**
+ * Surfaces currently on screen, keyed by their keepalive port.
+ *
+ * @type {Map<chrome.runtime.Port, {surface: string, windowId: number|null}>}
+ */
+const openSurfaces = new Map();
+
+/**
+ * Is a side panel open in this window?
+ *
+ * Only the same window counts. A panel open somewhere else would put the
+ * approval on a screen the user is not looking at, which is worse than a
+ * popup in front of them.
+ *
+ * @param {number|null} windowId
+ * @returns {boolean}
+ */
+function hasSidePanelInWindow(windowId) {
+  if (windowId === null || windowId === undefined) {
+    return false;
+  }
+  for (const entry of openSurfaces.values()) {
+    if (entry.surface === "sidepanel" && entry.windowId === windowId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Which window hosts the tab that made the request.
+ *
+ * @param {number} tabId
+ * @returns {Promise<number|null>}
+ */
+async function windowIdForTab(tabId) {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    return tab?.windowId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Listen for messages from UI (popup)
  * Handles: UI_READY, DAPP_APPROVE, DAPP_REJECT
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Only handle messages from extension pages (popup)
-  if (sender.tab) {
-    return; // This is from a content script, not popup
+  // Only handle messages from our own extension pages
+  if (!isOwnExtensionPage(sender)) {
+    return; // This is from a content script or another extension
   }
 
   switch (message.type) {
@@ -313,6 +449,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // before signing. Background is the single source of truth.
       handleGetActiveRequest(message.requestId, sendResponse);
       return true; // Keep channel open for async sendResponse
+
+    case "GET_PENDING_REQUEST":
+      // Lets a surface the user opened themselves pick up a request that
+      // is already in flight, instead of greeting them with Home.
+      sendResponse(
+        activeRequest
+          ? {
+              ok: true,
+              request: {
+                id: activeRequest.id,
+                method: activeRequest.method,
+                params: activeRequest.params,
+                origin: activeRequest.origin,
+              },
+            }
+          : { ok: false, request: null }
+      );
+      return true;
 
     case "GET_QUEUE_STATUS":
       sendResponse(getQueueStatus());
@@ -550,6 +704,14 @@ function isOriginAllowed(origin) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const originUrl = sender.origin ?? sender.url;
 
+  // Our own pages are served by the UI listener above. Chrome offers every
+  // message to every listener, so this one has to step aside in silence:
+  // answering "Origin not allowed" to the queue popup is what kept the
+  // dApp request from ever reaching the approval screen (H7).
+  if (isOwnExtensionPage(sender)) {
+    return;
+  }
+
   // Validate sender has required info
   if (!sender.tab?.id || !originUrl) {
     console.error("[StacksWallet] Missing sender info");
@@ -607,7 +769,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Check if this is an auto-approvable method with cached response
   if (AUTO_APPROVE_METHODS.includes(method)) {
     handleAutoApprove(message, sender, originUrl);
-    return true; // Keep channel open for async response
+    // No return true: the answer travels back through
+    // chrome.tabs.sendMessage, so claiming the sendResponse channel would
+    // only leave content.js waiting for a reply that never arrives.
+    return;
   }
 
   // Create request context and enqueue
@@ -633,7 +798,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   };
 
   enqueueRequest(ctx);
-  return true; // Keep channel open for async response
+  // Same as above: ctx.respond() answers through chrome.tabs.sendMessage.
+  return;
 });
 
 /**

@@ -22,6 +22,7 @@ import {
   handleSignStructuredData,
   handleDeployContract,
 } from "../utils/stxmethods";
+import { toQueueApproveResult } from "@/utils/stxmethods/queue";
 import type { JsonRpcRequest, Result } from "@/utils/types";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
@@ -57,8 +58,16 @@ const props = defineProps<{
   tabId: string;
   origin?: string;
   isQueueMode?: boolean;
+  /**
+   * True when this screen is an overlay inside a surface the user keeps
+   * open, such as the side panel. Closing the window there would take the
+   * whole wallet with it, so the screen is dismissed instead.
+   */
+  dismissOnly?: boolean;
   requestId?: string;
 }>();
+
+const emit = defineEmits<{ dismiss: [] }>();
 
 /**
  * H1: every rendered field reads from here, never from `props.payload`.
@@ -235,8 +244,9 @@ const showAccountSelector = computed(() => {
 
 secureLog("Incoming request", { method: props.payload.method, tabId: props.tabId, queueMode: props.isQueueMode });
 
-// Queue mode: send response via background message
-function sendQueueApprove(result: object) {
+// Queue mode: send response via background message. `result` is the inner
+// JSON-RPC result, never a full envelope: background adds the envelope.
+function sendQueueApprove(result: unknown) {
   chrome.runtime.sendMessage({
     type: "DAPP_APPROVE",
     id: props.requestId,
@@ -271,6 +281,11 @@ function handleResponseError(message: unknown): undefined {
 
 // Close window/tab based on context (popup vs full-page)
 function closeWindow() {
+  if (props.dismissOnly) {
+    emit("dismiss");
+    return;
+  }
+
   // Full-page mode: viewport is larger than popup dimensions
   if (window.innerWidth > 400 || window.innerHeight > 650) {
     chrome.tabs.getCurrent((tab) => {
@@ -375,7 +390,9 @@ async function handleConfirm() {
     if (result.status === "COMPLETE") {
       // Send response based on mode
       if (props.isQueueMode) {
-        sendQueueApprove(result.data);
+        // Background wraps this in its own JSON-RPC envelope, so only the
+        // inner result travels. See toQueueApproveResult.
+        sendQueueApprove(toQueueApproveResult(result.data));
       } else {
         await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
       }
@@ -741,6 +758,12 @@ function handleReject(reason?: string) {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
+  /* .confirm-content is a flex column, and `overflow: hidden` sets this
+     item's automatic minimum size to zero. Without this the card was the
+     one that gave way whenever the content did not fit: the summary
+     flattened to a hairline and the payload, present in the DOM with its
+     text, rendered at zero height. The panel looked empty. */
+  flex-shrink: 0;
 }
 
 .raw-details summary {

@@ -35,6 +35,7 @@ import {
 import {
   fetchCombinedBtcBalance,
   formatBtcBalance,
+  getBtcTxExplorerUrl,
   type BtcBalance,
 } from "../utils/bitcoin";
 import {
@@ -70,17 +71,20 @@ import { Button, ActionBar, SectionHeader } from "@/components/ui";
 import type { ActionItem } from "@/components/ui";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
+import { getAvailableAssets } from "../utils/assets/registry";
+import { fetchBtcActivity, type BtcActivityItem } from "@/utils/bitcoin/activity";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
 import ListGroup from "../components/list/ListGroup.vue";
 import ListRow from "../components/list/ListRow.vue";
 import { useUiMode } from "../composables/useUiMode";
+import { openSidePanel } from "@/composables/useSidePanel";
 
 const router = useRouter();
 
 // UI Mode detection
-const { isPopup } = useUiMode();
+const { isPopup, isSidePanel } = useUiMode();
 
 // Tab state for navigation (unified for popup and panel)
 const activeTab = ref<'assets' | 'activity'>('assets');
@@ -117,6 +121,15 @@ const stxPriceUsd = ref(0);
 // BTC Balance state
 const btcBalance = ref<BtcBalance>({ confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 });
 const isLoadingBtcBalance = ref(false);
+/**
+ * True when the Bitcoin indexer could not be reached. Kept apart from the
+ * balance itself: reporting zero for an unknown balance is the wallet
+ * telling the user something it does not know.
+ */
+const isBtcBalanceUnknown = ref(false);
+
+/** Bitcoin history, merged into the same Activity list as Stacks. */
+const btcActivity = ref<BtcActivityItem[]>([]);
 
 // Account count state
 const accountCount = ref(DEFAULT_ACCOUNT_COUNT);
@@ -170,6 +183,35 @@ const currentAccountName = computed(() => {
 });
 
 // Current account address (short)
+/** Full address of the account on screen, for the copy button. */
+const currentStxAddress = computed(
+  () => userAccounts.value[accountIndexToDisplay.value]?.stxAddress ?? ''
+);
+
+const addressCopied = ref(false);
+
+/**
+ * Copy the address shown in the header.
+ *
+ * The most repeated action in a wallet used to live two taps away, inside
+ * the Receive screen, with no affordance where the user is actually
+ * looking at their address.
+ */
+async function copyCurrentAddress() {
+  const address = currentStxAddress.value;
+  if (!address) return;
+
+  try {
+    await navigator.clipboard.writeText(address);
+    addressCopied.value = true;
+    setTimeout(() => {
+      addressCopied.value = false;
+    }, 2000);
+  } catch (error) {
+    secureLog('Failed to copy address', error);
+  }
+}
+
 const currentAccountAddressShort = computed(() => {
   const address = userAccounts.value[accountIndexToDisplay.value]?.stxAddress || '';
   return truncateAddress(address);
@@ -190,49 +232,36 @@ const handleAccountSelect = (index: number) => {
 };
 
 // Asset items for AssetList component
-// V81: Added `available` flag to indicate implemented assets
+//
+// Driven by ASSETS_REGISTRY via getAvailableAssets(), so the Home list shows
+// only assets the wallet actually queries. Unimplemented ones stay declared in
+// the registry with `available: false` and reappear here the moment that flips.
+//
+// This list used to be hand-written, which let it drift from the registry: it
+// declared Inscriptions as `ordinals` while the registry called it
+// `inscriptions`, so tapping the row failed isValidAssetId() in AssetDetailView
+// and bounced straight back to /user. It also hard-coded `balanceText: '0'` for
+// assets no code ever fetches, telling the user they held none of something the
+// wallet had never looked for.
+const assetBalanceText: Record<string, () => string> = {
+  stx: () => shortBalance.value,
+  btc: () => (isBtcBalanceUnknown.value ? 'Unavailable' : formatBtcBalance(btcBalance.value.total)),
+};
+
 const assetItems = computed<AssetRowModel[]>(() => {
   const currentAccount = userAccounts.value[accountIndexToDisplay.value];
   if (!currentAccount) return [];
 
-  return [
-    {
-      id: 'stx',
-      symbol: 'STX',
-      name: 'Stacks',
-      balanceText: shortBalance.value,
-      fiatText: totalValueUsd.value || undefined,
-      iconColor: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1))',
-      available: true,
-    },
-    {
-      id: 'btc',
-      symbol: 'BTC',
-      name: 'Bitcoin',
-      balanceText: formatBtcBalance(btcBalance.value.total),
-      fiatText: undefined, // TODO: BTC price API
-      iconColor: 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1))',
-      available: true,
-    },
-    {
-      id: 'runes',
-      symbol: 'R',
-      name: 'Runes',
-      balanceText: '0',
-      fiatText: undefined,
-      iconColor: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.1))',
-      available: false,
-    },
-    {
-      id: 'ordinals',
-      symbol: 'O',
-      name: 'Inscriptions',
-      balanceText: '0',
-      fiatText: undefined,
-      iconColor: 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(234, 179, 8, 0.1))',
-      available: false,
-    },
-  ];
+  return getAvailableAssets().map((asset) => ({
+    id: asset.id,
+    symbol: asset.symbol,
+    name: asset.name,
+    balanceText: assetBalanceText[asset.id]?.() ?? '0',
+    // TODO: BTC price API. Only STX has a fiat figure today.
+    fiatText: asset.id === 'stx' ? totalValueUsd.value || undefined : undefined,
+    iconColor: asset.iconColor,
+    available: asset.available,
+  }));
 });
 
 // V82: Handle asset item click - navigate to asset detail
@@ -240,8 +269,26 @@ const handleAssetClick = (item: AssetRowModel) => {
   router.push({ path: `/asset/${item.id}` });
 };
 
+/** Bitcoin history in the shape the shared Activity list renders. */
+const btcActivityItems = computed<ActivityItem[]>(() =>
+  btcActivity.value.map((item) => ({
+    txId: item.txid,
+    status: item.confirmed ? ('success' as const) : ('pending' as const),
+    title: 'Bitcoin Transfer',
+    subtitle: item.counterparty
+      ? `${item.isOutgoing ? 'To' : 'From'} ${truncateTxAddress(item.counterparty, 4)}`
+      : undefined,
+    amountText: `${formatBtcBalance(item.amountSats)} BTC`,
+    // Seconds, not milliseconds: formatRelativeTime compares against
+    // Date.now() / 1000. Multiplying made every Bitcoin row read "Just
+    // now", including one from hours earlier.
+    timeText: item.blockTime ? formatRelativeTime(item.blockTime) : 'Pending',
+    isOutgoing: item.isOutgoing,
+  }))
+);
+
 // Activity items for ActivityList component
-const activityItems = computed<ActivityItem[]>(() => {
+const stxActivityItems = computed<ActivityItem[]>(() => {
   const currentAccount = userAccounts.value[accountIndexToDisplay.value];
   if (!currentAccount) return [];
 
@@ -299,8 +346,30 @@ const activityItems = computed<ActivityItem[]>(() => {
   });
 });
 
+/**
+ * One list for both chains. Pending first, because that is what the user
+ * just did and what they came back to check.
+ */
+const activityItems = computed<ActivityItem[]>(() => {
+  const merged = [...stxActivityItems.value, ...btcActivityItems.value];
+  return merged.sort((a, b) => {
+    if (a.status !== b.status) {
+      if (a.status === 'pending') return -1;
+      if (b.status === 'pending') return 1;
+    }
+    return 0;
+  });
+});
+
 // Handle activity item click (navigate to transaction details)
 const handleActivityClick = (txId: string) => {
+  // The detail screen reads the Stacks API, so a Bitcoin txid would land
+  // on a page that can never load. Send those to a Bitcoin explorer.
+  if (btcActivity.value.some((item) => item.txid === txId)) {
+    window.open(getBtcTxExplorerUrl(txId, selectedNetwork.value), '_blank');
+    return;
+  }
+
   router.push({ path: `/transaction/${txId}` });
 };
 
@@ -370,8 +439,15 @@ async function loadBtcBalance() {
   try {
     const balance = await fetchCombinedBtcBalance(addresses, selectedNetwork.value);
     btcBalance.value = balance;
+    isBtcBalanceUnknown.value = false;
     secureLog("BTC balance loaded", { total: balance.total });
+
+    // A Bitcoin send used to disappear from the wallet the moment its
+    // result screen was dismissed: on chain, but nowhere in the app.
+    btcActivity.value = await fetchBtcActivity(addresses, selectedNetwork.value);
   } catch (error) {
+    // Say so, rather than leaving the last figure or a zero on screen.
+    isBtcBalanceUnknown.value = true;
     secureLog("Failed to load BTC balance", error);
   }
   isLoadingBtcBalance.value = false;
@@ -531,15 +607,20 @@ const handleActionClick = (key: string) => {
   else if (key === 'receive') openReceiveModal();
 };
 
-// Open wallet in full-page tab (only in extension context)
-const openFullPage = () => {
-  if (typeof chrome !== "undefined" && chrome.runtime?.getURL && chrome.tabs?.create) {
-    const url = chrome.runtime.getURL("index.html");
-    chrome.tabs.create({ url });
+/**
+ * Open the wallet in Chrome's side panel.
+ *
+ * More than a convenience: a panel open in the same window as a dApp is
+ * where background delivers the approval, and it is usually already
+ * unlocked. Until now the only way to open it was Chrome's extensions
+ * menu, which no one finds.
+ */
+const handleOpenSidePanel = async () => {
+  const outcome = await openSidePanel();
+  // The toolbar popup cannot survive the panel taking focus, and leaving
+  // two copies of the wallet on screen is confusing anyway.
+  if (outcome === "sidepanel" && isPopup.value) {
     window.close();
-  } else {
-    // Fallback for non-extension context (e.g., Playwright tests)
-    secureLog("Full page mode not available outside extension context");
   }
 };
 
@@ -636,7 +717,6 @@ const handleManageAccounts = () => {
             <AccountSwitcher
               ref="accountSwitcherRef"
               :current-label="currentAccountName"
-              :current-address-short="currentAccountAddressShort"
               :accounts="accountItems"
               :can-add-account="accountCount < 100"
               @select="handleAccountSelect"
@@ -654,15 +734,24 @@ const handleManageAccounts = () => {
                 @select="handleNetworkSelect"
               />
 
-              <!-- Fullpage Button (V28) -->
-              <Button variant="icon" @click="openFullPage" title="Open in full page">
+              <!-- Side panel entry: hidden when this already is the panel -->
+              <Button
+                v-if="!isSidePanel"
+                variant="icon"
+                data-roi="home-sidepanel"
+                title="Open in side panel"
+                @click="handleOpenSidePanel"
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="15 3 21 3 21 9"/>
-                  <polyline points="9 21 3 21 3 15"/>
-                  <line x1="21" y1="3" x2="14" y2="10"/>
-                  <line x1="3" y1="21" x2="10" y2="14"/>
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <line x1="15" y1="3" x2="15" y2="21"/>
                 </svg>
               </Button>
+
+              <!-- Full page moved to the menu: an occasional exit, and two
+                   window icons side by side were indistinguishable at 16px.
+                   The side panel stays because approvals are delivered
+                   there, so it cannot be the one that hides. -->
             </div>
           </header>
 
@@ -672,9 +761,13 @@ const handleManageAccounts = () => {
             symbol="STX"
             :usd-text="totalValueUsd ? `${totalValueUsd} USD` : undefined"
             :is-hidden="!showBalance"
+            :address-short="currentAccountAddressShort"
+            address-label="STX"
+            :address-copied="addressCopied"
             data-roi="home-balance-card"
             @toggle-hidden="toggleBalanceVisibility"
             @refresh="refreshBalance"
+            @copy-address="copyCurrentAddress"
           />
 
           <!-- V55.2: Quick Actions with data-roi -->
@@ -893,6 +986,38 @@ const handleManageAccounts = () => {
   padding: var(--card-pad-x);
   padding-top: var(--space-lg);
   padding-bottom: var(--space-sm);
+  /* At popup width there is no room to spare. Adding the copy button
+     pushed the network chip and the two view buttons off the right edge,
+     because the account pill would not give any width back. */
+  min-width: 0;
+}
+
+/* The account pill is the only elastic piece: it already truncates its
+   address, so it is the one that yields. */
+.header :deep(.account-switcher) {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.header :deep(.account-pill) {
+  max-width: 100%;
+}
+
+.header :deep(.account-pill__info) {
+  min-width: 0;
+}
+
+.header :deep(.account-pill__label),
+.header :deep(.account-pill__address) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Everything else keeps its size rather than being squeezed into nothing. */
+.header > :deep(.btn--icon),
+.header .header-actions {
+  flex: 0 0 auto;
 }
 
 /* Header right actions group (V33: aligned + balanced) */

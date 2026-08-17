@@ -7,23 +7,7 @@
 
 import { getSelectedNetwork, type NetworkName } from '../network';
 import { secureLog } from '../security/logger';
-
-/**
- * Mempool.space API URLs
- */
-const MEMPOOL_URLS: Record<NetworkName, string> = {
-  mainnet: 'https://mempool.space/api',
-  testnet: 'https://mempool.space/testnet/api',
-  devnet: 'https://mempool.space/testnet/api', // Devnet uses testnet for BTC
-};
-
-/**
- * Get the Mempool API URL for the current or specified network
- */
-function getMempoolUrl(network?: NetworkName): string {
-  const selectedNetwork = network || getSelectedNetwork();
-  return MEMPOOL_URLS[selectedNetwork];
-}
+import { esploraFetch, getBtcExplorerBase } from './endpoints';
 
 /**
  * Bitcoin address info from Mempool.space API
@@ -67,33 +51,71 @@ export async function fetchBtcAddressInfo(
   address: string,
   network?: NetworkName
 ): Promise<BtcAddressInfo | null> {
-  const apiUrl = getMempoolUrl(network);
-  const url = `${apiUrl}/address/${address}`;
+  const selectedNetwork = network || getSelectedNetwork();
 
   try {
-    const response = await fetch(url);
+    const response = await esploraFetch(`/address/${address}`, {
+      network: selectedNetwork,
+    });
 
     if (!response.ok) {
-      // 400 means address not found or invalid - return empty balance
-      if (response.status === 400) {
+      // An address the indexer has never seen is an answer: it is empty.
+      // Blockstream replies 200 with zeroed stats, mempool.space replies
+      // 400, so both shapes end up here as "nothing to report".
+      if (response.status === 400 || response.status === 404) {
         secureLog('BTC address not found (new address)', { address: address.slice(0, 8) + '...' });
         return null;
       }
-      secureLog('BTC balance fetch failed', { status: response.status, address: address.slice(0, 8) + '...' });
-      return null;
+      throw new Error(`Bitcoin API answered ${response.status}`);
     }
 
     const data = await response.json();
     secureLog('BTC balance fetched', { address: address.slice(0, 8) + '...' });
     return data as BtcAddressInfo;
   } catch (error) {
+    // Deliberately not swallowed. Returning zero here is what made an
+    // unreachable network look exactly like an empty wallet, and a wallet
+    // must not state a balance it does not know.
     secureLog('BTC balance fetch error', { error: String(error) });
+    throw error instanceof Error ? error : new Error(String(error));
+  }
+}
+
+/**
+ * Has a Bitcoin transaction been mined?
+ *
+ * @returns true once it is in a block, false while it sits in the
+ * mempool, and null when the chain could not be asked. The result screen
+ * used to skip this call entirely and declare success after three
+ * seconds, which told the user a transaction had confirmed when nobody
+ * had checked.
+ */
+export async function fetchBtcTxConfirmed(
+  txid: string,
+  network?: NetworkName
+): Promise<boolean | null> {
+  const selectedNetwork = network || getSelectedNetwork();
+
+  try {
+    const response = await esploraFetch(`/tx/${txid}/status`, {
+      network: selectedNetwork,
+    });
+    if (!response.ok) return null;
+
+    const status = (await response.json()) as { confirmed?: boolean };
+    return status.confirmed === true;
+  } catch (error) {
+    secureLog('BTC tx status fetch error', { error: String(error) });
     return null;
   }
 }
 
 /**
- * Fetch Bitcoin balance for an address
+ * Fetch the Bitcoin balance of an address.
+ *
+ * @throws when the balance could not be read. An empty address resolves to
+ * zero; an unreachable indexer does not, because those two are not the
+ * same thing and the UI has to say which one it is.
  */
 export async function fetchBtcBalance(
   address: string,
@@ -177,27 +199,17 @@ export function formatBtcBalance(satoshis: number): string {
 }
 
 /**
- * Get Mempool.space explorer URL for an address
+ * Explorer URL for an address, on the host the wallet can reach.
  */
 export function getBtcExplorerUrl(address: string, network?: NetworkName): string {
   const selectedNetwork = network || getSelectedNetwork();
-
-  if (selectedNetwork === 'mainnet') {
-    return `https://mempool.space/address/${address}`;
-  }
-
-  return `https://mempool.space/testnet/address/${address}`;
+  return `${getBtcExplorerBase(selectedNetwork)}/address/${address}`;
 }
 
 /**
- * Get Mempool.space explorer URL for a transaction
+ * Explorer URL for a transaction, on the host the wallet can reach.
  */
 export function getBtcTxExplorerUrl(txid: string, network?: NetworkName): string {
   const selectedNetwork = network || getSelectedNetwork();
-
-  if (selectedNetwork === 'mainnet') {
-    return `https://mempool.space/tx/${txid}`;
-  }
-
-  return `https://mempool.space/testnet/tx/${txid}`;
+  return `${getBtcExplorerBase(selectedNetwork)}/tx/${txid}`;
 }

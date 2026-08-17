@@ -32,7 +32,6 @@ export interface AccountItem {
 
 const props = defineProps<{
   currentLabel: string
-  currentAddressShort: string
   accounts: AccountItem[]
   canAddAccount?: boolean
 }>()
@@ -92,9 +91,12 @@ defineExpose({ open, close, toggle })
     <!-- Trigger Pill -->
     <button class="account-pill" data-roi="acctsw-trigger" @click="toggle">
       <span class="account-pill__dot"></span>
+      <!-- Name only. The address moved to the balance block, where it is
+           legible and copies on tap: two lines here made the pill's
+           min-content wider than its box, and the overflow read as a
+           collision with the neighbouring control. -->
       <span class="account-pill__info">
         <span class="account-pill__label">{{ currentLabel }}</span>
-        <span class="account-pill__address">{{ currentAddressShort }}</span>
       </span>
       <svg class="account-pill__arrow" :class="{ 'account-pill__arrow--open': isOpen }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="6 9 12 15 18 9"/>
@@ -186,6 +188,9 @@ defineExpose({ open, close, toggle })
   gap: var(--space-sm);
   height: var(--control-h);
   padding: 0 var(--space-sm);
+  /* The pill is the elastic control in a 400px header row, so it has to
+     be allowed to shrink and to clip its own label. */
+  min-width: 0;
   background: transparent;
   border: none;
   border-radius: var(--radius-control);
@@ -222,6 +227,7 @@ defineExpose({ open, close, toggle })
   align-items: flex-start;
   line-height: 1.15;
   gap: 1px;
+  min-width: 0;
 }
 
 .account-pill__label {
@@ -229,13 +235,10 @@ defineExpose({ open, close, toggle })
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   letter-spacing: 0.01em;
-}
-
-.account-pill__address {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  color: var(--color-text-muted);
-  font-family: var(--font-mono);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .account-pill__arrow {

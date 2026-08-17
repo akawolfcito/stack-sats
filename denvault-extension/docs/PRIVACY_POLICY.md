@@ -39,26 +39,46 @@ The extension communicates only with the following services:
 
 | Service | Purpose | Data Sent |
 |---------|---------|-----------|
-| Hiro Stacks API (api.hiro.so) | Fetch blockchain data (balances, transactions) | Wallet addresses only |
-| Stacks blockchain nodes | Broadcast signed transactions | Transaction data |
+| Hiro Stacks API (`api.hiro.so`, `api.testnet.hiro.so`) | Read Stacks balances, tokens and transaction history; broadcast signed Stacks transactions | Public wallet addresses; signed transactions |
+| Blockstream Esplora (`blockstream.info`) | Read Bitcoin balances and UTXOs; estimate fees; broadcast signed Bitcoin transactions | Public wallet addresses; signed transactions |
+| mempool.space | Same Bitcoin queries, used only when Blockstream cannot be reached | Public wallet addresses; signed transactions |
 
-**No personal information is transmitted in these requests.**
+Reading a public blockchain means asking a node or an indexer about an
+address, so these services necessarily learn which addresses this wallet
+looks up, and the IP address the request comes from. That is inherent to
+querying a public ledger and is why the list is kept short and named.
+
+**No personal information is transmitted in these requests.** No recovery
+phrase, no private key and no PIN ever leaves the device.
 
 ## Permissions Used
 
 | Permission | Purpose |
 |------------|---------|
 | `storage` | Store encrypted wallet data locally |
-| `scripting` | Inject wallet provider for dApp communication |
-| `tabs` | Route responses to requesting tabs |
-| `activeTab` | Validate origin of connection requests |
-| `sidePanel` | Provide persistent wallet view option |
+| `sidePanel` | Offer the wallet, and dApp approvals, in Chrome's side panel |
+| `clipboardRead` | Read the clipboard when you press Paste on the Send screen, and only then |
+
+| Host permission | Purpose |
+|------------|---------|
+| `https://api.hiro.so/*` | Stacks mainnet queries and broadcasts |
+| `https://api.testnet.hiro.so/*` | The same on testnet |
+
+The Bitcoin services above are reached with ordinary CORS requests and
+need no host permission. A declared content script runs on `https://*/*`
+to relay wallet RPC messages between a page and the extension; it does
+not read or modify page content.
 
 ## What We Do NOT Do
 
+- We do NOT read your clipboard in the background. The clipboard is read
+  only when you press Paste, to fill in a recipient address
 - We do NOT collect analytics or telemetry
 - We do NOT track your browsing history
-- We do NOT share any data with third parties
+- We do NOT sell or share personal data with anyone. The blockchain
+  services listed above receive public addresses and signed
+  transactions, which is what reading and writing a public ledger
+  requires
 - We do NOT store your seed phrase on any server
 - We do NOT have access to your wallet or funds
 

@@ -139,11 +139,16 @@ This extension enables users to manage Stacks blockchain wallets, view token bal
 
 **Permission Justifications:**
 
+> Checked against `public/manifest.json` on 2026-08-16. The manifest
+> declares exactly `storage` and `sidePanel`; `tabs`, `scripting` and
+> `activeTab` were removed and `src/test/manifest-permissions.test.ts`
+> fails if any of them comes back.
+
 | Permission | Justification |
 |------------|---------------|
 | storage | Store encrypted wallet data locally using chrome.storage.local. No data is transmitted externally. |
-| tabs | Send transaction responses back to the originating tab after user approves or rejects a request. |
-| sidePanel | Provide optional persistent wallet view in Chrome's side panel for improved user experience. |
+| sidePanel | Offer the wallet, and dApp approval screens, in Chrome's side panel. |
+| clipboardRead | Fill the recipient field when the user presses Paste on the Send screen. Read on that click only; nothing observes the clipboard in the background. |
 
 **Host Permission Justification:**
 
@@ -151,9 +156,14 @@ This extension enables users to manage Stacks blockchain wallets, view token bal
 Host permissions are limited to official Stacks blockchain API endpoints:
 - https://api.hiro.so/* — Mainnet blockchain API (balance queries, transaction broadcasts)
 - https://api.testnet.hiro.so/* — Testnet blockchain API (for developers)
-- https://api.platform.hiro.so/* — Hiro Platform API (enhanced queries)
 
-All API calls are read-only balance queries or transaction broadcasts. No user data is sent to these APIs.
+The wallet also holds Bitcoin, and reads Bitcoin balances, UTXOs and fee
+estimates from a public block explorer API: blockstream.info, falling back
+to mempool.space when it cannot be reached. Those are CORS requests and
+need no host permission, which is why they are absent from the list above.
+They are named here because the extension does contact them.
+
+All API calls are read-only queries or transaction broadcasts. No user data is sent to these APIs.
 
 dApp connectivity is handled via content scripts (not host permissions), which inject a minimal relay script to enable standard WBIP wallet RPC communication. The content script does NOT access or modify page DOM/content.
 ```
@@ -175,23 +185,23 @@ dApp connectivity is handled via content scripts (not host permissions), which i
 
 ## Host Permissions Analysis
 
-### Current Configuration (v1.1.0)
+### Current Configuration (v1.1.3)
 
 ```json
 "host_permissions": [
   "https://api.hiro.so/*",
-  "https://api.testnet.hiro.so/*",
-  "https://api.platform.hiro.so/*"
+  "https://api.testnet.hiro.so/*"
 ]
 ```
 
 ### Risk Assessment
 
-| Permission | Risk Level | Justification |
+| Host | Risk Level | Justification |
 |------------|------------|---------------|
 | api.hiro.so | Low | Official Stacks mainnet blockchain API |
 | api.testnet.hiro.so | Low | Official Stacks testnet blockchain API |
-| api.platform.hiro.so | Low | Hiro Platform API (enhanced queries) |
+| blockstream.info | Low | Public Esplora API: Bitcoin balances, UTXOs, fees, broadcast. Reached by CORS, no host permission |
+| mempool.space | Low | The same Esplora API, used only as a fallback |
 
 ### dApp Connectivity
 

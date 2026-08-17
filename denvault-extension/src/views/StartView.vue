@@ -430,8 +430,8 @@ onBeforeMount(() => {
   position: absolute;
   /* V55.1: Proportional glow for 72px logo */
   inset: -12px;
-  background: var(--color-accent-primary);
-  opacity: 0.2;
+  background: var(--color-mark-glow);
+  opacity: 0.22;
   filter: blur(28px);
   border-radius: 50%;
   transition: opacity 0.5s ease;
@@ -447,7 +447,11 @@ onBeforeMount(() => {
   width: 72px;
   height: 72px;
   border-radius: 20px;
-  background: linear-gradient(135deg, #2a2d15, #1a1c0d);
+  background: linear-gradient(
+    135deg,
+    var(--color-mark-plate-from),
+    var(--color-mark-plate-to)
+  );
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: var(--shadow-elev-2);
   display: flex;

@@ -37,11 +37,12 @@ const { mockPsbt } = vi.hoisted(() => {
       p2wpkh: vi.fn(() => ({ output: Buffer.alloc(25) })),
       p2tr: vi.fn(() => ({ output: Buffer.alloc(34) })),
     },
-    ECPair: {
-      fromPrivateKey: vi.fn(() => ({
-        publicKey: Buffer.alloc(33),
-        sign: vi.fn(() => Buffer.alloc(64)),
-      })),
+    // No ECPair on purpose. bitcoinjs-lib dropped it in v6, and having it
+    // here is what let `bitcoin.ECPair.fromPrivateKey()` pass its tests
+    // for months while failing on every real send. The signer shape is
+    // exercised against the real library in signing.test.ts.
+    crypto: {
+      taggedHash: vi.fn(() => Buffer.alloc(32, 7)),
     },
   };
 
@@ -81,6 +82,7 @@ import {
   formatBtcDisplay,
   type UTXO,
   type FeeEstimate,
+  feeEstimateFromEsplora,
 } from './transfer';
 
 // --- Test data ---
@@ -129,7 +131,9 @@ function mockFetchError(status: number, body = 'error') {
 }
 
 function mockFetchReject(message: string) {
-  global.fetch = vi.fn().mockRejectedValueOnce(new Error(message));
+  // Every host, not just the first: the Bitcoin calls fail over between
+  // Esplora hosts, so "the network is down" means all of them are down.
+  global.fetch = vi.fn().mockRejectedValue(new Error(message));
 }
 
 // --- Tests ---
@@ -360,7 +364,10 @@ describe('Bitcoin transfer utilities', () => {
       // 0.00000100 = 100 sats (below 546)
       const result = parseBtcAmount('0.000001');
       expect(result.success).toBe(false);
-      expect(result.error).toContain('dust');
+      // The message used to say "dust threshold is 546 sats", which means
+      // nothing to someone entering an amount in BTC.
+      expect(result.error).toContain('0.00000546 BTC');
+      expect(result.error).toContain('546 sats');
     });
 
     it('should accept amounts at dust threshold', () => {
@@ -414,7 +421,8 @@ describe('Bitcoin transfer utilities', () => {
       const result = await fetchUtxos(FAKE_ADDRESS_P2PKH, 'testnet');
       expect(result).toEqual(utxos);
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/address/${FAKE_ADDRESS_P2PKH}/utxo`)
+        expect.stringContaining(`/address/${FAKE_ADDRESS_P2PKH}/utxo`),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
 
@@ -441,7 +449,8 @@ describe('Bitcoin transfer utilities', () => {
       mockFetchOk([]);
       await fetchUtxos(FAKE_ADDRESS_P2PKH, 'devnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('mempool.space/testnet/api')
+        expect.stringContaining('blockstream.info/testnet/api'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
 
@@ -449,7 +458,8 @@ describe('Bitcoin transfer utilities', () => {
       mockFetchOk([]);
       await fetchUtxos(FAKE_ADDRESS_P2PKH, 'mainnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/mempool\.space\/api\/address/)
+        expect.stringMatching(/blockstream\.info\/api\/address/),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
   });
@@ -740,6 +750,55 @@ describe('Bitcoin transfer utilities', () => {
 
       const result = await transferBtc(baseParams);
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('feeEstimateFromEsplora', () => {
+    it('rounds the rate up, so tidying it cannot underpay', () => {
+      // Blockstream answers 17.730999999999998 and that float reached the
+      // fee selector verbatim, three levels of it.
+      const fees = feeEstimateFromEsplora({
+        '144': 17.730999999999998,
+        '504': 17.730999999999998,
+        '1008': 17.730999999999998,
+      });
+
+      expect(fees.fastestFee).toBe(17.74);
+      expect(fees.hourFee).toBe(17.74);
+      expect(fees.minimumFee).toBe(17.74);
+    });
+
+    it('degrades to the fastest published target when short ones are missing', () => {
+      const fees = feeEstimateFromEsplora({ '144': 5, '1008': 2 });
+
+      // Nothing on this ladder confirms in one block, so the fastest rate
+      // published is the most a "fast" choice can honestly offer.
+      expect(fees.fastestFee).toBe(5);
+      expect(fees.economyFee).toBe(5);
+      expect(fees.minimumFee).toBe(2);
+    });
+
+    it('uses the exact target when the ladder has it', () => {
+      const fees = feeEstimateFromEsplora({
+        '1': 30,
+        '3': 20,
+        '6': 12,
+        '144': 3,
+        '1008': 1,
+      });
+
+      expect(fees.fastestFee).toBe(30);
+      expect(fees.halfHourFee).toBe(20);
+      expect(fees.hourFee).toBe(12);
+      expect(fees.economyFee).toBe(3);
+    });
+
+    it('never goes below one sat per vbyte', () => {
+      expect(feeEstimateFromEsplora({ '1': 0.2 }).fastestFee).toBe(1);
+    });
+
+    it('throws when the estimate map is empty', () => {
+      expect(() => feeEstimateFromEsplora({})).toThrow(/empty/i);
     });
   });
 });

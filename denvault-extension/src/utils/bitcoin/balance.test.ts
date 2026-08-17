@@ -67,7 +67,9 @@ function mockFetchError(status: number) {
 }
 
 function mockFetchReject(message: string) {
-  global.fetch = vi.fn().mockRejectedValueOnce(new Error(message));
+  // Every host, not just the first: the Bitcoin calls fail over between
+  // Esplora hosts, so "the network is down" means all of them are down.
+  global.fetch = vi.fn().mockRejectedValue(new Error(message));
 }
 
 // --- Tests ---
@@ -140,7 +142,8 @@ describe('Bitcoin balance utilities', () => {
       const result = await fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet');
       expect(result).toEqual(info);
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/address/${FAKE_ADDRESS}`)
+        expect.stringContaining(`/address/${FAKE_ADDRESS}`),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
 
@@ -150,23 +153,34 @@ describe('Bitcoin balance utilities', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null on other error status', async () => {
-      mockFetchError(500);
+    it('should return null on 404 (address never seen)', async () => {
+      mockFetchError(404);
       const result = await fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet');
       expect(result).toBeNull();
     });
 
-    it('should return null on network error', async () => {
+    it('throws when every host answers with a server error', async () => {
+      mockFetchError(500);
+      // Returning null here is what made an outage look like an empty
+      // address: the caller had no way to tell the two apart.
+      await expect(
+        fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet')
+      ).rejects.toThrow();
+    });
+
+    it('throws on a network error', async () => {
       mockFetchReject('ECONNREFUSED');
-      const result = await fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet');
-      expect(result).toBeNull();
+      await expect(
+        fetchBtcAddressInfo(FAKE_ADDRESS, 'testnet')
+      ).rejects.toThrow(/ECONNREFUSED|could be reached/i);
     });
 
     it('should use testnet URL for devnet', async () => {
       mockFetchOk(makeAddressInfo());
       await fetchBtcAddressInfo(FAKE_ADDRESS, 'devnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('mempool.space/testnet/api')
+        expect.stringContaining('blockstream.info/testnet/api'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
     });
 
@@ -174,8 +188,42 @@ describe('Bitcoin balance utilities', () => {
       mockFetchOk(makeAddressInfo());
       await fetchBtcAddressInfo(FAKE_ADDRESS, 'mainnet');
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/mempool\.space\/api\/address/)
+        expect.stringMatching(/blockstream\.info\/api\/address/),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
+    });
+  });
+
+  describe('fetchBtcBalance: unknown is not zero', () => {
+    it('reports zero for an address the indexer has never seen', async () => {
+      mockFetchError(404);
+
+      const balance = await fetchBtcBalance(FAKE_ADDRESS, 'testnet');
+
+      expect(balance).toEqual({
+        confirmed: 0,
+        unconfirmed: 0,
+        total: 0,
+        txCount: 0,
+      });
+    });
+
+    it('refuses to report zero when it could not read the balance', async () => {
+      mockFetchReject('ECONNREFUSED');
+
+      // A wallet must not state a balance it does not know. The UI turns
+      // this rejection into "Unavailable" instead of a figure.
+      await expect(
+        fetchBtcBalance(FAKE_ADDRESS, 'testnet')
+      ).rejects.toThrow();
+    });
+
+    it('makes a combined balance unknown when either address fails', async () => {
+      mockFetchReject('ECONNREFUSED');
+
+      await expect(
+        fetchCombinedBtcBalance([FAKE_ADDRESS, FAKE_ADDRESS], 'testnet')
+      ).rejects.toThrow();
     });
   });
 
@@ -250,17 +298,20 @@ describe('Bitcoin balance utilities', () => {
       expect(result.txCount).toBe(12);
     });
 
-    it('should handle one address failing (returns zeros for that address)', async () => {
+    it('is unknown when one of the addresses cannot be read', async () => {
       const info1 = makeAddressInfo();
 
-      global.fetch = vi.fn()
+      global.fetch = vi
+        .fn()
         .mockResolvedValueOnce({ ok: true, json: async () => info1 })
-        .mockRejectedValueOnce(new Error('Network error'));
+        .mockRejectedValue(new Error('Network error'));
 
-      const result = await fetchCombinedBtcBalance([FAKE_ADDRESS, FAKE_ADDRESS_2], 'testnet');
-      // addr1: confirmed=300k, addr2: 0 (error)
-      expect(result.confirmed).toBe(300_000);
-      expect(result.total).toBe(350_000);
+      // This used to add zero for the unreadable address and report the
+      // sum as if it were the whole balance: a figure lower than reality,
+      // presented with the same confidence as a real one.
+      await expect(
+        fetchCombinedBtcBalance([FAKE_ADDRESS, FAKE_ADDRESS_2], 'testnet')
+      ).rejects.toThrow();
     });
 
     it('should handle empty address list', async () => {
@@ -279,17 +330,17 @@ describe('Bitcoin balance utilities', () => {
   describe('getBtcExplorerUrl', () => {
     it('should return mainnet explorer URL', () => {
       const url = getBtcExplorerUrl(FAKE_ADDRESS, 'mainnet');
-      expect(url).toBe(`https://mempool.space/address/${FAKE_ADDRESS}`);
+      expect(url).toBe(`https://blockstream.info/address/${FAKE_ADDRESS}`);
     });
 
     it('should return testnet explorer URL', () => {
       const url = getBtcExplorerUrl(FAKE_ADDRESS, 'testnet');
-      expect(url).toBe(`https://mempool.space/testnet/address/${FAKE_ADDRESS}`);
+      expect(url).toBe(`https://blockstream.info/testnet/address/${FAKE_ADDRESS}`);
     });
 
     it('should return testnet URL for devnet', () => {
       const url = getBtcExplorerUrl(FAKE_ADDRESS, 'devnet');
-      expect(url).toBe(`https://mempool.space/testnet/address/${FAKE_ADDRESS}`);
+      expect(url).toBe(`https://blockstream.info/testnet/address/${FAKE_ADDRESS}`);
     });
 
     it('should use selected network when no network provided', () => {
@@ -305,17 +356,17 @@ describe('Bitcoin balance utilities', () => {
   describe('getBtcTxExplorerUrl', () => {
     it('should return mainnet tx explorer URL', () => {
       const url = getBtcTxExplorerUrl(FAKE_TXID, 'mainnet');
-      expect(url).toBe(`https://mempool.space/tx/${FAKE_TXID}`);
+      expect(url).toBe(`https://blockstream.info/tx/${FAKE_TXID}`);
     });
 
     it('should return testnet tx explorer URL', () => {
       const url = getBtcTxExplorerUrl(FAKE_TXID, 'testnet');
-      expect(url).toBe(`https://mempool.space/testnet/tx/${FAKE_TXID}`);
+      expect(url).toBe(`https://blockstream.info/testnet/tx/${FAKE_TXID}`);
     });
 
     it('should return testnet URL for devnet', () => {
       const url = getBtcTxExplorerUrl(FAKE_TXID, 'devnet');
-      expect(url).toBe(`https://mempool.space/testnet/tx/${FAKE_TXID}`);
+      expect(url).toBe(`https://blockstream.info/testnet/tx/${FAKE_TXID}`);
     });
   });
 });

@@ -56,9 +56,15 @@ test.describe.serial("DenVault wallet flows (issue #10)", () => {
     // src/views/UserHomeView.vue (which shadows the 8...8 helper from useTxDraft).
     const expectedShort = `${expectedAddress.slice(0, 7)}...${expectedAddress.slice(-7)}`;
 
-    const trigger = page.locator('[data-roi="acctsw-trigger"]');
-    await expect(trigger).toBeVisible();
-    await expect(trigger).toContainText(expectedShort);
+    // The address moved out of the account pill and into the balance
+    // block, where it is legible and copies on tap. The pill carries the
+    // account name alone: two lines made its content wider than its box
+    // at popup width, and the overflow collided with the next control.
+    await expect(page.locator('[data-roi="acctsw-trigger"]')).toBeVisible();
+
+    const addressChip = page.locator('[data-roi="home-copy-address"]');
+    await expect(addressChip).toBeVisible();
+    await expect(addressChip).toContainText(expectedShort);
   });
 
   // NOTE: The current UI treats 3 failed PIN attempts as terminal.

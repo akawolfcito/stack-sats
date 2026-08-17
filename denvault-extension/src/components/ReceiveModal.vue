@@ -20,6 +20,8 @@ import QRCode from "qrcode";
 import { useUiMode } from "../composables/useUiMode";
 import { Sheet, Button } from "@/components/ui";
 import SegmentedTabs from "@/components/SegmentedTabs.vue";
+import { NETWORKS, getSelectedNetwork } from "@/utils/network";
+import { getBtcExplorerUrl } from "@/utils/bitcoin/balance";
 
 const props = defineProps<{
   visible: boolean;
@@ -160,12 +162,24 @@ async function copyAddress() {
 
 function openExplorer() {
   if (!currentAddress.value) return;
+
+  const network = getSelectedNetwork();
   let url = "";
+
   if (activeTab.value === "stx") {
-    url = `https://explorer.hiro.so/address/${currentAddress.value}?chain=mainnet`;
+    // The chain param is not decoration: without it the explorer defaults
+    // to mainnet, so a testnet address opened from here showed up as an
+    // account that does not exist.
+    const base = NETWORKS[network].explorerUrl;
+    if (!base) return;
+    const chainParam = network === "mainnet" ? "" : `?chain=${network}`;
+    url = `${base}/address/${currentAddress.value}${chainParam}`;
   } else {
-    url = `https://mempool.space/address/${currentAddress.value}`;
+    // Goes through the same host the Bitcoin calls use, so the link is
+    // not sent to a service the wallet itself could not reach.
+    url = getBtcExplorerUrl(currentAddress.value, network);
   }
+
   window.open(url, "_blank");
 }
 

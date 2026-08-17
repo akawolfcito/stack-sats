@@ -6,11 +6,19 @@ defineProps<{
   symbol: string
   usdText?: string
   isHidden?: boolean
+  /** Truncated address shown under the balance, tap to copy. */
+  addressShort?: string
+  /** Which chain the address belongs to. A wallet holding two of them
+   *  cannot offer "the address" without saying which one. */
+  addressLabel?: string
+  /** True for a moment after a copy, so the confirmation is in words. */
+  addressCopied?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'toggle-hidden'): void
   (e: 'refresh'): void
+  (e: 'copy-address'): void
 }>()
 </script>
 
@@ -38,6 +46,31 @@ const emit = defineEmits<{
         </svg>
       </Button>
     </div>
+    <!-- Address and copy are one target: showing it and copying it are
+         the same intent, and this is where there is room to read it. -->
+    <button
+      v-if="addressShort"
+      class="balance-address"
+      :class="{ 'balance-address--copied': addressCopied }"
+      data-roi="home-copy-address"
+      :title="addressCopied ? 'Address copied' : 'Copy address'"
+      @click="emit('copy-address')"
+    >
+      <svg v-if="addressCopied" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="9" width="13" height="13" rx="2"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      <span v-if="addressLabel && !addressCopied" class="balance-address__chain">
+        {{ addressLabel }}
+      </span>
+      <span class="balance-address__text">
+        {{ addressCopied ? `${addressLabel ?? ''} address copied`.trim() : addressShort }}
+      </span>
+    </button>
+
     <div v-if="usdText && !isHidden" class="balance-usd">
       {{ usdText }}
     </div>
@@ -45,6 +78,49 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
+/* Address chip: one target for reading and copying. */
+.balance-address {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 100%;
+  padding: 4px var(--space-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.balance-address:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+}
+
+.balance-address--copied {
+  color: var(--color-accent-primary);
+}
+
+.balance-address__chain {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm, 6px);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans, inherit);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+}
+
+.balance-address__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* V42: Premium fintech balance header - hero treatment */
 .balance-header {
   display: flex;

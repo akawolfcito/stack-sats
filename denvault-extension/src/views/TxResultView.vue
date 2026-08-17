@@ -17,17 +17,48 @@
  * - Guard redirect if draft has no result
  */
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import { Button } from "@/components/ui";
 import { NETWORKS } from "@/utils/network";
 import { useTxDraft } from "@/composables/useTxDraft";
+import { useBtcTxDraft } from "@/composables/useBtcTxDraft";
+import { fetchTransaction } from "@/utils/transactions";
+import { fetchBtcTxConfirmed, getBtcTxExplorerUrl } from "@/utils/bitcoin/balance";
 
 const router = useRouter();
+const route = useRoute();
 
-// V52.2: Single source of truth with setConfirmed
-const { draft, hasResult, isSuccess, isError, setConfirmed, clearDraft } = useTxDraft();
+/**
+ * Which chain sent us here.
+ *
+ * This screen only ever read the Stacks draft, so a Bitcoin result found
+ * no data, hit the guard below and pushed the user to the Stacks send
+ * form: the outcome of their Bitcoin transaction, success or failure,
+ * was never shown at all.
+ */
+const isBtc = computed(() => route.query.type === "btc");
+
+const stxDraft = useTxDraft();
+const btcDraft = useBtcTxDraft();
+
+const draft = computed(() =>
+  isBtc.value ? btcDraft.draft : stxDraft.draft
+);
+const hasResult = computed(() =>
+  isBtc.value ? btcDraft.hasResult.value : stxDraft.hasResult.value
+);
+const isSuccess = computed(() =>
+  isBtc.value ? btcDraft.isSuccess.value : stxDraft.isSuccess.value
+);
+const isError = computed(() =>
+  isBtc.value ? btcDraft.isError.value : stxDraft.isError.value
+);
+const setConfirmed = () =>
+  isBtc.value ? btcDraft.setConfirmed() : stxDraft.setConfirmed();
+const clearDraft = () =>
+  isBtc.value ? btcDraft.clearDraft() : stxDraft.clearDraft();
 
 // V52.2: Status states - pending | confirmed | timeout | error
 type TxStatus = "pending" | "confirmed" | "timeout" | "error";
@@ -47,37 +78,60 @@ const copied = ref(false);
 
 // Computed - V52.2: Read from draft
 const explorerUrl = computed(() => {
-  if (!draft.txid) return "";
-  const base = NETWORKS[draft.network]?.explorerUrl;
+  if (!draft.value.txid) return "";
+
+  // A Bitcoin txid on the Stacks explorer is a dead link.
+  if (isBtc.value) {
+    return getBtcTxExplorerUrl(draft.value.txid, draft.value.network);
+  }
+
+  const base = NETWORKS[draft.value.network]?.explorerUrl;
   if (!base) return "";
-  const formattedTxId = draft.txid.startsWith("0x") ? draft.txid : `0x${draft.txid}`;
-  const chainParam = draft.network === "mainnet" ? "" : `?chain=${draft.network}`;
+  const formattedTxId = draft.value.txid.startsWith("0x")
+    ? draft.value.txid
+    : `0x${draft.value.txid}`;
+  const chainParam = draft.value.network === "mainnet" ? "" : `?chain=${draft.value.network}`;
   return `${base}/txid/${formattedTxId}${chainParam}`;
 });
 
 const txidShort = computed(() => {
-  if (!draft.txid) return "";
-  const id = draft.txid.startsWith("0x") ? draft.txid.slice(2) : draft.txid;
+  if (!draft.value.txid) return "";
+  const id = draft.value.txid.startsWith("0x") ? draft.value.txid.slice(2) : draft.value.txid;
   if (id.length <= 16) return id;
   return `${id.slice(0, 8)}...${id.slice(-8)}`;
 });
 
-// V52.2: Header title based on status
+/**
+ * Sending is the part the user did, and it worked. The chain confirming
+ * it is the part that takes time.
+ *
+ * The screen used to open on "Broadcasting..." and settle into
+ * "Transaction Pending" under an amber clock, which reads like a warning
+ * about something that in fact succeeded. It says so now, and still
+ * refuses to call anything confirmed until a block says it is.
+ */
 const headerTitle = computed(() => {
   switch (status.value) {
-    case "pending": return "Broadcasting...";
-    case "confirmed": return "Transaction Sent";
-    case "timeout": return "Transaction Pending";
+    case "pending": return "Transaction Sent";
+    case "confirmed": return "Transaction Confirmed";
+    case "timeout": return "Transaction Sent";
     case "error": return "Transaction Failed";
     default: return "Transaction";
   }
 });
 
+/** Roughly how long a block takes on each chain. */
+const confirmationEstimate = computed(() =>
+  isBtc.value ? "about 10 minutes" : "a few minutes"
+);
+
 const statusIconClass = computed(() => {
   switch (status.value) {
-    case "pending": return "status-icon--pending";
+    // Sent is a success, not a caution. Confirmation is what is still
+    // outstanding, and the message below says so in words.
+    case "pending": return "status-icon--success";
     case "confirmed": return "status-icon--success";
-    case "timeout": return "status-icon--timeout";
+    case "timeout": return "status-icon--success";
     case "error": return "status-icon--error";
     default: return "";
   }
@@ -86,25 +140,34 @@ const statusIconClass = computed(() => {
 // V52.2: Status message based on state
 const statusMessage = computed(() => {
   switch (status.value) {
-    case "pending": return "Broadcasting to network...";
-    case "confirmed": return "Your transaction has been sent";
-    case "timeout": return "Transaction broadcast, waiting for confirmation";
-    case "error": return draft.error || "Transaction failed";
-    default: return "";
+    case "pending":
+      return `Sent to the network. It should confirm in ${confirmationEstimate.value}, and Activity will show when it does.`;
+    case "confirmed":
+      return "Confirmed on chain";
+    case "timeout":
+      return `Sent to the network and still confirming. Activity will show when it lands, and the explorer has the live status.`;
+    case "error":
+      return draft.value.error || "Transaction failed";
+    default:
+      return "";
   }
 });
 
 // Check if test/dev network (for chip warning style)
 const isTestOrDev = computed(() => {
-  const label = draft.networkLabel.toLowerCase();
+  const label = draft.value.networkLabel.toLowerCase();
   return label.includes("test") || label.includes("dev");
 });
 
 // V52.2: Read from draft on mount
 onMounted(() => {
-  // Guard: must have result data
+  // Guard: must have result data. Back to the form this came from, not
+  // whichever one happens to be first.
   if (!hasResult.value) {
-    router.push({ path: "/send", query: { error: "no-result" } });
+    router.push({
+      path: isBtc.value ? "/send-btc" : "/send",
+      query: { error: "no-result" },
+    });
     return;
   }
 
@@ -128,13 +191,40 @@ function startPolling() {
   schedulePoll();
 }
 
+/**
+ * Ask the chain whether the transaction is in a block.
+ *
+ * @returns true when mined, false when still pending, null when the
+ * network could not be asked.
+ */
+async function isTxConfirmed(): Promise<boolean | null> {
+  const txid = draft.value.txid;
+  if (!txid) return null;
+
+  if (isBtc.value) {
+    return fetchBtcTxConfirmed(txid, draft.value.network);
+  }
+
+  const tx = await fetchTransaction(txid, draft.value.network);
+  if (!tx) return null;
+  if (tx.status === "success") return true;
+  if (tx.status === "pending") return false;
+
+  // Rejected on chain. Saying "sent" here would be the worst kind of lie.
+  status.value = "error";
+  stopPolling();
+  return null;
+}
+
 function schedulePoll() {
-  pollTimeout = setTimeout(() => {
+  pollTimeout = setTimeout(async () => {
     const elapsed = Date.now() - pollStartTime.value;
 
-    // V52.2: Simulated - in real implementation, this would poll the API
-    // For demo, confirm after 3 seconds
-    if (elapsed >= 3000) {
+    // This used to declare success after three seconds without asking
+    // anyone. The wallet told the user a transaction had confirmed when
+    // nobody had checked, which is not a claim a wallet gets to make.
+    const confirmed = await isTxConfirmed();
+    if (confirmed === true) {
       status.value = "confirmed";
       setConfirmed();
       stopPolling();
@@ -166,8 +256,8 @@ function stopPolling() {
 
 // V52.2: Copy with feedback
 function handleCopyTxid() {
-  if (draft.txid) {
-    navigator.clipboard.writeText(draft.txid);
+  if (draft.value.txid) {
+    navigator.clipboard.writeText(draft.value.txid);
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 2000);
   }
@@ -217,13 +307,9 @@ function handleTryAgain() {
       <!-- V52.2: Status Icon with timeout state -->
       <div class="status-section" data-roi="tx-result-status">
         <div class="status-icon" :class="statusIconClass">
-          <!-- Pending: Spinner -->
-          <svg v-if="status === 'pending'" class="spinner-svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
-            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
-          </svg>
-          <!-- Confirmed: Checkmark -->
-          <svg v-else-if="status === 'confirmed'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <!-- Sent and confirmed both get the check: the send succeeded.
+               What is still outstanding is said in words below. -->
+          <svg v-if="status === 'pending' || status === 'confirmed'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <!-- Timeout: Clock icon -->
@@ -281,29 +367,23 @@ function handleTryAgain() {
       </div>
 
       <!-- V52.2: Hint based on state -->
-      <div v-if="status === 'confirmed' || status === 'timeout'" class="hint-text" data-roi="tx-result-hint">
+      <div v-if="status !== 'error'" class="hint-text" data-roi="tx-result-hint">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10" />
           <path d="M12 16v-4M12 8h.01" />
         </svg>
-        <span v-if="status === 'confirmed'">Transaction confirmation may take a few minutes.</span>
-        <span v-else>Check explorer for confirmation status.</span>
+        <span v-if="status === 'confirmed'">This transaction is in a block.</span>
+        <span v-else>Activity keeps its status, and the explorer has it live.</span>
       </div>
     </div>
 
     <!-- V52.2: CTA Rail with coherent actions per state -->
     <div class="cta-rail" data-roi="tx-result-cta-rail">
-      <!-- Pending: Disabled Done (wait) -->
-      <template v-if="status === 'pending'">
-        <Button v-if="explorerUrl" variant="ghost" full-width @click="handleOpenExplorer">
-          View in Explorer
-        </Button>
-        <Button variant="primary" full-width disabled>
-          Please wait...
-        </Button>
-      </template>
-      <!-- Confirmed/Timeout: Explorer + Done -->
-      <template v-else-if="status === 'confirmed' || status === 'timeout'">
+      <!-- Sent, confirmed or still confirming: the user is free to go.
+           Holding Done hostage to a confirmation meant standing in front
+           of a disabled button for the ten minutes a Bitcoin block takes,
+           for a transaction that had already succeeded. -->
+      <template v-if="status !== 'error'">
         <Button v-if="explorerUrl" variant="ghost" full-width @click="handleOpenExplorer">
           View in Explorer
         </Button>

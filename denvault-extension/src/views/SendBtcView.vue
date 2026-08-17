@@ -18,6 +18,7 @@ import ScreenShell from '@/components/layout/ScreenShell.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import { Button, TextField, InlineAction } from '@/components/ui';
 import { sessionManager } from '@/utils/security/session';
+import { secureLog } from '@/utils/security/logger';
 import { generateInitialAccounts, getBtcKeyPair } from '@/utils/accounts';
 import { getAccountCount } from '@/utils/accounts/settings';
 import { getActiveAccountIndex } from '@/utils/accounts/active';
@@ -74,6 +75,11 @@ const accountIndex = ref(0);
 // Balance state
 const btcBalance = ref<BtcBalance>({ confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 });
 const isLoadingBalance = ref(false);
+/** The indexer did not answer: the balance is unknown, not zero. */
+const isBtcBalanceUnknown = ref(false);
+const balanceError = ref('');
+/** Shown when the Paste button could not do its job. */
+const pasteHint = ref('');
 
 // UTXO state
 const utxos = ref<{ address: string; utxos: UTXO[] }[]>([]);
@@ -123,9 +129,23 @@ const totalSats = computed(() => {
   return amountSats.value + estimatedFee.value;
 });
 
+/**
+ * What can actually be spent: confirmed UTXOs only.
+ *
+ * The screen used to show the total, mempool included, and then refuse
+ * the send with "insufficient confirmed balance". Both statements were
+ * true and together they read like a bug.
+ */
 const formattedBalance = computed(() => {
-  return formatBtcDisplay(btcBalance.value.total);
+  return formatBtcDisplay(totalAvailableSats.value);
 });
+
+/** Funds received but not yet confirmed, so not yet spendable. */
+const pendingSats = computed(() => Math.max(0, btcBalance.value.unconfirmed));
+
+const hasPendingFunds = computed(() => pendingSats.value > 0);
+
+const formattedPending = computed(() => formatBtcDisplay(pendingSats.value));
 
 const formattedFee = computed(() => {
   return formatBtcDisplay(estimatedFee.value);
@@ -145,12 +165,20 @@ const canContinue = computed(() => {
     amount.value.trim() &&
     !recipientError.value &&
     !amountError.value &&
+    // Never let a send proceed on a balance nobody could read.
+    !isBtcBalanceUnknown.value &&
     totalAvailableSats.value >= totalSats.value
   );
 });
 
 const hasZeroBalance = computed(() => {
-  return btcBalance.value.total <= 0;
+  // Unknown is not zero, and neither is "still confirming": each of the
+  // three says its own thing.
+  return (
+    !isBtcBalanceUnknown.value &&
+    !hasPendingFunds.value &&
+    btcBalance.value.total <= 0
+  );
 });
 
 const hasInsufficientBalance = computed(() => {
@@ -253,8 +281,14 @@ async function loadBalance() {
 
     const result = await fetchCombinedBtcBalance(addresses, network.value);
     btcBalance.value = result;
-  } catch {
-    btcBalance.value = { confirmed: 0, unconfirmed: 0, total: 0, txCount: 0 };
+    isBtcBalanceUnknown.value = false;
+  } catch (error) {
+    // Sending against a balance nobody could read is how a user ends up
+    // signing a transaction that cannot be funded. Say it and block.
+    isBtcBalanceUnknown.value = true;
+    balanceError.value =
+      'Could not reach the Bitcoin network to read your balance. Try again in a moment.';
+    secureLog('Failed to load BTC balance', error);
   }
   isLoadingBalance.value = false;
 }
@@ -328,9 +362,16 @@ async function handlePaste() {
     if (text) {
       recipient.value = text.trim();
       validateRecipient();
+      pasteHint.value = '';
+      return;
     }
+    // An empty clipboard is not a failure, but silence would look like one.
+    pasteHint.value = 'Your clipboard is empty.';
   } catch (err) {
-    console.error('Failed to paste:', err);
+    // Chrome can still refuse the read, for instance when the document is
+    // not focused. The button used to swallow that and do nothing at all.
+    secureLog('Clipboard read refused', err);
+    pasteHint.value = 'Could not read the clipboard. Paste with Cmd+V or Ctrl+V.';
   }
 }
 
@@ -489,14 +530,36 @@ async function handlePinComplete(pin: string) {
         </div>
       </div>
 
+      <!-- Unknown balance: the network did not answer -->
+      <div v-if="isBtcBalanceUnknown" class="zero-balance-notice" data-roi="send-btc-balance-unknown">
+        <span class="notice-icon">!</span>
+        <span class="notice-text">{{ balanceError }}</span>
+      </div>
+
       <!-- Zero balance warning -->
       <div v-if="hasZeroBalance" class="zero-balance-notice">
         <span class="notice-icon">!</span>
         <span class="notice-text">Your BTC balance is empty.</span>
       </div>
 
+      <!-- Funds on their way, not yet spendable -->
+      <div
+        v-if="hasPendingFunds"
+        class="zero-balance-notice"
+        data-roi="send-btc-pending"
+      >
+        <span class="notice-icon">!</span>
+        <span class="notice-text">
+          {{ formattedPending }} BTC is waiting for its first confirmation and
+          cannot be spent yet.
+        </span>
+      </div>
+
       <!-- Insufficient balance warning -->
-      <div v-if="hasInsufficientBalance && !hasZeroBalance" class="insufficient-notice">
+      <div
+        v-if="hasInsufficientBalance && !hasZeroBalance && !hasPendingFunds"
+        class="insufficient-notice"
+      >
         <span class="notice-icon">!</span>
         <span class="notice-text">Insufficient confirmed balance for this transaction.</span>
       </div>
@@ -534,6 +597,7 @@ async function handlePinComplete(pin: string) {
         </TextField>
         <div class="input-hint-row">
           <p v-if="amountError" class="form-error" data-roi="send-btc-error-amount">{{ amountError }}</p>
+          <span v-else-if="pasteHint" class="input-hint">{{ pasteHint }}</span>
           <span v-else class="input-hint">Available: {{ formattedBalance }} BTC</span>
         </div>
       </div>

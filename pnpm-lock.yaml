@@ -8,7 +8,7 @@ importers:
 
   .: {}
 
-  den-vault:
+  denvault-extension:
     dependencies:
       '@bitcoinerlab/secp256k1':
         specifier: ^1.2.0

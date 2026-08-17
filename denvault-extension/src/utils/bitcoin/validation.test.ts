@@ -194,4 +194,26 @@ describe("Bitcoin validation utilities", () => {
       expect(isValidBtcAddress("tb1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxq8s5pku", "mainnet")).toBe(false);
     });
   });
+
+  describe('a Stacks address in a Bitcoin field', () => {
+    it('says which chain the address belongs to', () => {
+      // The wallet holds both chains and its own Home screen copies the
+      // STX address, so this paste is one tap away.
+      const result = validateBtcAddress(
+        'ST2NJ5K0XKKPTSDZ0KGZF5XRFZTVDQK56VQQWSJBQ',
+        'testnet'
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Stacks address');
+      expect(result.error).toContain('tb1');
+    });
+
+    it('still rejects plain nonsense with the generic message', () => {
+      const result = validateBtcAddress('not-an-address', 'testnet');
+
+      expect(result.valid).toBe(false);
+      expect(result.error).not.toContain('Stacks address');
+    });
+  });
 });

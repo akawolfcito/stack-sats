@@ -34,7 +34,11 @@ ROI_CURRENT_DIR="$CURRENT_DIR/roi"
 ROI_GOLDEN_DIR="$GOLDEN_DIR/roi"
 
 # Expected count per UI_CONTRACT
-EXPECTED_COUNT=24
+# 8 states x 2 surfaces (popup, sidepanel) x 2 densities (comfy, compact),
+# as defined by e2e/golden-matrix.spec.ts. The constant said 24 and the
+# matrix had grown two states past it, so accepting a freshly captured
+# set was impossible: the guard refused a baseline that was complete.
+EXPECTED_COUNT=32
 
 # Parse arguments
 FORCE=false
@@ -100,7 +104,7 @@ if [ "$ROI_ONLY" = false ]; then
   echo -e "Expected:            ${CYAN}$EXPECTED_COUNT${NC} screenshots"
   echo ""
 
-  # V38: Strict count validation - must have exactly 24 screenshots
+  # V38: Strict count validation - must match the matrix exactly
   if [ "$CURRENT_COUNT" -ne "$EXPECTED_COUNT" ]; then
     echo -e "${RED}ERROR: Count mismatch - cannot accept incomplete baseline${NC}"
     echo -e "Have $CURRENT_COUNT, need $EXPECTED_COUNT"

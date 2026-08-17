@@ -17,6 +17,15 @@
   --color-accent-primary-hover: #E5FF4D;
   --color-accent-primary-muted: rgba(215, 248, 46, 0.15);
 
+  /* Brand Mark - the logo's own palette, deliberately separate from the lime
+     accent above. The mark is blue (#1D60A8 -> #35A9C9); its plate and glow
+     must not inherit the UI accent, or the container reads olive behind a blue
+     emblem. Kept as its own group so changing the accent never drags the logo
+     with it. */
+  --color-mark-plate-from: #16202C;
+  --color-mark-plate-to: #0D141C;
+  --color-mark-glow: #35A9C9;
+
   /* Status Colors */
   --color-success: #99E18E;
   --color-success-muted: rgba(153, 225, 142, 0.15);

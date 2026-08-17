@@ -154,18 +154,25 @@ The extension uses `chrome.storage.local` for all sensitive data.
 | Permission | Necessity | Justification |
 |------------|-----------|---------------|
 | `storage` | Required | Store encrypted wallet data |
-| `scripting` | Required | Inject wallet provider |
-| `tabs` | Required | Send responses to dApps |
-| `activeTab` | Required | Validate request origins |
-| `sidePanel` | Optional | Alternative UI mode |
+| `sidePanel` | Required | Wallet and dApp approvals in Chrome's side panel |
+| `clipboardRead` | Required | The Paste button on Send BTC, on that click only |
 
 ### Host Permissions
 
 | Pattern | Purpose |
 |---------|---------|
-| `http://localhost/*` | Development |
-| `https://*/*` | Production dApps |
-| `https://api.hiro.so/*` | Blockchain API |
+| `https://api.hiro.so/*` | Stacks mainnet API |
+| `https://api.testnet.hiro.so/*` | Stacks testnet API |
+
+The Bitcoin block explorer API (`blockstream.info`, falling back to
+`mempool.space`) is reached with ordinary CORS requests and needs no host
+permission.
+
+### Content Scripts
+
+| Pattern | Purpose |
+|---------|---------|
+| `https://*/*` | Relay wallet RPC messages between a page and the extension. It does not read or modify page content |
 
 ## Reporting Vulnerabilities
 

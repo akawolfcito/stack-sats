@@ -23,7 +23,6 @@ export interface AssetDefinition {
   /** Icon gradient color */
   iconColor: string;
   /** Explorer base URL pattern (use {address} or {txid} placeholders) */
-  explorerAddressUrl?: string;
   /** Description shown in detail view when unavailable */
   unavailableMessage?: string;
 }
@@ -41,7 +40,6 @@ export const ASSETS_REGISTRY: AssetDefinition[] = [
     available: true,
     decimals: 6,
     iconColor: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1))',
-    explorerAddressUrl: 'https://explorer.hiro.so/address/{address}',
   },
   {
     id: 'btc',
@@ -51,7 +49,6 @@ export const ASSETS_REGISTRY: AssetDefinition[] = [
     available: true,
     decimals: 8,
     iconColor: 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1))',
-    explorerAddressUrl: 'https://mempool.space/address/{address}',
   },
   {
     id: 'runes',

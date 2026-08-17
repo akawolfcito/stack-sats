@@ -156,7 +156,7 @@ function handleVerify() {
 
       <!-- V54.5: Helper text - clear, no jargon -->
       <p class="verify-helper" data-roi="verify-helper">
-        Start typing — we'll suggest valid words.
+        Start typing and we'll suggest valid words.
       </p>
     </div>
 
