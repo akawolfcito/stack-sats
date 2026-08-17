@@ -59,7 +59,10 @@ describe('describeBtcTx', () => {
     expect(item.amountSats).toBe(181318);
     expect(item.feeSats).toBe(0);
     expect(item.counterparty).toBe(THEIRS);
+    // Seconds since the epoch, the unit formatRelativeTime expects.
+    // Handing it milliseconds made every row say "Just now".
     expect(item.blockTime).toBe(1786918722);
+    expect(String(item.blockTime).length).toBe(10);
   });
 
   it('counts a payment to our second address as incoming', () => {

@@ -279,9 +279,10 @@ const btcActivityItems = computed<ActivityItem[]>(() =>
       ? `${item.isOutgoing ? 'To' : 'From'} ${truncateTxAddress(item.counterparty, 4)}`
       : undefined,
     amountText: `${formatBtcBalance(item.amountSats)} BTC`,
-    timeText: item.blockTime
-      ? formatRelativeTime(item.blockTime * 1000)
-      : 'Just now',
+    // Seconds, not milliseconds: formatRelativeTime compares against
+    // Date.now() / 1000. Multiplying made every Bitcoin row read "Just
+    // now", including one from hours earlier.
+    timeText: item.blockTime ? formatRelativeTime(item.blockTime) : 'Pending',
     isOutgoing: item.isOutgoing,
   }))
 );
