@@ -110,6 +110,7 @@ const hasPendingActivity = computed(() =>
 
 /** Undone on unmount; installed once the first load has run. */
 let stopAutoRefresh: (() => void) | null = null;
+let onTxSubmitted: ((message: { type?: string }) => undefined) | null = null;
 const tabItems = [
   { key: 'assets', label: 'Assets' },
   { key: 'activity', label: 'Activity' },
@@ -583,14 +584,28 @@ onBeforeMount(async () => {
       // Nothing refreshed on its own until now, so a transaction that had
       // already been mined left no trace on screen and users sent it
       // again. See utils/composables/useAutoRefresh.
+      const refreshAll = () => {
+        loadBalance();
+        loadBtcBalance();
+        loadTransactions();
+      };
+
       stopAutoRefresh = startAutoRefresh({
         hasPending: hasPendingActivity,
-        onRefresh: () => {
-          loadBalance();
-          loadBtcBalance();
-          loadTransactions();
-        },
+        onRefresh: refreshAll,
       });
+
+      // Background says when a dApp transaction has gone out. Without it
+      // a side panel open beside the dApp waited for its next poll, so a
+      // deploy that was already confirmed showed up a minute late and
+      // read as nothing having happened.
+      if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+        onTxSubmitted = (message: { type?: string }) => {
+          if (message?.type === "WALLET_TX_SUBMITTED") refreshAll();
+          return undefined;
+        };
+        chrome.runtime.onMessage.addListener(onTxSubmitted);
+      }
     } else {
       router.push({ path: "/unlock" });
     }
@@ -626,6 +641,11 @@ watch(accountIndexToDisplay, async (newIndex) => {
 onBeforeUnmount(() => {
   stopAutoRefresh?.();
   stopAutoRefresh = null;
+
+  if (onTxSubmitted && typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.removeListener(onTxSubmitted);
+    onTxSubmitted = null;
+  }
 });
 
 const handleOpenUserMenu = () => {

@@ -406,6 +406,26 @@ describe("background queue: canonical params + explicit mismatch", () => {
       expect(envelope.result).not.toHaveProperty("jsonrpc");
     });
 
+    it("tells every open surface that a transaction went out", async () => {
+      const { sender } = await dispatchDappRequest(harness, { id: "req-tell" });
+      dispatchPopupMessage(harness, { type: "UI_READY" });
+      harness.runtimeSendMessage.mockClear();
+
+      dispatchPopupMessage(harness, {
+        type: "DAPP_APPROVE",
+        id: "req-tell",
+        result: { txid: "0xabc" },
+      });
+
+      // A side panel open next to the dApp had no idea anything had
+      // happened: it sat on a stale balance and a stale list until its
+      // next poll, which is how a confirmed deploy looked like nothing.
+      expect(harness.runtimeSendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "WALLET_TX_SUBMITTED" })
+      );
+      expect(sender.tab.id).toBeDefined();
+    });
+
     it("rejects double approve (request already resolved)", async () => {
       await dispatchDappRequest(harness, { id: "req-once" });
       dispatchPopupMessage(harness, { type: "UI_READY" });

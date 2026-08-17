@@ -625,6 +625,16 @@ function handleDappApprove(id, result) {
     result: result,
   });
 
+  // Tell every open surface that something moved. A side panel sitting
+  // next to the dApp had no way of knowing: it kept a stale balance and a
+  // stale Activity list until its next poll, which is how a deploy that
+  // was already confirmed looked like nothing had happened.
+  chrome.runtime
+    .sendMessage({ type: "WALLET_TX_SUBMITTED" })
+    .catch(() => {
+      // No surface open. Nothing to tell.
+    });
+
   clearActive();
 }
 
