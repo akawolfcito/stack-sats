@@ -35,6 +35,7 @@ import {
 import {
   fetchCombinedBtcBalance,
   formatBtcBalance,
+  getBtcTxExplorerUrl,
   type BtcBalance,
 } from "../utils/bitcoin";
 import {
@@ -71,6 +72,7 @@ import type { ActionItem } from "@/components/ui";
 import BalanceHeader from "../components/BalanceHeader.vue";
 import AssetList, { type AssetRowModel } from "../components/AssetList.vue";
 import { getAvailableAssets } from "../utils/assets/registry";
+import { fetchBtcActivity, type BtcActivityItem } from "@/utils/bitcoin/activity";
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
@@ -125,6 +127,9 @@ const isLoadingBtcBalance = ref(false);
  * telling the user something it does not know.
  */
 const isBtcBalanceUnknown = ref(false);
+
+/** Bitcoin history, merged into the same Activity list as Stacks. */
+const btcActivity = ref<BtcActivityItem[]>([]);
 
 // Account count state
 const accountCount = ref(DEFAULT_ACCOUNT_COUNT);
@@ -264,8 +269,25 @@ const handleAssetClick = (item: AssetRowModel) => {
   router.push({ path: `/asset/${item.id}` });
 };
 
+/** Bitcoin history in the shape the shared Activity list renders. */
+const btcActivityItems = computed<ActivityItem[]>(() =>
+  btcActivity.value.map((item) => ({
+    txId: item.txid,
+    status: item.confirmed ? ('success' as const) : ('pending' as const),
+    title: 'Bitcoin Transfer',
+    subtitle: item.counterparty
+      ? `${item.isOutgoing ? 'To' : 'From'} ${truncateTxAddress(item.counterparty, 4)}`
+      : undefined,
+    amountText: `${formatBtcBalance(item.amountSats)} BTC`,
+    timeText: item.blockTime
+      ? formatRelativeTime(item.blockTime * 1000)
+      : 'Just now',
+    isOutgoing: item.isOutgoing,
+  }))
+);
+
 // Activity items for ActivityList component
-const activityItems = computed<ActivityItem[]>(() => {
+const stxActivityItems = computed<ActivityItem[]>(() => {
   const currentAccount = userAccounts.value[accountIndexToDisplay.value];
   if (!currentAccount) return [];
 
@@ -323,8 +345,30 @@ const activityItems = computed<ActivityItem[]>(() => {
   });
 });
 
+/**
+ * One list for both chains. Pending first, because that is what the user
+ * just did and what they came back to check.
+ */
+const activityItems = computed<ActivityItem[]>(() => {
+  const merged = [...stxActivityItems.value, ...btcActivityItems.value];
+  return merged.sort((a, b) => {
+    if (a.status !== b.status) {
+      if (a.status === 'pending') return -1;
+      if (b.status === 'pending') return 1;
+    }
+    return 0;
+  });
+});
+
 // Handle activity item click (navigate to transaction details)
 const handleActivityClick = (txId: string) => {
+  // The detail screen reads the Stacks API, so a Bitcoin txid would land
+  // on a page that can never load. Send those to a Bitcoin explorer.
+  if (btcActivity.value.some((item) => item.txid === txId)) {
+    window.open(getBtcTxExplorerUrl(txId, selectedNetwork.value), '_blank');
+    return;
+  }
+
   router.push({ path: `/transaction/${txId}` });
 };
 
@@ -396,6 +440,10 @@ async function loadBtcBalance() {
     btcBalance.value = balance;
     isBtcBalanceUnknown.value = false;
     secureLog("BTC balance loaded", { total: balance.total });
+
+    // A Bitcoin send used to disappear from the wallet the moment its
+    // result screen was dismissed: on chain, but nowhere in the app.
+    btcActivity.value = await fetchBtcActivity(addresses, selectedNetwork.value);
   } catch (error) {
     // Say so, rather than leaving the last figure or a zero on screen.
     isBtcBalanceUnknown.value = true;
