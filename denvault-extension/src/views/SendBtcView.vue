@@ -565,12 +565,12 @@ async function handlePinComplete(pin: string) {
         <div class="from-card-glow"></div>
         <div class="from-card-content">
           <div class="from-card-left">
+            <!--
+              The same mark the asset list uses, matching Send STX beside it:
+              the symbol's letter on the asset's own gradient.
+            -->
             <div class="from-icon from-icon--btc">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F7931A" stroke-width="1.5">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9 8h4c1.5 0 2.5 1 2.5 2.5S14.5 13 13 13H9m0-5v8m0-3h4.5c1.5 0 2.5 1 2.5 2.5S15 18 13.5 18H9"/>
-                <path d="M11 6v2m2-2v2m-2 10v2m2-2v2"/>
-              </svg>
+              <span class="from-icon-text">B</span>
             </div>
             <div class="from-info">
               <span class="from-name">{{ accountName }}</span>
@@ -866,7 +866,7 @@ async function handlePinComplete(pin: string) {
 .from-icon {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: var(--radius-md, 14px);
   background: linear-gradient(135deg, #2d2518, #1f1a14);
   border: 1px solid rgba(247, 147, 26, 0.2);
   display: flex;
@@ -875,7 +875,14 @@ async function handlePinComplete(pin: string) {
 }
 
 .from-icon--btc {
-  background: linear-gradient(135deg, rgba(247, 147, 26, 0.15), rgba(247, 147, 26, 0.05));
+  /* Same gradient as the BTC row in the asset list (assets/registry.ts). */
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1));
+}
+
+.from-icon-text {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
 .from-info {
