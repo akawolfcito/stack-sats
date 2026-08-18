@@ -399,9 +399,31 @@ function cancelImport() {
             </svg>
           </template>
         </ListRow>
+        <!--
+          Restoring from the recovery phrase is the way a wallet is normally
+          brought back, and the screen for it already existed at
+          /import-recovery, reachable from onboarding and Add Wallet but not
+          from here. Settings offered only the encrypted JSON, which needs
+          both this extension and the PIN, so the path that works everywhere
+          was the one missing.
+        -->
         <ListRow
-          label="Import Wallet"
-          subtitle="Restore from backup file"
+          label="Import from Recovery Phrase"
+          subtitle="Restore with your words"
+          chevron
+          data-roi="menu-action-import-phrase"
+          @click="router.push('/import-recovery')"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7V5a2 2 0 0 1 2-2h2M4 17v2a2 2 0 0 0 2 2h2m8-18h2a2 2 0 0 1 2 2v2m0 10v2a2 2 0 0 1-2 2h-2"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          </template>
+        </ListRow>
+        <ListRow
+          label="Import Backup File"
+          subtitle="Restore from encrypted backup"
           chevron
           @click="triggerFileInput"
         >
