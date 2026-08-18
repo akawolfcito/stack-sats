@@ -239,8 +239,17 @@ function handleWalletClick(wallet: WalletEntry) {
             </div>
           </template>
 
-          <!-- Inline rename input -->
-          <template v-if="editingWalletId === wallet.id" #label>
+          <!--
+            Inline rename input.
+
+            Uses #content, the slot ListRow actually exposes. This was #label,
+            a slot that does not exist, so pressing edit rendered nothing at
+            all: the label prop was blanked for editing and the input never
+            appeared. The row lost its name, offered no field, and had no way
+            out, because the blur handler that ends editing lives on an input
+            that was never mounted.
+          -->
+          <template v-if="editingWalletId === wallet.id" #content>
             <input
               ref="renameInputRef"
               v-model="editingName"
