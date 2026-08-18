@@ -197,10 +197,28 @@ async function handlePinConfirm(enteredPin: string) {
     const encryptedData = await encryptWithPIN(mnemonic.value, pin.value);
 
     // Save as new wallet with name
-    await sessionManager.saveEncryptedWalletAsync(encryptedData, walletName.value.trim());
+    const wallet = await sessionManager.saveEncryptedWalletAsync(
+      encryptedData,
+      walletName.value.trim()
+    );
+
+    // Make it the active one before unlocking. addWalletAsync only assigns
+    // activeId to the very first wallet, so without this the unlock below
+    // reads the previous wallet and tries the new PIN on it. With different
+    // PINs that decryption fails, and the failure counts against the other
+    // wallet's lockout: creating a wallet quietly spent someone else's
+    // attempts. With matching PINs it appeared to work, which is how it
+    // lasted this long.
+    await sessionManager.switchWalletAsync(wallet.id);
 
     // Unlock session with new wallet
-    await sessionManager.unlock(pin.value);
+    const unlocked = await sessionManager.unlock(pin.value);
+    if (!unlocked) {
+      // Was discarded, and the next line navigated as though the wallet
+      // had opened. The wallet exists on disk; the session did not open.
+      pinError.value = "Wallet created, but it could not be opened. Unlock it from Manage Wallets.";
+      return;
+    }
 
     secureLog("New wallet created and encrypted", { name: walletName.value });
 
