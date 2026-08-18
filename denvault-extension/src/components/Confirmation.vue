@@ -445,6 +445,15 @@ async function handleConfirm() {
 
   isProcessing.value = true;
 
+  // Minutes can pass between this screen opening and Approve being
+  // pressed, and another transaction can spend the balance in between.
+  // Re-reading it costs one request and saves signing for nothing.
+  await assessBalance();
+  if (blockedByBalance.value) {
+    isProcessing.value = false;
+    return;
+  }
+
   let result: Result = {
     method: "",
     status: "",
