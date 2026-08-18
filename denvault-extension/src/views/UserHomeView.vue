@@ -80,6 +80,7 @@ import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
 import { sortActivityItems } from "@/utils/activity/sort";
+import { toBtcActivityRows } from "@/utils/activity/btc";
 import ListGroup from "../components/list/ListGroup.vue";
 import ListRow from "../components/list/ListRow.vue";
 import { useUiMode } from "../composables/useUiMode";
@@ -318,29 +319,10 @@ const handleAssetClick = (item: AssetRowModel) => {
   router.push({ path: `/asset/${item.id}` });
 };
 
-/** Bitcoin history in the shape the shared Activity list renders. */
+/** Bitcoin history, mapped by the shared helper so the asset detail
+ * screen and this one cannot drift apart. */
 const btcActivityItems = computed<ActivityItem[]>(() =>
-  btcActivity.value.map((item) => ({
-    txId: item.txid,
-    status: item.confirmed ? ('success' as const) : ('pending' as const),
-    title: item.isSelfTransfer ? 'Moved Between Your Addresses' : 'Bitcoin Transfer',
-    subtitle: item.counterparty
-      ? item.isSelfTransfer
-        ? `To your ${truncateTxAddress(item.counterparty, 4)}`
-        : `${item.isOutgoing ? 'To' : 'From'} ${truncateTxAddress(item.counterparty, 4)}`
-      : undefined,
-    amountText: `${formatBtcBalance(item.amountSats)} BTC`,
-    // Seconds, not milliseconds: formatRelativeTime compares against
-    // Date.now() / 1000. Multiplying made every Bitcoin row read "Just
-    // now", including one from hours earlier.
-    timeText: item.blockTime ? formatRelativeTime(item.blockTime) : 'Pending',
-    timestamp: item.blockTime,
-    isOutgoing: item.isOutgoing,
-    // A self transfer gets no sign at all. Dropping only the minus was not
-    // enough: the row then rendered "+0.0005 BTC" in green, which reads as
-    // money arriving. Nothing arrived and nothing left.
-    isNeutral: item.isSelfTransfer,
-  }))
+  toBtcActivityRows(btcActivity.value)
 );
 
 // Activity items for ActivityList component

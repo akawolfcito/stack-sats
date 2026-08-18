@@ -15,6 +15,8 @@ import ListGroup from '@/components/list/ListGroup.vue';
 import ListRow from '@/components/list/ListRow.vue';
 import ReceiveModal from '@/components/ReceiveModal.vue';
 import ActivityList, { type ActivityItem } from '@/components/activity/ActivityList.vue';
+import { fetchBtcActivity, type BtcActivityItem } from '@/utils/bitcoin/activity';
+import { toBtcActivityRows } from '@/utils/activity/btc';
 import { Button, ActionBar, SectionHeader } from '@/components/ui';
 import type { ActionItem } from '@/components/ui';
 import { getAssetById, isValidAssetId, type AssetDefinition } from '@/utils/assets/registry';
@@ -77,6 +79,7 @@ const isBtcBalanceUnknown = ref(false);
 
 // Transaction state
 const transactions = ref<Transaction[]>([]);
+const btcActivity = ref<BtcActivityItem[]>([]);
 const isLoadingTx = ref(false);
 
 // Token state (only for STX)
@@ -133,6 +136,13 @@ const actionItems = computed<ActionItem[]>(() => {
 // Activity items
 const activityItems = computed<ActivityItem[]>(() => {
   if (!currentAccount.value) return [];
+
+  // Bitcoin has its own history and its own shape. loadTransactions returned
+  // early for anything that was not STX, so this screen said "No activity
+  // yet" for every Bitcoin wallet, however busy.
+  if (asset.value?.id === 'btc') {
+    return toBtcActivityRows(btcActivity.value);
+  }
 
   return transactions.value.map((tx) => {
     const ftSender = tx.ftTransfer?.sender;
@@ -277,6 +287,24 @@ async function loadBtcBalance() {
   isLoadingBalance.value = false;
 }
 
+async function loadBtcTransactions() {
+  const account = currentAccount.value;
+  if (!account || asset.value?.id !== 'btc') return;
+
+  const addresses = [account.btcP2PKHAddress, account.btcP2TRAddress].filter(
+    (address): address is string => Boolean(address)
+  );
+  if (addresses.length === 0) return;
+
+  isLoadingTx.value = true;
+  try {
+    btcActivity.value = await fetchBtcActivity(addresses, selectedNetwork.value);
+  } catch (error) {
+    console.error('Failed to load BTC activity:', error);
+  }
+  isLoadingTx.value = false;
+}
+
 async function loadTransactions() {
   if (!currentAccount.value?.stxAddress || asset.value?.id !== 'stx') return;
 
@@ -345,6 +373,7 @@ async function _refreshData() {
     loadTokens();
   } else if (asset.value?.id === 'btc') {
     await loadBtcBalance();
+    loadBtcTransactions();
   }
 }
 
@@ -365,6 +394,7 @@ onBeforeMount(async () => {
     loadTokens();
   } else if (asset.value?.id === 'btc') {
     await loadBtcBalance();
+    loadBtcTransactions();
   }
 });
 
@@ -377,6 +407,7 @@ watch(assetId, async (newId) => {
 
   activeTab.value = 'activity';
   transactions.value = [];
+  btcActivity.value = [];
   tokens.value = [];
 
   if (asset.value?.id === 'stx') {
@@ -385,6 +416,7 @@ watch(assetId, async (newId) => {
     loadTokens();
   } else if (asset.value?.id === 'btc') {
     await loadBtcBalance();
+    loadBtcTransactions();
   }
 });
 </script>
