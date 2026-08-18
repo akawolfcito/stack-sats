@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { TEST_MNEMONIC } from './fixtures/mock-wallet.js';
+import { stubChainApis } from './fixtures/chain-api.js';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -258,7 +259,8 @@ async function setupUnlockedWallet(page: Page) {
     sessionStorage.clear();
     localStorage.setItem('__UI_SNAPSHOT_MODE__', 'true');
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
-    localStorage.setItem('selected_network', 'devnet');
+    // Devnet was withdrawn in a6d6195 and resolves to testnet anyway.
+    localStorage.setItem('selected_network', 'testnet');
     localStorage.setItem('density_mode', 'compact');
   }, TEST_MNEMONIC);
 }
@@ -272,7 +274,8 @@ async function setupLockedWallet(page: Page) {
     localStorage.setItem('__UI_SNAPSHOT_MODE__', 'true');
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
     localStorage.setItem('__UI_SNAPSHOT_LOCKED__', 'true');
-    localStorage.setItem('selected_network', 'devnet');
+    // Devnet was withdrawn in a6d6195 and resolves to testnet anyway.
+    localStorage.setItem('selected_network', 'testnet');
     localStorage.setItem('density_mode', 'compact');
   }, TEST_MNEMONIC);
 }
@@ -366,6 +369,8 @@ test.use({
 // V51.5: Zero overflow guard - catches horizontal scroll regressions
 test('V51.5: ConfirmTxView zero horizontal overflow', async ({ page }) => {
   // Setup unlocked wallet
+  await stubChainApis(page);
+
   await page.goto('about:blank');
   await page.goto('/');
   await setupUnlockedWallet(page);
@@ -404,6 +409,8 @@ test('V51.5: ConfirmTxView zero horizontal overflow', async ({ page }) => {
 for (const roi of ROI_TARGETS) {
   test(`ROI: ${roi.name}`, async ({ page }) => {
     // Step 1: Initialize
+    await stubChainApis(page);
+
     await page.goto('about:blank');
     await page.goto('/');
 

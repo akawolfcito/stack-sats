@@ -20,6 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { TEST_MNEMONIC } from './fixtures/mock-wallet.js';
+import { stubChainApis } from './fixtures/chain-api.js';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -108,7 +109,8 @@ async function setupUnlockedWallet(page: Page) {
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
 
     // Also set density and network for consistent screenshots
-    localStorage.setItem('selected_network', 'devnet');
+    // Devnet was withdrawn in a6d6195 and resolves to testnet anyway.
+    localStorage.setItem('selected_network', 'testnet');
   }, TEST_MNEMONIC);
   // No reload - navigation happens after setup
 }
@@ -261,6 +263,8 @@ for (const viewport of VIEWPORTS) {
             // The key is to set localStorage and reload so sessionManager picks it up
 
             // Step 1: Go to blank page to initialize browser context
+            await stubChainApis(page);
+
             await page.goto('about:blank');
 
             // Step 2: Navigate to app base to get localStorage access
