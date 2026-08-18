@@ -64,6 +64,7 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/eslint-config-typescript": "^14.3.0",
+    "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.18.0",

@@ -4,6 +4,11 @@ import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   plugins: [vue()],
+  // Views read the build flag vite.config.ts injects. Without it here, any
+  // component test that mounts one dies on "__DEV__ is not defined".
+  define: {
+    __DEV__: JSON.stringify(false),
+  },
   test: {
     environment: "jsdom",
     globals: true,
