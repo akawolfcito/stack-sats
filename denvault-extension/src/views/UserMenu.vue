@@ -388,7 +388,7 @@ function cancelImport() {
         </ListRow>
         <ListRow
           label="Export Secret Key"
-          subtitle="Download encrypted backup"
+          subtitle="Encrypted backup, opened only by this PIN"
           chevron
           data-roi="menu-action-export"
           @click="handleExportBackup"

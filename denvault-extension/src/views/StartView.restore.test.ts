@@ -19,12 +19,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mount, flushPromises, type VueWrapper } from "@vue/test-utils";
 
-const { push, parseBackupFile, importWalletAsync, walletExistsAsync } = vi.hoisted(() => ({
-  push: vi.fn(),
-  parseBackupFile: vi.fn(),
-  importWalletAsync: vi.fn(async () => "added" as const),
-  walletExistsAsync: vi.fn(async () => false),
-}));
+const { push, parseBackupFile, importWalletAsync, walletExistsAsync, checkWalletExistsAsync, order } =
+  vi.hoisted(() => {
+    const order: string[] = [];
+    return {
+      order,
+      push: vi.fn((to: unknown) => order.push(`push:${String(to)}`)),
+      parseBackupFile: vi.fn(),
+      importWalletAsync: vi.fn(async () => {
+        order.push("import");
+        return "added" as const;
+      }),
+      walletExistsAsync: vi.fn(async () => false),
+      checkWalletExistsAsync: vi.fn(async () => {
+        order.push("refresh");
+        return true;
+      }),
+    };
+  });
 
 const WALLET = { id: "w1", name: "The Wolf", createdAt: 1, encryptedData: {}, version: 1 };
 
@@ -32,6 +44,9 @@ vi.mock("@/utils/backup", () => ({ parseBackupFile }));
 vi.mock("@/utils/wallets", () => ({ importWalletAsync, walletExistsAsync }));
 vi.mock("@stacks/wallet-sdk", () => ({ randomSeedPhrase: () => "unused here" }));
 vi.mock("@/utils/security/logger", () => ({ secureLog: vi.fn(), secureWarn: vi.fn() }));
+vi.mock("@/utils/security/session", () => ({
+  sessionManager: { checkWalletExistsAsync, hasWallet: false },
+}));
 vi.mock("vue-router", () => ({ useRouter: () => ({ push }) }));
 
 import StartView from "./StartView.vue";
@@ -53,7 +68,9 @@ describe("StartView restoring from a backup file", () => {
   let wrapper: VueWrapper;
 
   beforeEach(() => {
+    order.length = 0;
     push.mockClear();
+    checkWalletExistsAsync.mockClear();
     importWalletAsync.mockClear();
     parseBackupFile.mockResolvedValue({ wallet: WALLET });
     walletExistsAsync.mockResolvedValue(false);
@@ -73,6 +90,17 @@ describe("StartView restoring from a backup file", () => {
 
     expect(importWalletAsync).toHaveBeenCalledWith(WALLET, false);
     expect(push).toHaveBeenCalledWith("/unlock");
+  });
+
+  it("refreshes the session's view of storage before navigating", async () => {
+    // The unlock screen bounces to setup when sessionManager says there is
+    // no wallet, and that flag is held in memory: importWalletAsync writes
+    // straight to the vault and never touches it. Without the refresh the
+    // screen sat there doing nothing, and only reopening the popup, which
+    // rebuilds the session from storage, revealed the unlock screen.
+    await chooseFile(wrapper, backupFile());
+
+    expect(order).toEqual(["import", "refresh", "push:/unlock"]);
   });
 
   it("says so when the file is not a backup, without navigating", async () => {

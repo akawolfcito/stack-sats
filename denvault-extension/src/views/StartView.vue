@@ -180,6 +180,14 @@ async function handleBackupFileSelected(event: Event) {
     return;
   }
 
+  // The unlock screen bounces back here when sessionManager reports no
+  // wallet, and that flag lives in memory: importWalletAsync writes
+  // straight to the vault and never touches it. Without this refresh the
+  // screen sat there having apparently done nothing, and only closing and
+  // reopening the popup, which rebuilds the session from storage, revealed
+  // the unlock screen. The wallet had been restored the whole time.
+  await sessionManager.checkWalletExistsAsync();
+
   secureLog("Wallet restored from backup at setup", { walletId: backup.wallet.id });
   router.push("/unlock");
 }
@@ -408,6 +416,18 @@ onBeforeMount(() => {
             Restore from Backup File
           </Button>
 
+          <!--
+            Said here, where the decision is made. An encrypted backup is
+            worth exactly what its credential is worth, and someone who
+            keeps the file believing it is enough on its own finds out at
+            the worst possible moment. The recovery phrase is the copy that
+            depends on nothing.
+          -->
+          <p class="restore-note" data-roi="start-restore-note">
+            A backup file opens with the PIN it was made with. Forget that PIN and only your
+            recovery phrase can bring the wallet back.
+          </p>
+
           <input
             ref="restoreInputRef"
             type="file"
@@ -623,6 +643,15 @@ onBeforeMount(() => {
 }
 
 /* Error Text */
+.restore-note {
+  margin: 0;
+  padding: 0 var(--space-xs);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
 /* Kept in the layout for a label, out of it for the eye. The button is
    the control; this input only carries the file picker. */
 .visually-hidden {
