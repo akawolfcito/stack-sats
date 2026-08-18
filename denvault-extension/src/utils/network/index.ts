@@ -47,8 +47,19 @@ export const NETWORKS: Record<
  */
 export function getSelectedNetwork(): NetworkName {
   const stored = localStorage.getItem(NETWORK_STORAGE_KEY);
-  if (stored && (stored === "mainnet" || stored === "testnet" || stored === "devnet")) {
+  if (stored === "mainnet" || stored === "testnet") {
     return stored;
+  }
+
+  /**
+   * A stored devnet resolves to testnet, which is where its data was coming
+   * from anyway: without a compile-time Platform key getApiUrl already fell
+   * back to testnet while the chip kept saying "Devnet". The picker no
+   * longer offers devnet, so anyone holding the old value would otherwise be
+   * stuck on a label that does not match the chain they are reading.
+   */
+  if (stored === "devnet") {
+    return "testnet";
   }
   /**
    * Mainnet, because it is the only network that works without configuring

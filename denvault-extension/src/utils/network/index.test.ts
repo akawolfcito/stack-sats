@@ -72,9 +72,16 @@ describe("network utilities", () => {
       expect(getSelectedNetwork()).toBe("testnet");
     });
 
-    it("should return stored devnet value", () => {
+    /**
+     * A stored devnet resolves to testnet, which is where its data came
+     * from anyway: without a compile-time Platform key, getApiUrl already
+     * fell back to testnet while the chip kept saying "Devnet". The picker
+     * no longer offers devnet, so anyone holding the old value would have
+     * been stuck on a label that did not match the chain.
+     */
+    it("resolves a stored devnet to testnet", () => {
       localStorage.setItem("selected_network", "devnet");
-      expect(getSelectedNetwork()).toBe("devnet");
+      expect(getSelectedNetwork()).toBe("testnet");
     });
 
     it("should return mainnet for invalid stored value", () => {

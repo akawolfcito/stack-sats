@@ -33,10 +33,24 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 
+/**
+ * Devnet is not offered.
+ *
+ * Its API URL is assembled from VITE_PLATFORM_HIRO_API_KEY, a compile-time
+ * variable, so a published build carries whatever key was compiled in or
+ * none at all. Without one, getApiUrl quietly falls back to testnet while
+ * getNetworkConfig still points at localhost:3999: the chip said "Devnet",
+ * the balances came from testnet, and a broadcast would have gone to a node
+ * nobody was running.
+ *
+ * The type keeps devnet, because the code still handles it and a stored
+ * value has to resolve to something. What it does not do is invite anyone
+ * to pick a network that cannot work. See DEVNET-PROPOSAL.md for the runtime
+ * URL that would make it real.
+ */
 const networks: { key: NetworkName; label: string }[] = [
   { key: 'mainnet', label: 'Mainnet' },
   { key: 'testnet', label: 'Testnet' },
-  { key: 'devnet', label: 'Devnet' },
 ]
 
 /**
