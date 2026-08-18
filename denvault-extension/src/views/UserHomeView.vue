@@ -145,6 +145,13 @@ const accountIndexToDisplay = ref(0);
 const stxBalanceMicro = ref<string>("0");
 const isLoadingBalance = ref(false);
 /**
+ * True when the Stacks API could not be reached, the same distinction BTC
+ * already draws below. The balance starts at "0" and a failed fetch leaves
+ * it there, so an account holding 499.97 STX read a confident "0.00 STX"
+ * whenever Hiro answered 429, and pressing refresh only repeated it.
+ */
+const isStxBalanceUnknown = ref(false);
+/**
  * Fiat conversion rate. Zero means "unknown", which hides the fiat line
  * rather than showing a fabricated $0.00 next to a real balance.
  *
@@ -291,7 +298,10 @@ const handleAccountSelect = (index: number) => {
  * elsewhere. "Unavailable" keeps no unit: it is not a quantity.
  */
 const assetBalanceText: Record<string, () => string> = {
-  stx: () => `${shortBalance.value} STX`,
+  stx: () =>
+    isStxBalanceUnknown.value
+      ? 'Unavailable'
+      : `${shortBalance.value} STX`,
   btc: () =>
     isBtcBalanceUnknown.value
       ? 'Unavailable'
@@ -449,8 +459,12 @@ async function loadBalance() {
     const balance = await fetchStxBalance(currentAccount.stxAddress, selectedNetwork.value);
     if (balance !== null) {
       stxBalanceMicro.value = balance;
+      isStxBalanceUnknown.value = false;
+    } else {
+      isStxBalanceUnknown.value = true;
     }
   } catch (error) {
+    isStxBalanceUnknown.value = true;
     secureLog("Failed to load balance", error);
   }
   isLoadingBalance.value = false;
@@ -842,8 +856,8 @@ const handleManageAccounts = () => {
 
           <!-- V55.2: Balance Card with data-roi -->
           <BalanceHeader
-            :amount-text="isLoadingBalance ? '...' : shortBalance"
-            symbol="STX"
+            :amount-text="isLoadingBalance ? '...' : isStxBalanceUnknown ? 'Unavailable' : shortBalance"
+            :symbol="isStxBalanceUnknown ? '' : 'STX'"
             :usd-text="totalValueUsd ? `${totalValueUsd} USD` : undefined"
             :is-hidden="!showBalance"
             :address-short="currentAccountAddressShort"
