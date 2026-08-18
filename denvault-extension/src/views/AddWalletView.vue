@@ -180,6 +180,13 @@ function handlePinCreate(enteredPin: string) {
 async function handlePinConfirm(enteredPin: string) {
   if (enteredPin !== pin.value) {
     pinError.value = "PINs do not match";
+    // See StartView: leaving the six slots full makes PinInput drop every
+    // key, so the retry it asks for is impossible on the control in front
+    // of the user.
+    nextTick(() => {
+      pinInputRef.value?.clear();
+      pinInputRef.value?.focus();
+    });
     return;
   }
 

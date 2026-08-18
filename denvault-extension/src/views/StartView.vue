@@ -174,7 +174,15 @@ const handlePinCreate = (enteredPin: string) => {
 const handlePinConfirm = async (enteredPin: string) => {
   if (enteredPin !== pin.value) {
     pinError.value = "PINs do not match";
-    pinConfirm.value = "";
+    // Empty the field, or the keypad stops answering. PinInput writes into
+    // the first free slot, and with all six full there is none: every key
+    // is dropped by its own guard and nothing on screen moves. Telling
+    // someone to try again on a control that has quietly died is how this
+    // step became a dead end halfway through an import.
+    nextTick(() => {
+      pinInputRef.value?.clear();
+      pinInputRef.value?.focus();
+    });
     return;
   }
 
