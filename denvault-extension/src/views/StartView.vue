@@ -38,6 +38,8 @@ import { encryptWithPIN, isValidPIN } from "@/utils/security";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import { emitWalletCreated, emitWalletImported } from "@/denlabs/emit";
+import { parseBackupFile } from "@/utils/backup";
+import { importWalletAsync, walletExistsAsync } from "@/utils/wallets";
 
 const router = useRouter();
 
@@ -134,6 +136,53 @@ const handleImportMnemonic = () => {
   importError.value = "";
   router.push("/import-recovery");
 };
+
+/**
+ * Restore an encrypted backup, from the screen where there is no wallet.
+ *
+ * Settings can already read these files, but Settings is behind an
+ * unlocked wallet, so the only door for a backup was the one situation
+ * where nobody needs one. Someone who reset the extension, or moved to
+ * another computer, arrived here with a valid file and nowhere to put it.
+ *
+ * The entry is already encrypted, so writing it needs no session: the PIN
+ * is asked for at the unlock screen afterwards, and it is the PIN that was
+ * in use when the backup was made. Saying that plainly matters, because a
+ * restored wallet that will not open to today's PIN reads as a lost wallet.
+ */
+const restoreInputRef = ref<HTMLInputElement | null>(null);
+
+const handleRestoreBackup = () => {
+  importError.value = "";
+  restoreInputRef.value?.click();
+};
+
+async function handleBackupFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  // Let the same file be chosen again after a failure.
+  input.value = "";
+  importError.value = "";
+
+  const backup = await parseBackupFile(file);
+  if (!backup) {
+    importError.value = "That is not a DenVault backup file.";
+    return;
+  }
+
+  const alreadyHere = await walletExistsAsync(backup.wallet.id);
+  const result = await importWalletAsync(backup.wallet, alreadyHere);
+
+  if (!result) {
+    importError.value = "The backup could not be restored. The file may be damaged.";
+    return;
+  }
+
+  secureLog("Wallet restored from backup at setup", { walletId: backup.wallet.id });
+  router.push("/unlock");
+}
 
 // V76: Check for imported mnemonic from route state on mount
 onMounted(() => {
@@ -343,6 +392,31 @@ onBeforeMount(() => {
             Import Existing Wallet
           </Button>
 
+          <!--
+            The third door. Export writes an encrypted file and Settings
+            reads it back, but Settings needs an open wallet, so the file
+            was unusable in the only situation that produces it: no wallet
+            on this device. See handleBackupFileSelected.
+          -->
+          <Button
+            variant="ghost"
+            size="lg"
+            full-width
+            data-roi="start-restore-cta"
+            @click="handleRestoreBackup"
+          >
+            Restore from Backup File
+          </Button>
+
+          <input
+            ref="restoreInputRef"
+            type="file"
+            accept="application/json,.json"
+            class="visually-hidden"
+            data-roi="start-restore-input"
+            @change="handleBackupFileSelected"
+          />
+
           <!-- V53: Error with reserved slot (no layout shift) -->
           <div class="error-slot" aria-live="polite">
             <p v-if="importError" class="error-text">{{ importError }}</p>
@@ -549,6 +623,20 @@ onBeforeMount(() => {
 }
 
 /* Error Text */
+/* Kept in the layout for a label, out of it for the eye. The button is
+   the control; this input only carries the file picker. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .error-text {
   color: var(--color-error);
   font-size: var(--font-size-sm);
