@@ -13,7 +13,7 @@
  *
  * Trust-critical flow: Users approve dApp requests here.
  */
-import { onBeforeMount, onBeforeUnmount, onMounted, ref, computed } from "vue";
+import { onBeforeMount, onBeforeUnmount, onMounted, ref, computed, watch } from "vue";
 import {
   handleSignMessage,
   handleGetAddresses,
@@ -41,6 +41,17 @@ import {
   type AccountOption,
 } from "@/utils/accounts/active";
 import { describeFailure, type FailureReport } from "@/utils/dapp/failure";
+import {
+  assessFunding,
+  fundingNeed,
+  toMicro,
+  type FundingAssessment,
+} from "@/utils/dapp/funding";
+import { fetchStxBalance } from "@/utils/balance";
+import { formatStxFromMicro } from "@/utils/balance/format";
+import { TRANSFER_FEE_MICRO_STX } from "@/utils/transfer";
+import { generateInitialAccounts } from "@/utils/accounts";
+import { getSelectedNetwork } from "@/utils/network";
 
 const isUnlocked = ref(false);
 const pinError = ref("");
@@ -62,6 +73,88 @@ const failure = ref<FailureReport | null>(null);
 function reportFailure(code: number | undefined, message: string) {
   failure.value = describeFailure(code, message);
   isProcessing.value = false;
+}
+
+/**
+ * Whether the signing account can pay for this, worked out before the PIN
+ * rather than after the node refuses. A deploy was approved from an empty
+ * account and died on the network; the balance was knowable all along.
+ *
+ * Null while unknown, which is not the same as zero: an unreachable API
+ * must never be read as an empty account, so nothing is blocked until
+ * there is an answer.
+ */
+const balanceMicro = ref<bigint | null>(null);
+const funding = ref<FundingAssessment | null>(null);
+
+/** Costs nothing, so the whole section stays out of the way. */
+const isFreeRequest = computed(() => fundingNeed(displayPayload.value.method) === "none");
+
+const feeMicro = computed(() => {
+  const params = (displayPayload.value.params ?? {}) as Record<string, unknown>;
+  const requested = toMicro(params.fee);
+  return requested > 0n ? requested : TRANSFER_FEE_MICRO_STX;
+});
+
+const blockedByBalance = computed(() => funding.value?.blocks === true);
+
+const fundingLines = computed(() => {
+  if (isFreeRequest.value || balanceMicro.value === null || !funding.value) return null;
+  return {
+    balance: formatStxFromMicro(balanceMicro.value.toString()),
+    fee: formatStxFromMicro(feeMicro.value.toString()),
+    missing:
+      funding.value.shortfallMicro > 0n
+        ? formatStxFromMicro(funding.value.shortfallMicro.toString())
+        : null,
+  };
+});
+
+/**
+ * Look up the balance of the account that would sign, and judge it.
+ *
+ * Needs an unlocked session to derive the address, so it runs on mount
+ * when the wallet is already open and again the moment the PIN opens it.
+ * Either way it lands before Approve, which is the part that matters.
+ */
+async function assessBalance() {
+  if (isFreeRequest.value) return;
+
+  const mnemonic = sessionManager.getMnemonic();
+  if (!mnemonic) return;
+
+  try {
+    const network = getSelectedNetwork();
+    const accounts = await generateInitialAccounts(
+      mnemonic,
+      selectedAccountIndex.value + 1,
+      network
+    );
+    const address = accounts[selectedAccountIndex.value]?.stxAddress;
+    if (!address) return;
+
+    const raw = await fetchStxBalance(address, network);
+    if (raw === null) {
+      // Unknown, so nothing is claimed and nothing is blocked.
+      balanceMicro.value = null;
+      funding.value = null;
+      return;
+    }
+
+    const params = (displayPayload.value.params ?? {}) as Record<string, unknown>;
+    balanceMicro.value = toMicro(raw);
+    funding.value = assessFunding({
+      method: displayPayload.value.method,
+      balanceMicro: balanceMicro.value,
+      feeMicro: feeMicro.value,
+      amountMicro: toMicro(params.amount),
+      sponsored: params.sponsored === true,
+    });
+  } catch (error) {
+    secureWarn("Balance check failed", { error: String(error) });
+    balanceMicro.value = null;
+    funding.value = null;
+  }
 }
 
 // Account selector state. Populated in onMounted from the accounts that
@@ -141,6 +234,17 @@ onMounted(async () => {
       requestId: props.requestId,
     });
   }
+
+  // After the canonical params land, so the amount and fee judged are the
+  // ones that will be signed.
+  void assessBalance();
+});
+
+// Signing with a different account means a different balance to check.
+watch(selectedAccountIndex, () => {
+  balanceMicro.value = null;
+  funding.value = null;
+  void assessBalance();
 });
 
 onBeforeUnmount(() => {
@@ -325,6 +429,8 @@ async function handlePinComplete(pin: string) {
   if (success) {
     isUnlocked.value = true;
     pinError.value = "";
+    // Now that there is a session, the signing address can be derived.
+    void assessBalance();
   } else {
     const remaining = 3 - sessionManager.failedAttempts;
     pinError.value = `Incorrect PIN. Attempts remaining: ${remaining}`;
@@ -656,9 +762,33 @@ function handleReject(reason?: string) {
         <PinInput mode="unlock" @complete="handlePinComplete" />
       </div>
 
+      <!-- What this costs and whether the account can cover it. Shown
+           whether or not it can: a figure that only appears when something
+           is wrong teaches people to fear the screen. -->
+      <div v-if="fundingLines" class="funding-card" data-roi="confirm-funding">
+        <div class="funding-row">
+          <span>Balance</span>
+          <span class="funding-value">{{ fundingLines.balance }} STX</span>
+        </div>
+        <div class="funding-row">
+          <span>Estimated fee</span>
+          <span class="funding-value">{{ fundingLines.fee }} STX</span>
+        </div>
+        <div v-if="fundingLines.missing" class="funding-row funding-row--short" data-roi="confirm-funding-short">
+          <span>Missing</span>
+          <span class="funding-value">{{ fundingLines.missing }} STX</span>
+        </div>
+      </div>
+
       <!-- V55.2: Reserved error slot (anti-layout-shift) -->
       <div class="error-slot" data-roi="confirm-error-slot" aria-live="polite">
         <p v-if="pinError" class="error-text">{{ pinError }}</p>
+        <p v-else-if="blockedByBalance" class="error-text" data-roi="confirm-blocked-reason">
+          This account cannot cover the network fee. Receive STX into it, or pick another account.
+        </p>
+        <p v-else-if="funding?.warns" class="warn-text" data-roi="confirm-funding-warning">
+          Signing costs nothing, but this account could not pay for this transaction when it is sent.
+        </p>
       </div>
     </main>
 
@@ -678,7 +808,7 @@ function handleReject(reason?: string) {
     <template v-else #footer>
       <StickyCTA
         primary-text="Approve"
-        :primary-disabled="!isUnlocked || isProcessing"
+        :primary-disabled="!isUnlocked || isProcessing || blockedByBalance"
         secondary-text="Deny"
         :show-arrow="false"
         roi-prefix="confirm"
@@ -901,6 +1031,40 @@ function handleReject(reason?: string) {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.funding-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-surface-2, rgba(255, 255, 255, 0.04));
+}
+
+.funding-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.funding-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.funding-row--short,
+.funding-row--short .funding-value {
+  color: var(--color-danger, #ef4444);
+}
+
+.warn-text {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+  color: var(--color-warning, #f59e0b);
 }
 
 .failure-state {
