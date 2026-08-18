@@ -23,6 +23,16 @@ import {
   parseBackupFile,
 } from "@/utils/backup";
 import { DensityService, type DensityMode } from "@/services/density";
+import {
+  ERASE_ACKNOWLEDGEMENT,
+  ERASE_CONFIRM_WORD,
+  ERASE_HEADLINE,
+  ERASE_ROW_LABEL,
+  ERASE_ROW_SUBTITLE,
+  ERASE_SCREEN_TITLE,
+  eraseBody,
+  eraseButtonLabel,
+} from "@/utils/wallets/erase-copy";
 
 const router = useRouter();
 const route = useRoute();
@@ -54,7 +64,16 @@ const showPinInput = ref(false);
 const deleteError = ref("");
 const walletToDelete = ref<string | null>(null);
 
-const CONFIRM_WORD = "DELETE";
+// One source for the words, shared with UnlockView's copy of this flow.
+// Two screens is how this action ended up with three names. See
+// utils/wallets/erase-copy.
+const CONFIRM_WORD = ERASE_CONFIRM_WORD;
+
+/** Named, not counted. A number is read past; a name you recognise is not. */
+const walletNames = ref<string[]>([]);
+
+/** The promise has to be made before the word can be typed. */
+const eraseAcknowledged = ref(false);
 
 // Backup state
 const backupMessage = ref<{ type: "success" | "error"; text: string } | null>(null);
@@ -73,6 +92,7 @@ async function loadWalletSummary() {
   const activeId = await getActiveWalletIdAsync();
 
   walletCount.value = wallets.length;
+  walletNames.value = wallets.map((w) => w.name);
   const activeWallet = wallets.find(w => w.id === activeId);
   activeWalletName.value = activeWallet?.name || 'No wallet';
 }
@@ -119,6 +139,7 @@ function initiateDelete() {
 }
 
 function cancelDelete() {
+  eraseAcknowledged.value = false;
   showDeleteConfirm.value = false;
   showPinInput.value = false;
   confirmText.value = "";
@@ -503,8 +524,8 @@ function cancelImport() {
       <!-- Danger Zone -->
       <ListGroup title="Danger Zone" variant="danger" data-roi="menu-section-danger">
         <ListRow
-          label="Delete All Wallets"
-          subtitle="Removes wallets from this device only"
+          :label="ERASE_ROW_LABEL"
+          :subtitle="ERASE_ROW_SUBTITLE"
           variant="danger"
           data-roi="menu-action-delete"
           @click="initiateDelete()"
@@ -534,12 +555,26 @@ function cancelImport() {
               <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
           </div>
-          <h3>Delete Wallet</h3>
-          <p>
-            This action will permanently delete your wallet from this extension.
-            Make sure you have your recovery phrase saved.
-          </p>
+          <h3>{{ ERASE_SCREEN_TITLE }}</h3>
+          <p class="erase-headline">{{ ERASE_HEADLINE }}</p>
+          <p>{{ eraseBody(walletCount) }}</p>
         </div>
+
+        <!-- Seeing the name you recognise is the moment a hand stops. -->
+        <div v-if="walletNames.length" class="erase-inventory" data-roi="erase-inventory">
+          <p class="erase-inventory-title">Wallets to be erased</p>
+          <ul>
+            <li v-for="name in walletNames" :key="name">{{ name }}</li>
+          </ul>
+        </div>
+
+        <!-- Before the typing. Ticking a box that claims something about
+             yourself is the gesture that actually gives pause; typing a
+             word is muscle. -->
+        <label class="erase-ack" data-roi="erase-acknowledge">
+          <input v-model="eraseAcknowledged" type="checkbox" />
+          <span>{{ ERASE_ACKNOWLEDGEMENT }}</span>
+        </label>
 
         <div class="confirm-input-section">
           <label class="confirm-label">
@@ -558,7 +593,14 @@ function cancelImport() {
 
         <div class="button-group">
           <Button variant="secondary" @click="cancelDelete">Cancel</Button>
-          <Button variant="danger" @click="confirmDeleteText">Continue</Button>
+          <Button
+            variant="danger"
+            :disabled="!eraseAcknowledged"
+            data-roi="erase-confirm-cta"
+            @click="confirmDeleteText"
+          >
+            {{ eraseButtonLabel(walletCount) }}
+          </Button>
         </div>
       </div>
 
@@ -745,6 +787,8 @@ function cancelImport() {
   display: flex;
   flex-direction: column;
   padding: 24px 16px;
+  /* The inventory and the acknowledgement made this taller than a popup. */
+  overflow-y: auto;
 }
 
 .confirm-step {
@@ -822,6 +866,47 @@ function cancelImport() {
   text-transform: uppercase;
 }
 
+.erase-headline {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+}
+
+.erase-inventory {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-surface-2, rgba(255, 255, 255, 0.04));
+}
+
+.erase-inventory-title {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.erase-inventory ul {
+  margin: 0;
+  padding-left: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.erase-ack {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.erase-ack input {
+  margin-top: 0.2em;
+  flex-shrink: 0;
+}
+
 .error-text {
   color: var(--color-error);
   font-size: var(--font-size-sm);
@@ -832,6 +917,12 @@ function cancelImport() {
 .button-group {
   display: flex;
   gap: var(--space-md);
+  /* See UnlockView: a confirmation whose buttons can leave the screen is
+     worse than no confirmation, because it looks like one. */
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-sm) 0;
+  background: var(--color-bg-primary);
 }
 
 /* Ensure buttons stretch equally in button group */

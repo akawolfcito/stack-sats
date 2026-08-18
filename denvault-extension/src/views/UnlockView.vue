@@ -28,6 +28,14 @@ import { secureLog } from "@/utils/security/logger";
 import { useLockoutCountdown } from "@/composables/useLockoutCountdown";
 import { useUiMode } from "@/composables/useUiMode";
 import { openSidePanel } from "@/composables/useSidePanel";
+import {
+  ERASE_CONFIRM_WORD,
+  ERASE_HEADLINE,
+  ERASE_SCREEN_TITLE,
+  eraseBody,
+  eraseButtonLabel,
+} from "@/utils/wallets/erase-copy";
+import { getWalletsAsync } from "@/utils/wallets";
 
 const router = useRouter();
 const { isPopup, isSidePanel } = useUiMode();
@@ -87,7 +95,15 @@ watch(
   }
 );
 
-const canDelete = computed(() => deleteConfirmText.value.toUpperCase() === "DELETE");
+// Same words as the flow in Settings. Two screens implementing one
+// destructive action is how it acquired three names, and the singular one
+// cost a user both of their wallets. See utils/wallets/erase-copy.
+const canDelete = computed(
+  () => deleteConfirmText.value.toUpperCase() === ERASE_CONFIRM_WORD
+);
+
+/** How many are about to go. No screen used to say. */
+const eraseWalletCount = ref(0);
 
 // V55.0: Biometrics visibility - show only if supported AND enabled by user
 // Currently defaults to false until biometrics configuration is implemented
@@ -148,7 +164,16 @@ const handleConfirmDelete = async () => {
   router.push({ path: "/" });
 };
 
-onMounted(() => {
+onMounted(async () => {
+  // Names and count live unencrypted in the vault metadata, so this works
+  // without a session, which is the point: this screen is reached from
+  // "Forgot PIN?", where there is no session to be had.
+  try {
+    eraseWalletCount.value = (await getWalletsAsync()).length;
+  } catch {
+    // Leave it at zero: the copy falls back to "every wallet".
+  }
+
   if (!sessionManager.hasWallet) {
     router.push({ path: "/" });
     return;
@@ -244,7 +269,7 @@ onBeforeUnmount(() => {
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </Button>
-        <h1>Reset Wallet</h1>
+        <h1>{{ ERASE_SCREEN_TITLE }}</h1>
         <div class="header-spacer"></div>
       </header>
 
@@ -264,23 +289,21 @@ onBeforeUnmount(() => {
               </svg>
             </div>
 
-            <h2 class="danger-headline">Danger Zone</h2>
+            <h2 class="danger-headline">{{ ERASE_HEADLINE }}</h2>
 
-            <p class="danger-text">
-              This action is <span class="text-danger">irreversible</span>. It will permanently delete all your wallets, keys, and transaction history from this device.
-            </p>
+            <p class="danger-text">{{ eraseBody(eraseWalletCount) }}</p>
 
             <!-- Input Section -->
             <div class="input-section">
               <label class="input-label" for="delete-input">
-                Type 'DELETE' to confirm
+                Type '{{ ERASE_CONFIRM_WORD }}' to confirm
               </label>
               <div class="input-wrapper">
                 <input
                   id="delete-input"
                   v-model="deleteConfirmText"
                   type="text"
-                  placeholder="DELETE"
+                  :placeholder="ERASE_CONFIRM_WORD"
                   class="delete-input"
                   autocomplete="off"
                 />
@@ -330,7 +353,7 @@ onBeforeUnmount(() => {
               <line x1="10" y1="11" x2="10" y2="17"/>
               <line x1="14" y1="11" x2="14" y2="17"/>
             </svg>
-            Reset Wallet
+            {{ eraseButtonLabel(eraseWalletCount) }}
           </Button>
         </div>
       </main>
@@ -663,8 +686,20 @@ onBeforeUnmount(() => {
 }
 
 /* Action Buttons */
+/*
+ * Pinned to the bottom of the scrolling area. These lived in the flow,
+ * pushed down by a spacer, which assumes the content fits. In a 600px
+ * popup it does not, and the first thing to leave the screen was the pair
+ * of buttons: a destructive confirmation with Cancel half out of view.
+ * Sticky keeps them reachable at any window height, and the background
+ * has to be opaque or the text scrolls visibly underneath them.
+ */
 .action-buttons {
   display: flex;
   gap: var(--space-md);
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-sm) 0;
+  background: var(--color-bg-primary);
 }
 </style>
