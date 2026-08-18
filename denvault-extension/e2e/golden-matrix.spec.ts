@@ -134,10 +134,21 @@ async function openViaSnapshotHook(page: Page, name: string) {
     { timeout: 15_000 }
   );
 
-  // Let the view settle before opening anything. Invoking the moment the
-  // hook appears is too early: the overlay opens and a later render closes
-  // it again, which photographs the plain home screen.
-  await page.waitForTimeout(500);
+  // The hook is installed at mount, but the accounts are derived after it,
+  // and until they land the entire home body is a "Loading accounts..."
+  // placeholder: the balance, the switcher and the chip live behind a
+  // v-else that has not rendered yet. Opening a dropdown over that
+  // photographed the placeholder, or an empty frame when even that had not
+  // painted, and the v-else swapping in afterwards is what closed an
+  // overlay that had already opened. Between runs three to eight of these
+  // frames came back blank on that race.
+  //
+  // So wait for the thing that has to be behind the dropdown, rather than
+  // for half a second and a hope.
+  await page.waitForSelector('[data-roi="home-balance-card"]', {
+    state: 'visible',
+    timeout: 15_000,
+  });
 
   await page.evaluate((hookName) => {
     (window as any).__UI_SNAPSHOT__[hookName]();
@@ -192,14 +203,41 @@ async function captureScreen(page: Page, filename: string) {
   console.log(`  Captured: ${filename}.png`);
 }
 
-// Ensure output directory exists
+/** Every filename this matrix is going to write, one per test. */
+const EXPECTED_FILES = new Set(
+  VIEWPORTS.flatMap(viewport =>
+    DENSITIES.flatMap(density =>
+      ROUTES.map(route => `${viewport.name}-${density}-${route.name}.png`)
+    )
+  )
+);
+
+/**
+ * Ensure the output directory exists, without wiping it.
+ *
+ * beforeAll runs once per worker, not once per run, and this suite is
+ * fullyParallel. So four workers each cleared this directory while the
+ * others were writing into it: screenshots vanished after being taken,
+ * which is the "between runs three to eight captures go missing" that had
+ * gone unexplained, and two workers racing the same unlink killed one
+ * outright with ENOENT, which is why a run would stop at 24 of 32 with
+ * seven tests never started.
+ *
+ * Nothing has to be cleared for correctness: each test overwrites its own
+ * file by name. Only names that no state claims any more are worth
+ * removing, and that is done tolerantly, because another worker may have
+ * removed the same one first.
+ */
 test.beforeAll(async () => {
-  if (fs.existsSync(CURRENT_DIR)) {
-    // Clear previous screenshots
-    const files = fs.readdirSync(CURRENT_DIR).filter(f => f.endsWith('.png'));
-    files.forEach(f => fs.unlinkSync(path.join(CURRENT_DIR, f)));
-  } else {
-    fs.mkdirSync(CURRENT_DIR, { recursive: true });
+  fs.mkdirSync(CURRENT_DIR, { recursive: true });
+
+  for (const file of fs.readdirSync(CURRENT_DIR).filter(f => f.endsWith('.png'))) {
+    if (EXPECTED_FILES.has(file)) continue;
+    try {
+      fs.unlinkSync(path.join(CURRENT_DIR, file));
+    } catch {
+      // Already gone: another worker got to it first.
+    }
   }
 });
 
