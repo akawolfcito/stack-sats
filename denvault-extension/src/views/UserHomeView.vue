@@ -35,7 +35,6 @@ import {
 import {
   fetchCombinedBtcBalance,
   formatBtcBalance,
-  getBtcTxExplorerUrl,
   type BtcBalance,
 } from "../utils/bitcoin";
 import {
@@ -81,6 +80,7 @@ import AccountSwitcher, { type AccountItem } from "../components/account/Account
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
 import { sortActivityItems } from "@/utils/activity/sort";
 import { toBtcActivityRows } from "@/utils/activity/btc";
+import { activityTarget } from "@/utils/activity/target";
 import ListGroup from "../components/list/ListGroup.vue";
 import ListRow from "../components/list/ListRow.vue";
 import { useUiMode } from "../composables/useUiMode";
@@ -405,14 +405,20 @@ const activityItems = computed<ActivityItem[]>(() =>
 
 // Handle activity item click (navigate to transaction details)
 const handleActivityClick = (txId: string) => {
-  // The detail screen reads the Stacks API, so a Bitcoin txid would land
-  // on a page that can never load. Send those to a Bitcoin explorer.
-  if (btcActivity.value.some((item) => item.txid === txId)) {
-    window.open(getBtcTxExplorerUrl(txId, selectedNetwork.value), '_blank');
+  // Which chain a row belongs to decides where it can go at all. See
+  // utils/activity/target: AssetDetailView asks the same question.
+  const target = activityTarget(
+    txId,
+    btcActivity.value.map((item) => item.txid),
+    selectedNetwork.value
+  );
+
+  if (target.kind === 'bitcoin') {
+    window.open(target.url, '_blank');
     return;
   }
 
-  router.push({ path: `/transaction/${txId}` });
+  router.push({ path: target.path });
 };
 
 // Load account names from settings

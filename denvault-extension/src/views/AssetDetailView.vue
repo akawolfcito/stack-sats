@@ -17,6 +17,7 @@ import ReceiveModal from '@/components/ReceiveModal.vue';
 import ActivityList, { type ActivityItem } from '@/components/activity/ActivityList.vue';
 import { fetchBtcActivity, type BtcActivityItem } from '@/utils/bitcoin/activity';
 import { toBtcActivityRows } from '@/utils/activity/btc';
+import { activityTarget } from '@/utils/activity/target';
 import { Button, ActionBar, SectionHeader } from '@/components/ui';
 import type { ActionItem } from '@/components/ui';
 import { getAssetById, isValidAssetId, type AssetDefinition } from '@/utils/assets/registry';
@@ -214,7 +215,22 @@ function handleAction(key: string) {
 }
 
 function handleActivityClick(txId: string) {
-  router.push({ path: `/transaction/${txId}` });
+  // This screen shows Bitcoin history too, and the detail screen only
+  // reads the Stacks API, so every Bitcoin row here used to land on
+  // "Transaction not found". Same question, same answer as the home
+  // screen: see utils/activity/target.
+  const target = activityTarget(
+    txId,
+    btcActivity.value.map((item) => item.txid),
+    selectedNetwork.value
+  );
+
+  if (target.kind === 'bitcoin') {
+    window.open(target.url, '_blank');
+    return;
+  }
+
+  router.push({ path: target.path });
 }
 
 function handleTokenClick(token: TokenInfo) {
