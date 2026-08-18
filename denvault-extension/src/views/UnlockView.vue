@@ -26,8 +26,31 @@ import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import { useLockoutCountdown } from "@/composables/useLockoutCountdown";
+import { useUiMode } from "@/composables/useUiMode";
+import { openSidePanel } from "@/composables/useSidePanel";
 
 const router = useRouter();
+const { isPopup, isSidePanel } = useUiMode();
+
+/**
+ * Open the side panel before unlocking, not after.
+ *
+ * The only entry point used to be the home screen, which is behind the PIN.
+ * So reaching the panel cost an unlock in the popup, then the panel opening
+ * on its own lock screen, then a second unlock. Offering it here spends one
+ * PIN instead of two, and the wallet ends up where dApp approvals are
+ * delivered.
+ *
+ * Called straight from the handler: chrome.sidePanel.open() needs the user
+ * gesture still to be in flight.
+ */
+const handleOpenSidePanel = async () => {
+  const outcome = await openSidePanel();
+  // Two lock screens on top of each other help nobody.
+  if (outcome === "sidepanel" && isPopup.value) {
+    window.close();
+  }
+};
 
 const pinError = ref("");
 const isLoading = ref(false);
@@ -181,6 +204,27 @@ onBeforeUnmount(() => {
       </template>
     </PinInput>
 
+    <!--
+      Side panel entry, in the slot PinScreenShell keeps for secondary
+      actions. Below the keypad on purpose: it sits apart from "Forgot PIN?",
+      which is a rare escape hatch rather than a daily action.
+    -->
+    <template v-if="!isSidePanel" #actions>
+      <button
+        type="button"
+        class="sidepanel-link"
+        :disabled="isLoading"
+        data-roi="unlock-sidepanel"
+        @click="handleOpenSidePanel"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="15" y1="3" x2="15" y2="21"/>
+        </svg>
+        <span>Open in side panel</span>
+      </button>
+    </template>
+
     <!-- Loading indicator -->
     <template #loading>
       <p v-if="isLoading" class="loading-text">Unlocking...</p>
@@ -296,6 +340,29 @@ onBeforeUnmount(() => {
 
 <style scoped>
 /* V54.8: Forgot PIN premium text link */
+.sidepanel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.sidepanel-link:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.sidepanel-link:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .forgot-pin-link {
   background: none;
   border: none;
