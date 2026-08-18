@@ -76,11 +76,18 @@ onBeforeUnmount(() => {
     </template>
 
     <main v-if="mnemonic" class="content">
-      <p class="warning" data-roi="recovery-phrase-warning">
-        Anyone who reads these words owns this wallet. Write them on paper and
-        keep them offline. Never type them into a website or share them with
-        support.
-      </p>
+      <!--
+        Three rules, one per line. This was a paragraph opening with
+        "Anyone who reads these words owns this wallet", which is what the
+        warning card below already says: two warnings saying the same thing,
+        stacked, before anything you could act on. What the card does not
+        carry is what to actually do, so that is all this keeps.
+      -->
+      <ul class="rules" data-roi="recovery-phrase-warning">
+        <li>Write it on paper and keep it offline.</li>
+        <li>Never type it into a website.</li>
+        <li>Support will never ask for it.</li>
+      </ul>
 
       <RecoveryPhraseDisplay
         :mnemonic="mnemonic"
@@ -88,15 +95,28 @@ onBeforeUnmount(() => {
         @continue="leave"
       />
 
+      <!--
+        The path used to be followed by five lines of prose. Same facts, but
+        the part that decides whether someone gets their bitcoin back was
+        buried mid sentence. Split by chain, because the answer differs by
+        chain and that is the whole point of saying it.
+      -->
       <section class="derivation" data-roi="recovery-phrase-derivation">
         <h2 class="derivation-title">Derivation path</h2>
         <p class="derivation-path">{{ derivationPath }}</p>
-        <p class="derivation-note">
-          Your Bitcoin addresses come from this Stacks path, not from the usual
-          Bitcoin ones. To restore your bitcoin in another wallet, enter this
-          path there: with default settings it will scan elsewhere and show an
-          empty balance. Your Stacks accounts restore normally.
-        </p>
+        <dl class="chains">
+          <div class="chain">
+            <dt>Stacks</dt>
+            <dd>Restores anywhere, with no setup.</dd>
+          </div>
+          <div class="chain">
+            <dt>Bitcoin</dt>
+            <dd>
+              Enter this path in the other wallet. Its own default scans
+              elsewhere and reports an empty balance.
+            </dd>
+          </div>
+        </dl>
       </section>
     </main>
   </ScreenShell>
@@ -110,11 +130,33 @@ onBeforeUnmount(() => {
   gap: var(--space-md);
 }
 
-.warning {
+.rules {
   margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.rules li {
+  position: relative;
+  padding-left: var(--space-md);
   font-size: var(--font-size-sm);
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--color-text-secondary);
+}
+
+/* A marker, not a bullet glyph: the line should read as a rule. */
+.rules li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
 }
 
 .derivation {
@@ -142,7 +184,27 @@ onBeforeUnmount(() => {
   word-break: break-all;
 }
 
-.derivation-note {
+.chains {
+  margin: var(--space-xs) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.chain {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  gap: var(--space-sm);
+  align-items: baseline;
+}
+
+.chain dt {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.chain dd {
   margin: 0;
   font-size: var(--font-size-xs);
   line-height: 1.5;
