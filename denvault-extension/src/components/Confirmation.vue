@@ -40,10 +40,29 @@ import {
   getActiveAccountIndex,
   type AccountOption,
 } from "@/utils/accounts/active";
+import { describeFailure, type FailureReport } from "@/utils/dapp/failure";
 
 const isUnlocked = ref(false);
 const pinError = ref("");
 const isProcessing = ref(false);
+
+/**
+ * Set when an approved request did not go through.
+ *
+ * The window used to forward the error to the dApp and close itself 150ms
+ * later, so approving a deploy from an empty account ended with no
+ * transaction, no message and no sign anything had been attempted. The
+ * dApp was told; the person who pressed Approve was not, and silence
+ * looks exactly like success. The reply still leaves immediately: only
+ * the closing waits for the user to have read it.
+ */
+const failure = ref<FailureReport | null>(null);
+
+/** Report the failure and stop, rather than reporting it and vanishing. */
+function reportFailure(code: number | undefined, message: string) {
+  failure.value = describeFailure(code, message);
+  isProcessing.value = false;
+}
 
 // Account selector state. Populated in onMounted from the accounts that
 // actually exist — a fixed list of three used to hide accounts 4+ and,
@@ -409,7 +428,7 @@ async function handleConfirm() {
       } else {
         await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
       }
-      setTimeout(() => closeWindow(), 150);
+      reportFailure(error.code, error.message);
       return;
     }
 
@@ -499,6 +518,11 @@ async function handleConfirm() {
       txSignStartTime.value,
       errorMsg
     );
+
+    // The dApp already has the error. Stay put so the person who pressed
+    // Approve gets it too, instead of watching the window vanish.
+    reportFailure(-32603, errorMsg);
+    return;
   }
 
   // Delay to ensure message is sent before closing
@@ -549,8 +573,27 @@ function handleReject(reason?: string) {
       />
     </template>
 
+    <!-- What happened, when it did not happen. Replaces the review, so
+         nobody approves the same thing twice while reading why it failed. -->
+    <main v-if="failure" class="confirm-content" data-roi="confirm-failure">
+      <div class="failure-state">
+        <div class="failure-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="13" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <h2 class="failure-title" data-roi="confirm-failure-title">{{ failure.title }}</h2>
+        <p class="failure-detail" data-roi="confirm-failure-detail">{{ failure.detail }}</p>
+        <p v-if="failure.recoverable" class="failure-hint">
+          Nothing was sent. You can change it and try again.
+        </p>
+      </div>
+    </main>
+
     <!-- Main Content -->
-    <main class="confirm-content">
+    <main v-else class="confirm-content">
       <!-- Origin badge -->
       <div class="origin-badge" data-roi="confirm-origin">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -619,8 +662,20 @@ function handleReject(reason?: string) {
       </div>
     </main>
 
+    <!-- One way out when it failed: reading it and closing. Approve would
+         resend what the network just refused. -->
+    <template v-if="failure" #footer>
+      <StickyCTA
+        primary-text="Close"
+        :show-arrow="false"
+        roi-prefix="confirm-failure"
+        data-roi="confirm-failure-cta"
+        @primary="closeWindow()"
+      />
+    </template>
+
     <!-- V55.2: Sticky CTA footer with Deny/Approve -->
-    <template #footer>
+    <template v-else #footer>
       <StickyCTA
         primary-text="Approve"
         :primary-disabled="!isUnlocked || isProcessing"
@@ -846,6 +901,41 @@ function handleReject(reason?: string) {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.failure-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl) var(--space-md);
+}
+
+.failure-icon {
+  color: var(--color-danger, #ef4444);
+}
+
+.failure-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+}
+
+.failure-detail {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  /* The node's own words can be long and unbroken. */
+  overflow-wrap: anywhere;
+}
+
+.failure-hint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 .error-text {
