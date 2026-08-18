@@ -79,6 +79,7 @@ import { fetchBtcActivity, type BtcActivityItem } from "@/utils/bitcoin/activity
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
+import { sortActivityItems } from "@/utils/activity/sort";
 import ListGroup from "../components/list/ListGroup.vue";
 import ListRow from "../components/list/ListRow.vue";
 import { useUiMode } from "../composables/useUiMode";
@@ -333,6 +334,7 @@ const btcActivityItems = computed<ActivityItem[]>(() =>
     // Date.now() / 1000. Multiplying made every Bitcoin row read "Just
     // now", including one from hours earlier.
     timeText: item.blockTime ? formatRelativeTime(item.blockTime) : 'Pending',
+    timestamp: item.blockTime,
     isOutgoing: item.isOutgoing,
     // A self transfer gets no sign at all. Dropping only the minus was not
     // enough: the row then rendered "+0.0005 BTC" in green, which reads as
@@ -395,6 +397,7 @@ const stxActivityItems = computed<ActivityItem[]>(() => {
       subtitle,
       amountText,
       timeText: formatRelativeTime(tx.timestamp),
+      timestamp: tx.timestamp,
       isOutgoing,
     };
   });
@@ -404,16 +407,9 @@ const stxActivityItems = computed<ActivityItem[]>(() => {
  * One list for both chains. Pending first, because that is what the user
  * just did and what they came back to check.
  */
-const activityItems = computed<ActivityItem[]>(() => {
-  const merged = [...stxActivityItems.value, ...btcActivityItems.value];
-  return merged.sort((a, b) => {
-    if (a.status !== b.status) {
-      if (a.status === 'pending') return -1;
-      if (b.status === 'pending') return 1;
-    }
-    return 0;
-  });
-});
+const activityItems = computed<ActivityItem[]>(() =>
+  sortActivityItems([...stxActivityItems.value, ...btcActivityItems.value])
+);
 
 // Handle activity item click (navigate to transaction details)
 const handleActivityClick = (txId: string) => {

@@ -8,6 +8,12 @@ export interface ActivityItem {
   subtitle?: string
   amountText?: string
   timeText?: string
+  /**
+   * Seconds since the epoch, for ordering. timeText is already formatted
+   * ("15h ago") and cannot be compared, which is why the combined list used
+   * to fall back to concatenation order.
+   */
+  timestamp?: number
   isOutgoing?: boolean
   /** Neither in nor out: the wallet paid itself. See ActivityRow. */
   isNeutral?: boolean
