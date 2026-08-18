@@ -5,6 +5,7 @@ import {
   type StacksNetwork,
 } from "@stacks/network";
 import { isAllowedApiHost } from "./allowed-hosts";
+import { clearOriginApprovals } from "../dapp/approvals";
 
 export type NetworkName = "mainnet" | "testnet" | "devnet";
 
@@ -80,6 +81,8 @@ export function getSelectedNetwork(): NetworkName {
  */
 export function setSelectedNetwork(network: NetworkName): void {
   localStorage.setItem(NETWORK_STORAGE_KEY, network);
+  // The addresses a site was given belong to the previous chain.
+  void clearOriginApprovals();
 }
 
 /**

@@ -813,6 +813,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 /**
+ * Whether this device still holds a wallet.
+ *
+ * The vault lives in chrome.storage.local under "wallet_vault", which the
+ * worker can read even though it can never open it: the entries are
+ * encrypted and the session that decrypts them lives in the extension
+ * pages. Presence is all that is needed here.
+ */
+async function hasAnyWallet() {
+  try {
+    const stored = await chrome.storage.local.get("wallet_vault");
+    const vault = stored.wallet_vault;
+    return Array.isArray(vault?.entries) && vault.entries.length > 0;
+  } catch (error) {
+    console.warn("[StacksWallet] Vault check failed:", error);
+    // Unreadable is not the same as absent. Answering from cache is the
+    // established behaviour, and refusing every dApp call because one
+    // storage read failed would be the worse mistake.
+    return true;
+  }
+}
+
+/**
  * Handle auto-approvable methods (like getAddresses)
  * Returns cached response if available, otherwise opens popup
  */
@@ -827,7 +849,15 @@ async function handleAutoApprove(message, sender, originUrl) {
       const entry = cached[cacheKey];
 
       // Check if cache entry has expired (24-hour TTL)
-      if (entry._approvedAt && Date.now() - entry._approvedAt > CACHE_TTL_MS) {
+      // A wallet that no longer exists cannot have addresses. After the
+      // vault was cleared, a site kept receiving the addresses of a wallet
+      // that had been deleted, because the cached answer outlived what it
+      // described. The extension pages drop this cache when the account,
+      // the network or the wallet changes; this covers the case where
+      // there is nothing left to change.
+      if (!(await hasAnyWallet())) {
+        await chrome.storage.session.remove(cacheKey);
+      } else if (entry._approvedAt && Date.now() - entry._approvedAt > CACHE_TTL_MS) {
         // Cache expired — remove silently
         await chrome.storage.session.remove(cacheKey);
       } else {

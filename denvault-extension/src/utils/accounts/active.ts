@@ -1,3 +1,4 @@
+import { clearOriginApprovals } from "../dapp/approvals";
 /**
  * Active account selection.
  *
@@ -40,6 +41,9 @@ export function getActiveAccountIndex(accountCount: number): number {
 /** Persist the active account index. */
 export function setActiveAccountIndex(index: number): void {
   localStorage.setItem(ACTIVE_ACCOUNT_STORAGE_KEY, String(index));
+  // A site holding an approved getAddresses response would keep receiving
+  // the account the user just left. See utils/dapp/approvals.
+  void clearOriginApprovals();
 }
 
 /**
