@@ -289,11 +289,16 @@ function handleWalletClick(wallet: WalletEntry) {
                 </svg>
               </button>
 
-              <!-- Remove button (not shown for active wallet if only one) -->
+              <!--
+                Removing the last wallet is allowed, and the modal warns
+                about it. The greyed-out styling stayed behind from when it
+                was blocked, so the control looked unavailable while working
+                perfectly: the one state where a user needs to trust what
+                they are told is the one where the screen was lying.
+              -->
               <button
                 v-if="editingWalletId !== wallet.id"
                 class="action-btn action-btn--danger"
-                :class="{ 'action-btn--disabled': wallet.id === activeWalletId && wallets.length === 1 }"
                 title="Remove wallet"
                 @click="initiateRemove(wallet, $event)"
               >
