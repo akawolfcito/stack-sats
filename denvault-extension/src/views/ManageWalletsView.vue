@@ -56,10 +56,16 @@ const sortedWallets = computed(() => {
   });
 });
 
-const canRemoveWallet = computed(() => {
-  // Can remove if there's more than one wallet
-  return wallets.value.length > 1;
-});
+/**
+ * Whether removing this wallet would leave the extension with none.
+ *
+ * The remove button used to be hidden entirely unless a second wallet
+ * existed, so someone with one wallet found no control and no explanation:
+ * nothing to click and nothing saying why. Removing the last one is
+ * supported (confirmRemove locks and returns to setup), so the answer is to
+ * warn rather than to hide.
+ */
+const isLastWallet = computed(() => wallets.value.length <= 1);
 
 // Load wallets
 onMounted(async () => {
@@ -146,11 +152,6 @@ function handleRenameKeydown(event: KeyboardEvent) {
 // Remove wallet
 function initiateRemove(wallet: WalletEntry, event: Event) {
   event.stopPropagation();
-
-  // Cannot remove active wallet if it's the only one
-  if (wallet.id === activeWalletId.value && wallets.value.length === 1) {
-    return;
-  }
 
   walletToRemove.value = wallet;
   showRemoveConfirm.value = true;
@@ -270,7 +271,7 @@ function handleWalletClick(wallet: WalletEntry) {
 
               <!-- Remove button (not shown for active wallet if only one) -->
               <button
-                v-if="canRemoveWallet && editingWalletId !== wallet.id"
+                v-if="editingWalletId !== wallet.id"
                 class="action-btn action-btn--danger"
                 :class="{ 'action-btn--disabled': wallet.id === activeWalletId && wallets.length === 1 }"
                 title="Remove wallet"
@@ -325,6 +326,10 @@ function handleWalletClick(wallet: WalletEntry) {
         <p class="remove-modal-body">
           "<strong>{{ walletToRemove?.name }}</strong>" will be removed from this device only.
           Your funds remain safe if you have your recovery phrase.
+        </p>
+        <p v-if="isLastWallet" class="remove-modal-warning" data-roi="remove-wallet-last">
+          This is your only wallet. Removing it returns DenVault to setup, and
+          nothing but your recovery phrase can bring it back.
         </p>
       </div>
 
@@ -543,6 +548,14 @@ function handleWalletClick(wallet: WalletEntry) {
   background: rgba(239, 68, 68, 0.1);
   border-radius: 50%;
   color: var(--color-error);
+}
+
+.remove-modal-warning {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-warning, #e6a700);
+  text-align: center;
 }
 
 .remove-modal-body {
