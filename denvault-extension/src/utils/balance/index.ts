@@ -55,6 +55,57 @@ export interface AccountBalances {
 }
 
 /**
+ * How long one answer stands in for the same question.
+ *
+ * Both callers of this endpoint run back to back: loadBalance goes through
+ * fetchStxBalance and loadTokens through fetchFungibleTokens, so every
+ * mount, account switch, network change and refresh asked Hiro twice for
+ * the same document. Long enough to collapse that pair, short enough that
+ * pressing refresh a second time still reaches the chain.
+ */
+export const BALANCE_CACHE_MS = 3_000;
+
+/** How long to leave a rate limited API alone when it sends no Retry-After. */
+export const RATE_LIMIT_COOLDOWN_MS = 10_000;
+
+interface CachedBalances {
+  at: number;
+  data: AccountBalances;
+}
+
+/** Keyed by API URL and address: never serve one account's balance as another's. */
+const balanceCache = new Map<string, CachedBalances>();
+/** Callers that arrive while a request is open wait on that request. */
+const inFlight = new Map<string, Promise<AccountBalances | null>>();
+/** Keyed by API URL: mainnet answering 429 says nothing about testnet. */
+const cooldownUntil = new Map<string, number>();
+
+/** Drop every cached answer and cooldown. For tests and for a wallet switch. */
+export function resetBalanceCache(): void {
+  balanceCache.clear();
+  inFlight.clear();
+  cooldownUntil.clear();
+}
+
+/**
+ * How long to wait after a 429, from the header when the server sends one.
+ * Retry-After may be seconds or an HTTP date; anything unreadable falls back
+ * to the default rather than to zero, which would resume the hammering.
+ */
+function cooldownFrom(response: { headers?: { get(name: string): string | null } }): number {
+  const header = response.headers?.get("retry-after");
+  if (!header) return RATE_LIMIT_COOLDOWN_MS;
+
+  const seconds = Number(header);
+  if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
+
+  const date = Date.parse(header);
+  if (!Number.isNaN(date)) return Math.max(date - Date.now(), 0);
+
+  return RATE_LIMIT_COOLDOWN_MS;
+}
+
+/**
  * Fetch account balances from the Stacks API
  */
 export async function fetchAccountBalances(
@@ -63,22 +114,48 @@ export async function fetchAccountBalances(
 ): Promise<AccountBalances | null> {
   const apiUrl = getApiUrl(network);
   const url = `${apiUrl}/extended/v1/address/${address}/balances`;
+  const now = Date.now();
 
-  try {
-    const response = await fetch(url);
+  const cached = balanceCache.get(url);
+  if (cached && now - cached.at < BALANCE_CACHE_MS) {
+    return cached.data;
+  }
 
-    if (!response.ok) {
-      secureLog("Balance fetch failed", { status: response.status, address });
-      return null;
-    }
-
-    const data = await response.json();
-    secureLog("Balance fetched", { address: address.slice(0, 8) + "..." });
-    return data as AccountBalances;
-  } catch (error) {
-    secureLog("Balance fetch error", { error: String(error) });
+  const cooling = cooldownUntil.get(apiUrl);
+  if (cooling !== undefined && now < cooling) {
+    // Asking again is what got us limited. The caller reports "unavailable".
     return null;
   }
+
+  const open = inFlight.get(url);
+  if (open) return open;
+
+  const request = (async (): Promise<AccountBalances | null> => {
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          cooldownUntil.set(apiUrl, Date.now() + cooldownFrom(response));
+        }
+        secureLog("Balance fetch failed", { status: response.status, address });
+        return null;
+      }
+
+      const data = (await response.json()) as AccountBalances;
+      balanceCache.set(url, { at: Date.now(), data });
+      secureLog("Balance fetched", { address: address.slice(0, 8) + "..." });
+      return data;
+    } catch (error) {
+      secureLog("Balance fetch error", { error: String(error) });
+      return null;
+    } finally {
+      inFlight.delete(url);
+    }
+  })();
+
+  inFlight.set(url, request);
+  return request;
 }
 
 /**
