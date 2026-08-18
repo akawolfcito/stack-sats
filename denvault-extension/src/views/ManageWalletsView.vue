@@ -12,7 +12,7 @@
  *
  * V78 Primitives: ScreenShell, AppHeader, ListGroup, ListRow, Button, Sheet
  */
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, type ComponentPublicInstance } from 'vue';
 import { useRouter } from 'vue-router';
 import ScreenShell from '@/components/layout/ScreenShell.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
@@ -40,7 +40,18 @@ const isLoading = ref(true);
 // Rename state
 const editingWalletId = ref<string | null>(null);
 const editingName = ref('');
+/**
+ * The field is rendered inside the v-for, so a string ref would come back
+ * as an array: Vue compiles refs under v-for with ref_for. Calling focus
+ * on that array threw "focus is not a function" on every rename, and the
+ * optional chaining did not help, because an array is not null. Only one
+ * row edits at a time, so a function ref holds the single live element.
+ */
 const renameInputRef = ref<HTMLInputElement | null>(null);
+
+function setRenameInputRef(el: Element | ComponentPublicInstance | null) {
+  renameInputRef.value = (el as HTMLInputElement | null) ?? null;
+}
 
 // Remove confirmation state
 const showRemoveConfirm = ref(false);
@@ -251,7 +262,7 @@ function handleWalletClick(wallet: WalletEntry) {
           -->
           <template v-if="editingWalletId === wallet.id" #content>
             <input
-              ref="renameInputRef"
+              :ref="setRenameInputRef"
               v-model="editingName"
               type="text"
               class="rename-input"
