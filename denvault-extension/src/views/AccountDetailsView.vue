@@ -16,7 +16,6 @@ import AddressCard from "@/components/account/AddressCard.vue";
 import AddressQrModal from "@/components/account/AddressQrModal.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
-import { ModalScaffold, Button } from "@/components/ui";
 
 const router = useRouter();
 const route = useRoute();
@@ -34,10 +33,6 @@ const qrModalOpen = ref(false);
 const qrModalLabel = ref("");
 const qrModalAddress = ref("");
 const qrModalAsset = ref<"STX" | "BTC" | "P2TR">("STX");
-
-// Coming soon modal state
-const showComingSoonModal = ref(false);
-const comingSoonFeature = ref("");
 
 // Get account index from route params
 const accountIndex = computed(() => {
@@ -126,14 +121,23 @@ function handleCloseQr() {
   qrModalOpen.value = false;
 }
 
-function handleViewPrivateKey() {
-  comingSoonFeature.value = "Private Key";
-  showComingSoonModal.value = true;
-}
-
+/**
+ * Send the user through the PIN to the phrase, which already works.
+ *
+ * This row opened a "Coming Soon" modal while the flow it describes sat
+ * finished two clicks away in Settings. VerifyPinView issues a single-use
+ * grant and RecoveryPhraseView spends it on arrival, so neither an
+ * unlocked session nor a typed URL is a way in: the PIN is charged every
+ * time. Same query as UserMenu.handleShowRecoveryPhrase, deliberately.
+ */
 function handleViewSecretPhrase() {
-  comingSoonFeature.value = "Secret Phrase";
-  showComingSoonModal.value = true;
+  router.push({
+    path: "/verify-pin",
+    query: {
+      action: "reveal",
+      returnTo: "/recovery-phrase",
+    },
+  });
 }
 
 function handleClose() {
@@ -229,19 +233,14 @@ function handleClose() {
       <div class="section" data-roi="account-section-security">
         <h3 class="section-title">Security</h3>
         <div class="card">
-          <!-- View Private Key -->
-          <button class="action-row" @click="handleViewPrivateKey">
-            <div class="action-icon key-icon">
-              <span>&#128273;</span>
-            </div>
-            <div class="action-content">
-              <p class="action-title">View Private Key</p>
-              <p class="action-subtitle">Requires PIN verification</p>
-            </div>
-            <span class="chevron">&rsaquo;</span>
-          </button>
-
-          <div class="divider"></div>
+          <!--
+            View Private Key was here, opening a "Coming Soon" modal. There
+            is no private key screen anywhere in the extension, so the row
+            described nothing. A promise with no destination, in the
+            security section of a wallet, is worse than an absence: it
+            teaches people that the warnings here are decorative. It can
+            come back when there is something behind it.
+          -->
 
           <!-- View Secret Phrase -->
           <button class="action-row" @click="handleViewSecretPhrase">
@@ -299,33 +298,6 @@ function handleClose() {
       @close="handleCloseQr"
     />
 
-    <!-- Coming Soon Modal -->
-    <ModalScaffold
-      :is-open="showComingSoonModal"
-      :title="`View ${comingSoonFeature}`"
-      variant="default"
-      @close="showComingSoonModal = false"
-    >
-      <template #icon>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-      </template>
-
-      <p>
-        This feature requires PIN verification and is <strong>coming soon</strong>.
-      </p>
-      <p style="margin-top: var(--space-sm); font-size: var(--font-size-xs);">
-        Your security is our priority.
-      </p>
-
-      <template #actions>
-        <Button variant="primary" full-width @click="showComingSoonModal = false">
-          Got it
-        </Button>
-      </template>
-    </ModalScaffold>
   </ScreenShell>
 </template>
 
@@ -510,11 +482,6 @@ function handleClose() {
   justify-content: center;
   font-size: var(--font-size-lg);
   flex-shrink: 0;
-}
-
-.key-icon {
-  background: rgba(255, 255, 255, 0.08); /* v17: neutral icon bg */
-  color: var(--color-text-primary);
 }
 
 .phrase-icon {
