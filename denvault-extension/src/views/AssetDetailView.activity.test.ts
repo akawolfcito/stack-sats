@@ -93,9 +93,15 @@ describe("AssetDetailView Bitcoin activity", () => {
   beforeEach(() => {
     push.mockClear();
     openTab.mockClear();
-    vi.stubGlobal("open", openTab);
+    // The link is opened through chrome.tabs.create, not window.open: a
+    // popup that opens a tab itself loses focus and closes. See
+    // utils/browser/open-tab.
     // @ts-expect-error - removing storage triggers the localStorage fallback
-    globalThis.chrome = { ...globalThis.chrome, storage: undefined };
+    globalThis.chrome = {
+      ...globalThis.chrome,
+      storage: undefined,
+      tabs: { ...globalThis.chrome?.tabs, create: openTab },
+    };
     localStorage.setItem("selected_network", "testnet");
   });
 
@@ -117,7 +123,7 @@ describe("AssetDetailView Bitcoin activity", () => {
 
     expect(push).not.toHaveBeenCalled();
     expect(openTab).toHaveBeenCalledTimes(1);
-    expect(openTab.mock.calls[0][0]).toContain(BTC_TXID);
-    expect(openTab.mock.calls[0][0]).toContain("testnet");
+    expect(openTab.mock.calls[0][0].url).toContain(BTC_TXID);
+    expect(openTab.mock.calls[0][0].url).toContain("testnet");
   });
 });

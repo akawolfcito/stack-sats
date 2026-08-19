@@ -85,6 +85,7 @@ import ListGroup from "../components/list/ListGroup.vue";
 import ListRow from "../components/list/ListRow.vue";
 import { useUiMode } from "../composables/useUiMode";
 import { openSidePanel } from "@/composables/useSidePanel";
+import { openExternalTab } from "@/utils/browser/open-tab";
 
 const router = useRouter();
 
@@ -414,7 +415,7 @@ const handleActivityClick = (txId: string) => {
   );
 
   if (target.kind === 'bitcoin') {
-    window.open(target.url, '_blank');
+    openExternalTab(target.url);
     return;
   }
 

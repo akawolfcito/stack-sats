@@ -15,6 +15,7 @@ import TxStatusBadge from "@/components/transaction/TxStatusBadge.vue";
 import TxDetailRow from "@/components/transaction/TxDetailRow.vue";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import { openExternalTab } from "@/utils/browser/open-tab";
 
 const router = useRouter();
 const route = useRoute();
@@ -90,7 +91,7 @@ function handleBack() {
 
 function openExplorer() {
   if (explorerUrl.value) {
-    window.open(explorerUrl.value, "_blank");
+    openExternalTab(explorerUrl.value);
   }
 }
 </script>

@@ -56,6 +56,7 @@ import {
   type NetworkName,
 } from '@/utils/network';
 import type { Account } from '@/utils/types';
+import { openExternalTab } from "@/utils/browser/open-tab";
 
 const router = useRouter();
 const route = useRoute();
@@ -226,7 +227,7 @@ function handleActivityClick(txId: string) {
   );
 
   if (target.kind === 'bitcoin') {
-    window.open(target.url, '_blank');
+    openExternalTab(target.url);
     return;
   }
 

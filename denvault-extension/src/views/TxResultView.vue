@@ -26,6 +26,7 @@ import { useTxDraft } from "@/composables/useTxDraft";
 import { useBtcTxDraft } from "@/composables/useBtcTxDraft";
 import { fetchTransaction } from "@/utils/transactions";
 import { fetchBtcTxConfirmed, getBtcTxExplorerUrl } from "@/utils/bitcoin/balance";
+import { openExternalTab } from "@/utils/browser/open-tab";
 
 const router = useRouter();
 const route = useRoute();
@@ -265,7 +266,7 @@ function handleCopyTxid() {
 
 function handleOpenExplorer() {
   if (explorerUrl.value) {
-    window.open(explorerUrl.value, "_blank");
+    openExternalTab(explorerUrl.value);
   }
 }
 
