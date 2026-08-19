@@ -37,6 +37,14 @@ export function useUiMode() {
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
   function handleResize() {
+    // The URL is a statement about which surface this is; height is a
+    // guess, and it can only ever answer popup or panel. Letting the guess
+    // win meant the first resize turned a side panel into a popup, and a
+    // side panel resizes whenever its window does. That is why the unlock
+    // screen kept offering to open the side panel from inside the side
+    // panel: the flag it checks had already been overwritten.
+    if (urlMode) return
+
     if (debounceTimer) {
       clearTimeout(debounceTimer)
     }

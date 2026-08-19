@@ -38,7 +38,7 @@ import {
 import { getWalletsAsync } from "@/utils/wallets";
 
 const router = useRouter();
-const { isPopup, isSidePanel } = useUiMode();
+const { isPopup } = useUiMode();
 
 /**
  * Open the side panel before unlocking, not after.
@@ -234,7 +234,13 @@ onBeforeUnmount(() => {
       actions. Below the keypad on purpose: it sits apart from "Forgot PIN?",
       which is a rare escape hatch rather than a daily action.
     -->
-    <template v-if="!isSidePanel" #actions>
+    <!--
+      Offered only from the popup, which is the surface it exists to
+      escape. Hiding it merely when isSidePanel was true left it showing
+      on any tall surface the URL had not labelled, and on the side panel
+      itself once a resize had overwritten that label.
+    -->
+    <template v-if="isPopup" #actions>
       <button
         type="button"
         class="sidepanel-link"
