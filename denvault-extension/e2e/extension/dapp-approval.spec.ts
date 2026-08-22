@@ -21,7 +21,7 @@
  */
 
 import type { BrowserContext, Page } from "@playwright/test";
-import { test, expect, openDapp } from "./fixtures";
+import { test, expect, openDapp, pinNetwork, ADDRESS_PREFIX } from "./fixtures";
 import { TEST_PIN, importTestWalletThroughUi } from "../helpers/wallet-setup";
 
 const DAPP_ORIGIN = "https://dapp.test";
@@ -48,6 +48,7 @@ async function setUpWallet(
 ): Promise<void> {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/index.html`);
+  await pinNetwork(page);
   await expect(page.locator('[data-roi="start-hero"]')).toBeVisible({
     timeout: 20000,
   });
@@ -178,7 +179,7 @@ test.describe("dApp approval chain", () => {
       publicKey: string;
     }>;
     const stx = addresses.find((entry) => entry.symbol === "STX");
-    expect(stx?.address).toMatch(/^ST/);
+    expect(stx?.address).toMatch(new RegExp(`^${ADDRESS_PREFIX}`));
     expect(addresses.filter((entry) => entry.symbol === "BTC")).toHaveLength(2);
   });
 
@@ -276,7 +277,7 @@ test.describe("dApp approval chain", () => {
       address: string;
     }>;
     expect(addresses.find((entry) => entry.symbol === "STX")?.address).toMatch(
-      /^ST/
+      new RegExp(`^${ADDRESS_PREFIX}`)
     );
 
     // The panel hands itself back to the wallet instead of closing.

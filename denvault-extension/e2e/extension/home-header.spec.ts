@@ -7,7 +7,7 @@
  * extension e2e runs at 1280px, and no golden covers this screen either.
  */
 
-import { test, expect } from "./fixtures";
+import { test, expect, pinNetwork } from "./fixtures";
 import { importTestWalletThroughUi } from "../helpers/wallet-setup";
 
 /** Chrome's action popup is 400px wide. */
@@ -20,6 +20,7 @@ test("every header control fits inside the popup", async ({
   const page = await context.newPage();
   await page.setViewportSize(POPUP);
   await page.goto(`chrome-extension://${extensionId}/index.html`);
+  await pinNetwork(page);
   await expect(page.locator('[data-roi="start-hero"]')).toBeVisible({
     timeout: 20000,
   });
