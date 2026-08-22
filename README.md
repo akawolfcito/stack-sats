@@ -8,104 +8,98 @@ status: public
 owner: Wolfcito
 pm: pnpm
 repo: https://github.com/akawolfcito/stack-sats
-url: https://github.com/akawolfcito/stack-sats
+url: https://akawolfcito.github.io/stack-sats/
 scripts: [dev, build, test, lint]
 -->
 
 > **DenLabs Lab** · Product · Stacks
-> Secure, open-source, non-custodial Stacks wallet — Chrome extension with production-grade security.
+> Non-custodial Stacks and Bitcoin wallet, shipped as a Chrome Manifest V3 extension.
 
-![DenVault Preview](./preview.png)
+**DenVault** is an open-source, non-custodial wallet for the Stacks blockchain (a Bitcoin
+layer) and for Bitcoin itself. Keys never leave the browser: the recovery phrase is encrypted
+at rest with AES-256-GCM and unlocked with a 6-digit PIN.
 
-**DenVault** is a secure, open-source, non-custodial Stacks wallet for Bitcoin Layer 2. Built as a Chrome extension with production-grade security.
+> Independently developed by DenLabs. Not affiliated with Hiro or the Stacks Foundation.
+> Review the source code before storing significant funds.
 
-> Open-source and independently developed by DenLabs — not affiliated with Hiro or Stacks Foundation. Review the source code before storing significant funds.
+- Project site: https://akawolfcito.github.io/stack-sats/
+- Privacy policy: https://akawolfcito.github.io/stack-sats/privacy.html
+- Support: https://akawolfcito.github.io/stack-sats/support.html
 
-## Features
+## Status
 
-### Security
-- **AES-256-GCM Encryption** - Mnemonic encrypted at rest with PBKDF2 key derivation (600k iterations, OWASP 2023)
-- **6-digit PIN Protection** - Escalating lockout (30s → 2m → 10m → 1h)
-- **Auto-lock** - Session expires after 5 minutes of inactivity
-- **Memory Cleanup** - Private keys cleared immediately after signing
-- **Content Security Policy** - Strict CSP in manifest
+| | |
+|---|---|
+| Extension version | 1.1.3 (`denvault-extension/public/manifest.json`) |
+| Distribution | **Not yet listed on the Chrome Web Store.** Install by loading the built `dist/` unpacked. |
+| Networks | Mainnet (default) and Testnet |
+| Unit tests | 1144 tests across 60 files, all passing |
+| E2E tests | 14 Playwright specs, 3 projects (popup, extension, side panel) |
+| Public site | GitHub Pages, served from `main:/docs` |
+
+The wallet is functional on Stacks mainnet and is under active development. It has not been
+through an external security audit.
+
+## What it does
 
 ### Wallet
-- **Multi-wallet Support** - Manage multiple wallets with custom names
-- **Dynamic Accounts** - Add/remove derived accounts per wallet
-- **Network Switching** - Mainnet, Testnet, and Devnet support
-- **Real-time Balance** - STX balance with manual refresh
-- **SIP-010 Tokens** - Display fungible tokens
-- **Transaction History** - Recent activity from Hiro API
-- **QR Codes** - For receiving STX, BTC, and Taproot addresses
-- **Encrypted Backup** - Export/import wallet with PIN verification
+- Create a wallet or import an existing BIP39 recovery phrase
+- Multiple wallets, each with custom naming, plus add/remove of derived accounts
+- Reveal the recovery phrase behind PIN verification
+- Encrypted backup export and restore, gated by PIN
+- Popup mode and Chrome side panel mode
 
-### Addresses
+### Assets
+- STX balance, with fiat price display
+- Send STX
+- Send Bitcoin, including from Taproot addresses
+- SIP-010 fungible tokens: discover, add custom tokens, manage the list, and send
+- Transaction history and per-asset activity, sourced from the Hiro API
+- QR codes for receiving on Stacks, Bitcoin P2PKH and Bitcoin Taproot
+
+### Addresses derived per account
+
 | Type | Format |
 |------|--------|
-| Stacks | SP... (mainnet) / ST... (testnet) |
-| Bitcoin P2PKH | Legacy format |
+| Stacks | `SP...` (mainnet) / `ST...` (testnet) |
+| Bitcoin P2PKH | Legacy |
 | Bitcoin P2TR | Taproot (Ordinals compatible) |
 
-### RPC Methods
-| Method | Description |
-|--------|-------------|
-| `getAddresses` | Get wallet addresses + network info |
-| `stx_signMessage` | Sign a message |
-| `stx_callContract` | Call a smart contract |
-| `stx_transferStx` | Transfer STX tokens |
+### dApp connectivity
 
-## Project Structure
+Web pages get `window.StacksWallet` (injected by `injection.js`) and speak JSON-RPC 2.0
+following @stacks/connect v8 and WBIP conventions. Implemented methods:
+
+| Method | Description | User approval |
+|--------|-------------|---------------|
+| `getAddresses` / `stx_getAddresses` | Return wallet addresses plus network info | Yes, first time per origin |
+| `stx_getAccounts` | Return connected accounts | Yes, first time per origin |
+| `stx_signMessage` | Sign a message | Yes, every time |
+| `stx_callContract` | Call a Clarity contract | Yes, every time |
+| `stx_transferStx` | Transfer STX | Yes, every time |
+
+Any method outside this list is rejected. Approvals are scoped per origin and are cleared
+when the network changes.
+
+## Repository layout
 
 ```
 stack-sats/
-├── den-vault/          # Chrome extension (Manifest V3)
-├── front-end/          # Test dApp (Vue/Vite)
-└── clarity/            # Smart contracts (Clarinet)
+├── denvault-extension/   # The Chrome extension (Manifest V3, Vue 3 + Vite)
+│   ├── public/           # manifest.json, background.js, content.js, injection.js
+│   ├── src/              # popup and side panel UI, wallet logic, security utils
+│   ├── e2e/              # Playwright specs
+│   └── scripts/          # build verification, packaging, UI audits
+├── docs/                 # Public GitHub Pages site (index, privacy, support)
+└── .github/workflows/    # CI
 ```
 
-## Quick Start
-
-### Installation
-
-```bash
-# Install dependencies
-pnpm install
-
-# Build wallet extension
-pnpm build
-
-# Start test dApp
-pnpm dev:frontend
-```
-
-### Load Extension in Chrome
-
-1. Go to `chrome://extensions/`
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select the `den-vault/dist` folder
-
-### Development Commands
-
-```bash
-# From root
-pnpm build           # Build wallet extension
-pnpm dev             # Dev server for extension
-pnpm dev:frontend    # Dev server for test dApp (localhost:5173)
-pnpm test            # Run Clarity contract tests
-pnpm test            # Run wallet unit tests (415 tests)
-
-# From den-vault/
-pnpm build           # Production build
-pnpm dev             # Dev with hot reload
-pnpm lint            # ESLint
-pnpm type-check      # TypeScript check
-```
+The pnpm workspace contains a single package, `denvault-extension` (package name
+`wallet-extension`). Root scripts proxy into it.
 
 ## Architecture
 
-### Message Flow
+### Message flow, page to wallet
 
 ```mermaid
 sequenceDiagram
@@ -113,61 +107,122 @@ sequenceDiagram
   participant c as content.js
   participant b as background.js
   participant p as Extension Popup
-  w->>+c: StacksWallet.request
+  w->>+c: window.StacksWallet.request(...)
   c->>b: chrome.runtime.sendMessage
-  b->>+p: chrome.windows.create
+  b->>+p: chrome.windows.create (approval UI)
   p->>-c: chrome.tabs.sendMessage
   c->>-w: window.postMessage
 ```
 
-### Security Flow
+### Key lifecycle
 
 ```
-Create Wallet → PIN → PBKDF2 → AES-Encrypt → chrome.storage.local
-Unlock → PIN → PBKDF2 → AES-Decrypt → mnemonic in memory → Auto-lock 5min
-Sign → Derive key → Sign transaction → Clear key from memory
+Create/import → 6-digit PIN → PBKDF2(600k) → AES-256-GCM encrypt → chrome.storage.local
+Unlock        → PIN → PBKDF2 → AES-256-GCM decrypt → mnemonic held in memory → auto-lock timer
+Sign          → derive private key on demand → sign → wipe the key from memory
+```
+
+## Getting started
+
+Requires Node 22+ and pnpm.
+
+```bash
+pnpm install
+pnpm build          # type-check + production build into denvault-extension/dist/
+```
+
+Then load it in Chrome:
+
+1. Open `chrome://extensions/`
+2. Enable **Developer mode**
+3. Click **Load unpacked**
+4. Select `denvault-extension/dist`
+
+### Development
+
+```bash
+pnpm dev            # Vite dev server with hot reload
+pnpm test           # Unit tests (vitest)
+pnpm lint           # ESLint with auto-fix
+pnpm type-check     # vue-tsc
+```
+
+From inside `denvault-extension/` there is more:
+
+```bash
+pnpm test:coverage        # Coverage (gates: branches 80, functions 90, lines 85)
+pnpm test:e2e             # Playwright
+pnpm test:e2e:extension   # Build, then run the packaged-extension project
+pnpm verify               # lint + type-check + build + UI contract check
+pnpm verify:production    # Full pre-release verification
+pnpm release:zip          # Package dist/ for the Chrome Web Store
+pnpm ui:shots / ui:verify # Golden screenshot matrix and comparison
 ```
 
 ## Configuration
 
-### Environment Variables
+The extension needs **no environment variables** to run against Mainnet or Testnet. It talks
+to the public Hiro APIs, which are the only hosts it is permitted to reach:
 
-Create `front-end/.env` from `.env.example`:
-
-```bash
-VITE_STACKS_NETWORK=platformdevnet
-VITE_PLATFORM_HIRO_API_KEY=<your-api-key>
+```json
+"host_permissions": ["https://api.hiro.so/*", "https://api.testnet.hiro.so/*"]
 ```
 
-Get your API key from [Hiro Platform](https://platform.hiro.so/settings/api-keys).
+| Network | Chain ID | API | Selectable in UI |
+|---------|----------|-----|------------------|
+| Mainnet | 1 | `api.hiro.so` | Yes (default) |
+| Testnet | 2147483648 | `api.testnet.hiro.so` | Yes |
 
-### Network Support
+`VITE_PLATFORM_HIRO_API_KEY` is read at build time only. It was used by an earlier
+Platform devnet path that is no longer offered in the network picker, because a published
+build cannot reach a local devnet node. A previously stored `devnet` selection now resolves
+to Testnet.
 
-| Network | Chain ID | API |
-|---------|----------|-----|
-| Mainnet | 1 | api.hiro.so |
-| Testnet | 2147483648 | api.testnet.hiro.so |
-| Devnet | 2147483648 | Platform Hiro (API key) |
+## Security
 
-## Smart Contract
+| Concern | Implementation |
+|---|---|
+| Encryption at rest | AES-256-GCM |
+| Key derivation | PBKDF2-SHA256, 600,000 iterations (OWASP 2023 guidance) |
+| Authentication | 6-digit PIN. After 3 failed attempts an escalating lockout applies: 30s, then 2m, then 10m, then 1h |
+| Auto-lock | Session expires after 5 minutes of inactivity |
+| Memory | Private keys wiped immediately after signing |
+| CSP | `script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'` |
+| Network reach | Restricted to the two Hiro hosts above |
+| dApp permissions | Per-origin approval, revoked on network change; unknown RPC methods rejected |
 
-The included `counter.clar` contract is for testing:
+### Assumptions and limitations
 
-- `increment` - Increment counter variable
-- `get-count` - Read current count
+- Security rests on the PIN. A weak PIN plus local disk access weakens the encrypted vault.
+- The wallet trusts the Hiro API for balances, token metadata and history. It does not run
+  its own node and does not independently verify that data.
+- No hardware wallet support.
+- No external security audit has been performed.
+- Content scripts run on `https://*/*` only, not on `http://`.
+- Chromium browsers only. There is no Firefox build.
+
+### Telemetry
+
+DenVault emits DenSignal v0.1 operational events. They are written **locally** to
+`chrome.storage.local` under the key `denlabs_densignals_v01` and are never sent anywhere:
+there is no network call in the emission path. Set `localStorage.denlabs_manual_only = '1'`
+to disable automatic emission. See `denvault-extension/PRIVACY.md`.
+
+Report vulnerabilities privately as described in [SECURITY.md](./SECURITY.md). Please do not
+open a public issue for them.
 
 ## Standards
 
 - [WBIP](https://wbips.netlify.app/) - Wallet Best Practices
 - [SIP-030](https://github.com/stacksgov/sips) - Stacks wallet integration
+- [SIP-010](https://github.com/stacksgov/sips) - Fungible token standard
 - [@stacks/connect v8](https://docs.hiro.so/stacks/connect) - Connection protocol
 
-## Links
+## Contributing
 
-- [Privacy Policy](https://akawolfcito.github.io/stack-sats/privacy.html)
-- [Support](https://akawolfcito.github.io/stack-sats/support.html)
-- [Hiro Documentation](https://docs.hiro.so)
+See [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 ## License
 
-Apache-2.0
+Apache-2.0. See [LICENSE](./LICENSE), [NOTICE](./NOTICE) and
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for third-party attributions.

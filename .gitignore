@@ -45,6 +45,11 @@ PROGRESS.md
 internal-docs/
 mocks/
 
+# Local working notes (never published)
+private/
+/SESSION.md
+/SESSION-*.md
+
 # Ralph Agent (internal docs - do not commit)
 .agent-template/
 AGENTS.md
