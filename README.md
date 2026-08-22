@@ -33,7 +33,7 @@ at rest with AES-256-GCM and unlocked with a 6-digit PIN.
 | Extension version | 1.1.3 (`denvault-extension/public/manifest.json`) |
 | Distribution | **Not yet listed on the Chrome Web Store.** Install by loading the built `dist/` unpacked. |
 | Networks | Mainnet (default) and Testnet |
-| Unit tests | 1268 tests across 81 files, all passing |
+| Unit tests | 1144 tests across 60 files, all passing |
 | E2E tests | 14 Playwright specs, 3 projects (popup, extension, side panel) |
 | Public site | GitHub Pages, served from `main:/docs` |
 

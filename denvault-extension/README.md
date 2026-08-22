@@ -36,7 +36,7 @@ Then load in Chrome:
 
 ```bash
 pnpm dev          # Dev server with hot-reload
-pnpm test         # Unit tests (vitest, 1268 tests)
+pnpm test         # Unit tests (vitest, 1144 tests)
 pnpm test:e2e     # E2E tests (Playwright)
 pnpm type-check   # TypeScript checking
 pnpm lint         # ESLint with auto-fix
