@@ -903,6 +903,13 @@ function cancelImport() {
 }
 
 .erase-ack input {
+  /* Explicit, so the box does not depend on whatever the global input
+     rule happens to say next. `input:focus` still paints a background on
+     a native checkbox, which the accent-color here overrides. */
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--color-error);
   margin-top: 0.2em;
   flex-shrink: 0;
 }

@@ -137,7 +137,19 @@ button {
 }
 
 /* Global Input Styles */
-input {
+
+/*
+ * Text-shaped inputs only.
+ *
+ * A bare `input` selector also caught checkbox and radio, handing them
+ * `width: 100%` and a 40-52px height. The two toggles in the app hide
+ * their input with `width: 0`, so it never showed; the acknowledgement
+ * box on the erase screen is the one native checkbox that renders, and
+ * it came out as a full-width white slab that pushed its own label into
+ * a one-word column and gave the screen a horizontal scrollbar. It was
+ * the only screen with no golden covering it.
+ */
+input:not([type="checkbox"]):not([type="radio"]) {
   font-family: var(--font-family);
   width: 100%;
   height: var(--control-h);
