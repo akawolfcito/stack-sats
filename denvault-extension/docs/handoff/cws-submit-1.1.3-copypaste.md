@@ -85,7 +85,13 @@ Security:
 Open source: https://github.com/akawolfcito/stack-sats
 ```
 
-**Category**: el dashboard tiene **Developer Tools**. Para una wallet de usuario final, **Productivity** te da mejor alcance. Ninguna de las dos es una violación; decídelo tú.
+**Category**: el dashboard tiene **Developer Tools**.
+
+Ojo, porque la edición anterior de esta guía se equivocaba: **"Productivity" no es seleccionable**, es un encabezado de grupo. El desplegable ofrece, dentro de PRODUCTIVITY, `Communication`, `Developer Tools`, `Education`, `Tools` y `Workflow & Planning`; y dentro de MAKE CHROME YOURS, `Accessibility`, `Functionality & UI` y `Privacy & Security`.
+
+Recomendado: **`Privacy & Security`**. El Single purpose declara custodia de claves propias y la Description vende cifrado, PIN y bloqueo automático. Bajo *Developer Tools* el formulario cuenta dos historias distintas, y este es el envío que sigue a un rechazo. *Developer Tools* además describe mal al usuario: DenVault es para quien guarda STX y BTC, no para quien construye sobre Stacks. `Tools` es el comodín si se prefiere algo neutro.
+
+Ninguna de las tres es una violación de política. El riesgo de elegir mal es de alcance, no de rechazo.
 
 **Language**: `English (United States)`. Ya está puesto.
 
@@ -256,7 +262,7 @@ expires. No wallet reset is required.
 - [x] ~~Revisar el manifest de la versión rechazada~~. Resuelto en el Paso 0. No apelar.
 - [ ] **Package**: subir `denvault-v1.1.4.zip`
 - [ ] **Store listing**: pegar la Description
-- [ ] **Store listing**: decidir categoría (Developer Tools vs Productivity)
+- [ ] **Store listing**: categoría a `Privacy & Security` (recomendada; "Productivity" no es seleccionable)
 - [ ] **Store listing**: borrar las 2 screenshots viejas y subir las 5 nuevas
 - [ ] **Store listing**: subir Small promo tile y Marquee
 - [ ] **Store listing**: Homepage y Support URL al host `akawolfcito`
