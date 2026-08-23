@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 const props = defineProps<{
   label: string;
@@ -12,6 +12,17 @@ const props = defineProps<{
 const emit = defineEmits<{
   showQr: [address: string, label: string];
 }>();
+
+/*
+ * Legacy and Taproot are both Bitcoin. Giving them badges of different
+ * colours invented a third asset that is not on any chain, and someone
+ * reading by colour could believe they were separate things.
+ *
+ * The badge says which coin. The text beside it already says which address
+ * format, which is where that belongs.
+ */
+const assetChain = computed(() => (props.assetTag === "STX" ? "stx" : "btc"));
+const assetInitial = computed(() => (props.assetTag === "STX" ? "S" : "B"));
 
 const copied = ref(false);
 
@@ -41,8 +52,8 @@ function handleShowQr() {
   <div class="address-card">
     <div class="card-header">
       <!-- Asset Icon -->
-      <div class="asset-icon" :class="assetTag.toLowerCase()">
-        {{ assetTag }}
+      <div class="asset-icon" :class="assetChain">
+        {{ assetInitial }}
       </div>
 
       <!-- Info -->
@@ -145,11 +156,13 @@ function handleShowQr() {
 .asset-icon {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  /* The rounded square is the shape the Assets list already established.
+     Two shapes for one concept means learning it twice. */
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   flex-shrink: 0;
 }
@@ -166,11 +179,6 @@ function handleShowQr() {
   border: 1px solid rgba(247, 147, 26, 0.3);
 }
 
-.asset-icon.p2tr {
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(244, 114, 182, 0.2));
-  color: #ec4899;
-  border: 1px solid rgba(236, 72, 153, 0.3);
-}
 
 .card-info {
   display: flex;

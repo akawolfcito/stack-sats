@@ -12,20 +12,20 @@ const statusConfig = computed(() => {
   switch (props.status) {
     case "success":
       return {
-        icon: "✓",
+        icon: "success" as const,
         label: "Confirmed",
         class: "status-success",
       };
     case "pending":
       return {
-        icon: "…",
+        icon: "pending" as const,
         label: "Pending",
         class: "status-pending",
       };
     case "failed":
     default:
       return {
-        icon: "✕",
+        icon: "failed" as const,
         label: "Failed",
         class: "status-failed",
       };
@@ -35,7 +35,29 @@ const statusConfig = computed(() => {
 
 <template>
   <span class="tx-status-badge" :class="[statusConfig.class, { compact }]">
-    <span class="status-icon">{{ statusConfig.icon }}</span>
+    <span class="status-icon" aria-hidden="true">
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline v-if="statusConfig.icon === 'success'" points="20 6 9 17 4 12" />
+        <template v-else-if="statusConfig.icon === 'failed'">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </template>
+        <template v-else>
+          <circle cx="5" cy="12" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="19" cy="12" r="1.5" />
+        </template>
+      </svg>
+    </span>
     <span v-if="!compact" class="status-label">{{ statusConfig.label }}</span>
   </span>
 </template>

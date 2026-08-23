@@ -149,7 +149,27 @@ async function scrollToBottom(page: Page) {
     const scrollable = Array.from(document.querySelectorAll<HTMLElement>("*")).find(
       (el) => el.scrollHeight > el.clientHeight + 8 && el.clientHeight > 200
     );
-    (scrollable ?? document.scrollingElement)?.scrollTo({ top: 1e6, behavior: "instant" });
+    const target = scrollable ?? document.scrollingElement;
+    target?.scrollTo({ top: 1e6, behavior: "instant" });
+
+    /*
+     * Snap the cut to a row edge.
+     *
+     * Settings is taller than the card, so something has to be cut. Landing
+     * mid row reads as an accident rather than as a frame, and this is a
+     * store asset. Scrolling back up by the sliver of the straddling row
+     * puts the cut on its top edge instead.
+     */
+    if (!scrollable) return;
+    const edge = scrollable.getBoundingClientRect().top;
+    const straddling = Array.from(scrollable.querySelectorAll<HTMLElement>("*"))
+      .map((el) => ({ el, rect: el.getBoundingClientRect() }))
+      .filter(({ rect }) => rect.height > 32 && rect.top < edge - 1 && rect.bottom > edge + 1)
+      .sort((a, b) => a.rect.height - b.rect.height)[0];
+
+    if (straddling) {
+      scrollable.scrollBy({ top: straddling.rect.top - edge, behavior: "instant" });
+    }
   });
   await page.waitForTimeout(300);
 }

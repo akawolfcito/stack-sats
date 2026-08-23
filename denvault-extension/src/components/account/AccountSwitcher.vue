@@ -131,7 +131,7 @@ defineExpose({ open, close, toggle })
             </template>
             <!-- V56.2: Trailing checkmark for active account (like NetworkChip) -->
             <template v-if="isActive(account)" #right>
-              <span class="account-check">&#10003;</span>
+              <span class="account-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
             </template>
           </ListRow>
         </ListGroup>

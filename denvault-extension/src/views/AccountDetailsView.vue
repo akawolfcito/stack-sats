@@ -140,9 +140,6 @@ function handleViewSecretPhrase() {
   });
 }
 
-function handleClose() {
-  router.push({ path: "/user" });
-}
 </script>
 
 <template>
@@ -185,7 +182,7 @@ function handleClose() {
               @blur="saveName"
               @keydown.enter="($event.target as HTMLInputElement).blur()"
             />
-            <span class="edit-icon">&#9998;</span>
+            <span class="edit-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
           </div>
           <p class="address-preview">{{ truncateAddress(account.stxAddress, 4) }}</p>
         </div>
@@ -245,7 +242,7 @@ function handleClose() {
           <!-- View Secret Phrase -->
           <button class="action-row" @click="handleViewSecretPhrase">
             <div class="action-icon phrase-icon">
-              <span>&#128274;</span>
+              <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
             </div>
             <div class="action-content">
               <p class="action-title">View Secret Phrase</p>
@@ -263,8 +260,8 @@ function handleClose() {
           <div class="preference-row">
             <div class="preference-info">
               <div class="preference-icon">
-                <span v-if="isHidden">&#128065;</span>
-                <span v-else>&#128064;</span>
+                <span v-if="isHidden"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M1 1l22 22"/></svg></span>
+                <span v-else><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>
               </div>
               <div class="preference-content">
                 <p class="preference-title">Hide Account</p>
@@ -283,10 +280,6 @@ function handleClose() {
         </div>
       </div>
 
-      <!-- Close Button -->
-      <button class="close-btn" @click="handleClose">
-        Close
-      </button>
     </main>
 
     <!-- QR Modal -->
