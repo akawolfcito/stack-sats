@@ -179,21 +179,16 @@ Reading happens only inside those four screens, in direct response to the user p
 
 **Host permission justification**
 
-> **Lo que hay puesto en el dashboard a 2026-08-23 es incorrecto y hay que reemplazarlo entero.** Dice que el broadcasting usa `api.platform.hiro.so`, y **omite `blockstream.info` y `mempool.space`, que el build empaquetado sí contacta** (`dist/assets/balance-*.js`). Un host contactado y no declarado es justo el tipo de omisión que provoca una segunda ronda. El texto de abajo declara los cuatro.
+> **Lo que hay puesto en el dashboard a 2026-08-23 es incorrecto y hay que reemplazarlo entero.** Dice que el broadcasting usa `api.platform.hiro.so`, y **omite `blockstream.info` y `mempool.space`, que el build empaquetado sí contacta** (`dist/assets/balance-*.js`). Un host contactado y no declarado es justo el tipo de omisión que provoca una segunda ronda. El texto de abajo declara los cuatro y **cabe en el limite de 1.000 caracteres** (995): la version larga se truncaba a mitad de palabra y perdia justo la frase que dice que el content script no lee la pagina.
 
 ```
-Host permissions are limited to the two public Stacks blockchain API endpoints:
+Host permissions cover the two public Stacks API endpoints: https://api.hiro.so/* for mainnet and https://api.testnet.hiro.so/* for testnet, used for balance and token queries, transaction history, and broadcasting signed transactions.
 
-- https://api.hiro.so/* for mainnet: balance and token queries, transaction history, broadcasting signed transactions
-- https://api.testnet.hiro.so/* for the same queries on testnet
+The wallet also holds Bitcoin, reading balances, UTXOs and fee estimates from blockstream.info, falling back to mempool.space. Those are CORS requests needing no host permission; they are declared here because the extension does contact them.
 
-The wallet also holds Bitcoin, and reads Bitcoin balances, UTXOs and fee estimates from a public block explorer API, blockstream.info, falling back to mempool.space when it cannot be reached. Those are CORS requests and need no host permission, which is why they are not in the list above; they are declared here because the extension does contact them.
+The manifest also declares a content script matching https://*/*. Stacks dApps are hosted on many independent domains, so a fixed allowlist would break wallet discovery. That content script does not read or modify page content: it only relays standard WBIP/SIP-030 wallet RPC messages, and every request that signs or moves funds is approved by the user inside the extension.
 
-Every one of these calls carries only public blockchain addresses and signed transactions. No personal data, no recovery phrase and no private key is ever sent.
-
-The manifest also declares a content script matching https://*/*. This is what the wallet needs to be discoverable by Stacks dApps, which are hosted on many independent domains, so a fixed allowlist would break the feature. That content script does not read or modify page content: it relays standard WBIP/SIP-030 wallet RPC messages between the page and the extension, and every request that can move funds or sign anything is shown to the user for explicit approval inside the extension.
-
-For completeness, the bundle also contains a code path for api.platform.hiro.so, used only when the wallet is pointed at a local devnet and only when a developer supplies their own Hiro Platform API key at build time. The published package ships no such key, so that path falls back to the public testnet endpoint and the host is never contacted by this build.
+All calls carry only public blockchain addresses and signed transactions. No personal data, recovery phrase or private key is ever sent.
 ```
 
 **Remote code**: "No, I am not using remote code".
