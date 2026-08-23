@@ -179,6 +179,8 @@ Reading happens only inside those four screens, in direct response to the user p
 
 **Host permission justification**
 
+> **Lo que hay puesto en el dashboard a 2026-08-23 es incorrecto y hay que reemplazarlo entero.** Dice que el broadcasting usa `api.platform.hiro.so`, y **omite `blockstream.info` y `mempool.space`, que el build empaquetado sí contacta** (`dist/assets/balance-*.js`). Un host contactado y no declarado es justo el tipo de omisión que provoca una segunda ronda. El texto de abajo declara los cuatro.
+
 ```
 Host permissions are limited to the two public Stacks blockchain API endpoints:
 
@@ -189,7 +191,9 @@ The wallet also holds Bitcoin, and reads Bitcoin balances, UTXOs and fee estimat
 
 Every one of these calls carries only public blockchain addresses and signed transactions. No personal data, no recovery phrase and no private key is ever sent.
 
-dApp connectivity does not use host permissions either. A declared content script relays standard WBIP/SIP-030 wallet RPC messages between the page and the extension; it does not read or modify page content.
+The manifest also declares a content script matching https://*/*. This is what the wallet needs to be discoverable by Stacks dApps, which are hosted on many independent domains, so a fixed allowlist would break the feature. That content script does not read or modify page content: it relays standard WBIP/SIP-030 wallet RPC messages between the page and the extension, and every request that can move funds or sign anything is shown to the user for explicit approval inside the extension.
+
+For completeness, the bundle also contains a code path for api.platform.hiro.so, used only when the wallet is pointed at a local devnet and only when a developer supplies their own Hiro Platform API key at build time. The published package ships no such key, so that path falls back to the public testnet endpoint and the host is never contacted by this build.
 ```
 
 **Remote code**: "No, I am not using remote code".
@@ -198,7 +202,9 @@ dApp connectivity does not use host permissions either. A declared content scrip
 No. The extension executes no remote code. All scripts are bundled in the package, and the content security policy is script-src 'self' 'wasm-unsafe-eval'.
 ```
 
-**Data usage**: no marques **nada**. La respuesta honesta es que no se recoge ningún dato:
+**Data usage**: no marques **nada**, y **desmarca lo que ya está marcado**.
+
+> A 2026-08-23 el dashboard tiene marcadas **Financial and payment information** y **Authentication information**. Hay que quitarlas. El formulario pregunta qué datos **recoges**, y recoger significa sacarlos del dispositivo. DenVault no saca ninguno: la frase se cifra con AES-256-GCM y no se transmite jamás, y el PIN no se almacena, solo deriva la clave y se descarta. Marcar esas casillas te obliga además a sostener en la política de privacidad una recogida que no ocurre, y le dice al revisor que una wallet no custodial manda credenciales a algún sitio. Lo que sí sale del dispositivo son transacciones firmadas hacia nodos públicos, que son datos públicos de la cadena por diseño y no van a ningún servidor tuyo.
 
 
 | Tipo de dato                        | ¿Marcar? | Por qué                                                                       |
