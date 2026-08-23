@@ -223,6 +223,11 @@
           <td>Broadcast transactions</td>
           <td>Signed transaction data</td>
         </tr>
+        <tr>
+          <td>blockstream.info, falling back to mempool.space</td>
+          <td>Fetch Bitcoin balances, UTXOs and fee estimates</td>
+          <td>Wallet addresses only (public)</td>
+        </tr>
       </tbody>
     </table>
 
@@ -243,23 +248,28 @@
           <td>Store encrypted wallet data locally</td>
         </tr>
         <tr>
-          <td>tabs</td>
-          <td>Route responses to requesting tabs</td>
-        </tr>
-        <tr>
           <td>sidePanel</td>
           <td>Provide persistent wallet view option</td>
+        </tr>
+        <tr>
+          <td>clipboardRead</td>
+          <td>Paste a recipient address, a token contract identifier or a recovery phrase, only when you press Paste</td>
         </tr>
       </tbody>
     </table>
 
     <h2>Host Permissions</h2>
-    <p>The extension communicates only with official Stacks blockchain API endpoints:</p>
+    <p>The extension declares host permissions for the official Stacks blockchain API endpoints:</p>
     <ul>
       <li><strong>api.hiro.so</strong> - Stacks mainnet blockchain API (balance queries, transaction broadcasts)</li>
       <li><strong>api.testnet.hiro.so</strong> - Stacks testnet blockchain API (for developers)</li>
-      <li><strong>api.platform.hiro.so</strong> - Hiro Platform API (enhanced queries)</li>
     </ul>
+    <p>The wallet also holds Bitcoin, and reads Bitcoin balances, UTXOs and fee estimates from a public block explorer API. These are CORS requests, so they need no host permission, but the extension does contact them and they are listed here for that reason:</p>
+    <ul>
+      <li><strong>blockstream.info</strong> - Bitcoin balances, UTXOs and fee estimates</li>
+      <li><strong>mempool.space</strong> - the same queries, used only when blockstream.info cannot be reached</li>
+    </ul>
+    <p>Every one of these requests carries only public blockchain addresses and signed transactions. No personal data, no recovery phrase and no private key is ever sent.</p>
     <p>dApp connectivity is handled via content scripts that inject a minimal relay for standard WBIP wallet communication. The content script does NOT access or modify page content.</p>
 
     <div class="highlight-box">
