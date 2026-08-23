@@ -223,7 +223,11 @@ No. The extension executes no remote code. All scripts are bundled in the packag
 
 ## 4 · Distribution
 
-Sin cambios. Visibilidad pública, todas las regiones.
+**Ojo, la edición anterior de esta guía afirmaba algo falso.** Decía "sin cambios, visibilidad pública". El dashboard tiene **`Unlisted`** seleccionado.
+
+- [ ] **Visibility: `Unlisted` → `Public`.** Con `Unlisted` el item no sale en el catálogo ni en las búsquedas de la tienda: solo entra quien tenga el enlace directo. Las capturas, la descripción y la categoría dejan de tener publico al que llegar. No es una violación de politica, es peor: es publicar sin que nadie lo vea.
+- **Payments**: `Free of charge`. Correcto, la wallet no cobra nada ni tiene compras dentro.
+- **Distribution**: `All regions` marcado. Correcto.
 
 ---
 
@@ -272,6 +276,7 @@ expires. No wallet reset is required.
 - [ ] **Privacy**: Remote code = No
 - [ ] **Privacy**: Data usage sin marcar nada + las 3 certificaciones
 - [ ] **Test instructions**: pegar el bloque
+- [ ] **Distribution**: visibilidad a `Public`
 - [ ] **Submit for review**
 
 
