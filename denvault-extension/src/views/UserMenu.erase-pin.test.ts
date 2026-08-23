@@ -15,9 +15,17 @@ vi.stubGlobal("__APP_VERSION__", "1.1.3");
  * was unfinishable.
  */
 
+// The mock has to cover every export the view imports, not just the ones a
+// test drives. onMounted calls getActiveWalletIdAsync, so leaving it out threw
+// an unhandled rejection after each test had already passed: green tests, red
+// exit code.
 vi.mock("@/utils/wallets", () => ({
   getWalletsAsync: vi.fn().mockResolvedValue([{ id: "w1", name: "Wallet 1" }]),
   getWalletCountAsync: vi.fn().mockResolvedValue(1),
+  getActiveWalletIdAsync: vi.fn().mockResolvedValue("w1"),
+  getActiveWalletAsync: vi.fn().mockResolvedValue({ id: "w1", name: "Wallet 1" }),
+  importWalletAsync: vi.fn().mockResolvedValue(undefined),
+  walletExistsAsync: vi.fn().mockResolvedValue(false),
 }));
 vi.mock("@/utils/security/logger", () => ({ secureLog: vi.fn() }));
 
