@@ -28,6 +28,7 @@ import { useRouter, useRoute } from "vue-router";
 import PinScreenShell from "@/components/pin/PinScreenShell.vue";
 import PinInput from "@/components/PinInput.vue";
 import { sessionManager } from "@/utils/security/session";
+import { grantReveal } from "@/utils/recovery/grant";
 import { secureLog } from "@/utils/security/logger";
 
 const router = useRouter();
@@ -52,6 +53,10 @@ const headlines: Record<string, { title: string; subtitle: string }> = {
     title: "Verify PIN",
     subtitle: "Enter your PIN to delete wallet",
   },
+  reveal: {
+    title: "Verify PIN",
+    subtitle: "Enter your PIN to show your recovery phrase",
+  },
   verify: {
     title: "Verify PIN",
     subtitle: "Enter your PIN to continue",
@@ -69,6 +74,12 @@ const handleVerify = async (pin: string) => {
 
     if (mnemonic) {
       secureLog("PIN verified for action", { action: action.value });
+
+      // The reveal screen refuses to show anything without this, so that an
+      // already unlocked wallet, or a typed route, is not a way to the seed.
+      if (action.value === "reveal") {
+        grantReveal();
+      }
 
       // Navigate back with success flag
       router.push({

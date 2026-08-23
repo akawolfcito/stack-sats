@@ -1,3 +1,4 @@
+import { readBroadcast } from "@/utils/stxmethods/broadcast";
 /**
  * SIP-010 Token Transfer Module
  * Handles building, signing, and broadcasting SIP-010 token transfers
@@ -137,11 +138,22 @@ export async function transferToken(params: TokenTransferParams): Promise<TokenT
       network: networkConfig,
     });
 
-    secureLog("SIP-010 transfer successful", { txid: result.txid });
+    // A refused broadcast is returned, not thrown. Without this the send
+    // screen reported success with an undefined txid.
+    const outcome = readBroadcast(result);
+    if (!outcome.ok) {
+      secureLog("Transfer refused by the node", { reason: outcome.reason });
+      return {
+        success: false,
+        error: outcome.detail,
+      };
+    }
+
+    secureLog("SIP-010 transfer successful", { txid: outcome.txid });
 
     return {
       success: true,
-      txid: result.txid,
+      txid: outcome.txid,
     };
   } catch (error) {
     const rawError = error instanceof Error ? error.message : String(error);

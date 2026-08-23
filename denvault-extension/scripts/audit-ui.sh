@@ -165,7 +165,6 @@ HARDCODE_ALLOWLIST=(
   "src/views/SendTokenView.vue"
   "src/views/UnlockView.vue"
   "src/views/UserMenu.vue"
-  "src/views/SwapView.vue"
   "src/views/AccountDetailsView.vue"
   "src/views/StartView.vue"
   "src/views/ManageTokensView.vue"

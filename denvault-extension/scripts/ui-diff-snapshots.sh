@@ -35,8 +35,17 @@ ROI_CURRENT_DIR="$CURRENT_DIR/roi"
 ROI_GOLDEN_DIR="$GOLDEN_DIR/roi"
 ROI_DIFF_DIR="$DIFF_DIR/roi"
 
-# Expected count per UI_CONTRACT
-EXPECTED_COUNT=24
+# How many screenshots the matrix should produce.
+#
+# This was hardcoded to 24, the figure from V38 when the matrix had six
+# states. It has had eight since, so the count check refused every run and
+# `pnpm ui:diff` has not compared an image in a long time: the tool meant to
+# catch visual regressions was failing before it looked at one.
+#
+# Derived from the golden set instead, so adding a state to the matrix no
+# longer silently disables the comparison. The point of the check is that
+# current and golden hold the same screenshots, which is asserted below.
+EXPECTED_COUNT=$(ls -1 "$ARTIFACTS_DIR/golden"/*.png 2>/dev/null | wc -l | tr -d ' ')
 
 # Default threshold (percentage difference to fail)
 THRESHOLD=5
@@ -102,8 +111,8 @@ echo ""
 
 # V38: Strict count validation
 COUNT_OK=true
-if [ "$GOLDEN_COUNT" -ne "$EXPECTED_COUNT" ]; then
-  echo -e "${RED}ERROR: Golden count mismatch ($GOLDEN_COUNT != $EXPECTED_COUNT)${NC}"
+if [ "$GOLDEN_COUNT" -eq 0 ]; then
+  echo -e "${RED}ERROR: No golden screenshots. Run pnpm ui:shots first.${NC}"
   COUNT_OK=false
 fi
 

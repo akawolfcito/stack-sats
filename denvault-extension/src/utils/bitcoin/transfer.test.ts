@@ -84,6 +84,7 @@ import {
   type FeeEstimate,
   feeEstimateFromEsplora,
 } from './transfer';
+import type { BtcAddressType } from './validation';
 
 // --- Test data ---
 
@@ -211,6 +212,43 @@ describe('Bitcoin transfer utilities', () => {
     it('should use p2pkh size for unknown type', () => {
       expect(estimateTxSize(1, 2, 'unknown')).toBe(estimateTxSize(1, 2, 'p2pkh'));
     });
+
+    /**
+     * Both figures below are measured, not derived: they are the two Taproot
+     * testnet transactions of 2026-08-17, `33251914...40db96e4` (block
+     * 5124343) and `6786c176...6b6c1fe4`.
+     *
+     * The output size was hardcoded at 34 vB with a comment claiming that was
+     * the largest common type. It is not: a Taproot output is 43 vB. So
+     * paying to a tb1p address underestimated the transaction, and the wallet
+     * paid 255.66 sat/vB against a requested 264.71, quietly missing the fee
+     * rate it had promised the user.
+     */
+    it('counts a Taproot output as 43 vB, not as 34', () => {
+      // 10 + 148 (legacy input) + 43 (p2tr out) + 34 (p2pkh change) = 235.
+      // The funding transaction measured 234 vB on chain, the last byte being
+      // signature length, which varies.
+      expect(estimateTxSize(1, 2, 'p2pkh', ['p2tr', 'p2pkh'])).toBe(235);
+    });
+
+    it('matches the Taproot spend that was actually broadcast', () => {
+      // 10 + 57.5 (p2tr input) + 34 + 34 = 135.5 → 136, and the transaction
+      // measured exactly 136 vB.
+      expect(estimateTxSize(1, 2, 'p2tr', ['p2pkh', 'p2pkh'])).toBe(136);
+    });
+
+    it('keeps the old estimate when no output types are given', () => {
+      // Every existing caller must keep working unchanged.
+      expect(estimateTxSize(1, 2, 'p2pkh')).toBe(226);
+    });
+
+    it('assumes the largest output for a type it cannot place', () => {
+      // Erring toward overpaying is the safe direction: an underpaid
+      // transaction sits in the mempool.
+      expect(estimateTxSize(1, 1, 'p2pkh', ['unknown'])).toBe(
+        estimateTxSize(1, 1, 'p2pkh', ['p2tr'])
+      );
+    });
   });
 
   describe('calculateFee', () => {
@@ -306,6 +344,38 @@ describe('Bitcoin transfer utilities', () => {
       expect(result).not.toBeNull();
       expect(result!.change).toBe(0);
       expect(result!.fee).toBe(fee + 200);
+    });
+
+    /**
+     * Dust depends on the output being created, not on the input being
+     * spent. The threshold was read off inputType, which happened to be
+     * survivable while change always went to a legacy address, and stopped
+     * being survivable once change follows the input type: a Taproot output
+     * is dust below 330 sats, and 294 would have built one the network
+     * refuses to relay.
+     */
+    it('uses the Taproot dust threshold when change is Taproot', () => {
+      const outputs: BtcAddressType[] = ['p2pkh', 'p2tr'];
+      const fee = calculateFee(1, 2, 1, 'p2tr', outputs);
+      // 300 sats of change: above the segwit threshold, below Taproot's 330.
+      const utxos = [makeUtxo(50_000 + fee + 300)];
+
+      const result = selectUtxos(utxos, 50_000, 1, 'p2tr', outputs);
+
+      expect(result).not.toBeNull();
+      expect(result!.change).toBe(0);
+      expect(result!.fee).toBe(fee + 300);
+    });
+
+    it('keeps Taproot change once it clears 330', () => {
+      const outputs: BtcAddressType[] = ['p2pkh', 'p2tr'];
+      const fee = calculateFee(1, 2, 1, 'p2tr', outputs);
+      const utxos = [makeUtxo(50_000 + fee + 400)];
+
+      const result = selectUtxos(utxos, 50_000, 1, 'p2tr', outputs);
+
+      expect(result).not.toBeNull();
+      expect(result!.change).toBe(400);
     });
 
     it('should return zero change when exact amount', () => {

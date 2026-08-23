@@ -43,6 +43,14 @@ export interface BtcActivityItem {
   amountSats: number;
   /** Miner fee, only meaningful on outgoing transactions. */
   feeSats: number;
+  /**
+   * True when the wallet paid itself, so nothing actually left.
+   *
+   * Worth its own flag rather than being inferred from an amount of zero:
+   * that is exactly what Activity used to show, "-0 BTC", for the two moves
+   * of 2026-08-17.
+   */
+  isSelfTransfer: boolean;
   confirmed: boolean;
   /** Seconds since the epoch, or undefined while unconfirmed. */
   blockTime?: number;
@@ -77,9 +85,42 @@ export function describeBtcTx(
     );
     const amountSats = toOthers.reduce((total, output) => total + output.value, 0);
 
+    if (toOthers.length === 0) {
+      /**
+       * Nobody else was paid, so this was a move between our own addresses.
+       * Reporting zero here was arithmetically right and useless to read:
+       * Activity said "-0 BTC" for a transfer of 90000 sats.
+       *
+       * What moved is whatever landed somewhere other than the addresses
+       * that funded it. Payment and change are indistinguishable when they
+       * share an address, so both count.
+       */
+      const sources = new Set(
+        tx.vin
+          .map((input) => input.prevout?.scriptpubkey_address)
+          .filter((address): address is string => Boolean(address))
+      );
+
+      const moved = tx.vout.filter(
+        (output) => output.scriptpubkey_address && !sources.has(output.scriptpubkey_address)
+      );
+
+      return {
+        txid: tx.txid,
+        isOutgoing: true,
+        isSelfTransfer: true,
+        amountSats: moved.reduce((total, output) => total + output.value, 0),
+        feeSats: tx.fee ?? 0,
+        confirmed: tx.status.confirmed,
+        blockTime: tx.status.block_time,
+        counterparty: moved[0]?.scriptpubkey_address,
+      };
+    }
+
     return {
       txid: tx.txid,
       isOutgoing: true,
+      isSelfTransfer: false,
       amountSats,
       feeSats: tx.fee ?? 0,
       confirmed: tx.status.confirmed,
@@ -95,6 +136,7 @@ export function describeBtcTx(
   return {
     txid: tx.txid,
     isOutgoing: false,
+    isSelfTransfer: false,
     amountSats: received.reduce((total, output) => total + output.value, 0),
     feeSats: 0,
     confirmed: tx.status.confirmed,

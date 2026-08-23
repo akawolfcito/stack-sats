@@ -12,7 +12,7 @@
  *
  * V78 Primitives: ScreenShell, AppHeader, ListGroup, ListRow, Button, Sheet
  */
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, type ComponentPublicInstance } from 'vue';
 import { useRouter } from 'vue-router';
 import ScreenShell from '@/components/layout/ScreenShell.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
@@ -21,6 +21,7 @@ import ListRow from '@/components/list/ListRow.vue';
 import { Button, Sheet } from '@/components/ui';
 import { sessionManager } from '@/utils/security/session';
 import { secureLog } from '@/utils/security/logger';
+import { verifyWalletPin, describeWalletAuth } from '@/utils/wallets/ownership';
 import {
   getWalletsAsync,
   getActiveWalletIdAsync,
@@ -40,11 +41,32 @@ const isLoading = ref(true);
 // Rename state
 const editingWalletId = ref<string | null>(null);
 const editingName = ref('');
+/**
+ * The field is rendered inside the v-for, so a string ref would come back
+ * as an array: Vue compiles refs under v-for with ref_for. Calling focus
+ * on that array threw "focus is not a function" on every rename, and the
+ * optional chaining did not help, because an array is not null. Only one
+ * row edits at a time, so a function ref holds the single live element.
+ */
 const renameInputRef = ref<HTMLInputElement | null>(null);
+
+function setRenameInputRef(el: Element | ComponentPublicInstance | null) {
+  renameInputRef.value = (el as HTMLInputElement | null) ?? null;
+}
 
 // Remove confirmation state
 const showRemoveConfirm = ref(false);
 const walletToRemove = ref<WalletEntry | null>(null);
+
+/*
+ * Removing asked for nothing, so the PIN of any wallet was authority over
+ * every wallet on the device. Funds do survive if the recovery phrase was
+ * written down, but when it was not this is permanent loss carried out by
+ * someone who never showed the wallet was theirs.
+ */
+const removePin = ref("");
+const removeError = ref("");
+const isRemoving = ref(false);
 
 // Computed
 const sortedWallets = computed(() => {
@@ -56,10 +78,16 @@ const sortedWallets = computed(() => {
   });
 });
 
-const canRemoveWallet = computed(() => {
-  // Can remove if there's more than one wallet
-  return wallets.value.length > 1;
-});
+/**
+ * Whether removing this wallet would leave the extension with none.
+ *
+ * The remove button used to be hidden entirely unless a second wallet
+ * existed, so someone with one wallet found no control and no explanation:
+ * nothing to click and nothing saying why. Removing the last one is
+ * supported (confirmRemove locks and returns to setup), so the answer is to
+ * warn rather than to hide.
+ */
+const isLastWallet = computed(() => wallets.value.length <= 1);
 
 // Load wallets
 onMounted(async () => {
@@ -147,11 +175,6 @@ function handleRenameKeydown(event: KeyboardEvent) {
 function initiateRemove(wallet: WalletEntry, event: Event) {
   event.stopPropagation();
 
-  // Cannot remove active wallet if it's the only one
-  if (wallet.id === activeWalletId.value && wallets.value.length === 1) {
-    return;
-  }
-
   walletToRemove.value = wallet;
   showRemoveConfirm.value = true;
 }
@@ -159,13 +182,27 @@ function initiateRemove(wallet: WalletEntry, event: Event) {
 function cancelRemove() {
   showRemoveConfirm.value = false;
   walletToRemove.value = null;
+  removePin.value = "";
+  removeError.value = "";
 }
 
 async function confirmRemove() {
-  if (!walletToRemove.value) return;
+  if (!walletToRemove.value || isRemoving.value) return;
 
   const isActive = walletToRemove.value.id === activeWalletId.value;
   const walletId = walletToRemove.value.id;
+
+  // The PIN of the wallet being removed, not the one that opened the
+  // session. Being unlocked with one wallet is not authority over another.
+  isRemoving.value = true;
+  const auth = await verifyWalletPin(walletId, removePin.value);
+  isRemoving.value = false;
+
+  if (!auth.ok) {
+    removeError.value = describeWalletAuth(auth);
+    removePin.value = "";
+    return;
+  }
 
   await deleteWalletAsync(walletId);
   secureLog('Wallet removed from device', { walletId });
@@ -173,6 +210,8 @@ async function confirmRemove() {
   // Reset modal state
   showRemoveConfirm.value = false;
   walletToRemove.value = null;
+  removePin.value = "";
+  removeError.value = "";
 
   // Reload wallets
   await loadWallets();
@@ -238,10 +277,19 @@ function handleWalletClick(wallet: WalletEntry) {
             </div>
           </template>
 
-          <!-- Inline rename input -->
-          <template v-if="editingWalletId === wallet.id" #label>
+          <!--
+            Inline rename input.
+
+            Uses #content, the slot ListRow actually exposes. This was #label,
+            a slot that does not exist, so pressing edit rendered nothing at
+            all: the label prop was blanked for editing and the input never
+            appeared. The row lost its name, offered no field, and had no way
+            out, because the blur handler that ends editing lives on an input
+            that was never mounted.
+          -->
+          <template v-if="editingWalletId === wallet.id" #content>
             <input
-              ref="renameInputRef"
+              :ref="setRenameInputRef"
               v-model="editingName"
               type="text"
               class="rename-input"
@@ -268,12 +316,18 @@ function handleWalletClick(wallet: WalletEntry) {
                 </svg>
               </button>
 
-              <!-- Remove button (not shown for active wallet if only one) -->
+              <!--
+                Removing the last wallet is allowed, and the modal warns
+                about it. The greyed-out styling stayed behind from when it
+                was blocked, so the control looked unavailable while working
+                perfectly: the one state where a user needs to trust what
+                they are told is the one where the screen was lying.
+              -->
               <button
-                v-if="canRemoveWallet && editingWalletId !== wallet.id"
+                v-if="editingWalletId !== wallet.id"
                 class="action-btn action-btn--danger"
-                :class="{ 'action-btn--disabled': wallet.id === activeWalletId && wallets.length === 1 }"
                 title="Remove wallet"
+                data-roi="wallet-remove"
                 @click="initiateRemove(wallet, $event)"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -326,6 +380,28 @@ function handleWalletClick(wallet: WalletEntry) {
           "<strong>{{ walletToRemove?.name }}</strong>" will be removed from this device only.
           Your funds remain safe if you have your recovery phrase.
         </p>
+        <p v-if="isLastWallet" class="remove-modal-warning" data-roi="remove-wallet-last">
+          This is your only wallet. Removing it returns DenVault to setup, and
+          nothing but your recovery phrase can bring it back.
+        </p>
+
+        <label class="remove-modal-pin">
+          <span>Enter this wallet's PIN to remove it</span>
+          <input
+            v-model="removePin"
+            type="password"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="6"
+            placeholder="6 digits"
+            data-roi="remove-wallet-pin"
+            @keyup.enter="confirmRemove"
+          />
+        </label>
+
+        <p class="remove-modal-error" data-roi="remove-wallet-error" aria-live="polite">
+          {{ removeError || ' ' }}
+        </p>
       </div>
 
       <template #footer>
@@ -341,6 +417,7 @@ function handleWalletClick(wallet: WalletEntry) {
           <Button
             variant="danger"
             full-width
+            :disabled="removePin.length !== 6 || isRemoving"
             data-roi="remove-wallet-confirm"
             @click="confirmRemove"
           >
@@ -353,6 +430,29 @@ function handleWalletClick(wallet: WalletEntry) {
 </template>
 
 <style scoped>
+.remove-modal-pin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.remove-modal-pin input {
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.remove-modal-error {
+  min-height: 1.2em;
+  margin: var(--space-xs) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+  text-align: center;
+}
+
 /* V78: Root view styling */
 .manage-wallets-view {
   position: relative;
@@ -543,6 +643,14 @@ function handleWalletClick(wallet: WalletEntry) {
   background: rgba(239, 68, 68, 0.1);
   border-radius: 50%;
   color: var(--color-error);
+}
+
+.remove-modal-warning {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-warning, #e6a700);
+  text-align: center;
 }
 
 .remove-modal-body {

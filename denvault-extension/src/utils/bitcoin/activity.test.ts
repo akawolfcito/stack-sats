@@ -81,7 +81,17 @@ describe('describeBtcTx', () => {
     expect(item.amountSats).toBe(40000);
   });
 
-  it('treats a move between our own addresses as outgoing with nothing sent', () => {
+  /**
+   * A move between our own addresses used to be reported as outgoing with
+   * an amount of zero. The arithmetic was right, since nothing left the
+   * wallet, but Activity then displayed "Bitcoin Transfer, -0 BTC", which
+   * tells the user nothing about the 90000 sats they just moved. Both
+   * testnet sends of 2026-08-17 looked like that.
+   *
+   * So it is still not money leaving, and the amount now says how much
+   * changed address rather than pretending it was a payment.
+   */
+  it('names a move between our own addresses, with the amount that moved', () => {
     const item = describeBtcTx(
       {
         txid: 'bb',
@@ -93,9 +103,36 @@ describe('describeBtcTx', () => {
       owned
     );
 
-    expect(item.isOutgoing).toBe(true);
-    expect(item.amountSats).toBe(0);
+    expect(item.isSelfTransfer).toBe(true);
+    expect(item.amountSats).toBe(29800);
     expect(item.feeSats).toBe(200);
+  });
+
+  it('adds up a self transfer that landed on one address twice', () => {
+    // The real Taproot spend: one Taproot input, and both outputs, payment
+    // and change alike, on the legacy address. On chain the two are
+    // indistinguishable, so what moved is the pair of them.
+    const item = describeBtcTx(
+      {
+        txid: 'cc',
+        fee: 59875,
+        vin: [{ prevout: { scriptpubkey_address: MINE_TAPROOT, value: 90000 } }],
+        vout: [
+          { scriptpubkey_address: MINE_LEGACY, value: 20000 },
+          { scriptpubkey_address: MINE_LEGACY, value: 10125 },
+        ],
+        status: { confirmed: false },
+      },
+      owned
+    );
+
+    expect(item.isSelfTransfer).toBe(true);
+    expect(item.amountSats).toBe(30125);
+  });
+
+  it('does not call a real payment a self transfer', () => {
+    expect(describeBtcTx(OUTGOING, owned).isSelfTransfer).toBe(false);
+    expect(describeBtcTx(INCOMING, owned).isSelfTransfer).toBe(false);
   });
 });
 

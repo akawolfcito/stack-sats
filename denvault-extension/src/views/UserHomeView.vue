@@ -35,7 +35,6 @@ import {
 import {
   fetchCombinedBtcBalance,
   formatBtcBalance,
-  getBtcTxExplorerUrl,
   type BtcBalance,
 } from "../utils/bitcoin";
 import {
@@ -79,10 +78,14 @@ import { fetchBtcActivity, type BtcActivityItem } from "@/utils/bitcoin/activity
 import NetworkChip from "../components/network/NetworkChip.vue";
 import AccountSwitcher, { type AccountItem } from "../components/account/AccountSwitcher.vue";
 import ActivityList, { type ActivityItem } from "../components/activity/ActivityList.vue";
+import { sortActivityItems } from "@/utils/activity/sort";
+import { toBtcActivityRows } from "@/utils/activity/btc";
+import { activityTarget } from "@/utils/activity/target";
 import ListGroup from "../components/list/ListGroup.vue";
 import ListRow from "../components/list/ListRow.vue";
 import { useUiMode } from "../composables/useUiMode";
 import { openSidePanel } from "@/composables/useSidePanel";
+import { openExternalTab } from "@/utils/browser/open-tab";
 
 const router = useRouter();
 
@@ -130,6 +133,17 @@ const tabItems = [
 
 const userAccounts = ref<Account[]>([]);
 const isLoading = ref(true);
+
+/*
+ * Which wallet could not be opened, if any.
+ *
+ * A phrase that cannot derive accounts used to send this screen to "/",
+ * which sent it to "/unlock", which sent it straight back here. Three
+ * guards, each correct on its own, formed a ring with no exit: the popup
+ * spun until Chrome throttled navigation, and the only way out was
+ * DevTools. Nothing here navigates on failure any more.
+ */
+const accountsError = ref<string | null>(null);
 const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
 const currentMnemonic = ref<string | null>(null);
 
@@ -142,6 +156,13 @@ const accountIndexToDisplay = ref(0);
 // Balance state
 const stxBalanceMicro = ref<string>("0");
 const isLoadingBalance = ref(false);
+/**
+ * True when the Stacks API could not be reached, the same distinction BTC
+ * already draws below. The balance starts at "0" and a failed fetch leaves
+ * it there, so an account holding 499.97 STX read a confident "0.00 STX"
+ * whenever Hiro answered 429, and pressing refresh only repeated it.
+ */
+const isStxBalanceUnknown = ref(false);
 /**
  * Fiat conversion rate. Zero means "unknown", which hides the fiat line
  * rather than showing a fabricated $0.00 next to a real balance.
@@ -280,9 +301,23 @@ const handleAccountSelect = (index: number) => {
 // and bounced straight back to /user. It also hard-coded `balanceText: '0'` for
 // assets no code ever fetches, telling the user they held none of something the
 // wallet had never looked for.
+/**
+ * Balances carry their unit.
+ *
+ * The rows showed bare numbers: STX read "499.99" and BTC read "0". For
+ * Bitcoin that is not a cosmetic gap, since 0.0005 and 50000 are the same
+ * amount written in different units, and this wallet talks in sats
+ * elsewhere. "Unavailable" keeps no unit: it is not a quantity.
+ */
 const assetBalanceText: Record<string, () => string> = {
-  stx: () => shortBalance.value,
-  btc: () => (isBtcBalanceUnknown.value ? 'Unavailable' : formatBtcBalance(btcBalance.value.total)),
+  stx: () =>
+    isStxBalanceUnknown.value
+      ? 'Unavailable'
+      : `${shortBalance.value} STX`,
+  btc: () =>
+    isBtcBalanceUnknown.value
+      ? 'Unavailable'
+      : `${formatBtcBalance(btcBalance.value.total)} BTC`,
 };
 
 const assetItems = computed<AssetRowModel[]>(() => {
@@ -306,22 +341,10 @@ const handleAssetClick = (item: AssetRowModel) => {
   router.push({ path: `/asset/${item.id}` });
 };
 
-/** Bitcoin history in the shape the shared Activity list renders. */
+/** Bitcoin history, mapped by the shared helper so the asset detail
+ * screen and this one cannot drift apart. */
 const btcActivityItems = computed<ActivityItem[]>(() =>
-  btcActivity.value.map((item) => ({
-    txId: item.txid,
-    status: item.confirmed ? ('success' as const) : ('pending' as const),
-    title: 'Bitcoin Transfer',
-    subtitle: item.counterparty
-      ? `${item.isOutgoing ? 'To' : 'From'} ${truncateTxAddress(item.counterparty, 4)}`
-      : undefined,
-    amountText: `${formatBtcBalance(item.amountSats)} BTC`,
-    // Seconds, not milliseconds: formatRelativeTime compares against
-    // Date.now() / 1000. Multiplying made every Bitcoin row read "Just
-    // now", including one from hours earlier.
-    timeText: item.blockTime ? formatRelativeTime(item.blockTime) : 'Pending',
-    isOutgoing: item.isOutgoing,
-  }))
+  toBtcActivityRows(btcActivity.value)
 );
 
 // Activity items for ActivityList component
@@ -378,6 +401,7 @@ const stxActivityItems = computed<ActivityItem[]>(() => {
       subtitle,
       amountText,
       timeText: formatRelativeTime(tx.timestamp),
+      timestamp: tx.timestamp,
       isOutgoing,
     };
   });
@@ -387,27 +411,26 @@ const stxActivityItems = computed<ActivityItem[]>(() => {
  * One list for both chains. Pending first, because that is what the user
  * just did and what they came back to check.
  */
-const activityItems = computed<ActivityItem[]>(() => {
-  const merged = [...stxActivityItems.value, ...btcActivityItems.value];
-  return merged.sort((a, b) => {
-    if (a.status !== b.status) {
-      if (a.status === 'pending') return -1;
-      if (b.status === 'pending') return 1;
-    }
-    return 0;
-  });
-});
+const activityItems = computed<ActivityItem[]>(() =>
+  sortActivityItems([...stxActivityItems.value, ...btcActivityItems.value])
+);
 
 // Handle activity item click (navigate to transaction details)
 const handleActivityClick = (txId: string) => {
-  // The detail screen reads the Stacks API, so a Bitcoin txid would land
-  // on a page that can never load. Send those to a Bitcoin explorer.
-  if (btcActivity.value.some((item) => item.txid === txId)) {
-    window.open(getBtcTxExplorerUrl(txId, selectedNetwork.value), '_blank');
+  // Which chain a row belongs to decides where it can go at all. See
+  // utils/activity/target: AssetDetailView asks the same question.
+  const target = activityTarget(
+    txId,
+    btcActivity.value.map((item) => item.txid),
+    selectedNetwork.value
+  );
+
+  if (target.kind === 'bitcoin') {
+    openExternalTab(target.url);
     return;
   }
 
-  router.push({ path: `/transaction/${txId}` });
+  router.push({ path: target.path });
 };
 
 // Load account names from settings
@@ -431,7 +454,13 @@ async function loadAccounts(mnemonic: string, network: NetworkName, count?: numb
     secureLog(`Accounts loaded for ${network}: ${numAccounts} accounts`);
   } catch (error) {
     secureLog("Failed to generate accounts", error);
-    router.push({ path: "/" });
+    // Lock, so a reload lands on the PIN screen rather than retrying this
+    // on a loop, and the wallet is not left half open behind an error.
+    // Deliberately not locking: Manage Wallets is the way out of this
+    // state, and locking would put the PIN screen between the person and
+    // the only screen that can remove the wallet that caused it.
+    accountsError.value =
+      "This wallet's recovery phrase could not be read, so its accounts cannot be opened. Remove it from Manage Wallets and import it again.";
   }
   isLoading.value = false;
 }
@@ -454,8 +483,12 @@ async function loadBalance() {
     const balance = await fetchStxBalance(currentAccount.stxAddress, selectedNetwork.value);
     if (balance !== null) {
       stxBalanceMicro.value = balance;
+      isStxBalanceUnknown.value = false;
+    } else {
+      isStxBalanceUnknown.value = true;
     }
   } catch (error) {
+    isStxBalanceUnknown.value = true;
     secureLog("Failed to load balance", error);
   }
   isLoadingBalance.value = false;
@@ -789,6 +822,13 @@ const handleManageAccounts = () => {
 
       <div v-if="isLoading" class="loading-state">Loading accounts...</div>
 
+      <div v-else-if="accountsError" class="accounts-error" data-roi="home-accounts-error">
+        <p>{{ accountsError }}</p>
+        <Button variant="primary" @click="router.push({ path: '/manage-wallets' })">
+          Manage Wallets
+        </Button>
+      </div>
+
       <template v-else>
         <!-- Fixed Header Section (no scroll) -->
         <div class="home-header">
@@ -847,8 +887,8 @@ const handleManageAccounts = () => {
 
           <!-- V55.2: Balance Card with data-roi -->
           <BalanceHeader
-            :amount-text="isLoadingBalance ? '...' : shortBalance"
-            symbol="STX"
+            :amount-text="isLoadingBalance ? '...' : isStxBalanceUnknown ? 'Unavailable' : shortBalance"
+            :symbol="isStxBalanceUnknown ? '' : 'STX'"
             :usd-text="totalValueUsd ? `${totalValueUsd} USD` : undefined"
             :is-hidden="!showBalance"
             :address-short="currentAccountAddressShort"
@@ -1058,6 +1098,21 @@ const handleManageAccounts = () => {
 }
 
 /* Loading State */
+.accounts-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.accounts-error p {
+  margin: 0;
+}
+
 .loading-state {
   display: flex;
   align-items: center;

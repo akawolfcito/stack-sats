@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   fetchAccountBalances,
+  resetBalanceCache,
   fetchStxBalance,
   fetchFungibleTokens,
   microStxToStx,
@@ -29,6 +30,9 @@ describe("balance utilities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue("testnet");
+    // fetchAccountBalances now shares one answer between callers for a few
+    // seconds, so each test has to start from an empty cache.
+    resetBalanceCache();
   });
 
   describe("fetchFungibleTokens", () => {

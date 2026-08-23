@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { TEST_MNEMONIC } from './fixtures/mock-wallet.js';
+import { stubChainApis } from './fixtures/chain-api.js';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -85,6 +86,21 @@ const ROI_TARGETS: ROIConfig[] = [
     name: 'segmented-tabs',
     route: '/user',
     selector: '.minimal-tabs, .tab-item',
+    setup: setupUnlockedWallet,
+  },
+  /**
+   * Asset rows, because the full frame cannot see them.
+   *
+   * Adding the unit to each balance ("499.99 STX" rather than "499.99")
+   * changed the home screen and the 5% full-frame threshold did not notice:
+   * a few characters in two rows are a rounding error across 400x600. ROI
+   * compares at 0.5% over the region itself, which is where a wrong or
+   * missing unit would actually show up.
+   */
+  {
+    name: 'asset-rows',
+    route: '/user',
+    selector: '.asset-list',
     setup: setupUnlockedWallet,
   },
   // Secondary button on Start
@@ -243,7 +259,8 @@ async function setupUnlockedWallet(page: Page) {
     sessionStorage.clear();
     localStorage.setItem('__UI_SNAPSHOT_MODE__', 'true');
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
-    localStorage.setItem('selected_network', 'devnet');
+    // Devnet was withdrawn in a6d6195 and resolves to testnet anyway.
+    localStorage.setItem('selected_network', 'testnet');
     localStorage.setItem('density_mode', 'compact');
   }, TEST_MNEMONIC);
 }
@@ -257,7 +274,8 @@ async function setupLockedWallet(page: Page) {
     localStorage.setItem('__UI_SNAPSHOT_MODE__', 'true');
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
     localStorage.setItem('__UI_SNAPSHOT_LOCKED__', 'true');
-    localStorage.setItem('selected_network', 'devnet');
+    // Devnet was withdrawn in a6d6195 and resolves to testnet anyway.
+    localStorage.setItem('selected_network', 'testnet');
     localStorage.setItem('density_mode', 'compact');
   }, TEST_MNEMONIC);
 }
@@ -351,6 +369,8 @@ test.use({
 // V51.5: Zero overflow guard - catches horizontal scroll regressions
 test('V51.5: ConfirmTxView zero horizontal overflow', async ({ page }) => {
   // Setup unlocked wallet
+  await stubChainApis(page);
+
   await page.goto('about:blank');
   await page.goto('/');
   await setupUnlockedWallet(page);
@@ -358,7 +378,10 @@ test('V51.5: ConfirmTxView zero horizontal overflow', async ({ page }) => {
 
   // Navigate to confirm-tx with test data
   const confirmRoute = '/confirm-tx?networkLabel=Devnet&fromLabel=Account%201&fromAddressShort=ST2C...X4AG&toAddress=ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG&toAddressShort=ST2C...K9AG&amountText=1.00%20STX&feeText=0.001%20STX&totalText=1.001%20STX';
-  await page.goto(confirmRoute);
+  // Through the hash: the router is createWebHashHistory, so navigating to
+  // "/confirm-tx?..." left the hash empty and landed on /user. This test has
+  // been asserting that the home screen does not overflow.
+  await page.goto(`/#${confirmRoute}`);
   await waitForStableState(page);
 
   // Assert: scrollWidth should equal clientWidth (no horizontal overflow)
@@ -386,6 +409,8 @@ test('V51.5: ConfirmTxView zero horizontal overflow', async ({ page }) => {
 for (const roi of ROI_TARGETS) {
   test(`ROI: ${roi.name}`, async ({ page }) => {
     // Step 1: Initialize
+    await stubChainApis(page);
+
     await page.goto('about:blank');
     await page.goto('/');
 
@@ -400,7 +425,10 @@ for (const roi of ROI_TARGETS) {
     // Step 4: Reload and navigate
     await page.reload();
     if (roi.route !== '/') {
-      await page.goto(roi.route);
+      // Through the hash, same reason as golden-matrix: the router is
+      // createWebHashHistory, so a bare path lands on /user. Every ROI so far
+      // targets /user, so they were right by accident rather than by route.
+      await page.goto(`/#${roi.route}`);
     }
 
     // Step 5: Apply density

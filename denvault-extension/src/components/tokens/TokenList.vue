@@ -35,7 +35,7 @@ function handleToggle(contractId: string, enabled: boolean) {
 
   <!-- Empty State -->
   <div v-else-if="items.length === 0" class="empty-state">
-    <span class="empty-icon">🔍</span>
+    <span class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
     <span class="empty-text">{{ emptyText || "No tokens found" }}</span>
   </div>
 

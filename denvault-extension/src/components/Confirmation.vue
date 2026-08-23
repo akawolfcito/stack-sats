@@ -13,7 +13,7 @@
  *
  * Trust-critical flow: Users approve dApp requests here.
  */
-import { onBeforeMount, onBeforeUnmount, onMounted, ref, computed } from "vue";
+import { onBeforeMount, onBeforeUnmount, onMounted, ref, computed, watch } from "vue";
 import {
   handleSignMessage,
   handleGetAddresses,
@@ -40,10 +40,134 @@ import {
   getActiveAccountIndex,
   type AccountOption,
 } from "@/utils/accounts/active";
+import { describeFailure, type FailureReport } from "@/utils/dapp/failure";
+import {
+  assessFunding,
+  fundingNeed,
+  toMicro,
+  type FundingAssessment,
+} from "@/utils/dapp/funding";
+import { fetchStxBalance } from "@/utils/balance";
+import { formatStxFromMicro } from "@/utils/balance/format";
+import { TRANSFER_FEE_MICRO_STX } from "@/utils/transfer";
+import { generateInitialAccounts } from "@/utils/accounts";
+import { getSelectedNetwork } from "@/utils/network";
 
 const isUnlocked = ref(false);
 const pinError = ref("");
 const isProcessing = ref(false);
+
+/**
+ * Set when an approved request did not go through.
+ *
+ * The window used to forward the error to the dApp and close itself 150ms
+ * later, so approving a deploy from an empty account ended with no
+ * transaction, no message and no sign anything had been attempted. The
+ * dApp was told; the person who pressed Approve was not, and silence
+ * looks exactly like success. The reply still leaves immediately: only
+ * the closing waits for the user to have read it.
+ */
+const failure = ref<FailureReport | null>(null);
+
+/** Report the failure and stop, rather than reporting it and vanishing. */
+function reportFailure(code: number | undefined, message: string) {
+  failure.value = describeFailure(code, message);
+  isProcessing.value = false;
+}
+
+/**
+ * Whether the signing account can pay for this, worked out before the PIN
+ * rather than after the node refuses. A deploy was approved from an empty
+ * account and died on the network; the balance was knowable all along.
+ *
+ * Null while unknown, which is not the same as zero: an unreachable API
+ * must never be read as an empty account, so nothing is blocked until
+ * there is an answer.
+ */
+const balanceMicro = ref<bigint | null>(null);
+/*
+ * Which chain is about to be signed on.
+ *
+ * The screen named the site and the account but never the network, so the
+ * only way to check was to leave the approval, look at the header, and come
+ * back. Reported after signing on the wrong assumption and having to go
+ * out and verify. Shown, not offered: a switch here would be a place for a
+ * site to talk someone into changing chains mid approval.
+ */
+const networkName = computed(() => (getSelectedNetwork() === "mainnet" ? "Mainnet" : "Testnet"));
+const isMainnet = computed(() => getSelectedNetwork() === "mainnet");
+
+const funding = ref<FundingAssessment | null>(null);
+
+/** Costs nothing, so the whole section stays out of the way. */
+const isFreeRequest = computed(() => fundingNeed(displayPayload.value.method) === "none");
+
+const feeMicro = computed(() => {
+  const params = (displayPayload.value.params ?? {}) as Record<string, unknown>;
+  const requested = toMicro(params.fee);
+  return requested > 0n ? requested : TRANSFER_FEE_MICRO_STX;
+});
+
+const blockedByBalance = computed(() => funding.value?.blocks === true);
+
+const fundingLines = computed(() => {
+  if (isFreeRequest.value || balanceMicro.value === null || !funding.value) return null;
+  return {
+    balance: formatStxFromMicro(balanceMicro.value.toString()),
+    fee: formatStxFromMicro(feeMicro.value.toString()),
+    missing:
+      funding.value.shortfallMicro > 0n
+        ? formatStxFromMicro(funding.value.shortfallMicro.toString())
+        : null,
+  };
+});
+
+/**
+ * Look up the balance of the account that would sign, and judge it.
+ *
+ * Needs an unlocked session to derive the address, so it runs on mount
+ * when the wallet is already open and again the moment the PIN opens it.
+ * Either way it lands before Approve, which is the part that matters.
+ */
+async function assessBalance() {
+  if (isFreeRequest.value) return;
+
+  const mnemonic = sessionManager.getMnemonic();
+  if (!mnemonic) return;
+
+  try {
+    const network = getSelectedNetwork();
+    const accounts = await generateInitialAccounts(
+      mnemonic,
+      selectedAccountIndex.value + 1,
+      network
+    );
+    const address = accounts[selectedAccountIndex.value]?.stxAddress;
+    if (!address) return;
+
+    const raw = await fetchStxBalance(address, network);
+    if (raw === null) {
+      // Unknown, so nothing is claimed and nothing is blocked.
+      balanceMicro.value = null;
+      funding.value = null;
+      return;
+    }
+
+    const params = (displayPayload.value.params ?? {}) as Record<string, unknown>;
+    balanceMicro.value = toMicro(raw);
+    funding.value = assessFunding({
+      method: displayPayload.value.method,
+      balanceMicro: balanceMicro.value,
+      feeMicro: feeMicro.value,
+      amountMicro: toMicro(params.amount),
+      sponsored: params.sponsored === true,
+    });
+  } catch (error) {
+    secureWarn("Balance check failed", { error: String(error) });
+    balanceMicro.value = null;
+    funding.value = null;
+  }
+}
 
 // Account selector state. Populated in onMounted from the accounts that
 // actually exist — a fixed list of three used to hide accounts 4+ and,
@@ -122,6 +246,17 @@ onMounted(async () => {
       requestId: props.requestId,
     });
   }
+
+  // After the canonical params land, so the amount and fee judged are the
+  // ones that will be signed.
+  void assessBalance();
+});
+
+// Signing with a different account means a different balance to check.
+watch(selectedAccountIndex, () => {
+  balanceMicro.value = null;
+  funding.value = null;
+  void assessBalance();
 });
 
 onBeforeUnmount(() => {
@@ -306,6 +441,8 @@ async function handlePinComplete(pin: string) {
   if (success) {
     isUnlocked.value = true;
     pinError.value = "";
+    // Now that there is a session, the signing address can be derived.
+    void assessBalance();
   } else {
     const remaining = 3 - sessionManager.failedAttempts;
     pinError.value = `Incorrect PIN. Attempts remaining: ${remaining}`;
@@ -319,6 +456,15 @@ async function handleConfirm() {
   if (!props.tabId || isProcessing.value) return;
 
   isProcessing.value = true;
+
+  // Minutes can pass between this screen opening and Approve being
+  // pressed, and another transaction can spend the balance in between.
+  // Re-reading it costs one request and saves signing for nothing.
+  await assessBalance();
+  if (blockedByBalance.value) {
+    isProcessing.value = false;
+    return;
+  }
 
   let result: Result = {
     method: "",
@@ -409,7 +555,7 @@ async function handleConfirm() {
       } else {
         await chrome.tabs.sendMessage(parseInt(props.tabId), result.data);
       }
-      setTimeout(() => closeWindow(), 150);
+      reportFailure(error.code, error.message);
       return;
     }
 
@@ -499,6 +645,11 @@ async function handleConfirm() {
       txSignStartTime.value,
       errorMsg
     );
+
+    // The dApp already has the error. Stay put so the person who pressed
+    // Approve gets it too, instead of watching the window vanish.
+    reportFailure(-32603, errorMsg);
+    return;
   }
 
   // Delay to ensure message is sent before closing
@@ -549,8 +700,27 @@ function handleReject(reason?: string) {
       />
     </template>
 
+    <!-- What happened, when it did not happen. Replaces the review, so
+         nobody approves the same thing twice while reading why it failed. -->
+    <main v-if="failure" class="confirm-content" data-roi="confirm-failure">
+      <div class="failure-state">
+        <div class="failure-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="13" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <h2 class="failure-title" data-roi="confirm-failure-title">{{ failure.title }}</h2>
+        <p class="failure-detail" data-roi="confirm-failure-detail">{{ failure.detail }}</p>
+        <p v-if="failure.recoverable" class="failure-hint">
+          Nothing was sent. You can change it and try again.
+        </p>
+      </div>
+    </main>
+
     <!-- Main Content -->
-    <main class="confirm-content">
+    <main v-else class="confirm-content">
       <!-- Origin badge -->
       <div class="origin-badge" data-roi="confirm-origin">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -558,6 +728,15 @@ function handleReject(reason?: string) {
           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
         <span>From: <strong>{{ displayOrigin }}</strong></span>
+      </div>
+
+      <div
+        class="network-badge"
+        :class="{ 'network-badge--test': !isMainnet }"
+        data-roi="confirm-network"
+      >
+        <span class="network-badge__dot" aria-hidden="true"></span>
+        <span>{{ networkName }}</span>
       </div>
 
       <!-- Method icon and description -->
@@ -613,17 +792,53 @@ function handleReject(reason?: string) {
         <PinInput mode="unlock" @complete="handlePinComplete" />
       </div>
 
+      <!-- What this costs and whether the account can cover it. Shown
+           whether or not it can: a figure that only appears when something
+           is wrong teaches people to fear the screen. -->
+      <div v-if="fundingLines" class="funding-card" data-roi="confirm-funding">
+        <div class="funding-row">
+          <span>Balance</span>
+          <span class="funding-value">{{ fundingLines.balance }} STX</span>
+        </div>
+        <div class="funding-row">
+          <span>Estimated fee</span>
+          <span class="funding-value">{{ fundingLines.fee }} STX</span>
+        </div>
+        <div v-if="fundingLines.missing" class="funding-row funding-row--short" data-roi="confirm-funding-short">
+          <span>Missing</span>
+          <span class="funding-value">{{ fundingLines.missing }} STX</span>
+        </div>
+      </div>
+
       <!-- V55.2: Reserved error slot (anti-layout-shift) -->
       <div class="error-slot" data-roi="confirm-error-slot" aria-live="polite">
         <p v-if="pinError" class="error-text">{{ pinError }}</p>
+        <p v-else-if="blockedByBalance" class="error-text" data-roi="confirm-blocked-reason">
+          This account cannot cover the network fee. Receive STX into it, or pick another account.
+        </p>
+        <p v-else-if="funding?.warns" class="warn-text" data-roi="confirm-funding-warning">
+          Signing costs nothing, but this account could not pay for this transaction when it is sent.
+        </p>
       </div>
     </main>
 
+    <!-- One way out when it failed: reading it and closing. Approve would
+         resend what the network just refused. -->
+    <template v-if="failure" #footer>
+      <StickyCTA
+        primary-text="Close"
+        :show-arrow="false"
+        roi-prefix="confirm-failure"
+        data-roi="confirm-failure-cta"
+        @primary="closeWindow()"
+      />
+    </template>
+
     <!-- V55.2: Sticky CTA footer with Deny/Approve -->
-    <template #footer>
+    <template v-else #footer>
       <StickyCTA
         primary-text="Approve"
-        :primary-disabled="!isUnlocked || isProcessing"
+        :primary-disabled="!isUnlocked || isProcessing || blockedByBalance"
         secondary-text="Deny"
         :show-arrow="false"
         roi-prefix="confirm"
@@ -639,6 +854,39 @@ function handleReject(reason?: string) {
 </template>
 
 <style scoped>
+.network-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs, 4px);
+  align-self: center;
+  margin-top: var(--space-2xs, 4px);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-full, 999px);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.network-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+
+/* Testnet reads as the exception, so it is the one that stands out. */
+.network-badge--test {
+  color: var(--color-warning, #e0b341);
+  border-color: currentColor;
+}
+
+.network-badge--test .network-badge__dot {
+  background: currentColor;
+}
+
 /* V55.2: Main content area with proper padding */
 .confirm-content {
   flex: 1;
@@ -846,6 +1094,75 @@ function handleReject(reason?: string) {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.funding-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-surface-2, rgba(255, 255, 255, 0.04));
+}
+
+.funding-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.funding-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.funding-row--short,
+.funding-row--short .funding-value {
+  color: var(--color-danger, #ef4444);
+}
+
+.warn-text {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+  color: var(--color-warning, #f59e0b);
+}
+
+.failure-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
+  padding: var(--space-xl) var(--space-md);
+}
+
+.failure-icon {
+  color: var(--color-danger, #ef4444);
+}
+
+.failure-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+}
+
+.failure-detail {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  /* The node's own words can be long and unbroken. */
+  overflow-wrap: anywhere;
+}
+
+.failure-hint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 .error-text {

@@ -1,4 +1,5 @@
 import { encodeMessage } from "@stacks/encryption";
+import { readBroadcast } from "./broadcast";
 import {
   signMessageHashRsv,
   privateKeyToPublic,
@@ -268,15 +269,35 @@ async function handleCallContract(
       network,
     });
 
+    // A refusal comes back as a value, not as a throw, so this is the only
+    // place it can be noticed. See ./broadcast.ts.
+    const outcome = readBroadcast(broadcasted);
+
     if (isDebugMode()) {
-      console.log("[StacksWallet] Broadcast result:", broadcasted.txid);
+      console.log("[StacksWallet] Broadcast result:", outcome);
+    }
+
+    if (!outcome.ok) {
+      return {
+        method: payload.method,
+        status: "COMPLETE",
+        data: {
+          jsonrpc: "2.0",
+          id: payload.id,
+          error: {
+            code: JsonRpcErrorCode.UnknownError,
+            message: outcome.reason,
+            data: outcome.detail,
+          },
+        },
+      };
     }
 
     response = {
       jsonrpc: "2.0",
       id: payload.id,
       result: {
-        txid: broadcasted.txid,
+        txid: outcome.txid,
         transaction: transactionToHex(transaction),
       },
     };
@@ -389,15 +410,35 @@ async function handleTransferStx(
       network,
     });
 
+    // A refusal comes back as a value, not as a throw, so this is the only
+    // place it can be noticed. See ./broadcast.ts.
+    const outcome = readBroadcast(broadcasted);
+
     if (isDebugMode()) {
-      console.log("[StacksWallet] Broadcast result:", broadcasted.txid);
+      console.log("[StacksWallet] Broadcast result:", outcome);
+    }
+
+    if (!outcome.ok) {
+      return {
+        method: payload.method,
+        status: "COMPLETE",
+        data: {
+          jsonrpc: "2.0",
+          id: payload.id,
+          error: {
+            code: JsonRpcErrorCode.UnknownError,
+            message: outcome.reason,
+            data: outcome.detail,
+          },
+        },
+      };
     }
 
     response = {
       jsonrpc: "2.0",
       id: payload.id,
       result: {
-        txid: broadcasted.txid,
+        txid: outcome.txid,
         transaction: transactionToHex(transaction),
       },
     };
@@ -606,15 +647,35 @@ async function handleDeployContract(
       network,
     });
 
+    // A refusal comes back as a value, not as a throw, so this is the only
+    // place it can be noticed. See ./broadcast.ts.
+    const outcome = readBroadcast(broadcasted);
+
     if (isDebugMode()) {
-      console.log("[StacksWallet] Deploy broadcast result:", broadcasted.txid);
+      console.log("[StacksWallet] Deploy broadcast result:", outcome);
+    }
+
+    if (!outcome.ok) {
+      return {
+        method: payload.method,
+        status: "COMPLETE",
+        data: {
+          jsonrpc: "2.0",
+          id: payload.id,
+          error: {
+            code: JsonRpcErrorCode.UnknownError,
+            message: outcome.reason,
+            data: outcome.detail,
+          },
+        },
+      };
     }
 
     response = {
       jsonrpc: "2.0",
       id: payload.id,
       result: {
-        txid: broadcasted.txid,
+        txid: outcome.txid,
         transaction: transactionToHex(transaction),
       },
     };

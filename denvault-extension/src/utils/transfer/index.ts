@@ -1,3 +1,4 @@
+import { readBroadcast } from "@/utils/stxmethods/broadcast";
 /**
  * STX Transfer module
  * Handles building, signing, and broadcasting STX transfers
@@ -68,11 +69,22 @@ export async function transferStx(params: TransferParams): Promise<TransferResul
       network: networkConfig,
     });
 
-    secureLog("STX transfer successful", { txid: result.txid });
+    // A refused broadcast is returned, not thrown. Without this the send
+    // screen reported success with an undefined txid.
+    const outcome = readBroadcast(result);
+    if (!outcome.ok) {
+      secureLog("Transfer refused by the node", { reason: outcome.reason });
+      return {
+        success: false,
+        error: outcome.detail,
+      };
+    }
+
+    secureLog("STX transfer successful", { txid: outcome.txid });
 
     return {
       success: true,
-      txid: result.txid,
+      txid: outcome.txid,
     };
   } catch (error) {
     const rawError = error instanceof Error ? error.message : String(error);

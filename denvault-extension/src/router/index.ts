@@ -80,19 +80,14 @@ const router = createRouter({
       component: () => import("../views/SendTokenView.vue"),
     },
     {
-      path: "/add-network",
-      name: "add-network",
-      component: () => import("../views/AddNetworkView.vue"),
-    },
-    {
-      path: "/swap",
-      name: "swap",
-      component: () => import("../views/SwapView.vue"),
-    },
-    {
       path: "/verify-pin",
       name: "verify-pin",
       component: () => import("../views/VerifyPinView.vue"),
+    },
+    {
+      path: "/recovery-phrase",
+      name: "recovery-phrase",
+      component: () => import("../views/RecoveryPhraseView.vue"),
     },
     {
       path: "/import-recovery",

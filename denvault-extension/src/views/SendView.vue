@@ -384,11 +384,14 @@ async function handlePinComplete(pin: string) {
         <div class="from-card-glow"></div>
         <div class="from-card-content">
           <div class="from-card-left">
+            <!--
+              The same mark the asset list uses: the symbol's letter on the
+              asset's own gradient. This was a generic card outline, which
+              said nothing about which asset was being sent and did not match
+              the Bitcoin screen next to it.
+            -->
             <div class="from-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5">
-                <rect x="2" y="5" width="20" height="15" rx="2"/>
-                <path d="M2 9h20"/>
-              </svg>
+              <span class="from-icon-text">S</span>
             </div>
             <div class="from-info">
               <span class="from-name">{{ accountName }}</span>
@@ -669,13 +672,20 @@ async function handlePinComplete(pin: string) {
 .from-icon {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #252525, #1a1a1a); /* v17: neutral gradient */
+  border-radius: var(--radius-md, 14px);
+  /* Same gradient as the STX row in the asset list (assets/registry.ts). */
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1));
   border: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-primary); /* v17: neutral icon */
+  color: var(--color-text-primary);
+}
+
+.from-icon-text {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
 .from-info {

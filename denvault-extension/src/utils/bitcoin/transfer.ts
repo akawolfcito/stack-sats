@@ -239,7 +239,8 @@ export function getFeeRateForLevel(fees: FeeEstimate, level: FeeLevel): number {
 export function estimateTxSize(
   inputCount: number,
   outputCount: number,
-  inputType: BtcAddressType = 'p2pkh'
+  inputType: BtcAddressType = 'p2pkh',
+  outputTypes?: BtcAddressType[]
 ): number {
   // Base transaction overhead
   const overhead = 10;
@@ -255,13 +256,34 @@ export function estimateTxSize(
 
   const inputSize = inputSizes[inputType] || inputSizes.p2pkh;
 
-  // Outputs are averaged rather than typed. A per-type table existed here
-  // but nothing could use it: the signature takes only outputCount, not
-  // the type of each output. 34 vB is the p2pkh figure, the largest of
-  // the common types, so the estimate errs toward overpaying the fee.
-  const avgOutputSize = 34;
+  /**
+   * Output sizes by type: 8 bytes of value, 1 of script length, then the
+   * script itself.
+   *
+   * A previous comment here called 34 "the largest of the common types" and
+   * used it for every output. That is wrong, and it cost real money: a
+   * Taproot output is 43 vB. Paying to a tb1p address therefore
+   * underestimated the transaction, and on 2026-08-17 the wallet paid
+   * 255.66 sat/vB against the 264.71 it had told the user it was paying.
+   *
+   * Unknown falls to the largest, so an unrecognised address overpays
+   * instead of sitting in the mempool.
+   */
+  const outputSizes: Record<BtcAddressType, number> = {
+    p2pkh: 34,     // 8 + 1 + 25
+    p2sh: 32,      // 8 + 1 + 23
+    p2wpkh: 31,    // 8 + 1 + 22
+    p2tr: 43,      // 8 + 1 + 34
+    unknown: 43,
+  };
 
-  return Math.ceil(overhead + inputCount * inputSize + outputCount * avgOutputSize);
+  // Callers that do not know their output types keep the old flat estimate,
+  // which is correct whenever every output is legacy.
+  const outputsSize = outputTypes
+    ? outputTypes.reduce((total, type) => total + (outputSizes[type] ?? outputSizes.unknown), 0)
+    : outputCount * outputSizes.p2pkh;
+
+  return Math.ceil(overhead + inputCount * inputSize + outputsSize);
 }
 
 /**
@@ -271,11 +293,24 @@ export function calculateFee(
   inputCount: number,
   outputCount: number,
   feeRate: number,
-  inputType: BtcAddressType = 'p2pkh'
+  inputType: BtcAddressType = 'p2pkh',
+  outputTypes?: BtcAddressType[]
 ): number {
-  const vBytes = estimateTxSize(inputCount, outputCount, inputType);
+  const vBytes = estimateTxSize(inputCount, outputCount, inputType, outputTypes);
   return Math.ceil(vBytes * feeRate);
 }
+
+/**
+ * Below these values an output costs more to spend than it holds, and the
+ * network will not relay it. Keyed by the output's own script type.
+ */
+const DUST_THRESHOLDS: Record<BtcAddressType, number> = {
+  p2pkh: 546,
+  p2sh: 540,
+  p2wpkh: 294,
+  p2tr: 330,
+  unknown: 546,
+};
 
 /**
  * Select UTXOs to cover the amount + fee
@@ -285,7 +320,9 @@ export function selectUtxos(
   utxos: UTXO[],
   targetAmount: number,
   feeRate: number,
-  inputType: BtcAddressType = 'p2pkh'
+  inputType: BtcAddressType = 'p2pkh',
+  /** Recipient and change, in that order, when the caller knows them. */
+  outputTypes?: BtcAddressType[]
 ): { selected: UTXO[]; fee: number; change: number } | null {
   // Sort by value descending
   const sorted = [...utxos].sort((a, b) => b.value - a.value);
@@ -298,14 +335,27 @@ export function selectUtxos(
     totalInput += utxo.value;
 
     // Calculate fee with current inputs (2 outputs: recipient + change)
-    const fee = calculateFee(selected.length, 2, feeRate, inputType);
+    const fee = calculateFee(selected.length, 2, feeRate, inputType, outputTypes);
     const required = targetAmount + fee;
 
     if (totalInput >= required) {
       const change = totalInput - targetAmount - fee;
 
-      // Check if change is dust (< 546 sats for legacy, < 294 for segwit)
-      const dustThreshold = inputType === 'p2pkh' ? 546 : 294;
+      /**
+       * Dust is a property of the output being created, not of the input
+       * being spent, and the two stopped agreeing once change began
+       * following the input type. A Taproot output is dust below 330 sats,
+       * so the old 294 would have built one the network refuses to relay.
+       *
+       * Callers that do not say where the change is going keep the previous
+       * input-based guess, which is what every existing test asserts.
+       */
+      const changeType = outputTypes?.[1];
+      const dustThreshold = changeType
+        ? DUST_THRESHOLDS[changeType]
+        : inputType === 'p2pkh'
+          ? 546
+          : 294;
 
       if (change > 0 && change < dustThreshold) {
         // Add dust to fee instead
@@ -359,15 +409,47 @@ export async function buildAndSignTransaction(
   // Calculate total available
   const totalAvailable = allUtxos.reduce((sum, item) => sum + item.utxo.value, 0);
 
-  // Determine primary input type for fee estimation
-  const primaryType = allUtxos[0]?.type || 'p2pkh';
+  /**
+   * Primary input type for the fee estimate: the type of the largest UTXO,
+   * because selectUtxos sorts by value and takes that one first.
+   *
+   * This used to read allUtxos[0], which is merely the first address queried,
+   * and the legacy address is queried first. So spending a Taproot UTXO was
+   * costed as if it were legacy, 148 vB against 57.5. On 2026-08-17 that
+   * turned a 265 sat/vB request into 440 paid, which the explorer flagged as
+   * overpaying by 66%.
+   */
+  const largestUtxo = [...allUtxos].sort((a, b) => b.utxo.value - a.utxo.value)[0];
+  const primaryType = largestUtxo?.type || 'p2pkh';
+
+  /**
+   * Change returns to the type it was spent from.
+   *
+   * It used to go to the legacy address unconditionally, so every Taproot
+   * send quietly migrated the remainder to P2PKH. That charged the user
+   * twice: a legacy input costs 148 vB to spend later against 57.5, and it
+   * silently undid the address format they had chosen in Receive.
+   *
+   * This wallet has no internal change chain, so the change lands on an
+   * address the user already uses. Reusing it is a privacy cost that a
+   * proper BIP-32 change branch would remove, but sending it to the wrong
+   * script type was a cost on top of that one, not a substitute for it.
+   */
+  const changeAddress =
+    primaryType === 'p2tr' && senderP2TR ? senderP2TR : senderP2PKH;
+
+  const outputTypes: BtcAddressType[] = [
+    detectAddressType(recipient, network),
+    detectAddressType(changeAddress, network),
+  ];
 
   // Select UTXOs
   const selection = selectUtxos(
     allUtxos.map((item) => item.utxo),
     amountSats,
     feeRate,
-    primaryType
+    primaryType,
+    outputTypes
   );
 
   if (!selection) {
@@ -391,11 +473,16 @@ export async function buildAndSignTransaction(
       throw new Error(`UTXO info not found for ${selectedUtxo.txid}:${selectedUtxo.vout}`);
     }
 
-    // Fetch the raw transaction to get the scriptPubKey
-    const rawTxHex = await fetchRawTransaction(selectedUtxo.txid, network);
-
     if (utxoInfo.type === 'p2pkh') {
-      // Legacy P2PKH input
+      // Legacy P2PKH input.
+      //
+      // Only this branch needs the whole previous transaction: a legacy input
+      // is signed over it, while segwit and Taproot inputs carry the amount
+      // and script in witnessUtxo. This fetch used to run for every input,
+      // so a Taproot send died whenever /tx/{id}/hex was slow or unavailable,
+      // waiting on data it was never going to use.
+      const rawTxHex = await fetchRawTransaction(selectedUtxo.txid, network);
+
       psbt.addInput({
         hash: selectedUtxo.txid,
         index: selectedUtxo.vout,
@@ -445,7 +532,7 @@ export async function buildAndSignTransaction(
   // Add change output if there's change
   if (selection.change > 0) {
     psbt.addOutput({
-      address: senderP2PKH, // Send change back to P2PKH address
+      address: changeAddress, // Same script type the inputs came from
       value: selection.change,
     });
   }

@@ -26,6 +26,7 @@ import { useTxDraft } from "@/composables/useTxDraft";
 import { useBtcTxDraft } from "@/composables/useBtcTxDraft";
 import { fetchTransaction } from "@/utils/transactions";
 import { fetchBtcTxConfirmed, getBtcTxExplorerUrl } from "@/utils/bitcoin/balance";
+import { openExternalTab } from "@/utils/browser/open-tab";
 
 const router = useRouter();
 const route = useRoute();
@@ -265,13 +266,21 @@ function handleCopyTxid() {
 
 function handleOpenExplorer() {
   if (explorerUrl.value) {
-    window.open(explorerUrl.value, "_blank");
+    openExternalTab(explorerUrl.value);
   }
 }
 
 function handleDone() {
   clearDraft();
-  router.push({ path: "/user" });
+
+  // Land on Activity, where the transaction just sent is the first row.
+  //
+  // Approvals coming from a dApp already did this: background broadcasts
+  // WALLET_TX_SUBMITTED and the home view switches tabs. A send made inside
+  // the wallet never touches that path, so it dropped the user on Assets
+  // instead, in front of a balance that had not moved yet, which is exactly
+  // the confusion that made someone send the same transaction twice.
+  router.push({ path: "/user", query: { tab: "activity" } });
 }
 
 function handleTryAgain() {

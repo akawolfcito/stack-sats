@@ -14,7 +14,7 @@
  */
 
 import type { Page } from "@playwright/test";
-import { test, expect } from "./fixtures";
+import { test, expect, pinNetwork, ADDRESS_PREFIX, ADDRESS_PATTERN } from "./fixtures";
 import { TEST_PIN, importTestWalletThroughUi } from "../helpers/wallet-setup";
 
 interface SidePanelCall {
@@ -54,6 +54,7 @@ test("the Home header opens the wallet in the side panel", async ({
 }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/index.html`);
+  await pinNetwork(page);
   await expect(page.locator('[data-roi="start-hero"]')).toBeVisible({
     timeout: 20000,
   });
@@ -91,6 +92,7 @@ test("the Home header copies the address on screen", async ({
 }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/index.html`);
+  await pinNetwork(page);
   await expect(page.locator('[data-roi="start-hero"]')).toBeVisible({
     timeout: 20000,
   });
@@ -125,11 +127,11 @@ test("the Home header copies the address on screen", async ({
   const clipboard = await page.evaluate(
     () => (window as unknown as { __copied?: string }).__copied ?? ""
   );
-  expect(clipboard).toMatch(/^ST[0-9A-Z]{38,}$/);
+  expect(clipboard).toMatch(ADDRESS_PATTERN);
 
   // The header shows a truncated form of the same address, so the copy
   // cannot be of some other account.
-  const [head] = shown.match(/ST[0-9A-Z]{4,}/) ?? [];
+  const [head] = shown.match(new RegExp(`${ADDRESS_PREFIX}[0-9A-Z]{4,}`)) ?? [];
   expect(clipboard.startsWith(head ?? "never")).toBe(true);
 
   // The chip names the chain, because this wallet holds two and the
@@ -148,6 +150,7 @@ test("the panel does not offer to open itself", async ({
 }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/index.html`);
+  await pinNetwork(page);
   await expect(page.locator('[data-roi="start-hero"]')).toBeVisible({
     timeout: 20000,
   });

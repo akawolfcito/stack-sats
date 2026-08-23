@@ -6,6 +6,7 @@
 import { type EncryptedData } from "../security/encryption";
 import { secureLog } from "../security/logger";
 import { walletVault, type VaultEntry, getVaultState, saveVaultState } from "../security/vault";
+import { clearOriginApprovals } from "../dapp/approvals";
 
 // Re-export types
 export type { VaultEntry as WalletEntry };
@@ -37,6 +38,8 @@ export async function getActiveWalletIdAsync(): Promise<string | null> {
  */
 export async function setActiveWalletIdAsync(id: string): Promise<void> {
   await walletVault.setActiveId(id);
+  // Another wallet means entirely different addresses.
+  await clearOriginApprovals();
 }
 
 /**

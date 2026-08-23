@@ -33,6 +33,7 @@ import {
   formatBtcDisplay,
   satoshisToBtc,
   calculateFee,
+  detectAddressType,
   fetchCombinedUtxos,
   type FeeLevel,
   type FeeEstimate,
@@ -114,9 +115,36 @@ const feeRate = computed(() => {
   return getFeeRateForLevel(feeEstimate.value, feeLevel.value);
 });
 
+/**
+ * The address the change will return to: the same script type the inputs
+ * came from. Mirrors buildAndSignTransaction, so the figure on screen and
+ * the figure charged agree.
+ */
+const changeAddress = computed(() => {
+  const inputType = detectAddressType(fundingAddress.value, network.value);
+  return inputType === 'p2tr' && senderP2TR.value ? senderP2TR.value : senderP2PKH.value;
+});
+
 const estimatedFee = computed(() => {
-  // Estimate for 1 input, 2 outputs (recipient + change)
-  return calculateFee(1, 2, feeRate.value, 'p2pkh');
+  /**
+   * The input type was hardcoded to 'p2pkh' here, so the screen always
+   * quoted the legacy price: 0.000599 BTC for a Taproot send that actually
+   * costs 0.000384. That number is not only shown, it drives the balance
+   * check, the MAX button and the draft handed to the confirmation screen,
+   * so the wallet was validating against a fee it was not going to pay.
+   *
+   * Before a recipient is typed there is no address to read, so it assumes
+   * the largest output type: the estimate then only ever falls once the
+   * real recipient is known, never rises.
+   */
+  const inputType = detectAddressType(fundingAddress.value, network.value);
+
+  const typed = recipient.value.trim();
+  const recipientType = typed ? detectAddressType(typed, network.value) : 'p2tr';
+  const changeType = detectAddressType(changeAddress.value, network.value);
+
+  // 1 input, 2 outputs (recipient + change)
+  return calculateFee(1, 2, feeRate.value, inputType, [recipientType, changeType]);
 });
 
 const amountSats = computed(() => {
@@ -195,7 +223,33 @@ const networkLabel = computed(() => {
   return labels[network.value] || network.value;
 });
 
-const senderAddressShort = computed(() => truncateBtcAddress(senderP2PKH.value));
+/**
+ * The address this send will actually spend from.
+ *
+ * The header showed the legacy address unconditionally, so a transaction
+ * funded by the Taproot UTXO announced the wrong source. Yesterday's spend
+ * said "From mw7qXcn8..." on screen and spent tb1p0lh8... on chain.
+ *
+ * The rule mirrors selectUtxos, which sorts by value and takes the largest
+ * confirmed UTXO first, so the two agree by construction. Before the UTXOs
+ * arrive there is nothing to go on, and legacy is the safe thing to show.
+ */
+const fundingAddress = computed(() => {
+  let largest: { address: string; value: number } | null = null;
+
+  for (const entry of utxos.value) {
+    for (const utxo of entry.utxos) {
+      if (!utxo.status.confirmed) continue;
+      if (!largest || utxo.value > largest.value) {
+        largest = { address: entry.address, value: utxo.value };
+      }
+    }
+  }
+
+  return largest?.address ?? senderP2PKH.value;
+});
+
+const senderAddressShort = computed(() => truncateBtcAddress(fundingAddress.value));
 const truncatedRecipient = computed(() => truncateBtcAddress(recipient.value.trim()));
 
 // Header
@@ -511,16 +565,16 @@ async function handlePinComplete(pin: string) {
         <div class="from-card-glow"></div>
         <div class="from-card-content">
           <div class="from-card-left">
+            <!--
+              The same mark the asset list uses, matching Send STX beside it:
+              the symbol's letter on the asset's own gradient.
+            -->
             <div class="from-icon from-icon--btc">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F7931A" stroke-width="1.5">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9 8h4c1.5 0 2.5 1 2.5 2.5S14.5 13 13 13H9m0-5v8m0-3h4.5c1.5 0 2.5 1 2.5 2.5S15 18 13.5 18H9"/>
-                <path d="M11 6v2m2-2v2m-2 10v2m2-2v2"/>
-              </svg>
+              <span class="from-icon-text">B</span>
             </div>
             <div class="from-info">
               <span class="from-name">{{ accountName }}</span>
-              <span class="from-address">{{ truncateBtcAddress(senderP2PKH) }}</span>
+              <span class="from-address">{{ senderAddressShort }}</span>
             </div>
           </div>
           <div class="from-balance">
@@ -812,7 +866,7 @@ async function handlePinComplete(pin: string) {
 .from-icon {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: var(--radius-md, 14px);
   background: linear-gradient(135deg, #2d2518, #1f1a14);
   border: 1px solid rgba(247, 147, 26, 0.2);
   display: flex;
@@ -821,7 +875,14 @@ async function handlePinComplete(pin: string) {
 }
 
 .from-icon--btc {
-  background: linear-gradient(135deg, rgba(247, 147, 26, 0.15), rgba(247, 147, 26, 0.05));
+  /* Same gradient as the BTC row in the asset list (assets/registry.ts). */
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1));
+}
+
+.from-icon-text {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
 .from-info {

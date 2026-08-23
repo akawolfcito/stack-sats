@@ -177,9 +177,33 @@ function handlePinCreate(enteredPin: string) {
   });
 }
 
+/**
+ * Go back to choosing the PIN, keeping the phrase and the name.
+ *
+ * The only escape was an unlabelled arrow, which nobody presses while
+ * reading an error. Everything gathered so far survives: the point is to
+ * replace a PIN that cannot be reproduced, not to start again.
+ */
+function restartPinChoice() {
+  pin.value = "";
+  pinError.value = "";
+  currentStep.value = "pin-create";
+  nextTick(() => {
+    pinInputRef.value?.clear();
+    pinInputRef.value?.focus();
+  });
+}
+
 async function handlePinConfirm(enteredPin: string) {
   if (enteredPin !== pin.value) {
     pinError.value = "PINs do not match";
+    // See StartView: leaving the six slots full makes PinInput drop every
+    // key, so the retry it asks for is impossible on the control in front
+    // of the user.
+    nextTick(() => {
+      pinInputRef.value?.clear();
+      pinInputRef.value?.focus();
+    });
     return;
   }
 
@@ -190,10 +214,28 @@ async function handlePinConfirm(enteredPin: string) {
     const encryptedData = await encryptWithPIN(mnemonic.value, pin.value);
 
     // Save as new wallet with name
-    await sessionManager.saveEncryptedWalletAsync(encryptedData, walletName.value.trim());
+    const wallet = await sessionManager.saveEncryptedWalletAsync(
+      encryptedData,
+      walletName.value.trim()
+    );
+
+    // Make it the active one before unlocking. addWalletAsync only assigns
+    // activeId to the very first wallet, so without this the unlock below
+    // reads the previous wallet and tries the new PIN on it. With different
+    // PINs that decryption fails, and the failure counts against the other
+    // wallet's lockout: creating a wallet quietly spent someone else's
+    // attempts. With matching PINs it appeared to work, which is how it
+    // lasted this long.
+    await sessionManager.switchWalletAsync(wallet.id);
 
     // Unlock session with new wallet
-    await sessionManager.unlock(pin.value);
+    const unlocked = await sessionManager.unlock(pin.value);
+    if (!unlocked) {
+      // Was discarded, and the next line navigated as though the wallet
+      // had opened. The wallet exists on disk; the session did not open.
+      pinError.value = "Wallet created, but it could not be opened. Unlock it from Manage Wallets.";
+      return;
+    }
 
     secureLog("New wallet created and encrypted", { name: walletName.value });
 
@@ -263,6 +305,26 @@ function handleStepBack() {
       hide-label
       @complete="currentStep === 'pin-create' ? handlePinCreate($event) : handlePinConfirm($event)"
     />
+
+    <!--
+      A way out that says what it does. Retyping only helps someone who
+      remembers the first PIN; the trap is confirming one already
+      forgotten, and the only control on offer was an unlabelled arrow in
+      the corner that means "leave" everywhere else in the app. So the
+      wallet was built, the phrase was written down, and it could not be
+      added: words that were safe and worthless.
+    -->
+    <template #actions>
+      <button
+        v-if="currentStep === 'pin-confirm'"
+        type="button"
+        class="pin-start-over"
+        data-roi="pin-start-over"
+        @click="restartPinChoice"
+      >
+        Choose a different PIN
+      </button>
+    </template>
 
     <template #loading>
       <p v-if="isLoading" class="loading-text">Creating wallet...</p>
@@ -375,6 +437,23 @@ function handleStepBack() {
 }
 
 /* V53: Error slot - reserved height for no layout shift */
+/* A text action, not a button: it competes with nothing and reads as the
+   sentence it is. */
+.pin-start-over {
+  background: none;
+  border: none;
+  padding: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.pin-start-over:hover {
+  color: var(--color-text-primary);
+}
+
 .error-slot {
   min-height: 20px;
   display: flex;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, nextTick, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
@@ -7,6 +7,7 @@ import ListGroup from "@/components/list/ListGroup.vue";
 import ListRow from "@/components/list/ListRow.vue";
 import { Button, ModalScaffold } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
+import PinInput from "@/components/PinInput.vue";
 import { secureLog } from "@/utils/security/logger";
 import {
   getWalletsAsync,
@@ -23,6 +24,16 @@ import {
   parseBackupFile,
 } from "@/utils/backup";
 import { DensityService, type DensityMode } from "@/services/density";
+import {
+  ERASE_ACKNOWLEDGEMENT,
+  ERASE_CONFIRM_WORD,
+  ERASE_HEADLINE,
+  ERASE_ROW_LABEL,
+  ERASE_ROW_SUBTITLE,
+  ERASE_SCREEN_TITLE,
+  eraseBody,
+  eraseButtonLabel,
+} from "@/utils/wallets/erase-copy";
 
 const router = useRouter();
 const route = useRoute();
@@ -54,7 +65,31 @@ const showPinInput = ref(false);
 const deleteError = ref("");
 const walletToDelete = ref<string | null>(null);
 
-const CONFIRM_WORD = "DELETE";
+// One source for the words, shared with UnlockView's copy of this flow.
+// Two screens is how this action ended up with three names. See
+// utils/wallets/erase-copy.
+const CONFIRM_WORD = ERASE_CONFIRM_WORD;
+
+/*
+ * Both gates, before the press rather than after it.
+ *
+ * The button lit up on the checkbox alone, so pressing it on a destructive
+ * screen only to be told a field was empty made the control look ready when
+ * it was not. A confirmation that says yes and then no teaches people to
+ * press through it.
+ */
+const canErase = computed(
+  () => eraseAcknowledged.value && confirmText.value.toUpperCase() === CONFIRM_WORD
+);
+
+/** The keypad, so a refused PIN can be emptied for the next attempt. */
+const erasePinRef = ref<InstanceType<typeof PinInput> | null>(null);
+
+/** Named, not counted. A number is read past; a name you recognise is not. */
+const walletNames = ref<string[]>([]);
+
+/** The promise has to be made before the word can be typed. */
+const eraseAcknowledged = ref(false);
 
 // Backup state
 const backupMessage = ref<{ type: "success" | "error"; text: string } | null>(null);
@@ -73,6 +108,7 @@ async function loadWalletSummary() {
   const activeId = await getActiveWalletIdAsync();
 
   walletCount.value = wallets.length;
+  walletNames.value = wallets.map((w) => w.name);
   const activeWallet = wallets.find(w => w.id === activeId);
   activeWalletName.value = activeWallet?.name || 'No wallet';
 }
@@ -119,6 +155,7 @@ function initiateDelete() {
 }
 
 function cancelDelete() {
+  eraseAcknowledged.value = false;
   showDeleteConfirm.value = false;
   showPinInput.value = false;
   confirmText.value = "";
@@ -140,6 +177,13 @@ async function handlePinComplete(pin: string) {
 
   if (!mnemonic) {
     deleteError.value = "Incorrect PIN. Attempts remaining: " + (3 - sessionManager.failedAttempts);
+    // PinInput writes into the first free slot of six. Leaving them full
+    // means the retry it asks for costs six backspaces first. See the same
+    // fix in StartView and AddWalletView.
+    nextTick(() => {
+      erasePinRef.value?.clear();
+      erasePinRef.value?.focus();
+    });
     return;
   }
 
@@ -177,6 +221,24 @@ async function handleExportBackup() {
     query: {
       action: "backup",
       returnTo: "/usermenu",
+    },
+  });
+}
+
+/**
+ * Show the recovery phrase again.
+ *
+ * Goes straight to the phrase on success rather than back here, because the
+ * grant VerifyPinView issues is spent by the first screen that asks for it.
+ */
+function handleShowRecoveryPhrase() {
+  backupMessage.value = null;
+
+  router.push({
+    path: "/verify-pin",
+    query: {
+      action: "reveal",
+      returnTo: "/recovery-phrase",
     },
   });
 }
@@ -355,8 +417,22 @@ function cancelImport() {
       <!-- Security & Backup Section -->
       <ListGroup title="Security & Backup" data-roi="menu-section-security">
         <ListRow
+          label="Recovery Phrase"
+          subtitle="See your words again, after your PIN"
+          chevron
+          data-roi="menu-action-recovery-phrase"
+          @click="handleShowRecoveryPhrase"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </template>
+        </ListRow>
+        <ListRow
           label="Export Secret Key"
-          subtitle="Download encrypted backup"
+          subtitle="Encrypted backup, opened only by this PIN"
           chevron
           data-roi="menu-action-export"
           @click="handleExportBackup"
@@ -367,9 +443,31 @@ function cancelImport() {
             </svg>
           </template>
         </ListRow>
+        <!--
+          Restoring from the recovery phrase is the way a wallet is normally
+          brought back, and the screen for it already existed at
+          /import-recovery, reachable from onboarding and Add Wallet but not
+          from here. Settings offered only the encrypted JSON, which needs
+          both this extension and the PIN, so the path that works everywhere
+          was the one missing.
+        -->
         <ListRow
-          label="Import Wallet"
-          subtitle="Restore from backup file"
+          label="Import from Recovery Phrase"
+          subtitle="Restore with your words"
+          chevron
+          data-roi="menu-action-import-phrase"
+          @click="router.push('/import-recovery')"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7V5a2 2 0 0 1 2-2h2M4 17v2a2 2 0 0 0 2 2h2m8-18h2a2 2 0 0 1 2 2v2m0 10v2a2 2 0 0 1-2 2h-2"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          </template>
+        </ListRow>
+        <ListRow
+          label="Import Backup File"
+          subtitle="Restore from encrypted backup"
           chevron
           @click="triggerFileInput"
         >
@@ -449,8 +547,8 @@ function cancelImport() {
       <!-- Danger Zone -->
       <ListGroup title="Danger Zone" variant="danger" data-roi="menu-section-danger">
         <ListRow
-          label="Delete All Wallets"
-          subtitle="Removes wallets from this device only"
+          :label="ERASE_ROW_LABEL"
+          :subtitle="ERASE_ROW_SUBTITLE"
           variant="danger"
           data-roi="menu-action-delete"
           @click="initiateDelete()"
@@ -480,12 +578,26 @@ function cancelImport() {
               <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
           </div>
-          <h3>Delete Wallet</h3>
-          <p>
-            This action will permanently delete your wallet from this extension.
-            Make sure you have your recovery phrase saved.
-          </p>
+          <h3>{{ ERASE_SCREEN_TITLE }}</h3>
+          <p class="erase-headline">{{ ERASE_HEADLINE }}</p>
+          <p>{{ eraseBody(walletCount) }}</p>
         </div>
+
+        <!-- Seeing the name you recognise is the moment a hand stops. -->
+        <div v-if="walletNames.length" class="erase-inventory" data-roi="erase-inventory">
+          <p class="erase-inventory-title">Wallets to be erased</p>
+          <ul>
+            <li v-for="name in walletNames" :key="name">{{ name }}</li>
+          </ul>
+        </div>
+
+        <!-- Before the typing. Ticking a box that claims something about
+             yourself is the gesture that actually gives pause; typing a
+             word is muscle. -->
+        <label class="erase-ack" data-roi="erase-acknowledge">
+          <input v-model="eraseAcknowledged" type="checkbox" />
+          <span>{{ ERASE_ACKNOWLEDGEMENT }}</span>
+        </label>
 
         <div class="confirm-input-section">
           <label class="confirm-label">
@@ -504,13 +616,21 @@ function cancelImport() {
 
         <div class="button-group">
           <Button variant="secondary" @click="cancelDelete">Cancel</Button>
-          <Button variant="danger" @click="confirmDeleteText">Continue</Button>
+          <Button
+            variant="danger"
+            :disabled="!canErase"
+            data-roi="erase-confirm-cta"
+            @click="confirmDeleteText"
+          >
+            {{ eraseButtonLabel(walletCount) }}
+          </Button>
         </div>
       </div>
 
       <div v-else class="pin-step">
         <p class="pin-prompt">Enter your PIN to confirm deletion:</p>
         <PinInput
+          ref="erasePinRef"
           mode="unlock"
           @complete="handlePinComplete"
           @cancel="handlePinCancel"
@@ -691,6 +811,8 @@ function cancelImport() {
   display: flex;
   flex-direction: column;
   padding: 24px 16px;
+  /* The inventory and the acknowledgement made this taller than a popup. */
+  overflow-y: auto;
 }
 
 .confirm-step {
@@ -768,6 +890,54 @@ function cancelImport() {
   text-transform: uppercase;
 }
 
+.erase-headline {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+}
+
+.erase-inventory {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-surface-2, rgba(255, 255, 255, 0.04));
+}
+
+.erase-inventory-title {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.erase-inventory ul {
+  margin: 0;
+  padding-left: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.erase-ack {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.erase-ack input {
+  /* Explicit, so the box does not depend on whatever the global input
+     rule happens to say next. `input:focus` still paints a background on
+     a native checkbox, which the accent-color here overrides. */
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--color-error);
+  margin-top: 0.2em;
+  flex-shrink: 0;
+}
+
 .error-text {
   color: var(--color-error);
   font-size: var(--font-size-sm);
@@ -778,6 +948,12 @@ function cancelImport() {
 .button-group {
   display: flex;
   gap: var(--space-md);
+  /* See UnlockView: a confirmation whose buttons can leave the screen is
+     worse than no confirmation, because it looks like one. */
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-sm) 0;
+  background: var(--color-bg-primary);
 }
 
 /* Ensure buttons stretch equally in button group */

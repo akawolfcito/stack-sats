@@ -26,8 +26,39 @@ import { Button } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
 import { secureLog } from "@/utils/security/logger";
 import { useLockoutCountdown } from "@/composables/useLockoutCountdown";
+import { useUiMode } from "@/composables/useUiMode";
+import { openSidePanel } from "@/composables/useSidePanel";
+import {
+  ERASE_CONFIRM_WORD,
+  ERASE_HEADLINE,
+  ERASE_SCREEN_TITLE,
+  eraseBody,
+  eraseButtonLabel,
+} from "@/utils/wallets/erase-copy";
+import { getWalletsAsync } from "@/utils/wallets";
 
 const router = useRouter();
+const { isPopup } = useUiMode();
+
+/**
+ * Open the side panel before unlocking, not after.
+ *
+ * The only entry point used to be the home screen, which is behind the PIN.
+ * So reaching the panel cost an unlock in the popup, then the panel opening
+ * on its own lock screen, then a second unlock. Offering it here spends one
+ * PIN instead of two, and the wallet ends up where dApp approvals are
+ * delivered.
+ *
+ * Called straight from the handler: chrome.sidePanel.open() needs the user
+ * gesture still to be in flight.
+ */
+const handleOpenSidePanel = async () => {
+  const outcome = await openSidePanel();
+  // Two lock screens on top of each other help nobody.
+  if (outcome === "sidepanel" && isPopup.value) {
+    window.close();
+  }
+};
 
 const pinError = ref("");
 const isLoading = ref(false);
@@ -64,7 +95,15 @@ watch(
   }
 );
 
-const canDelete = computed(() => deleteConfirmText.value.toUpperCase() === "DELETE");
+// Same words as the flow in Settings. Two screens implementing one
+// destructive action is how it acquired three names, and the singular one
+// cost a user both of their wallets. See utils/wallets/erase-copy.
+const canDelete = computed(
+  () => deleteConfirmText.value.toUpperCase() === ERASE_CONFIRM_WORD
+);
+
+/** How many are about to go. No screen used to say. */
+const eraseWalletCount = ref(0);
 
 // V55.0: Biometrics visibility - show only if supported AND enabled by user
 // Currently defaults to false until biometrics configuration is implemented
@@ -125,7 +164,16 @@ const handleConfirmDelete = async () => {
   router.push({ path: "/" });
 };
 
-onMounted(() => {
+onMounted(async () => {
+  // Names and count live unencrypted in the vault metadata, so this works
+  // without a session, which is the point: this screen is reached from
+  // "Forgot PIN?", where there is no session to be had.
+  try {
+    eraseWalletCount.value = (await getWalletsAsync()).length;
+  } catch {
+    // Leave it at zero: the copy falls back to "every wallet".
+  }
+
   if (!sessionManager.hasWallet) {
     router.push({ path: "/" });
     return;
@@ -181,6 +229,33 @@ onBeforeUnmount(() => {
       </template>
     </PinInput>
 
+    <!--
+      Side panel entry, in the slot PinScreenShell keeps for secondary
+      actions. Below the keypad on purpose: it sits apart from "Forgot PIN?",
+      which is a rare escape hatch rather than a daily action.
+    -->
+    <!--
+      Offered only from the popup, which is the surface it exists to
+      escape. Hiding it merely when isSidePanel was true left it showing
+      on any tall surface the URL had not labelled, and on the side panel
+      itself once a resize had overwritten that label.
+    -->
+    <template v-if="isPopup" #actions>
+      <button
+        type="button"
+        class="sidepanel-link"
+        :disabled="isLoading"
+        data-roi="unlock-sidepanel"
+        @click="handleOpenSidePanel"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="15" y1="3" x2="15" y2="21"/>
+        </svg>
+        <span>Open in side panel</span>
+      </button>
+    </template>
+
     <!-- Loading indicator -->
     <template #loading>
       <p v-if="isLoading" class="loading-text">Unlocking...</p>
@@ -200,7 +275,7 @@ onBeforeUnmount(() => {
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </Button>
-        <h1>Reset Wallet</h1>
+        <h1>{{ ERASE_SCREEN_TITLE }}</h1>
         <div class="header-spacer"></div>
       </header>
 
@@ -220,23 +295,21 @@ onBeforeUnmount(() => {
               </svg>
             </div>
 
-            <h2 class="danger-headline">Danger Zone</h2>
+            <h2 class="danger-headline">{{ ERASE_HEADLINE }}</h2>
 
-            <p class="danger-text">
-              This action is <span class="text-danger">irreversible</span>. It will permanently delete all your wallets, keys, and transaction history from this device.
-            </p>
+            <p class="danger-text">{{ eraseBody(eraseWalletCount) }}</p>
 
             <!-- Input Section -->
             <div class="input-section">
               <label class="input-label" for="delete-input">
-                Type 'DELETE' to confirm
+                Type '{{ ERASE_CONFIRM_WORD }}' to confirm
               </label>
               <div class="input-wrapper">
                 <input
                   id="delete-input"
                   v-model="deleteConfirmText"
                   type="text"
-                  placeholder="DELETE"
+                  :placeholder="ERASE_CONFIRM_WORD"
                   class="delete-input"
                   autocomplete="off"
                 />
@@ -286,7 +359,7 @@ onBeforeUnmount(() => {
               <line x1="10" y1="11" x2="10" y2="17"/>
               <line x1="14" y1="11" x2="14" y2="17"/>
             </svg>
-            Reset Wallet
+            {{ eraseButtonLabel(eraseWalletCount) }}
           </Button>
         </div>
       </main>
@@ -296,6 +369,29 @@ onBeforeUnmount(() => {
 
 <style scoped>
 /* V54.8: Forgot PIN premium text link */
+.sidepanel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.sidepanel-link:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.sidepanel-link:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .forgot-pin-link {
   background: none;
   border: none;
@@ -596,8 +692,20 @@ onBeforeUnmount(() => {
 }
 
 /* Action Buttons */
+/*
+ * Pinned to the bottom of the scrolling area. These lived in the flow,
+ * pushed down by a spacer, which assumes the content fits. In a 600px
+ * popup it does not, and the first thing to leave the screen was the pair
+ * of buttons: a destructive confirmation with Cancel half out of view.
+ * Sticky keeps them reachable at any window height, and the background
+ * has to be opaque or the text scrolls visibly underneath them.
+ */
 .action-buttons {
   display: flex;
   gap: var(--space-md);
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-sm) 0;
+  background: var(--color-bg-primary);
 }
 </style>

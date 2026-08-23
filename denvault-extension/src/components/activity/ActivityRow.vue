@@ -17,6 +17,15 @@ export interface ActivityRowProps {
   amountText?: string
   timeText?: string
   isOutgoing?: boolean
+  /**
+   * Neither in nor out: the wallet paid itself.
+   *
+   * isOutgoing alone only has two states, so a Bitcoin move between the
+   * user's own addresses had to pick one. Suppressing the minus made it
+   * render as "+0.0005 BTC" in green, which reads as money arriving, and
+   * showing the minus reads as money leaving. Neither happened.
+   */
+  isNeutral?: boolean
 }
 
 defineProps<ActivityRowProps>()
@@ -66,8 +75,15 @@ const getStatusLabel = (status: ActivityStatus) => {
     </div>
 
     <!-- Amount (if applicable) -->
-    <div v-if="amountText" class="activity-row__amount" :class="{ 'activity-row__amount--outgoing': isOutgoing }">
-      {{ isOutgoing ? '-' : '+' }}{{ amountText }}
+    <div
+      v-if="amountText"
+      class="activity-row__amount"
+      :class="{
+        'activity-row__amount--outgoing': isOutgoing && !isNeutral,
+        'activity-row__amount--neutral': isNeutral,
+      }"
+    >
+      <template v-if="!isNeutral">{{ isOutgoing ? '-' : '+' }}</template>{{ amountText }}
     </div>
 
     <!-- Chevron -->
@@ -222,6 +238,11 @@ const getStatusLabel = (status: ActivityStatus) => {
 
 .activity-row__amount--outgoing {
   color: var(--color-text-secondary); /* V30: Muted for outgoing */
+}
+
+/* Nothing entered or left the wallet, so it gets no success green. */
+.activity-row__amount--neutral {
+  color: var(--color-text-secondary);
 }
 
 /* Chevron */

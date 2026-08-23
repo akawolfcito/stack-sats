@@ -1,12 +1,27 @@
 <script setup lang="ts">
-defineProps<{
-  /** Enable scrolling in content area (default: true) */
-  scroll?: boolean;
-  /** Additional class for content wrapper */
-  contentClass?: string;
-  /** Apply standard horizontal padding to content (default: true) */
-  padded?: boolean;
-}>();
+/**
+ * Defaults have to be declared, not implied.
+ *
+ * These props documented themselves as "default: true" and the template
+ * asked `scroll !== false`, but Vue casts an absent Boolean prop to false
+ * rather than leaving it undefined. So every screen that did not pass
+ * `scroll` got no scroll container at all: the content overflowed and was
+ * clipped by the shell's overflow:hidden, with no way to reach the bottom.
+ *
+ * Seen on /asset/stx, where the activity list ran 26px past the viewport,
+ * and on /recovery-phrase, where the derivation path sat below the fold.
+ */
+withDefaults(
+  defineProps<{
+    /** Enable scrolling in content area */
+    scroll?: boolean;
+    /** Additional class for content wrapper */
+    contentClass?: string;
+    /** Apply standard horizontal padding to content */
+    padded?: boolean;
+  }>(),
+  { scroll: true, padded: true, contentClass: undefined }
+);
 </script>
 
 <template>

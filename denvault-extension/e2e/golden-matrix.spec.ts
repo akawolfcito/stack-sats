@@ -20,6 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { TEST_MNEMONIC } from './fixtures/mock-wallet.js';
+import { stubChainApis } from './fixtures/chain-api.js';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -108,51 +109,69 @@ async function setupUnlockedWallet(page: Page) {
     localStorage.setItem('__UI_SNAPSHOT_MNEMONIC__', mnemonic);
 
     // Also set density and network for consistent screenshots
-    localStorage.setItem('selected_network', 'devnet');
+    // Devnet was withdrawn in a6d6195 and resolves to testnet anyway.
+    localStorage.setItem('selected_network', 'testnet');
   }, TEST_MNEMONIC);
   // No reload - navigation happens after setup
 }
 
+/**
+ * Open an overlay through the snapshot hook the app exposes.
+ *
+ * These used to sleep 500ms and hope the hook had appeared, then warn to a
+ * console nobody reads when it had not, and carry on to photograph whatever
+ * was on screen. Under parallel load that produced entirely black frames,
+ * saved as golden, and counted as passes: the run reported "all 8 dropdown
+ * screenshots present" because present only meant the file existed.
+ *
+ * Waiting for the hook itself removes the guess, and a missing hook now
+ * fails the test instead of quietly capturing nothing.
+ */
+async function openViaSnapshotHook(page: Page, name: string) {
+  // The hook only exists once the app has mounted, so waiting for it is
+  // also the proof that there is something on screen to photograph.
+  await page.waitForFunction(
+    (hookName) => Boolean((window as any).__UI_SNAPSHOT__?.[hookName]),
+    name,
+    { timeout: 15_000 }
+  );
+
+  // The hook is installed at mount, but the accounts are derived after it,
+  // and until they land the entire home body is a "Loading accounts..."
+  // placeholder: the balance, the switcher and the chip live behind a
+  // v-else that has not rendered yet. Opening a dropdown over that
+  // photographed the placeholder, or an empty frame when even that had not
+  // painted, and the v-else swapping in afterwards is what closed an
+  // overlay that had already opened. Between runs three to eight of these
+  // frames came back blank on that race.
+  //
+  // So wait for the thing that has to be behind the dropdown, rather than
+  // for half a second and a hope.
+  await page.waitForSelector('[data-roi="home-balance-card"]', {
+    state: 'visible',
+    timeout: 15_000,
+  });
+
+  await page.evaluate((hookName) => {
+    (window as any).__UI_SNAPSHOT__[hookName]();
+  }, name);
+
+  await page.waitForTimeout(300); // Overlay animation
+}
+
 // V35: Helper to open ReceiveModal via snapshot hook
 async function openReceiveModal(page: Page) {
-  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
-  await page.evaluate(() => {
-    const hook = (window as any).__UI_SNAPSHOT__;
-    if (hook?.openReceiveModal) {
-      hook.openReceiveModal();
-    } else {
-      console.warn('Snapshot hook not available for ReceiveModal');
-    }
-  });
-  await page.waitForTimeout(300); // Wait for modal animation
+  await openViaSnapshotHook(page, 'openReceiveModal');
 }
 
 // V57: Helper to open AccountSwitcher dropdown via snapshot hook
 async function openAccountSwitcher(page: Page) {
-  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
-  await page.evaluate(() => {
-    const hook = (window as any).__UI_SNAPSHOT__;
-    if (hook?.openAccountSwitcher) {
-      hook.openAccountSwitcher();
-    } else {
-      console.warn('Snapshot hook not available for AccountSwitcher');
-    }
-  });
-  await page.waitForTimeout(300); // Wait for dropdown animation
+  await openViaSnapshotHook(page, 'openAccountSwitcher');
 }
 
 // V57: Helper to open NetworkChip dropdown via snapshot hook
 async function openNetworkChip(page: Page) {
-  await page.waitForTimeout(500); // Wait for Vue component to mount and expose hook
-  await page.evaluate(() => {
-    const hook = (window as any).__UI_SNAPSHOT__;
-    if (hook?.openNetworkChip) {
-      hook.openNetworkChip();
-    } else {
-      console.warn('Snapshot hook not available for NetworkChip');
-    }
-  });
-  await page.waitForTimeout(300); // Wait for dropdown animation
+  await openViaSnapshotHook(page, 'openNetworkChip');
 }
 
 // Helper: Set density mode
@@ -186,14 +205,41 @@ async function captureScreen(page: Page, filename: string) {
   console.log(`  Captured: ${filename}.png`);
 }
 
-// Ensure output directory exists
+/** Every filename this matrix is going to write, one per test. */
+const EXPECTED_FILES = new Set(
+  VIEWPORTS.flatMap(viewport =>
+    DENSITIES.flatMap(density =>
+      ROUTES.map(route => `${viewport.name}-${density}-${route.name}.png`)
+    )
+  )
+);
+
+/**
+ * Ensure the output directory exists, without wiping it.
+ *
+ * beforeAll runs once per worker, not once per run, and this suite is
+ * fullyParallel. So four workers each cleared this directory while the
+ * others were writing into it: screenshots vanished after being taken,
+ * which is the "between runs three to eight captures go missing" that had
+ * gone unexplained, and two workers racing the same unlink killed one
+ * outright with ENOENT, which is why a run would stop at 24 of 32 with
+ * seven tests never started.
+ *
+ * Nothing has to be cleared for correctness: each test overwrites its own
+ * file by name. Only names that no state claims any more are worth
+ * removing, and that is done tolerantly, because another worker may have
+ * removed the same one first.
+ */
 test.beforeAll(async () => {
-  if (fs.existsSync(CURRENT_DIR)) {
-    // Clear previous screenshots
-    const files = fs.readdirSync(CURRENT_DIR).filter(f => f.endsWith('.png'));
-    files.forEach(f => fs.unlinkSync(path.join(CURRENT_DIR, f)));
-  } else {
-    fs.mkdirSync(CURRENT_DIR, { recursive: true });
+  fs.mkdirSync(CURRENT_DIR, { recursive: true });
+
+  for (const file of fs.readdirSync(CURRENT_DIR).filter(f => f.endsWith('.png'))) {
+    if (EXPECTED_FILES.has(file)) continue;
+    try {
+      fs.unlinkSync(path.join(CURRENT_DIR, file));
+    } catch {
+      // Already gone: another worker got to it first.
+    }
   }
 });
 
@@ -217,6 +263,8 @@ for (const viewport of VIEWPORTS) {
             // The key is to set localStorage and reload so sessionManager picks it up
 
             // Step 1: Go to blank page to initialize browser context
+            await stubChainApis(page);
+
             await page.goto('about:blank');
 
             // Step 2: Navigate to app base to get localStorage access
@@ -236,8 +284,18 @@ for (const viewport of VIEWPORTS) {
             await page.reload();
 
             // Step 6: Navigate to target route (if not root)
+            //
+            // Through the hash, because the router is createWebHashHistory
+            // (src/router/index.ts). Navigating to "/send" left the hash
+            // empty, so the app started at "/" and landed on /user, and the
+            // suite has been photographing the home screen under three
+            // different names: send and usermenu were both just /user.
+            //
+            // start and unlock only looked right by accident: their storage
+            // state makes the app land there on its own. The overlays are
+            // captured by afterNav hooks on /user, so they were fine.
             if (route.path !== '/') {
-              await page.goto(route.path);
+              await page.goto(`/#${route.path}`);
             }
 
             // Step 7: Apply density class to document
