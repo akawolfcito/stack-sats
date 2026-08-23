@@ -1,9 +1,9 @@
-# CWS Submit v1.1.3: guía lista para rellenar
+# CWS Submit v1.1.4: guía lista para rellenar
 
 **Item ID:** `npojbdkhjpgfkfjeagfcfhjchcnpkfek`. Sube al item existente. **Nunca crear un listing nuevo**: un duplicado es en sí una violación de política.
-**Paquete:** `denvault-v1.1.3.zip`, en la raíz del repo. No subas 1.1.0, 1.1.1 ni 1.1.2, que siguen en disco.
+**Paquete:** `denvault-v1.1.4.zip`, en la raíz del repo. No subas 1.1.0, 1.1.1, 1.1.2 ni 1.1.3, que siguen en disco.
 
-> Verificado el 2026-08-12 contra `main`: 997/997 unit, 7/7 e2e contra la extensión real cargada, `verify-store-assets` PASS (dimensiones **y** canal alfa), y el `manifest.json` dentro del ZIP es byte a byte el mismo que `public/manifest.json`.
+> Verificado el 2026-08-23 contra `main` (`8e492ef`, tag `v1.1.4`): **1298 unit en 85 ficheros con exit 0**, **27/27 e2e** contra la extensión real cargada, `type-check`, `lint` y `verify:production` 5/5, y el `manifest.json` dentro del ZIP es byte a byte el mismo que `public/manifest.json` (`60d4fe1d...4047a83`).
 > El bloque equivalente de `docs/RELEASE.md` está **obsoleto**: justifica `tabs` y `api.platform.hiro.so`, eliminados en el PR #28.
 
 Las secciones van en el orden en que aparecen en el menú lateral del dashboard. Cada bloque en ``` se pega tal cual.
@@ -25,14 +25,14 @@ Esa 1.0.0 salió del commit inicial `36b7d6e` (23-dic-2025), cuando el proyecto 
 
 `scripting` estaba y no se usaba. El rechazo era correcto. El commit `164728b` (1.0.1) ya lo había quitado, pero ese build nunca se subió y el draft quedó congelado en 1.0.0 durante un año.
 
-**No apeles.** El manifest de 1.1.3 pide exactamente:
+**No apeles.** El manifest de 1.1.4 pide exactamente:
 
 ```json
-"permissions": ["storage", "sidePanel"],
+"permissions": ["storage", "sidePanel", "clipboardRead"],
 "host_permissions": ["https://api.hiro.so/*", "https://api.testnet.hiro.so/*"]
 ```
 
-Los dos permisos y los dos hosts se usan, y hay tests que fallan si vuelve `scripting` o `tabs` (`src/test/manifest-permissions.test.ts`).
+Los **tres** permisos y los dos hosts se usan, y hay tests que fallan si vuelve `scripting` o `tabs` (`src/test/manifest-permissions.test.ts`).
 
 ---
 
@@ -40,9 +40,9 @@ Los dos permisos y los dos hosts se usan, y hay tests que fallan si vuelve `scri
 
 ## 1 · Package
 
-- [ ] **Upload new package** → `denvault-v1.1.3.zip`
+- [ ] **Upload new package** → `denvault-v1.1.4.zip`
 
-Sube el ZIP antes que nada: hasta que el paquete no esté en 1.1.3, el resto del formulario describe una versión que ya no existe.
+Sube el ZIP antes que nada: hasta que el paquete no esté en 1.1.4, el resto del formulario describe una versión que ya no existe.
 
 ---
 
@@ -163,6 +163,14 @@ Stores the encrypted wallet vault, network and display settings, and the unlocke
 Opens the wallet in Chrome's side panel so it stays visible while the user interacts with a dApp in the page. Used by chrome.sidePanel.open and chrome.sidePanel.setOptions in the extension's service worker.
 ```
 
+**Permission justification:** `clipboardRead`
+
+```
+Lets the user paste into the four fields where typing by hand is the error-prone path: the recipient address when sending STX, the recipient address when sending Bitcoin, a SIP-10 contract identifier when adding a token, and a recovery phrase when importing an existing wallet. A mistyped blockchain address sends funds to the wrong place irreversibly, so paste is a safety feature here, not a convenience.
+
+Reading happens only inside those four screens, in direct response to the user pressing a Paste button. The extension never reads the clipboard in the background, on page load, or from any web page. The clipboard contents are placed in the form field the user is looking at and are never transmitted.
+```
+
 **Host permission justification**
 
 ```
@@ -246,7 +254,7 @@ expires. No wallet reset is required.
 ## Checklist de envío
 
 - [x] ~~Revisar el manifest de la versión rechazada~~. Resuelto en el Paso 0. No apelar.
-- [ ] **Package**: subir `denvault-v1.1.3.zip`
+- [ ] **Package**: subir `denvault-v1.1.4.zip`
 - [ ] **Store listing**: pegar la Description
 - [ ] **Store listing**: decidir categoría (Developer Tools vs Productivity)
 - [ ] **Store listing**: borrar las 2 screenshots viejas y subir las 5 nuevas
@@ -263,5 +271,5 @@ expires. No wallet reset is required.
 
 ## Después de enviar
 
-- [ ] Borrar `denvault-v1.1.0.zip`, `denvault-v1.1.1.zip` y `denvault-v1.1.2.zip` de la raíz del repo
+- [ ] Borrar `denvault-v1.1.0.zip`, `denvault-v1.1.1.zip`, `denvault-v1.1.2.zip` y `denvault-v1.1.3.zip` de la raíz del repo
 - [ ] Corregir el nombre en el issue [#3](https://github.com/akawolfcito/stack-sats/issues/3): aún dice "Stack-SATs", la marca es **DenVault**
