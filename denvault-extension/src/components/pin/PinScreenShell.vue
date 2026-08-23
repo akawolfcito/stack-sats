@@ -84,7 +84,12 @@ function handleBack() {
     <!-- V55.1: Top Cluster - consistent breathing room and title baseline -->
     <header class="pin-header" data-roi="pin-header" data-roi-cluster="pin-top-cluster">
       <!-- V54.9: Optional eyebrow (step indicator) -->
-      <span v-if="eyebrow" class="pin-eyebrow" data-roi="pin-eyebrow">{{ eyebrow }}</span>
+      <!--
+        Always rendered. "Create a 6-digit PIN" carries an eyebrow and
+        "Confirm your PIN" does not, so removing the row moved the whole
+        header up between two steps of the same flow, one keystroke apart.
+      -->
+      <span class="pin-eyebrow" data-roi="pin-eyebrow">{{ eyebrow || '\u00a0' }}</span>
 
       <!-- Optional compact logo -->
       <div v-if="showLogo" class="logo-container">
@@ -139,9 +144,11 @@ function handleBack() {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: transparent;
+  /* A way out that nobody can see is not a way out. This one was found by
+     hovering blindly in the corner. */
+  background: rgba(255, 255, 255, 0.06);
   border: none;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -150,7 +157,7 @@ function handleBack() {
 }
 
 .back-button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--color-text-primary);
 }
 

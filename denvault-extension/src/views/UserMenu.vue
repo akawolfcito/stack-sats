@@ -7,6 +7,7 @@ import ListGroup from "@/components/list/ListGroup.vue";
 import ListRow from "@/components/list/ListRow.vue";
 import { Button, ModalScaffold } from "@/components/ui";
 import { sessionManager } from "@/utils/security/session";
+import PinInput from "@/components/PinInput.vue";
 import { secureLog } from "@/utils/security/logger";
 import {
   getWalletsAsync,
