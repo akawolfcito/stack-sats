@@ -44,6 +44,17 @@ vi.mock("@/utils/security/session", () => ({
 }));
 
 vi.mock("@/utils/security/logger", () => ({ secureLog: vi.fn() }));
+
+/*
+ * Removing now needs the PIN of the wallet being removed. These cases are
+ * about what removal does once authorised, so the proof is stubbed and its
+ * own behaviour is covered in utils/wallets/ownership.test.ts.
+ */
+const verifyWalletPin = vi.hoisted(() => vi.fn());
+vi.mock("@/utils/wallets/ownership", () => ({
+  verifyWalletPin,
+  describeWalletAuth: () => "That is not this wallet's PIN.",
+}));
 vi.mock("vue-router", () => ({ useRouter: () => ({ push }) }));
 
 import ManageWalletsView from "./ManageWalletsView.vue";
@@ -59,6 +70,8 @@ describe("ManageWalletsView removal", () => {
       { id: "w1", name: "The Wolf", createdAt: 1 },
       { id: "w2", name: "Test Wallet", createdAt: 2 },
     ];
+    verifyWalletPin.mockReset();
+    verifyWalletPin.mockResolvedValue({ ok: true });
   });
 
   afterEach(() => {
@@ -82,7 +95,17 @@ describe("ManageWalletsView removal", () => {
   const roi = (name: string) =>
     document.querySelector<HTMLElement>(`[data-roi="${name}"]`);
 
-  async function confirmRemoval() {
+  /** Type a PIN, since the confirm button stays disabled without one. */
+  async function enterRemovalPin(pin = "111111") {
+    const field = roi("remove-wallet-pin") as HTMLInputElement | null;
+    expect(field, "the PIN field should be on screen").toBeTruthy();
+    field!.value = pin;
+    field!.dispatchEvent(new Event("input", { bubbles: true }));
+    await flushPromises();
+  }
+
+  async function confirmRemoval(pin = "111111") {
+    await enterRemovalPin(pin);
     const button = roi("remove-wallet-confirm");
     expect(button, "the confirm button should be on screen").toBeTruthy();
     button!.click();
@@ -141,5 +164,38 @@ describe("ManageWalletsView removal", () => {
     walletStore.entries = [{ id: "w1", name: "The Wolf", createdAt: 1 }];
     await startRemoving("The Wolf");
     expect(roi("remove-wallet-last")).toBeTruthy();
+  });
+
+  /** The reported hole: one wallet's PIN was authority over every wallet. */
+  it("does not remove anything when the PIN is not this wallet's", async () => {
+    verifyWalletPin.mockResolvedValue({ ok: false, reason: "wrong-pin" });
+    await startRemoving("Test Wallet");
+
+    await confirmRemoval("222222");
+
+    expect(deleteWalletAsync).not.toHaveBeenCalled();
+    expect(walletStore.entries.map((e) => e.id)).toEqual(["w1", "w2"]);
+    expect(roi("remove-wallet-error")?.textContent).toContain("this wallet's PIN");
+  });
+
+  it("checks the PIN against the wallet being removed, not the open one", async () => {
+    await startRemoving("Test Wallet");
+
+    await confirmRemoval("111111");
+
+    expect(verifyWalletPin).toHaveBeenCalledWith("w2", "111111");
+  });
+
+  it("keeps the destructive button out of reach until a full PIN is typed", async () => {
+    await startRemoving("Test Wallet");
+
+    const button = roi("remove-wallet-confirm") as HTMLButtonElement | null;
+    expect(button?.disabled).toBe(true);
+
+    await enterRemovalPin("11111");
+    expect((roi("remove-wallet-confirm") as HTMLButtonElement).disabled).toBe(true);
+
+    await enterRemovalPin("111111");
+    expect((roi("remove-wallet-confirm") as HTMLButtonElement).disabled).toBe(false);
   });
 });

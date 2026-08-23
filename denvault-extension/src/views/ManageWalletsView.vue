@@ -21,6 +21,7 @@ import ListRow from '@/components/list/ListRow.vue';
 import { Button, Sheet } from '@/components/ui';
 import { sessionManager } from '@/utils/security/session';
 import { secureLog } from '@/utils/security/logger';
+import { verifyWalletPin, describeWalletAuth } from '@/utils/wallets/ownership';
 import {
   getWalletsAsync,
   getActiveWalletIdAsync,
@@ -56,6 +57,16 @@ function setRenameInputRef(el: Element | ComponentPublicInstance | null) {
 // Remove confirmation state
 const showRemoveConfirm = ref(false);
 const walletToRemove = ref<WalletEntry | null>(null);
+
+/*
+ * Removing asked for nothing, so the PIN of any wallet was authority over
+ * every wallet on the device. Funds do survive if the recovery phrase was
+ * written down, but when it was not this is permanent loss carried out by
+ * someone who never showed the wallet was theirs.
+ */
+const removePin = ref("");
+const removeError = ref("");
+const isRemoving = ref(false);
 
 // Computed
 const sortedWallets = computed(() => {
@@ -171,13 +182,27 @@ function initiateRemove(wallet: WalletEntry, event: Event) {
 function cancelRemove() {
   showRemoveConfirm.value = false;
   walletToRemove.value = null;
+  removePin.value = "";
+  removeError.value = "";
 }
 
 async function confirmRemove() {
-  if (!walletToRemove.value) return;
+  if (!walletToRemove.value || isRemoving.value) return;
 
   const isActive = walletToRemove.value.id === activeWalletId.value;
   const walletId = walletToRemove.value.id;
+
+  // The PIN of the wallet being removed, not the one that opened the
+  // session. Being unlocked with one wallet is not authority over another.
+  isRemoving.value = true;
+  const auth = await verifyWalletPin(walletId, removePin.value);
+  isRemoving.value = false;
+
+  if (!auth.ok) {
+    removeError.value = describeWalletAuth(auth);
+    removePin.value = "";
+    return;
+  }
 
   await deleteWalletAsync(walletId);
   secureLog('Wallet removed from device', { walletId });
@@ -185,6 +210,8 @@ async function confirmRemove() {
   // Reset modal state
   showRemoveConfirm.value = false;
   walletToRemove.value = null;
+  removePin.value = "";
+  removeError.value = "";
 
   // Reload wallets
   await loadWallets();
@@ -300,6 +327,7 @@ function handleWalletClick(wallet: WalletEntry) {
                 v-if="editingWalletId !== wallet.id"
                 class="action-btn action-btn--danger"
                 title="Remove wallet"
+                data-roi="wallet-remove"
                 @click="initiateRemove(wallet, $event)"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -356,6 +384,24 @@ function handleWalletClick(wallet: WalletEntry) {
           This is your only wallet. Removing it returns DenVault to setup, and
           nothing but your recovery phrase can bring it back.
         </p>
+
+        <label class="remove-modal-pin">
+          <span>Enter this wallet's PIN to remove it</span>
+          <input
+            v-model="removePin"
+            type="password"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="6"
+            placeholder="6 digits"
+            data-roi="remove-wallet-pin"
+            @keyup.enter="confirmRemove"
+          />
+        </label>
+
+        <p class="remove-modal-error" data-roi="remove-wallet-error" aria-live="polite">
+          {{ removeError || ' ' }}
+        </p>
       </div>
 
       <template #footer>
@@ -371,6 +417,7 @@ function handleWalletClick(wallet: WalletEntry) {
           <Button
             variant="danger"
             full-width
+            :disabled="removePin.length !== 6 || isRemoving"
             data-roi="remove-wallet-confirm"
             @click="confirmRemove"
           >
@@ -383,6 +430,29 @@ function handleWalletClick(wallet: WalletEntry) {
 </template>
 
 <style scoped>
+.remove-modal-pin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.remove-modal-pin input {
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.remove-modal-error {
+  min-height: 1.2em;
+  margin: var(--space-xs) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+  text-align: center;
+}
+
 /* V78: Root view styling */
 .manage-wallets-view {
   position: relative;
