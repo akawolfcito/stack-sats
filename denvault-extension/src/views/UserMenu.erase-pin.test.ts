@@ -20,6 +20,18 @@ vi.mock("@/utils/wallets", () => ({
   getWalletCountAsync: vi.fn().mockResolvedValue(1),
 }));
 vi.mock("@/utils/security/logger", () => ({ secureLog: vi.fn() }));
+
+const unlock = vi.hoisted(() => vi.fn());
+vi.mock("@/utils/security/session", () => ({
+  sessionManager: {
+    unlock,
+    failedAttempts: 1,
+    deleteWalletAsync: vi.fn(),
+    getMnemonic: () => null,
+    isLocked: false,
+    hasWallet: true,
+  },
+}));
 vi.mock("vue-router", () => ({
   useRouter: () => ({ push: vi.fn() }),
   useRoute: () => ({ query: {}, path: "/usermenu" }),
@@ -60,5 +72,57 @@ describe("UserMenu erase confirmation", () => {
     expect(wrapper.find('[data-roi="pin-input"]').exists()).toBe(true);
     expect(wrapper.find('[data-roi="pin-keypad"]').exists()).toBe(true);
     expect(html.toLowerCase()).not.toContain("<pininput");
+  });
+
+  /**
+   * The button lit up on the checkbox alone, so it could be pressed on a
+   * destructive screen only to answer that a field was empty.
+   */
+  it("stays out of reach until both the box and the word are done", async () => {
+    wrapper = mount(UserMenu);
+    await flushPromises();
+    await wrapper.get('[data-roi="menu-action-delete"]').trigger("click");
+    await flushPromises();
+
+    const cta = () =>
+      wrapper!.get('[data-roi="erase-confirm-cta"]').element as HTMLButtonElement;
+
+    expect(cta().disabled).toBe(true);
+
+    await wrapper.get('[data-roi="erase-acknowledge"] input').setValue(true);
+    expect(cta().disabled, "the box alone is not enough").toBe(true);
+
+    await wrapper.get("input.confirm-input").setValue("ERAS");
+    expect(cta().disabled, "a partial word is not enough").toBe(true);
+
+    await wrapper.get("input.confirm-input").setValue("erase");
+    expect(cta().disabled, "case should not matter").toBe(false);
+  });
+
+  /** Same defect as the PIN dead end in StartView, on a worse screen. */
+  it("empties the keypad after a refused PIN", async () => {
+    unlock.mockResolvedValue(null);
+
+    wrapper = mount(UserMenu);
+    await flushPromises();
+    await wrapper.get('[data-roi="menu-action-delete"]').trigger("click");
+    await flushPromises();
+    await wrapper.get('[data-roi="erase-acknowledge"] input').setValue(true);
+    await wrapper.get("input.confirm-input").setValue("ERASE");
+    await wrapper.get('[data-roi="erase-confirm-cta"]').trigger("click");
+    await flushPromises();
+
+    const keypad = wrapper.get('[data-roi="pin-keypad"]');
+    for (const digit of "000000") {
+      await keypad.findAll("button").find((b) => b.text() === digit)!.trigger("click");
+    }
+    await flushPromises();
+    await flushPromises();
+
+    expect(wrapper.html()).toContain("Incorrect PIN");
+    expect(
+      wrapper.findAll('[data-roi="pin-dots-rail"] .pin-dot--filled'),
+      "the dots should be empty, ready for the next attempt"
+    ).toHaveLength(0);
   });
 });

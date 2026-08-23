@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, nextTick, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import ScreenShell from "@/components/layout/ScreenShell.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
@@ -69,6 +69,21 @@ const walletToDelete = ref<string | null>(null);
 // Two screens is how this action ended up with three names. See
 // utils/wallets/erase-copy.
 const CONFIRM_WORD = ERASE_CONFIRM_WORD;
+
+/*
+ * Both gates, before the press rather than after it.
+ *
+ * The button lit up on the checkbox alone, so pressing it on a destructive
+ * screen only to be told a field was empty made the control look ready when
+ * it was not. A confirmation that says yes and then no teaches people to
+ * press through it.
+ */
+const canErase = computed(
+  () => eraseAcknowledged.value && confirmText.value.toUpperCase() === CONFIRM_WORD
+);
+
+/** The keypad, so a refused PIN can be emptied for the next attempt. */
+const erasePinRef = ref<InstanceType<typeof PinInput> | null>(null);
 
 /** Named, not counted. A number is read past; a name you recognise is not. */
 const walletNames = ref<string[]>([]);
@@ -162,6 +177,13 @@ async function handlePinComplete(pin: string) {
 
   if (!mnemonic) {
     deleteError.value = "Incorrect PIN. Attempts remaining: " + (3 - sessionManager.failedAttempts);
+    // PinInput writes into the first free slot of six. Leaving them full
+    // means the retry it asks for costs six backspaces first. See the same
+    // fix in StartView and AddWalletView.
+    nextTick(() => {
+      erasePinRef.value?.clear();
+      erasePinRef.value?.focus();
+    });
     return;
   }
 
@@ -596,7 +618,7 @@ function cancelImport() {
           <Button variant="secondary" @click="cancelDelete">Cancel</Button>
           <Button
             variant="danger"
-            :disabled="!eraseAcknowledged"
+            :disabled="!canErase"
             data-roi="erase-confirm-cta"
             @click="confirmDeleteText"
           >
@@ -608,6 +630,7 @@ function cancelImport() {
       <div v-else class="pin-step">
         <p class="pin-prompt">Enter your PIN to confirm deletion:</p>
         <PinInput
+          ref="erasePinRef"
           mode="unlock"
           @complete="handlePinComplete"
           @cancel="handlePinCancel"
