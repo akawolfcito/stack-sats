@@ -85,6 +85,18 @@ function reportFailure(code: number | undefined, message: string) {
  * there is an answer.
  */
 const balanceMicro = ref<bigint | null>(null);
+/*
+ * Which chain is about to be signed on.
+ *
+ * The screen named the site and the account but never the network, so the
+ * only way to check was to leave the approval, look at the header, and come
+ * back. Reported after signing on the wrong assumption and having to go
+ * out and verify. Shown, not offered: a switch here would be a place for a
+ * site to talk someone into changing chains mid approval.
+ */
+const networkName = computed(() => (getSelectedNetwork() === "mainnet" ? "Mainnet" : "Testnet"));
+const isMainnet = computed(() => getSelectedNetwork() === "mainnet");
+
 const funding = ref<FundingAssessment | null>(null);
 
 /** Costs nothing, so the whole section stays out of the way. */
@@ -718,6 +730,15 @@ function handleReject(reason?: string) {
         <span>From: <strong>{{ displayOrigin }}</strong></span>
       </div>
 
+      <div
+        class="network-badge"
+        :class="{ 'network-badge--test': !isMainnet }"
+        data-roi="confirm-network"
+      >
+        <span class="network-badge__dot" aria-hidden="true"></span>
+        <span>{{ networkName }}</span>
+      </div>
+
       <!-- Method icon and description -->
       <div class="method-section" data-roi="confirm-summary">
         <div class="method-icon">
@@ -833,6 +854,39 @@ function handleReject(reason?: string) {
 </template>
 
 <style scoped>
+.network-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs, 4px);
+  align-self: center;
+  margin-top: var(--space-2xs, 4px);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-full, 999px);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.network-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+
+/* Testnet reads as the exception, so it is the one that stands out. */
+.network-badge--test {
+  color: var(--color-warning, #e0b341);
+  border-color: currentColor;
+}
+
+.network-badge--test .network-badge__dot {
+  background: currentColor;
+}
+
 /* V55.2: Main content area with proper padding */
 .confirm-content {
   flex: 1;

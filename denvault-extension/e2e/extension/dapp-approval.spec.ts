@@ -386,4 +386,30 @@ test.describe("dApp approval chain", () => {
     expect(outcome.status).toBe("rejected");
     expect(outcome.error).toMatchObject({ error: { code: 4001 } });
   });
+
+  /**
+   * The screen named the site and the account but never the chain, so the
+   * only way to check was to leave the approval and come back. Reported
+   * after doing exactly that.
+   */
+  test("the approval names the network being signed on", async ({
+    context,
+    extensionId,
+  }) => {
+    await setUpWallet(context, extensionId);
+    const dapp = await openDapp(context, DAPP_ORIGIN);
+
+    const approvalWindow = waitForApprovalWindow(context);
+    await callWallet(dapp, "stx_signMessage", { message: "which chain?" });
+    const approval = await approvalWindow;
+
+    await expect(approval.locator('[data-roi="confirm-screen"]')).toBeVisible({
+      timeout: 20000,
+    });
+
+    const badge = approval.locator('[data-roi="confirm-network"]');
+    await expect(badge).toBeVisible({ timeout: 15000 });
+    // pinNetwork puts the profile on testnet, so that is what must show.
+    await expect(badge).toContainText(/testnet/i);
+  });
 });
