@@ -371,7 +371,7 @@ onBeforeMount(() => {
         data-roi="pin-start-over"
         @click="restartPinChoice"
       >
-        Forgot it already? Choose a different PIN
+        Choose a different PIN
       </button>
     </template>
 
