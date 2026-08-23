@@ -133,6 +133,17 @@ const tabItems = [
 
 const userAccounts = ref<Account[]>([]);
 const isLoading = ref(true);
+
+/*
+ * Which wallet could not be opened, if any.
+ *
+ * A phrase that cannot derive accounts used to send this screen to "/",
+ * which sent it to "/unlock", which sent it straight back here. Three
+ * guards, each correct on its own, formed a ring with no exit: the popup
+ * spun until Chrome throttled navigation, and the only way out was
+ * DevTools. Nothing here navigates on failure any more.
+ */
+const accountsError = ref<string | null>(null);
 const selectedNetwork = ref<NetworkName>(getSelectedNetwork());
 const currentMnemonic = ref<string | null>(null);
 
@@ -443,7 +454,13 @@ async function loadAccounts(mnemonic: string, network: NetworkName, count?: numb
     secureLog(`Accounts loaded for ${network}: ${numAccounts} accounts`);
   } catch (error) {
     secureLog("Failed to generate accounts", error);
-    router.push({ path: "/" });
+    // Lock, so a reload lands on the PIN screen rather than retrying this
+    // on a loop, and the wallet is not left half open behind an error.
+    // Deliberately not locking: Manage Wallets is the way out of this
+    // state, and locking would put the PIN screen between the person and
+    // the only screen that can remove the wallet that caused it.
+    accountsError.value =
+      "This wallet's recovery phrase could not be read, so its accounts cannot be opened. Remove it from Manage Wallets and import it again.";
   }
   isLoading.value = false;
 }
@@ -805,6 +822,13 @@ const handleManageAccounts = () => {
 
       <div v-if="isLoading" class="loading-state">Loading accounts...</div>
 
+      <div v-else-if="accountsError" class="accounts-error" data-roi="home-accounts-error">
+        <p>{{ accountsError }}</p>
+        <Button variant="primary" @click="router.push({ path: '/manage-wallets' })">
+          Manage Wallets
+        </Button>
+      </div>
+
       <template v-else>
         <!-- Fixed Header Section (no scroll) -->
         <div class="home-header">
@@ -1074,6 +1098,21 @@ const handleManageAccounts = () => {
 }
 
 /* Loading State */
+.accounts-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.accounts-error p {
+  margin: 0;
+}
+
 .loading-state {
   display: flex;
   align-items: center;

@@ -24,6 +24,8 @@ import AppHeader from '@/components/layout/AppHeader.vue';
 import { Sheet, Button } from '@/components/ui';
 import { sessionManager } from '@/utils/security/session';
 
+import { checkMnemonic, describeMnemonicIssue } from '@/utils/mnemonic/validate';
+
 const router = useRouter();
 
 // V76: Determine return path based on wallet state
@@ -86,20 +88,24 @@ async function handlePaste() {
 }
 
 // Handle confirm - navigate back to origin with mnemonic
-function handleConfirm() {
+async function handleConfirm() {
   error.value = '';
 
-  if (!isValidWordCount.value) {
-    error.value = 'Recovery phrase must be 12 or 24 words';
-    return;
-  }
-
-  if (!isValidFormat.value) {
-    error.value = 'Invalid phrase format. Use lowercase letters only.';
-    return;
-  }
-
   const seedPhrase = words.value.join(' ');
+
+  /*
+   * The word count and the lowercase check used to be the whole gate. A
+   * phrase with two words run together is still 11 or 23 lowercase words,
+   * so it passed, got encrypted, and reached disk. Deriving accounts from
+   * it then failed on the home screen, which had no way to report it and
+   * no way back. Checking against the BIP39 list and the checksum here is
+   * the last point where the person still has the text and can fix it.
+   */
+  const check = await checkMnemonic(seedPhrase);
+  if (!check.valid) {
+    error.value = describeMnemonicIssue(check.issue);
+    return;
+  }
 
   // V77: Set flag to bypass discard modal on successful submit
   isSubmitting.value = true;
@@ -241,7 +247,7 @@ onBeforeUnmount(() => {
 
       <!-- Error with reserved slot -->
       <div class="error-slot" aria-live="polite">
-        <p v-if="error" class="error-message">{{ error }}</p>
+        <p v-if="error" class="error-message" data-roi="import-error">{{ error }}</p>
       </div>
     </div>
 
