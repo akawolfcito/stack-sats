@@ -237,25 +237,21 @@ No. The extension executes no remote code. All scripts are bundled in the packag
 
 Un revisor que no sepa por dónde empezar es un rechazo evitable.
 
+**Credentials (Username y Password): déjalos vacíos.** No hay cuenta que dar, y rellenarlos con algo inventado es peor que dejarlos en blanco.
+
+**Additional instructions** tiene un límite de **500 caracteres**. La versión anterior de esta guía traía un bloque de más de 1.000, escrito sin conocer el límite. Este ocupa 472.
+
+Fuera quedaron el faucet alternativo de learnweb3 y el párrafo del PIN fallido: con el sandbox de Hiro el revisor ya consigue fondos, y el bloqueo por PIN lo encuentra solo si lo intenta.
+
 ```
-No account or login is required. The extension is self-contained.
+No account or login is required; leave the credential fields empty.
 
-To review:
-1. Open the extension and choose "Create New Wallet".
-2. Write down the recovery phrase and set a 6-digit PIN.
-3. The wallet opens on the home screen showing a zero STX balance.
-4. Use the network selector in the header to switch to Testnet.
-5. "Receive" shows the address and a QR code. Testnet STX can be obtained
-   from the Stacks Explorer sandbox at https://explorer.hiro.so/sandbox
-   (connect the wallet, then use the Faucet tab), or from the public
-   faucet at https://learnweb3.io/faucets/stacks/
-6. "Send" walks through recipient, amount, fee and a PIN confirmation.
-7. To review dApp connectivity, any Stacks dApp using @stacks/connect will
-   detect DenVault through the WBIP provider registration.
+1. Open the extension, choose "Create New Wallet", save the recovery phrase, set a 6-digit PIN.
+2. Use the network selector in the header to switch to Testnet.
+3. "Receive" shows the address and QR. Fund it from https://explorer.hiro.so/sandbox (connect, Faucet tab).
+4. "Send" walks through recipient, amount, fee and a PIN confirmation.
 
-To review the failed-PIN behaviour: lock the wallet, then enter a wrong PIN
-three times. The keypad shows a countdown and re-enables itself when it
-expires. No wallet reset is required.
+Any dApp using @stacks/connect detects DenVault automatically.
 ```
 
 ---
