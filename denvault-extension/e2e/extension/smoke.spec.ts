@@ -13,7 +13,7 @@ test("the service worker boots and reports the packaged version", async ({
 }) => {
   const manifest = await serviceWorker.evaluate(() => chrome.runtime.getManifest());
 
-  expect(manifest.version).toBe("1.1.3");
+  expect(manifest.version).toBe("1.1.4");
   expect(manifest.permissions).toEqual([
     "storage",
     "sidePanel",
